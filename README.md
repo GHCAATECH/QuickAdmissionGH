@@ -11,7 +11,6 @@ for students, school administrators, and the platform owner.
 | `student-portal_20.html` | Student-facing portal: school selection, login, token purchase (Paystack), multi-step personal records form, document downloads. |
 | `school-admin_36.html` | School admin panel: placement import, student management, house/class allocation, finance, SMS, reports, templates, academic-year switching. |
 | `super-admin_12.html` | Platform owner panel: schools, admins, finance overview. |
-| `index_11.html` | Standalone login landing page. |
 | `banner.png` | Landing-page hero banner. |
 
 ## Tech
