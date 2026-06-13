@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickAdmissionGH</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">₵</span>
+      <div>
+        <h1>School Fees Collection</h1>
+        <p class="brand-sub">Bursar's dashboard</p>
+      </div>
+    </div>
+
+    <button id="themeToggle" class="theme-btn" type="button" aria-label="Toggle dark mode">
+      <span class="theme-icon">🌙</span>
+      <span class="theme-label">Dark</span>
+    </button>
+  </header>
+
+  <!-- ============ TAB NAVIGATION ============ -->
+  <nav class="tabs" role="tablist">
+    <button class="tab is-active" data-tab="dashboard" role="tab">Dashboard</button>
+    <button class="tab" data-tab="students" role="tab">Students</button>
+    <button class="tab" data-tab="payments" role="tab">Payments</button>
+  </nav>
+
+  <main class="container">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section id="dashboard" class="panel is-active">
+      <div class="cards">
+        <div class="card card--students">
+          <p class="card-label">Total students</p>
+          <p class="card-value" id="statStudents">0</p>
+        </div>
+        <div class="card card--collected">
+          <p class="card-label">Total fees collected</p>
+          <p class="card-value" id="statCollected">₵0.00</p>
+        </div>
+        <div class="card card--outstanding">
+          <p class="card-label">Outstanding balance</p>
+          <p class="card-value" id="statOutstanding">₵0.00</p>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <h2>Recent payments</h2>
+          <button class="btn btn-ghost" id="exportPaymentsTop" type="button">Export payments (CSV)</button>
+        </div>
+        <div class="table-wrap">
+          <table id="recentTable">
+            <thead>
+              <tr>
+                <th>Receipt #</th>
+                <th>Student</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody><!-- filled by JS --></tbody>
+          </table>
+          <p class="empty" id="recentEmpty">No payments recorded yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STUDENTS ============ -->
+    <section id="students" class="panel">
+      <div class="grid-2">
+
+        <!-- Add student form -->
+        <div class="block">
+          <div class="block-head"><h2>Add a student</h2></div>
+          <form id="studentForm" class="form" novalidate>
+            <label>
+              Full name
+              <input type="text" id="sName" placeholder="e.g. Ama Mensah" />
+              <span class="err" data-for="sName"></span>
+            </label>
+            <label>
+              Student ID
+              <input type="text" id="sId" placeholder="e.g. STU-001" />
+              <span class="err" data-for="sId"></span>
+            </label>
+            <label>
+              Class
+              <input type="text" id="sClass" placeholder="e.g. JHS 2" />
+              <span class="err" data-for="sClass"></span>
+            </label>
+            <label>
+              Contact
+              <input type="text" id="sContact" placeholder="e.g. 024 000 0000" />
+              <span class="err" data-for="sContact"></span>
+            </label>
+            <label>
+              Total fees due (₵)
+              <input type="number" id="sFees" min="0" step="0.01" placeholder="e.g. 1500" />
+              <span class="err" data-for="sFees"></span>
+            </label>
+            <button class="btn btn-primary" type="submit">Add student</button>
+          </form>
+        </div>
+
+        <!-- Student list -->
+        <div class="block">
+          <div class="block-head">
+            <h2>Students</h2>
+            <button class="btn btn-ghost" id="exportStudents" type="button">Export students (CSV)</button>
+          </div>
+
+          <div class="filters">
+            <input type="search" id="searchInput" placeholder="Search by name or ID…" />
+            <select id="classFilter">
+              <option value="">All classes</option>
+            </select>
+          </div>
+
+          <div class="table-wrap">
+            <table id="studentTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>ID</th>
+                  <th>Class</th>
+                  <th>Paid</th>
+                  <th>Balance</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody><!-- filled by JS --></tbody>
+            </table>
+            <p class="empty" id="studentEmpty">No students match your search.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ PAYMENTS ============ -->
+    <section id="payments" class="panel">
+      <div class="grid-2">
+
+        <!-- Record payment form -->
+        <div class="block">
+          <div class="block-head"><h2>Record a payment</h2></div>
+          <form id="paymentForm" class="form" novalidate>
+            <label>
+              Student
+              <select id="pStudent">
+                <option value="">Select a student…</option>
+              </select>
+              <span class="err" data-for="pStudent"></span>
+            </label>
+
+            <div class="balance-hint" id="balanceHint" hidden>
+              Remaining balance: <strong id="balanceHintValue">₵0.00</strong>
+            </div>
+
+            <label>
+              Amount paid (₵)
+              <input type="number" id="pAmount" min="0.01" step="0.01" placeholder="e.g. 500" />
+              <span class="err" data-for="pAmount"></span>
+            </label>
+            <label>
+              Date
+              <input type="date" id="pDate" />
+              <span class="err" data-for="pDate"></span>
+            </label>
+            <label>
+              Payment method
+              <select id="pMethod">
+                <option value="Cash">Cash</option>
+                <option value="Mobile Money">Mobile money</option>
+                <option value="Bank">Bank</option>
+              </select>
+            </label>
+            <button class="btn btn-primary" type="submit">Record payment</button>
+          </form>
+        </div>
+
+        <!-- Payment history -->
+        <div class="block">
+          <div class="block-head">
+            <h2>Payment history</h2>
+            <button class="btn btn-ghost" id="exportPayments" type="button">Export payments (CSV)</button>
+          </div>
+          <div class="table-wrap">
+            <table id="paymentTable">
+              <thead>
+                <tr>
+                  <th>Receipt #</th>
+                  <th>Student</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Date</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody><!-- filled by JS --></tbody>
+            </table>
+            <p class="empty" id="paymentEmpty">No payments recorded yet.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ RECEIPT MODAL ============ -->
+  <div class="modal-overlay" id="receiptModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="receiptTitle">
+      <div id="receiptArea" class="receipt">
+        <div class="receipt-head">
+          <h3 id="receiptTitle">Payment Receipt</h3>
+          <p class="receipt-school">School Fees Collection</p>
+        </div>
+        <dl class="receipt-rows">
+          <div><dt>Receipt #</dt><dd id="rNo"></dd></div>
+          <div><dt>Student</dt><dd id="rName"></dd></div>
+          <div><dt>Class</dt><dd id="rClass"></dd></div>
+          <div><dt>Amount paid</dt><dd id="rAmount"></dd></div>
+          <div><dt>Method</dt><dd id="rMethod"></dd></div>
+          <div><dt>Date</dt><dd id="rDate"></dd></div>
+          <div class="receipt-balance"><dt>Remaining balance</dt><dd id="rBalance"></dd></div>
+        </dl>
+        <p class="receipt-foot">Thank you. Keep this receipt for your records.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="closeReceipt" type="button">Close</button>
+        <button class="btn btn-primary" id="printReceipt" type="button">Print receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="script.js"></script>
+  <footer style="text-align:center;padding:18px;font-size:12px;color:#888;border-top:1px solid #e5e7eb;margin-top:24px">Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
+</body>
+</html>
