@@ -814,7 +814,10 @@ async function submitApp(){
   $('submitBtn').textContent='Submitting…';
   const {data,error}=await sb.rpc('submit_application',{p_index:session.index,p_token:session.token,payload,p_school:session.school||null});
   $('submitBtn').textContent='✅ Submit Enrolment';
-  if(error||!data.ok){toast('Submission failed — please try again');return;}
+  if(error||!data.ok){
+    if(data&amp;&amp;data.error==='closed'){toast('Admission is closed for this school — submission not allowed.');return;}
+    toast('Submission failed — please try again');return;
+  }
   await refreshStudent(); app.current=0; showPanel('dash');
   toast('Enrolment submitted · Admission No '+data.admission_no);
 }
