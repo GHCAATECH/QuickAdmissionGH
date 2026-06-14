@@ -916,15 +916,22 @@ function docRecords(){
   if(tpl&amp;&amp;tpl.trim()){ printDoc('Personal Records Form', fillTemplate(tpl), true); return; }
   printDoc('Personal Records Form','<h2>Personal Records</h2>'+recordsTableHTML());
 }
+function schoolDocUrl(k){ const c=(SCHOOL&amp;&amp;SCHOOL.config)||{}; return c[k]||''; }
+function openUploadedDoc(url){ const w=window.open(url,'_blank'); if(!w)toast('Allow pop-ups to open the document'); }
 function docUndertaking(){
+  const u=schoolDocUrl('undertaking_url'); if(u){return openUploadedDoc(u);}
   printDoc('Undertaking','<h2>Undertaking</h2><p>I, <b>'+(STU.full_name||'')+'</b> (Index No. '+(STU.index||'')+'), hereby undertake to abide by all the rules and regulations of '+((SCHOOL&amp;&amp;SCHOOL.school.name)||'the school')+'. I understand that any breach may lead to disciplinary action.</p><p style=&quot;margin-top:30px&quot;>Signature of Student: _______________________</p><p>Signature of Parent / Guardian: _______________________</p><p>Date: _______________________</p>');
 }
 function docSubjects(){
+  const u=schoolDocUrl('subjects_url'); if(u){return openUploadedDoc(u);}
   const p=progById(STU.programme_id);
   const subs=p?(p.subjects||'').split(',').map(x=>'<li>'+x.trim()+'</li>').join(''):'<li>To be assigned</li>';
   printDoc('Programme / Subject Combination','<h2>'+(p?p.name:(STU.programme||'Programme'))+'</h2><p>Subject combination for '+(STU.full_name||'')+':</p><ol>'+subs+'</ol>');
 }
-function docProspectus(){ printDoc('Prospectus','<h2>School Prospectus</h2><p>Welcome to '+((SCHOOL&amp;&amp;SCHOOL.school.name)||'our school')+'. This prospectus outlines what you need to know as a fresh student — academic programmes, school rules, boarding arrangements and the items to bring on reporting day.</p><p>For the full printed prospectus, please collect a copy at the administration office on reporting day.</p>'); }
+function docProspectus(){
+  const u=schoolDocUrl('prospectus_url'); if(u){return openUploadedDoc(u);}
+  printDoc('Prospectus','<h2>School Prospectus</h2><p>Welcome to '+((SCHOOL&amp;&amp;SCHOOL.school.name)||'our school')+'. This prospectus outlines what you need to know as a fresh student — academic programmes, school rules, boarding arrangements and the items to bring on reporting day.</p><p>For the full printed prospectus, please collect a copy at the administration office on reporting day.</p>');
+}
 
 function logout(){session=null;STU=null;showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
 
@@ -1787,10 +1794,10 @@ loadSchools();
           </div>
           <div class=&quot;panel panel-pad&quot; style=&quot;margin:0&quot;>
             <h3 class=&quot;section-title&quot;>Admission documents</h3>
-            <p style=&quot;font-size:12.5px;color:var(--muted);margin-bottom:12px&quot;>Upload templates students download from their portal.</p>
-            <div class=&quot;field&quot;><label>Personal records form</label><input type=&quot;file&quot;></div>
-            <div class=&quot;field&quot;><label>Acceptance / undertaking form</label><input type=&quot;file&quot;></div>
-            <button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;toast('Opening sample admission letter…')&quot;>Preview admission letter</button>
+            <p style=&quot;font-size:12.5px;color:var(--muted);margin-bottom:12px&quot;>Upload documents students download from their portal (PDF, Word or image · max 10 MB).</p>
+            <div class=&quot;field&quot;><label>Prospectus <a id=&quot;doc_prospectus_link&quot; href=&quot;#&quot; target=&quot;_blank&quot; style=&quot;display:none;font-size:11px;margin-left:6px&quot;>view current</a></label><input type=&quot;file&quot; id=&quot;doc_prospectus&quot; accept=&quot;.pdf,.doc,.docx,image/*&quot; onchange=&quot;uploadSchoolDoc('prospectus',this)&quot;></div>
+            <div class=&quot;field&quot;><label>Acceptance / Undertaking <a id=&quot;doc_undertaking_link&quot; href=&quot;#&quot; target=&quot;_blank&quot; style=&quot;display:none;font-size:11px;margin-left:6px&quot;>view current</a></label><input type=&quot;file&quot; id=&quot;doc_undertaking&quot; accept=&quot;.pdf,.doc,.docx,image/*&quot; onchange=&quot;uploadSchoolDoc('undertaking',this)&quot;></div>
+            <div class=&quot;field&quot;><label>Subject Combination <a id=&quot;doc_subjects_link&quot; href=&quot;#&quot; target=&quot;_blank&quot; style=&quot;display:none;font-size:11px;margin-left:6px&quot;>view current</a></label><input type=&quot;file&quot; id=&quot;doc_subjects&quot; accept=&quot;.pdf,.doc,.docx,image/*&quot; onchange=&quot;uploadSchoolDoc('subjects',this)&quot;></div>
           </div>
         </div>
         <div class=&quot;panel&quot; style=&quot;margin-top:18px&quot;><div class=&quot;panel-head&quot;><div><h3>Saved academic years</h3><div class=&quot;sub&quot;>Switch to any saved year to view or edit its students &amp;amp; payments</div></div><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;renderArchives()&quot;>Refresh</button></div>
@@ -2388,6 +2395,30 @@ function buildCharts(){
 /* ===== DOC LINES + LOG ===== */
 function renderDocLines(){$('docLines').innerHTML=docLines.map((l,i)=>`<div class=&quot;doc-line&quot;><span class=&quot;num&quot;>${i+1}</span><textarea oninput=&quot;docLines[${i}]=this.value&quot; rows=&quot;2&quot;>${l}</textarea></div>`).join('');}
 function renderLog(){$('logRows').innerHTML=activityLog.map(l=>`<tr><td class=&quot;mono&quot; style=&quot;font-size:12px&quot;>${l.time}</td><td>${l.action}</td><td>${l.by}</td></tr>`).join('');renderArchives();}
+const DOC_COL={prospectus:'prospectus_url',undertaking:'undertaking_url',subjects:'subjects_url'};
+function showSchoolDocLink(kind,url){
+  const a=document.getElementById('doc_'+kind+'_link'); if(!a)return;
+  if(url){ a.href=url; a.style.display='inline'; } else { a.style.display='none'; }
+}
+async function uploadSchoolDoc(kind,inp){
+  if(roGuard()){inp.value='';return;}
+  const f=inp.files&amp;&amp;inp.files[0]; inp.value='';
+  if(!f)return;
+  if(!SB_SCHOOL){toast('School not loaded');return;}
+  if(f.size>10*1024*1024){toast('File too large — max 10 MB');return;}
+  toast('Uploading…');
+  const ext=(f.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path=SB_SCHOOL.id+'/'+kind+'_'+Date.now()+'.'+ext;
+  const {error}=await sb.storage.from('school-docs').upload(path,f,{contentType:f.type||'application/octet-stream',upsert:true});
+  if(error){toast('Upload failed: '+error.message);return;}
+  const {data:pub}=sb.storage.from('school-docs').getPublicUrl(path);
+  const col=DOC_COL[kind];
+  const {error:e2}=await sb.from('school_config').update({[col]:pub.publicUrl}).eq('school_id',SB_SCHOOL.id);
+  if(e2){toast('Saved file but could not record: '+e2.message);return;}
+  if(SB_CFG) SB_CFG[col]=pub.publicUrl;
+  showSchoolDocLink(kind,pub.publicUrl);
+  toast(({prospectus:'Prospectus',undertaking:'Acceptance / Undertaking',subjects:'Subject Combination'}[kind])+' uploaded');
+}
 async function renderArchives(){
   const tb=$('archiveRows'); if(!tb)return;
   if(!SB_SCHOOL){tb.innerHTML=emptyRow(6,'No school loaded.');return;}
@@ -2807,6 +2838,7 @@ async function loadSchoolData(prof){
   admissionOpen=(SB_CFG.admission_status==='OPENED');
   smsBalance=SB_CFG.sms_balance||0;
   populateYearSelect(SB_CFG.academic_year); { const my=$('s_admyear'); if(my&amp;&amp;SB_CFG.admission_year) my.value=SB_CFG.admission_year; }
+  showSchoolDocLink('prospectus',SB_CFG.prospectus_url); showSchoolDocLink('undertaking',SB_CFG.undertaking_url); showSchoolDocLink('subjects',SB_CFG.subjects_url);
   if(SB_CFG.req_doc_line1!==undefined) docLines=[SB_CFG.req_doc_line1,SB_CFG.req_doc_line2,SB_CFG.req_doc_line3,SB_CFG.req_doc_line4,SB_CFG.req_doc_line5].map(x=>x||'');
 
   // header identity
