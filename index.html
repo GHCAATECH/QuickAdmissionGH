@@ -73,6 +73,9 @@
   .auth-head{text-align:center;margin-bottom:12px}
   .auth-head h1{font-family:'Space Grotesk';font-size:23px;font-weight:600;letter-spacing:-.3px;line-height:1.2}
   .auth-head .tag{display:inline-block;margin-top:8px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);background:var(--primary-soft);padding:4px 12px;border-radius:20px}
+  .sch-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.12em;color:var(--primary);margin-bottom:6px}
+  #schCrest{position:relative;overflow:hidden}
+  #schLogo{width:100%;height:100%;object-fit:cover;border-radius:inherit}
   /* ===== Landing corner links + hero ===== */
   .corner-nav{position:fixed;top:14px;right:16px;z-index:70;display:flex;gap:8px}
   .corner-nav a{font-size:12px;font-weight:600;color:var(--primary);background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:8px 15px;text-decoration:none;box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:7px}
@@ -318,7 +321,7 @@
     <div class=&quot;auth-foot&quot;>Powered by VELOXIS TECH HUB</div>
   </div>
     <div class=&quot;auth-hero&quot;>
-      <div class=&quot;auth-head&quot;><div class=&quot;crest&quot;>SHS</div><h1>Senior High School Admission</h1><span class=&quot;tag&quot;>Online Admission · 2025/2026</span></div>
+      <div class=&quot;auth-head&quot;><div id=&quot;schCodeTop&quot; class=&quot;sch-code&quot; style=&quot;display:none&quot;></div><div class=&quot;crest&quot; id=&quot;schCrest&quot;><span id=&quot;schCrestText&quot;>SHS</span><img id=&quot;schLogo&quot; alt=&quot;School logo&quot; style=&quot;display:none&quot;></div><h1 id=&quot;schTitle&quot;>Senior High School Admission</h1><span class=&quot;tag&quot;>Online Admission · 2025/2026</span></div>
       <h2>Quick Admission, <span class=&quot;grn&quot;>Bright Future!</span></h2>
       <p class=&quot;lead&quot;>Fast. Easy. Reliable. That's the new way forward.</p>
       <img class=&quot;hero-img&quot; src=&quot;banner.png&quot; alt=&quot;Quick Admission GH — Bright Future&quot;>
@@ -941,6 +944,21 @@ function schoolStatus(id){ const s=SCHOOLS_LIST.find(x=>String(x.id)===String(id
 function admissionClosed(id){ return id &amp;&amp; schoolStatus(id)==='CLOSED'; }
 function onLoginSchoolChange(){
   const sid=$('login-school')?$('login-school').value:'';
+  // Show the selected school's logo with its code on top
+  { const s=SCHOOLS_LIST.find(x=>String(x.id)===String(sid));
+    const code=$('schCodeTop'), crestText=$('schCrestText'), logo=$('schLogo'), title=$('schTitle');
+    if(s){
+      if(title) title.textContent=s.name||'Senior High School Admission';
+      if(code){ if(s.code){code.textContent=s.code;code.style.display='block';} else code.style.display='none'; }
+      if(s.crest_url){ if(logo){logo.src=s.crest_url;logo.style.display='block';} if(crestText)crestText.style.display='none'; }
+      else { if(logo)logo.style.display='none'; if(crestText){crestText.style.display='';crestText.textContent=(s.code||'SHS').slice(0,4);} }
+    } else {
+      if(title) title.textContent='Senior High School Admission';
+      if(code) code.style.display='none';
+      if(logo) logo.style.display='none';
+      if(crestText){ crestText.style.display=''; crestText.textContent='SHS'; }
+    }
+  }
   const closed=admissionClosed(sid);
   const banner=$('admClosedBanner'); if(banner) banner.style.display=closed?'block':'none';
   const lb=$('loginBtn'); if(lb){ lb.disabled=closed; lb.style.opacity=closed?'.5':''; lb.style.pointerEvents=closed?'none':''; }
