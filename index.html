@@ -735,14 +735,17 @@ function buildPickers(){
   $('pf-region').innerHTML='<option value=&quot;&quot;>Select…</option>'+REGIONS.map(r=>`<option>${r}</option>`).join('');
   $('pf-nat').innerHTML=NATIONALITIES.map(n=>`<option ${n==='Ghanaian'?'selected':''}>${n}</option>`).join('');
 }
+function fmtCombo(str){ return (str||'').split(',').map(x=>x.trim()).filter(Boolean).join(' · '); }
 function buildClassTable(){
-  const subs=(progById(STU.programme_id)||{}).subjects||'';
-  const combo=subs.split(',').map(x=>x.trim()).filter(Boolean).join(' · ')||'Standard combination';
+  const progSubs=fmtCombo((progById(STU.programme_id)||{}).subjects||'');
   let classes=(SCHOOL&amp;&amp;SCHOOL.classes)||[];
   // Only show classes for this student's programme (classes without a programme are shown to all)
   const mine=classes.filter(c=>!c.programme_id || String(c.programme_id)===String(STU.programme_id));
   if(mine.length) classes=mine;
-  $('clsRows').innerHTML=classes.length?classes.map(c=>`<tr class=&quot;cls-row ${c.id===app.classId?'sel':''}&quot; data-id=&quot;${c.id}&quot; onclick=&quot;pickClass('${c.id}','${(c.name||'').replace(/'/g,&quot;&quot;)}')&quot;><td><span class=&quot;cls-radio&quot;></span>${c.name}</td><td class=&quot;cls-combo&quot;>${combo}</td><td class=&quot;cls-seats&quot;>${c.seats}</td></tr>`).join(''):`<tr><td colspan=&quot;3&quot; style=&quot;text-align:center;color:var(--muted);padding:18px&quot;>No classes published yet. You can still submit; a class will be assigned by the school.</td></tr>`;
+  $('clsRows').innerHTML=classes.length?classes.map(c=>{
+    const combo=fmtCombo(c.subjects)||progSubs||'Standard combination';
+    return `<tr class=&quot;cls-row ${c.id===app.classId?'sel':''}&quot; data-id=&quot;${c.id}&quot; onclick=&quot;pickClass('${c.id}','${(c.name||'').replace(/'/g,&quot;&quot;)}')&quot;><td><span class=&quot;cls-radio&quot;></span>${c.name}</td><td class=&quot;cls-combo&quot;>${combo}</td><td class=&quot;cls-seats&quot;>${c.seats}</td></tr>`;
+  }).join(''):`<tr><td colspan=&quot;3&quot; style=&quot;text-align:center;color:var(--muted);padding:18px&quot;>No classes published yet. You can still submit; a class will be assigned by the school.</td></tr>`;
 }
 function pickClass(id,name){app.classId=id;app.className=name;document.querySelectorAll('.cls-row').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));}
 function uploadEnr(){ const inp=$('enrFileInput'); if(inp) inp.click(); }
@@ -2820,7 +2823,7 @@ async function loadSchoolData(prof){
   const pRev={},hRev={},cRev={}; pMap={};hMap={};cMap={};
   programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:(stu.data||[]).filter(s=>s.programme_id===p.id).length};});
   houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,gender:h.gender||'',rtype:h.residential_type||'',occ:(stu.data||[]).filter(s=>s.house_id===h.id).length};});
-  classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,progId:c.programme_id?pRev[c.programme_id]:'',occ:(stu.data||[]).filter(s=>s.class_id===c.id).length};});
+  classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:(stu.data||[]).filter(s=>s.class_id===c.id).length};});
   const plcByIdx={}; (plc.data||[]).forEach(p=>plcByIdx[p.index_number]=p);
   students=(stu.data||[]).map((s,i)=>{ const pl=plcByIdx[s.bece_index]||{}; const dt=s.created_at?new Date(s.created_at):null;
     return {id:i+1,_id:s.id,index:s.bece_index,name:s.full_name||'(no name)',gender:s.gender||'M',
@@ -3181,16 +3184,17 @@ openHouse=function(id){
 };
 openClass=function(id){
   if(roGuard())return;
-  const c=id?classes.find(x=>x.id===id):{name:'',code:'',cap:50,progId:''};
+  const c=id?classes.find(x=>x.id===id):{name:'',code:'',cap:50,progId:'',subjects:''};
   const pOpts='<option value=&quot;&quot;>— None —</option>'+programmes.map(p=>`<option value=&quot;${p.id}&quot; ${String(c.progId)===String(p.id)?'selected':''}>${p.name}</option>`).join('');
   crudModal(id?'Edit class':'Add class',
     `<div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Class name</label><input id=&quot;c_name&quot; value=&quot;${c.name}&quot;></div><div class=&quot;field&quot;><label>Code</label><input id=&quot;c_code&quot; value=&quot;${c.code||''}&quot;></div></div>
      <div class=&quot;field&quot;><label>Programme</label><select id=&quot;c_prog&quot;>${pOpts}</select></div>
+     <div class=&quot;field&quot;><label>Subject combination <span class=&quot;hint&quot;>— comma separated; shown to students when picking this class</span></label><textarea id=&quot;c_sub&quot; rows=&quot;3&quot; placeholder=&quot;e.g. Core Maths, English, Integrated Science, Physics, Chemistry, Biology, Elective Maths&quot;>${(c.subjects||'').replace(/</g,'&amp;lt;')}</textarea></div>
      <div class=&quot;field&quot; style=&quot;max-width:160px&quot;><label>Capacity</label><input id=&quot;c_cap&quot; type=&quot;number&quot; value=&quot;${c.cap}&quot;></div>`,
     async ()=>{ const name=val('c_name'); if(!name){toast('Class name required');return;}
-      const progNum=val('c_prog'); const progUuid=progNum?pMap[progNum]:null;
-      if(id){ await sb.from('classrooms').update({name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid}).eq('id',c._id); c.name=name;c.code=val('c_code');c.cap=+val('c_cap')||50;c.progId=progNum?+progNum:''; }
-      else { const {data}=await sb.from('classrooms').insert({school_id:SB_SCHOOL.id,name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid}).select().single(); const nid=Math.max(0,...classes.map(x=>x.id))+1; cMap[nid]=data.id; classes.push({id:nid,_id:data.id,name,code:val('c_code'),cap:+val('c_cap')||50,occ:0,progId:progNum?+progNum:''}); }
+      const progNum=val('c_prog'); const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
+      if(id){ await sb.from('classrooms').update({name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).eq('id',c._id); c.name=name;c.code=val('c_code');c.cap=+val('c_cap')||50;c.progId=progNum?+progNum:'';c.subjects=subj||''; }
+      else { const {data}=await sb.from('classrooms').insert({school_id:SB_SCHOOL.id,name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).select().single(); const nid=Math.max(0,...classes.map(x=>x.id))+1; cMap[nid]=data.id; classes.push({id:nid,_id:data.id,name,code:val('c_code'),cap:+val('c_cap')||50,occ:0,progId:progNum?+progNum:'',subjects:subj||''}); }
       closeModal(); renderClasses(); fillSelects&amp;&amp;fillSelects(); toast('Class saved'); });
 };
 delItem=async function(type,id){
