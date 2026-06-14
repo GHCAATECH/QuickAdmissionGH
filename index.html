@@ -3255,7 +3255,12 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; try
   .brand-sub{font-size:10.5px;color:#6f857c;letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
   .nav{padding:6px 10px 20px;flex:1}
   .nav-group{margin-top:14px}
-  .nav-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#5e7269;padding:0 10px 6px;font-weight:600}
+  .nav-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#5e7269;padding:7px 10px;font-weight:600;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-radius:8px;user-select:none;transition:.14s}
+  .nav-label:hover{color:#9fc7ba;background:var(--sb-soft)}
+  .nav-label .gc{width:13px;height:13px;transition:transform .2s;opacity:.6}
+  .nav-group.open .nav-label .gc{transform:rotate(180deg)}
+  .nav-group > .nav-item{display:none}
+  .nav-group.open > .nav-item{display:flex}
   .nav-item{
     display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:var(--r-sm);
     color:var(--sb-text);font-size:13.5px;font-weight:500;width:100%;text-align:left;
@@ -3489,7 +3494,7 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; try
         Dashboard
       </button>
       <div class=&quot;nav-group&quot;>
-        <div class=&quot;nav-label&quot;>Oversight</div>
+        <div class=&quot;nav-label&quot; onclick=&quot;toggleNavGroup(this)&quot;>Oversight<svg class=&quot;gc&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.4&quot;><polyline points=&quot;6 9 12 15 18 9&quot;/></svg></div>
         <button class=&quot;nav-item&quot; data-view=&quot;schools&quot;>
           <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M3 21h18M5 21V7l8-4v18M19 21V11l-6-4&quot;/><path d=&quot;M9 9v.01M9 12v.01M9 15v.01M9 18v.01&quot;/></svg>
           Schools <span class=&quot;nav-badge&quot; id=&quot;badge-schools&quot;>6</span>
@@ -3504,7 +3509,7 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; try
         </button>
       </div>
       <div class=&quot;nav-group&quot;>
-        <div class=&quot;nav-label&quot;>Operations</div>
+        <div class=&quot;nav-label&quot; onclick=&quot;toggleNavGroup(this)&quot;>Configuration<svg class=&quot;gc&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.4&quot;><polyline points=&quot;6 9 12 15 18 9&quot;/></svg></div>
         <button class=&quot;nav-item&quot; data-view=&quot;finance&quot;>
           <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><line x1=&quot;12&quot; y1=&quot;1&quot; x2=&quot;12&quot; y2=&quot;23&quot;/><path d=&quot;M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6&quot;/></svg>
           Financial Reports
@@ -3518,15 +3523,15 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; try
           System Settings
         </button>
       </div>
-    </nav>
-    <div class=&quot;sb-foot&quot;>
-      <div class=&quot;sb-avatar&quot;>KM</div>
-      <div style=&quot;flex:1;min-width:0&quot;>
-        <div style=&quot;color:#fff;font-size:12.5px;font-weight:600&quot;>Kwame Mensah</div>
-        <small>System Owner</small>
+      <div class=&quot;sb-foot&quot;>
+        <div class=&quot;sb-avatar&quot;>KM</div>
+        <div style=&quot;flex:1;min-width:0&quot;>
+          <div style=&quot;color:#fff;font-size:12.5px;font-weight:600&quot;>Kwame Mensah</div>
+          <small>System Owner</small>
+        </div>
+        <button class=&quot;sb-logout&quot; title=&quot;Log out&quot; onclick=&quot;logout()&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9&quot;/></svg></button>
       </div>
-      <button class=&quot;sb-logout&quot; title=&quot;Log out&quot; onclick=&quot;logout()&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9&quot;/></svg></button>
-    </div>
+    </nav>
   </aside>
   <div class=&quot;backdrop&quot; id=&quot;backdrop&quot;></div>
 
@@ -4086,8 +4091,16 @@ $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal(
 
 /* ============ NAV ============ */
 const titles={dashboard:['Dashboard','System-wide overview across all schools'],schools:['School Management','Create, configure and oversee every tenant'],admins:['School Admins','Manage admin accounts and access'],students:['All Students','Cross-school student directory'],finance:['Financial Reports','Revenue and transactions across schools'],sms:['SMS Management','Broadcast messaging and credit pool'],settings:['System Settings','Global configuration and defaults']};
+function toggleNavGroup(lbl){
+  const g=lbl.closest('.nav-group'); if(!g)return;
+  const willOpen=!g.classList.contains('open');
+  document.querySelectorAll('#nav .nav-group').forEach(x=>x.classList.remove('open'));
+  if(willOpen) g.classList.add('open');
+}
 function go(view){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
+  document.querySelectorAll('#nav .nav-group').forEach(g=>g.classList.remove('open'));
+  { const cur=[...document.querySelectorAll('#nav [data-view]')].find(n=>n.dataset.view===view); const grp=cur&amp;&amp;cur.closest('.nav-group'); if(grp)grp.classList.add('open'); }
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+view));
   $('pagetitle').firstChild.textContent=titles[view][0];$('pagesub').textContent=titles[view][1];
   if(view==='dashboard'){renderStats();renderDashTable();renderFeed();buildCharts();}
