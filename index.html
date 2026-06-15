@@ -215,6 +215,9 @@
   .step.done .lbl{color:var(--ink)}
   .stepcard{display:none}.stepcard.active{display:block;animation:fade .25s}
   .card2{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+  /* ===== 3D depth (broad) ===== */
+  .welcome,.card2{box-shadow:0 1px 2px rgba(16,40,34,.05),0 8px 20px -10px rgba(16,40,34,.16),0 22px 44px -22px rgba(16,40,34,.22);transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s}
+  .welcome:hover,.card2:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(16,40,34,.07),0 16px 32px -12px rgba(16,40,34,.22),0 36px 64px -28px rgba(16,40,34,.3)}
   .card2-head{padding:20px 24px;border-bottom:1px solid var(--line)}
   .card2-head h2{font-family:'Space Grotesk';font-size:18px;font-weight:600}
   .card2-head p{font-size:13px;color:var(--muted);margin-top:3px}
@@ -1161,6 +1164,9 @@ loadSchools();
   .qa small{display:block;font-weight:400;color:var(--muted);font-size:11px}
 
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:18px}
+  /* ===== 3D depth (broad) ===== */
+  .stat,.panel{box-shadow:0 1px 2px rgba(16,40,34,.05),0 8px 20px -10px rgba(16,40,34,.16),0 22px 44px -22px rgba(16,40,34,.22);transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s}
+  .stat:hover,.panel:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(16,40,34,.07),0 16px 32px -12px rgba(16,40,34,.22),0 36px 64px -28px rgba(16,40,34,.3)}
   .panel-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap}
   .panel-head h3{font-family:'Space Grotesk';font-size:15px;font-weight:600}
   .panel-head .sub{font-size:11.5px;color:var(--muted);margin-top:1px}
@@ -3438,6 +3444,9 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; try
   /* ---------- Layout cols ---------- */
   .cols{display:grid;grid-template-columns:1fr 340px;gap:18px;margin-bottom:18px}
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  /* ===== 3D depth (broad) ===== */
+  .stat,.panel{box-shadow:0 1px 2px rgba(16,40,34,.05),0 8px 20px -10px rgba(16,40,34,.16),0 22px 44px -22px rgba(16,40,34,.22);transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s}
+  .stat:hover,.panel:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(16,40,34,.07),0 16px 32px -12px rgba(16,40,34,.22),0 36px 64px -28px rgba(16,40,34,.3)}
   .panel-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--line)}
   .panel-head h3{font-family:'Space Grotesk';font-size:15px;font-weight:600}
   .panel-head .sub{font-size:11.5px;color:var(--muted);margin-top:1px}
