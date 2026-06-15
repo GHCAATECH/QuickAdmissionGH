@@ -585,8 +585,18 @@ async function doLogin(){
     return;
   }
   session={index:idx,token:tok,school:sid}; STU=data.student; applySchool(data);
+  try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){}
   hydrate(); showScreen('s-app'); showPanel('dash');
   showDisclaimer();
+}
+async function bootStudent(){
+  let s=null; try{ s=JSON.parse(localStorage.getItem('qag_student')||'null'); }catch(e){}
+  if(!s||!s.index||!s.token) return;
+  try{
+    const {data}=await sb.rpc('student_login',{p_index:s.index,p_token:s.token,p_school:s.school||null});
+    if(data&amp;&amp;data.ok){ session=s; STU=data.student; applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); }
+    else { try{localStorage.removeItem('qag_student');}catch(e){} }
+  }catch(e){}
 }
 function showDisclaimer(){
   const sch=(SCHOOL&amp;&amp;SCHOOL.school&amp;&amp;SCHOOL.school.name)||&quot;your school&quot;;
@@ -725,7 +735,7 @@ async function verifyPayment(reference, idx, name, school){
   toast('Payment confirmed \u2014 signing you in\u2026');
   session={index:idx,token:data.token,school:school||null};
   const {data:login}=await sb.rpc('student_login',{p_index:idx,p_token:data.token,p_school:school||null});
-  if(login&amp;&amp;login.ok){ STU=login.student; applySchool(login); hydrate(); showScreen('s-app'); showPanel('dash'); showDisclaimer(); toast('Welcome! Save your token: '+data.token); }
+  if(login&amp;&amp;login.ok){ STU=login.student; applySchool(login); try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){} hydrate(); showScreen('s-app'); showPanel('dash'); showDisclaimer(); toast('Welcome! Save your token: '+data.token); }
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }
 function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in — tap Log in');}
@@ -967,7 +977,7 @@ function docProspectus(){
 }
 
 function gotoSuper(){ try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin_12.html'; }
-function logout(){session=null;STU=null;showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
+function logout(){session=null;STU=null;try{localStorage.removeItem('qag_student');}catch(e){}showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
 
 buildSteps();
 // Phone/contact fields: digits only, max 10
@@ -1017,6 +1027,7 @@ function onLoginSchoolChange(){
   const bt=$('buyTokenBtn'); if(bt){ bt.disabled=closed; bt.style.opacity=closed?'.5':''; bt.style.pointerEvents=closed?'none':''; }
 }
 loadSchools();
+bootStudent();
 // Live school detection on the purchase form
 (function(){
   var pi=document.getElementById('p-index'); if(!pi)return;
@@ -2812,7 +2823,7 @@ fillSelects();renderStats();renderRecent();buildColvis();
 /* ================= SUPABASE INTEGRATION (school admin) ================= */
 const SB_URL='https://datxaylostmyroleisdl.supabase.co';
 const SB_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-school-auth'}});
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'● PRODUCTION':'● DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 var SB_SCHOOL=null, SB_CFG=null, SB_ADMIN_NAME='Admin', SB_PERMS=null, SB_UID=null, SB_HOUSE=null, READONLY=false;
 // Capability catalogue (key -> friendly label)
@@ -2899,8 +2910,27 @@ const fmtT=ts=>{ if(!ts) return '—'; const d=new Date(ts), n=new Date(); const
   document.body.appendChild(ov);
   document.getElementById('ag_btn').addEventListener('click',adminLogin);
   document.getElementById('ag_pass').addEventListener('keydown',e=>{if(e.key==='Enter')adminLogin();});
+  bootSession();
 })();
 
+async function enterAdmin(prof,uid){
+  SB_UID=uid; SB_PERMS=(prof.permissions===undefined?null:prof.permissions); SB_HOUSE=(SB_PERMS&amp;&amp;SB_PERMS.house)||null;
+  await loadSchoolData(prof);
+  const g=document.getElementById('authGate'); if(g)g.remove();
+  document.querySelector('.app').style.display='';
+  applyPermissions();
+  go(firstAllowedView());
+}
+async function bootSession(){
+  try{
+    const {data}=await sb.auth.getSession();
+    const session=data&amp;&amp;data.session;
+    if(!session||!session.user) return;
+    const {data:prof}=await sb.from('profiles').select('full_name,role,school_id,permissions').eq('id',session.user.id).single();
+    if(!prof||(prof.role!=='school_admin'&amp;&amp;prof.role!=='super_admin')) return;
+    await enterAdmin(prof,session.user.id);
+  }catch(e){}
+}
 async function adminLogin(){
   const btn=document.getElementById('ag_btn'), err=document.getElementById('ag_err');
   btn.textContent='Signing in…'; err.style.display='none';
@@ -2908,13 +2938,8 @@ async function adminLogin(){
   if(error){ err.textContent=error.message; err.style.display='block'; btn.textContent='Sign in'; return; }
   const {data:prof}=await sb.from('profiles').select('full_name,role,school_id,permissions').eq('id',data.user.id).single();
   if(!prof||(prof.role!=='school_admin'&amp;&amp;prof.role!=='super_admin')){ err.textContent='This account has no school-admin access.'; err.style.display='block'; btn.textContent='Sign in'; await sb.auth.signOut(); return; }
-  SB_UID=data.user.id; SB_PERMS=(prof.permissions===undefined?null:prof.permissions); SB_HOUSE=(SB_PERMS&amp;&amp;SB_PERMS.house)||null;
-  try{ await loadSchoolData(prof); }
+  try{ await enterAdmin(prof,data.user.id); }
   catch(e){ err.textContent='Could not load school data.'; err.style.display='block'; btn.textContent='Sign in'; return; }
-  document.getElementById('authGate').remove();
-  document.querySelector('.app').style.display='';
-  applyPermissions();
-  go(firstAllowedView());
   showDisclaimer();
 }
 
@@ -4342,7 +4367,7 @@ renderAll();buildCharts();
 /* ================= SUPABASE INTEGRATION (super admin) ================= */
 const SB_URL='https://datxaylostmyroleisdl.supabase.co';
 const SB_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-super-auth'}});
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'● PRODUCTION':'● DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 const sval=id=>document.getElementById(id).value;
 const sa_init=n=>{const w=(n||'').replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean);return ((w[0]&amp;&amp;w[0][0]||'S')+(w[1]&amp;&amp;w[1][0]||(w[0]&amp;&amp;w[0][1])||'C')).toUpperCase();};
@@ -4370,8 +4395,26 @@ const sa_time=ts=>{ if(!ts)return '—'; const d=new Date(ts),n=new Date(),m=Mat
   document.body.appendChild(ov);
   document.getElementById('ag_btn').addEventListener('click',superLogin);
   document.getElementById('ag_pass').addEventListener('keydown',e=>{if(e.key==='Enter')superLogin();});
+  bootSuperSession();
 })();
 
+async function enterSuper(uid){
+  SA_UID=uid;
+  await loadSA();
+  const g=document.getElementById('authGate'); if(g)g.remove();
+  document.querySelector('.app').style.display='';
+  go('dashboard');
+}
+async function bootSuperSession(){
+  try{
+    const {data}=await sb.auth.getSession();
+    const session=data&amp;&amp;data.session;
+    if(!session||!session.user) return;
+    const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',session.user.id).single();
+    if(!prof||prof.role!=='super_admin') return;
+    await enterSuper(session.user.id);
+  }catch(e){}
+}
 async function superLogin(){
   const btn=document.getElementById('ag_btn'),err=document.getElementById('ag_err');
   btn.textContent='Signing in…'; err.style.display='none';
@@ -4379,11 +4422,7 @@ async function superLogin(){
   if(error){err.textContent=error.message;err.style.display='block';btn.textContent='Sign in';return;}
   const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',data.user.id).single();
   if(!prof||prof.role!=='super_admin'){err.textContent='This account is not a super admin.';err.style.display='block';btn.textContent='Sign in';await sb.auth.signOut();return;}
-  SA_UID=data.user.id;
-  try{ await loadSA(); }catch(e){ err.textContent='Could not load platform data.'; err.style.display='block'; btn.textContent='Sign in'; return; }
-  document.getElementById('authGate').remove();
-  document.querySelector('.app').style.display='';
-  go('dashboard');
+  try{ await enterSuper(data.user.id); }catch(e){ err.textContent='Could not load platform data.'; err.style.display='block'; btn.textContent='Sign in'; return; }
 }
 async function logout(){ if(!confirm('Log out of the Super Admin portal?'))return; try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 
