@@ -1831,10 +1831,10 @@ bootStudent();
 
       <!-- REPORTS -->
       <section class=&quot;view&quot; id=&quot;view-reports&quot;>
-        <div class=&quot;toolbar&quot;><h2 class=&quot;section-title&quot; style=&quot;margin:0&quot;>Enrollment reports</h2><div style=&quot;flex:1&quot;></div><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;toast('Exporting all reportsâ€¦')&quot;>Export all</button></div>
+        <div class=&quot;toolbar&quot;><h2 class=&quot;section-title&quot; style=&quot;margin:0&quot;>Enrolment reports</h2><div style=&quot;flex:1&quot;></div><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;toast('Exporting all reportsâ€¦')&quot;>Export all</button></div>
         <div class=&quot;chart-grid&quot;>
           <div class=&quot;panel&quot; style=&quot;margin:0&quot;><div class=&quot;panel-head&quot;><h3>Gender distribution</h3></div><div class=&quot;chart-box&quot;><canvas id=&quot;genderChart&quot;></canvas></div></div>
-          <div class=&quot;panel&quot; style=&quot;margin:0&quot;><div class=&quot;panel-head&quot;><h3>Programme enrollment</h3></div><div class=&quot;chart-box&quot;><canvas id=&quot;progChart&quot;></canvas></div></div>
+          <div class=&quot;panel&quot; style=&quot;margin:0&quot;><div class=&quot;panel-head&quot;><h3>Programme enrolment</h3></div><div class=&quot;chart-box&quot;><canvas id=&quot;progChart&quot;></canvas></div></div>
           <div class=&quot;panel&quot; style=&quot;margin:0&quot;><div class=&quot;panel-head&quot;><h3>House allocation</h3></div><div class=&quot;chart-box&quot;><canvas id=&quot;houseChart&quot;></canvas></div></div>
         </div>
       </section>
@@ -2781,7 +2781,7 @@ function repPrint(title,headers,rows){
   w.document.close(); setTimeout(function(){w.print();},300);
 }
 
-const titles={dashboard:['Dashboard','Admission overview for 2025/2026'],setup:['School Setup','Profile, calendar and admission configuration'],portal:['Student Portal Setup','Control what students see and fill in'],programmes:['Programmes','Define programmes and subject combinations'],houses:['Houses','Manage houses and allocation'],classes:['Classrooms','Manage classes and capacity'],placement:['Placement List','Import and manage CSSPS placements'],students:['View Students','Browse all admitted students'],'manage-students':['Manage Students','Edit and update student records'],'house-alloc':['Manage House Allocation','Assign students to houses'],'class-alloc':['Manage Class Allocation','Assign students to classes'],finance:['Financials','Payments and gateway configuration'],sms:['SMS','Broadcast messaging'],reports:['Reports','Enrollment analytics'],templates:['Document templates','Design your admission letter &amp; records printout'],users:['Users','Manage who can sign in to this school'],utilities:['Utilities','Account and document tools']};
+const titles={dashboard:['Dashboard','Admission overview for 2025/2026'],setup:['School Setup','Profile, calendar and admission configuration'],portal:['Student Portal Setup','Control what students see and fill in'],programmes:['Programmes','Define programmes and subject combinations'],houses:['Houses','Manage houses and allocation'],classes:['Classrooms','Manage classes and capacity'],placement:['Placement List','Import and manage CSSPS placements'],students:['View Students','Browse all admitted students'],'manage-students':['Manage Students','Edit and update student records'],'house-alloc':['Manage House Allocation','Assign students to houses'],'class-alloc':['Manage Class Allocation','Assign students to classes'],finance:['Financials','Payments and gateway configuration'],sms:['SMS','Broadcast messaging'],reports:['Reports','Enrolment analytics'],templates:['Document templates','Design your admission letter &amp; records printout'],users:['Users','Manage who can sign in to this school'],utilities:['Utilities','Account and document tools']};
 function go(view){
   if(!can(VIEW_CAP[view])){ view=firstAllowedView(); }
   document.querySelectorAll('.nav-item,.nav-sub').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
@@ -3821,7 +3821,7 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; try
           </div>
         </div>
         <div class=&quot;chart-grid&quot;>
-          <div class=&quot;panel&quot;><div class=&quot;panel-head&quot;><h3>Enrollment â€” last 30 days</h3></div><div class=&quot;chart-box&quot;><canvas id=&quot;trendChart&quot;></canvas></div></div>
+          <div class=&quot;panel&quot;><div class=&quot;panel-head&quot;><h3>Enrolment â€” last 30 days</h3></div><div class=&quot;chart-box&quot;><canvas id=&quot;trendChart&quot;></canvas></div></div>
           <div class=&quot;panel&quot;><div class=&quot;panel-head&quot;><h3>Top schools</h3></div><div class=&quot;chart-box&quot;><canvas id=&quot;topChart&quot;></canvas></div></div>
           <div class=&quot;panel&quot;><div class=&quot;panel-head&quot;><h3>Revenue split</h3></div><div class=&quot;chart-box&quot;><canvas id=&quot;revChart&quot;></canvas></div></div>
         </div>
