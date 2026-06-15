@@ -3187,6 +3187,11 @@ function renderTemplates(){
   if(!tplLoaded){ TPL.letter=(SB_CFG&amp;&amp;SB_CFG.letter_template)||TPL_DEFAULT.letter; TPL.records=(SB_CFG&amp;&amp;SB_CFG.records_template)||TPL_DEFAULT.records; tplLoaded=true; }
   const ed=$('tplEditor');
   if(!tplBound){ ['keyup','mouseup','input'].forEach(e=>ed.addEventListener(e,tplSaveSel));
+    // Keep the editor's selection alive when a ribbon button is clicked
+    // (a button's mousedown would otherwise blur the editor and collapse the selection).
+    document.querySelectorAll('.tpl-toolbar, .tpl-fieldbar').forEach(bar=>{
+      bar.addEventListener('mousedown',function(e){ if(e.target.closest('button')) e.preventDefault(); });
+    });
     ed.addEventListener('dblclick',function(e){ if(e.target&amp;&amp;e.target.tagName==='IMG'){ const cur=parseInt(e.target.style.width)||e.target.width||120; const w=prompt('Image width in pixels:',cur); if(w&amp;&amp;!isNaN(parseInt(w))){e.target.style.width=parseInt(w)+'px';e.target.style.height='auto';tplSaveSel();} } });
     let drag=null;
     ed.addEventListener('mousedown',function(e){ const t=e.target; if(t&amp;&amp;t.tagName==='IMG'&amp;&amp;t.getAttribute('data-float')==='1'){ e.preventDefault(); const ir=t.getBoundingClientRect(); drag={el:t,offX:e.clientX-ir.left,offY:e.clientY-ir.top}; t.style.opacity='.85'; } });
