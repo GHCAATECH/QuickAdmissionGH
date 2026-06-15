@@ -18,7 +18,7 @@
   .qa-stack{position:fixed;top:72px;left:0;right:0;bottom:0}
   .app-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:#fff}
   .app-frame.active{display:block}
-  @media(max-width:520px){.qa-tabs{height:60px}.qa-logo{height:60px}.qa-stack{top:60px}.qa-tab{padding:7px 11px;font-size:12px;margin-left:4px}}
+  @media(max-width:520px){.qa-tabs{height:60px}.qa-logo{height:60px}.qa-stack{top:60px}.qa-tab{padding:7px 10px;font-size:11.5px;margin-left:3px}}
 </style>
 </head>
 <body>
@@ -27,6 +27,7 @@
     <span class="spacer"></span>
     <button class="qa-tab active" data-t="student" onclick="qaShow('student')">Student Portal</button>
     <button class="qa-tab" data-t="school" onclick="qaShow('school')">School Admin</button>
+    <button class="qa-tab" data-t="manual" onclick="qaShow('manual')">User Manual</button>
   </div>
   <div class="qa-stack">
     <iframe class="app-frame active" id="frame-student" data-t="student" srcdoc="<!DOCTYPE html>
@@ -4446,6 +4447,164 @@ sendBulkSms=async function(){
 
 <div style=&quot;height:46px&quot; aria-hidden=&quot;true&quot;></div>
 <footer style=&quot;position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
+</body>
+</html>
+"></iframe>
+    <iframe class="app-frame" id="frame-manual" data-t="manual" srcdoc="<!DOCTYPE html>
+<html lang=&quot;en&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;>
+<title>QuickAdmissionGH — User Manual</title>
+<link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot;>
+<link href=&quot;https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap&quot; rel=&quot;stylesheet&quot;>
+<style>
+  *{box-sizing:border-box}
+  :root{--primary:#1557B0;--deep:#0E3F86;--ink:#14202B;--soft:#46556a;--muted:#8a96a8;--line:#e1e8f2;--bg:#eef2f8;--surface:#fff}
+  body{margin:0;font-family:'Inter',system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px 80px}
+  .hero{background:linear-gradient(150deg,var(--primary),var(--deep));color:#fff;border-radius:18px;padding:30px 28px;box-shadow:0 18px 40px -16px rgba(18,38,72,.4);margin-bottom:24px}
+  .hero h1{font-family:'Space Grotesk';font-size:28px;margin:0 0 6px}
+  .hero p{margin:0;opacity:.9;font-size:14px}
+  .toc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:24px;box-shadow:0 8px 20px -12px rgba(18,38,72,.18)}
+  .toc h3{margin:0 0 8px;font-family:'Space Grotesk';font-size:14px;color:var(--primary);text-transform:uppercase;letter-spacing:.08em}
+  .toc a{display:block;color:var(--soft);text-decoration:none;font-size:13.5px;padding:3px 0}
+  .toc a:hover{color:var(--primary)}
+  section.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:18px;box-shadow:0 8px 20px -12px rgba(18,38,72,.18)}
+  h2{font-family:'Space Grotesk';font-size:20px;color:var(--deep);margin:0 0 12px;border-bottom:2px solid var(--primary);padding-bottom:6px}
+  h3{font-family:'Space Grotesk';font-size:15px;color:var(--ink);margin:18px 0 6px}
+  p,li{font-size:14px}
+  ul,ol{padding-left:20px;margin:6px 0}
+  li{margin-bottom:5px}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--primary);color:#fff;font-weight:600}
+  tr:nth-child(even) td{background:#f6f9fe}
+  .note{background:#E2ECFB;border-left:3px solid var(--primary);border-radius:8px;padding:10px 14px;font-size:13.5px;margin:10px 0}
+  code{background:#eef2f8;padding:1px 6px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:12.5px}
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}
+</style>
+</head>
+<body>
+<div class=&quot;wrap&quot;>
+
+  <div class=&quot;hero&quot;>
+    <h1>QuickAdmissionGH — User Manual</h1>
+    <p>A web-based Senior High School admission system for Ghana · Powered by VELOXIS TECH HUB · Version 1.0</p>
+  </div>
+
+  <div class=&quot;toc&quot;>
+    <h3>Contents</h3>
+    <a href=&quot;#overview&quot;>1. Overview</a>
+    <a href=&quot;#student&quot;>2. Student Portal</a>
+    <a href=&quot;#school&quot;>3. School Admin Portal</a>
+    <a href=&quot;#super&quot;>4. Super Admin Portal</a>
+    <a href=&quot;#roles&quot;>5. Roles &amp;amp; Data Scope</a>
+    <a href=&quot;#trouble&quot;>6. Troubleshooting</a>
+  </div>
+
+  <section class=&quot;card&quot; id=&quot;overview&quot;>
+    <h2>1. Overview</h2>
+    <p>QuickAdmissionGH runs a school's entire admission process online. It has three portals in one app:</p>
+    <table>
+      <tr><th>Portal</th><th>Who uses it</th><th>What it does</th></tr>
+      <tr><td>Student Portal</td><td>Applicants / parents</td><td>Buy a token, fill the personal records form, download documents</td></tr>
+      <tr><td>School Admin</td><td>School staff</td><td>Manage placements, students, classes, houses, fees, SMS, templates, documents</td></tr>
+      <tr><td>Super Admin</td><td>Platform owner</td><td>Create and oversee all schools</td></tr>
+    </table>
+    <h3>Getting around</h3>
+    <ul>
+      <li>Top-right tabs switch between <b>Student Portal</b> and <b>School Admin</b>, and this <b>User Manual</b>.</li>
+      <li>A small <b>Super Admin</b> link sits under the student login card.</li>
+    </ul>
+  </section>
+
+  <section class=&quot;card&quot; id=&quot;student&quot;>
+    <h2>2. Student Portal</h2>
+    <h3>2.1 Logging in</h3>
+    <ol>
+      <li><b>Select your school</b> — its logo and code appear to confirm.</li>
+      <li>Enter your <b>BECE index number</b> (with year, e.g. <code>100000000026</code>).</li>
+      <li>Enter your <b>8-character admission token</b>, then click <b>Log in</b>.</li>
+    </ol>
+    <div class=&quot;note&quot;>If a school's admission is <b>closed</b>, login and token purchase are disabled.</div>
+    <h3>2.2 Buy a token</h3>
+    <p>Click <b>Buy token</b>, select your school, enter your details, and pay with <b>Paystack</b>. The token is shown and sent by SMS.</p>
+    <h3>2.3 Retrieve a lost token</h3>
+    <p>Use <b>Retrieve token</b> — search by index number or payment receipt (select your school first).</p>
+    <h3>2.4 The Personal Records Form</h3>
+    <p>After login you accept a short disclaimer, then complete four parts:</p>
+    <ul>
+      <li><b>A. Placement</b> — auto-filled from your placement data.</li>
+      <li><b>B. Enrolment Data</b> — raw score, enrolment code, JHS details, and <b>upload your enrolment form</b> (JPG, max 2 MB).</li>
+      <li><b>C. Personal Data</b> — DOB, nationality, religion, etc. Pick <b>&quot;Other&quot;</b> to type your own value.</li>
+      <li><b>D. Parent / Guardian</b> — contacts and parent details.</li>
+    </ul>
+    <div class=&quot;note&quot;>Phone/contact fields accept <b>digits only, 10 maximum</b>. In Class selection, each class shows its <b>subject combination</b>.</div>
+    <h3>2.5 Downloading documents</h3>
+    <p>From the dashboard: <b>Admission Letter</b>, <b>Personal Records Form</b>, <b>Prospectus</b>, <b>Acceptance/Undertaking</b>, and <b>Subject Combination</b>. Allow pop-ups so they open.</p>
+  </section>
+
+  <section class=&quot;card&quot; id=&quot;school&quot;>
+    <h2>3. School Admin Portal</h2>
+    <h3>3.1 Logging in</h3>
+    <p>Sign in with your school-admin email and password, then accept the disclaimer. The owner has full access; sub-users are read-only.</p>
+    <h3>3.2 Navigation</h3>
+    <p>The sidebar groups pages into collapsible dropdowns: <b>Dashboard</b>, <b>Configuration</b> (School Setup, Student Portal Setup, Financials, SMS, Reports, Templates, Users, Utilities), <b>Academic structure</b> (Programmes, Houses, Classrooms), <b>Admissions</b> (Placement List, View/Manage Students, House/Class Allocation). Your name and <b>Log out</b> are bottom-left.</p>
+    <h3>3.3 Placement List</h3>
+    <ul>
+      <li><b>Import</b> a CSV — use <b>Download Template CSV</b> for the right columns.</li>
+      <li>Add, Edit, Delete records; <b>Delete recent import</b> or <b>Delete all</b> (submitted students are kept).</li>
+    </ul>
+    <h3>3.4 Managing students</h3>
+    <p><b>Manage Students</b> → Edit any student, or Delete (works even after submission). <b>House/Class Allocation</b> assigns or auto-fills students.</p>
+    <h3>3.5 Classrooms &amp;amp; subjects</h3>
+    <p>Set each class's <b>Subject Combination</b> — shown in the table and to students during class selection.</p>
+    <h3>3.6 Templates</h3>
+    <p>Design the Admission Letter and Personal Records printouts with fields like <code>{STUDENT_NAME}</code>, <code>{RECORDS_TABLE}</code>, <code>{QR_CODE}</code>.</p>
+    <h3>3.7 School Setup &amp;amp; Academic Year</h3>
+    <p>The <b>academic year is a dropdown</b>. Changing it <b>swaps</b> datasets — the current year is saved aside and the selected year loads (or starts empty). Nothing is deleted; switch back from <b>Utilities → Saved academic years</b>.</p>
+    <h3>3.8 Admission documents</h3>
+    <p>In <b>Utilities → Admission documents</b> upload <b>Prospectus</b>, <b>Acceptance/Undertaking</b>, and <b>Subject Combination</b> (PDF/Word/image, max 10 MB). Students download exactly these.</p>
+    <h3>3.9 Open / close admission</h3>
+    <p>Toggle <b>Admission OPEN/CLOSED</b> in the top bar. When closed, students can't log in, buy tokens, or submit.</p>
+    <h3>3.10 Reports</h3>
+    <p>Programme, CSSPS, House, Class and Boarding reports, plus the <b>QuickAdmissionGH (Excel Import)</b> export with a <b>date filter</b>.</p>
+  </section>
+
+  <section class=&quot;card&quot; id=&quot;super&quot;>
+    <h2>4. Super Admin Portal</h2>
+    <p>Open the small <b>Super Admin</b> link under the student login card and sign in.</p>
+    <ul>
+      <li><b>Oversight</b> — Schools, School Admins, All Students.</li>
+      <li><b>Configuration</b> — Financial Reports, SMS Management, System Settings.</li>
+      <li>Creating a school clones the default setup (programmes, houses, classes, templates, config) with a fresh empty admission year.</li>
+    </ul>
+  </section>
+
+  <section class=&quot;card&quot; id=&quot;roles&quot;>
+    <h2>5. Roles &amp;amp; Data Scope</h2>
+    <ul>
+      <li>Each admin only sees <b>their own school's</b> data.</li>
+      <li>The same BECE index can exist at different schools — students must <b>pick a school</b> at login.</li>
+      <li>Owners can edit; sub-users are read-only.</li>
+    </ul>
+  </section>
+
+  <section class=&quot;card&quot; id=&quot;trouble&quot;>
+    <h2>6. Troubleshooting</h2>
+    <table>
+      <tr><th>Problem</th><th>Fix</th></tr>
+      <tr><td>Document won't open</td><td>Allow pop-ups, then click again</td></tr>
+      <tr><td>&quot;Admission is closed&quot;</td><td>The school hasn't opened admission — contact the office</td></tr>
+      <tr><td>Can't log in</td><td>Select the correct school; check index/token</td></tr>
+      <tr><td>Logo/banner missing</td><td>Keep <code>banner.png</code> and <code>veloxis-logo.png</code> beside <code>index.html</code></td></tr>
+      <tr><td>Phone rejected</td><td>Digits only, 10 max (e.g. <code>0244000000</code>)</td></tr>
+    </table>
+  </section>
+
+  <div class=&quot;foot&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</div>
+</div>
 </body>
 </html>
 "></iframe>
