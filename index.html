@@ -85,10 +85,11 @@
   .super-link{position:fixed;bottom:56px;right:16px;z-index:70;font-size:11px;color:#9aa6a1;text-decoration:none;opacity:.55;display:inline-flex;align-items:center;gap:5px}
   .super-link:hover{opacity:1;color:var(--primary)}
   .super-link svg{width:13px;height:13px}
-  .auth-split{width:100%;max-width:1000px;display:grid;grid-template-columns:.9fr 1.1fr;gap:34px;align-items:start}
+  .auth-split{width:100%;max-width:1000px;display:grid;grid-template-columns:.9fr 1.1fr;gap:34px;align-items:stretch}
+  .auth-hero{display:flex;flex-direction:column}
   .auth-hero .auth-head{text-align:left;margin-bottom:10px}
   .auth-hero .auth-head .crest{margin-left:0}
-  .auth-hero .hero-img{width:100%;height:auto;max-height:40vh;object-fit:contain;border-radius:16px;box-shadow:var(--shadow);display:block;margin-top:8px}
+  .auth-hero .hero-img{width:100%;flex:1;min-height:0;object-fit:cover;border-radius:16px;box-shadow:var(--shadow);display:block;margin-top:8px}
   .auth-hero h2{font-family:'Space Grotesk';font-size:26px;line-height:1.05;font-weight:700;margin:0 0 5px;color:var(--ink)}
   .auth-hero h2 .grn{color:var(--primary)}
   .auth-hero p.lead{font-size:13px;color:var(--ink-soft);margin:0;font-weight:500}
@@ -99,7 +100,7 @@
   .hero-feat small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
   .hero-upload{margin-top:14px;font-size:11.5px;color:var(--muted)}
   .hero-upload label{color:var(--primary);cursor:pointer;text-decoration:underline;font-weight:600}
-  @media(max-width:860px){.auth-split{grid-template-columns:1fr;max-width:460px;gap:18px}.auth-hero h2{font-size:24px}.auth-hero{order:1}.auth-card{order:2}.auth-hero .hero-img{max-height:32vh}}
+  @media(max-width:860px){.auth-split{grid-template-columns:1fr;max-width:460px;gap:18px;align-items:start}.auth-hero h2{font-size:24px}.auth-hero{order:1}.auth-card{order:2}.auth-hero .hero-img{flex:none;height:auto;max-height:32vh;object-fit:contain}}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
   /* ===== 3D visual treatment (login area) ===== */
   #s-login .auth{perspective:1400px}
