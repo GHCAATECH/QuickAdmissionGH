@@ -1268,6 +1268,9 @@ loadSchools();
   .bulkbar .btn-sm:hover{background:rgba(255,255,255,.24)}
 
   /* upload zone */
+  .pop-overlay{position:fixed;inset:0;z-index:120;display:none;align-items:flex-start;justify-content:center;padding:80px 16px 24px;background:rgba(8,20,36,.5);backdrop-filter:blur(2px);overflow:auto}
+  .pop-overlay.show{display:flex;animation:fade .18s}
+  .pop-card{width:100%;box-shadow:0 24px 60px -16px rgba(8,20,36,.5)}
   .dropzone{border:2px dashed var(--line);border-radius:var(--r);padding:32px;text-align:center;background:var(--surface-2);transition:.14s;cursor:pointer}
   .dropzone:hover{border-color:var(--primary);background:var(--primary-soft)}
   .dropzone svg{width:32px;height:32px;color:var(--muted);margin-bottom:8px}
@@ -1603,27 +1606,34 @@ loadSchools();
 
       <!-- PLACEMENT -->
       <section class=&quot;view&quot; id=&quot;view-placement&quot;>
-        <div style=&quot;display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px&quot;>
-          <div class=&quot;panel panel-pad&quot; style=&quot;margin:0;flex:1;min-width:280px;max-width:600px&quot;>
-            <h3 class=&quot;section-title&quot;>Import CSSPS placement list</h3>
+        <div style=&quot;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px&quot;>
+          <button class=&quot;btn btn-primary&quot; onclick=&quot;openPop('importPop')&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; style=&quot;width:16px;height:16px&quot;><path d=&quot;M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4&quot;/><polyline points=&quot;17 8 12 3 7 8&quot;/><line x1=&quot;12&quot; y1=&quot;3&quot; x2=&quot;12&quot; y2=&quot;15&quot;/></svg>Import CSSPS placement list</button>
+          <button class=&quot;btn btn-primary&quot; onclick=&quot;openPop('manualPop')&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.2&quot; style=&quot;width:16px;height:16px&quot;><line x1=&quot;12&quot; y1=&quot;5&quot; x2=&quot;12&quot; y2=&quot;19&quot;/><line x1=&quot;5&quot; y1=&quot;12&quot; x2=&quot;19&quot; y2=&quot;12&quot;/></svg>Add record manually</button>
+        </div>
+
+        <div class=&quot;pop-overlay&quot; id=&quot;importPop&quot; onclick=&quot;if(event.target===this)closePop('importPop')&quot;>
+          <div class=&quot;panel panel-pad pop-card&quot; style=&quot;max-width:560px&quot;>
+            <div style=&quot;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px&quot;><h3 class=&quot;section-title&quot; style=&quot;margin:0&quot;>Import CSSPS placement list</h3><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;closePop('importPop')&quot;>×</button></div>
             <input type=&quot;file&quot; id=&quot;csvFileInput&quot; accept=&quot;.csv,text/csv&quot; style=&quot;display:none&quot; onchange=&quot;handlePlacementFile(this)&quot;>
-            <div class=&quot;dropzone&quot; onclick=&quot;importPlacement()&quot; style=&quot;padding:18px&quot;>
+            <div class=&quot;dropzone&quot; onclick=&quot;importPlacement()&quot; style=&quot;padding:22px&quot;>
               <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.6&quot;><path d=&quot;M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4&quot;/><polyline points=&quot;17 8 12 3 7 8&quot;/><line x1=&quot;12&quot; y1=&quot;3&quot; x2=&quot;12&quot; y2=&quot;15&quot;/></svg>
               <b>Click to browse CSV file</b>
               <small>Columns: index_number, student_name, other_names, gender, residential_status, programme, aggregate, jhs_attended, dob, sms_contact, enrolment_code</small>
             </div>
             <button class=&quot;btn btn-ghost btn-sm&quot; style=&quot;margin-top:10px&quot; onclick=&quot;downloadPlacementTemplate()&quot;>⬇ Download Template CSV</button>
           </div>
-          <button class=&quot;btn btn-primary&quot; id=&quot;addRecBtn&quot; onclick=&quot;toggleAddRecord()&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.2&quot; style=&quot;width:16px;height:16px&quot;><line x1=&quot;12&quot; y1=&quot;5&quot; x2=&quot;12&quot; y2=&quot;19&quot;/><line x1=&quot;5&quot; y1=&quot;12&quot; x2=&quot;19&quot; y2=&quot;12&quot;/></svg>Add record manually</button>
         </div>
-        <div class=&quot;panel panel-pad&quot; id=&quot;manualCard&quot; style=&quot;margin:0 0 18px;display:none;max-width:760px&quot;>
-          <div style=&quot;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px&quot;><h3 class=&quot;section-title&quot; style=&quot;margin:0&quot;>Add record manually</h3><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;toggleAddRecord()&quot;>Close</button></div>
-          <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Index number</label><input id=&quot;pl_index&quot; placeholder=&quot;e.g. 100000000026&quot;></div><div class=&quot;field&quot;><label>SMS contact</label><input id=&quot;pl_sms&quot; type=&quot;tel&quot; placeholder=&quot;024…&quot;></div></div>
-          <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Full name</label><input id=&quot;pl_name&quot; placeholder=&quot;Surname / full name&quot;></div><div class=&quot;field&quot;><label>Other name(s)</label><input id=&quot;pl_other&quot; placeholder=&quot;Other names&quot;></div></div>
-          <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Gender</label><select id=&quot;pl_gender&quot;><option value=&quot;&quot;>Select…</option><option>Male</option><option>Female</option></select></div><div class=&quot;field&quot;><label>Residential status</label><select id=&quot;pl_res&quot;><option value=&quot;&quot;>Select…</option><option>Boarding</option><option>Day</option></select></div></div>
-          <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Programme offered / learning area</label><select id=&quot;pl_prog&quot;></select></div><div class=&quot;field&quot;><label>Aggregate of best six</label><input id=&quot;pl_agg&quot; type=&quot;number&quot; min=&quot;6&quot; max=&quot;54&quot; placeholder=&quot;e.g. 12&quot;></div></div>
-          <div class=&quot;field&quot;><label>Date of birth</label><input id=&quot;pl_dob&quot; type=&quot;date&quot;></div>
-          <button class=&quot;btn btn-primary btn-sm&quot; onclick=&quot;addPlacement()&quot;>Add record</button>
+
+        <div class=&quot;pop-overlay&quot; id=&quot;manualPop&quot; onclick=&quot;if(event.target===this)closePop('manualPop')&quot;>
+          <div class=&quot;panel panel-pad pop-card&quot; style=&quot;max-width:760px&quot;>
+            <div style=&quot;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px&quot;><h3 class=&quot;section-title&quot; style=&quot;margin:0&quot;>Add record manually</h3><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;closePop('manualPop')&quot;>×</button></div>
+            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Index number</label><input id=&quot;pl_index&quot; placeholder=&quot;e.g. 100000000026&quot;></div><div class=&quot;field&quot;><label>SMS contact</label><input id=&quot;pl_sms&quot; type=&quot;tel&quot; placeholder=&quot;024…&quot;></div></div>
+            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Full name</label><input id=&quot;pl_name&quot; placeholder=&quot;Surname / full name&quot;></div><div class=&quot;field&quot;><label>Other name(s)</label><input id=&quot;pl_other&quot; placeholder=&quot;Other names&quot;></div></div>
+            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Gender</label><select id=&quot;pl_gender&quot;><option value=&quot;&quot;>Select…</option><option>Male</option><option>Female</option></select></div><div class=&quot;field&quot;><label>Residential status</label><select id=&quot;pl_res&quot;><option value=&quot;&quot;>Select…</option><option>Boarding</option><option>Day</option></select></div></div>
+            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Programme offered / learning area</label><select id=&quot;pl_prog&quot;></select></div><div class=&quot;field&quot;><label>Aggregate of best six</label><input id=&quot;pl_agg&quot; type=&quot;number&quot; min=&quot;6&quot; max=&quot;54&quot; placeholder=&quot;e.g. 12&quot;></div></div>
+            <div class=&quot;field&quot;><label>Date of birth</label><input id=&quot;pl_dob&quot; type=&quot;date&quot;></div>
+            <button class=&quot;btn btn-primary btn-sm&quot; onclick=&quot;addPlacement()&quot;>Add record</button>
+          </div>
         </div>
         <div class=&quot;panel&quot;><div class=&quot;panel-head&quot;><div><h3>Current placement list</h3><div class=&quot;sub&quot;><span id=&quot;placeCount&quot;>0</span> placed students</div></div><div style=&quot;display:flex;gap:8px;flex-wrap:wrap&quot;><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;toast('Downloading contacts as CSV…')&quot;>Download contacts</button><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;deletePlacementBatch('recent')&quot;>Delete recent import</button><button class=&quot;btn btn-danger btn-sm&quot; onclick=&quot;deletePlacementBatch('all')&quot;>Delete all</button></div></div>
           <div class=&quot;tbl-wrap&quot;><table><thead><tr><th>Index No</th><th>Name</th><th>Gender</th><th>Res.</th><th>Programme</th><th>Agg.</th><th>SMS contact</th><th>Logged in?</th><th></th></tr></thead><tbody id=&quot;placeRows&quot;></tbody></table></div>
@@ -2117,13 +2127,13 @@ async function deletePlacementBatch(scope){
 function importPlacement(){
   document.getElementById('csvFileInput').click();
 }
-function toggleAddRecord(){
+function openPop(id){
   if(roGuard())return;
-  const c=document.getElementById('manualCard'); if(!c)return;
-  const show=(c.style.display==='none'||!c.style.display);
-  c.style.display=show?'block':'none';
-  if(show){ const i=document.getElementById('pl_index'); if(i){ try{i.focus();}catch(e){} } c.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  const o=document.getElementById(id); if(!o)return;
+  o.classList.add('show');
+  if(id==='manualPop'){ const i=document.getElementById('pl_index'); if(i){ try{i.focus();}catch(e){} } }
 }
+function closePop(id){ const o=document.getElementById(id); if(o) o.classList.remove('show'); }
 function downloadPlacementTemplate(){
   const csv='index_number,student_name,other_names,gender,residential_status,programme,aggregate,jhs_attended,dob,sms_contact,enrolment_code\n';
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='placement_template.csv';a.click();
@@ -2148,6 +2158,7 @@ async function handlePlacementFile(inp){
   if(error){toast('Import failed: '+error.message);return;}
   const res=data||{};
   toast('Done — inserted: '+(res.inserted||0)+', updated: '+(res.updated||0)+', skipped: '+(res.skipped_submitted||0));
+  closePop('importPop');
   const {data:plcData}=await sb.from('placement_list').select('*');
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   renderPlacement();
@@ -3285,7 +3296,7 @@ addPlacement=async function(){
   if(error){toast('Could not save: '+error.message);return;}
   placement.unshift({index:i,name:n,other:rec.other_names||'',gender:rec.gender||'',res:rec.residential_status||'',prog:rec.programme||'',agg:rec.aggregate,dob:rec.dob||'',sms:rec.sms_contact||'',code:null,loggedIn:false});
   ['pl_index','pl_name','pl_other','pl_gender','pl_res','pl_agg','pl_dob','pl_sms'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  renderPlacement(); toast('Placement record added');
+  renderPlacement(); closePop('manualPop'); toast('Placement record added');
 };
 
 /* ===== DISCLAIMER (shown after successful login) ===== */
