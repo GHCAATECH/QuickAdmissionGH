@@ -1635,7 +1635,7 @@ loadSchools();
             <button class=&quot;btn btn-primary btn-sm&quot; onclick=&quot;addPlacement()&quot;>Add record</button>
           </div>
         </div>
-        <div class=&quot;panel&quot;><div class=&quot;panel-head&quot;><div><h3>Current placement list</h3><div class=&quot;sub&quot;><span id=&quot;placeCount&quot;>0</span> placed students</div></div><div style=&quot;display:flex;gap:8px;flex-wrap:wrap&quot;><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;toast('Downloading contacts as CSV…')&quot;>Download contacts</button><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;deletePlacementBatch('recent')&quot;>Delete recent import</button><button class=&quot;btn btn-danger btn-sm&quot; onclick=&quot;deletePlacementBatch('all')&quot;>Delete all</button></div></div>
+        <div class=&quot;panel&quot;><div class=&quot;panel-head&quot;><div><h3>Current placement list</h3><div class=&quot;sub&quot;><span id=&quot;placeCount&quot;>0</span> placed students</div></div><div style=&quot;display:flex;gap:8px;flex-wrap:wrap;align-items:center&quot;><input id=&quot;placeSearch&quot; placeholder=&quot;Search name or index…&quot; oninput=&quot;renderPlacement()&quot; style=&quot;width:200px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:13px&quot;><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;toast('Downloading contacts as CSV…')&quot;>Download contacts</button><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;deletePlacementBatch('recent')&quot;>Delete recent import</button><button class=&quot;btn btn-danger btn-sm&quot; onclick=&quot;deletePlacementBatch('all')&quot;>Delete all</button></div></div>
           <div class=&quot;tbl-wrap&quot;><table><thead><tr><th>Index No</th><th>Name</th><th>Gender</th><th>Res.</th><th>Programme</th><th>Agg.</th><th>SMS contact</th><th>Logged in?</th><th></th></tr></thead><tbody id=&quot;placeRows&quot;></tbody></table></div>
         </div>
       </section>
@@ -2048,8 +2048,10 @@ function openClass(id){
 
 /* ===== PLACEMENT ===== */
 function renderPlacement(){
-  $('placeCount').textContent=placement.length;
-  $('placeRows').innerHTML=placement.length?placement.slice(0,200).map(p=>`<tr><td class=&quot;mono&quot;>${p.index}</td><td class=&quot;nm&quot;>${p.name}${p.other?' '+p.other:''}</td><td>${p.gender||'—'}</td><td>${p.res||'—'}</td><td>${p.prog||'—'}</td><td class=&quot;mono&quot;>${p.agg||'—'}</td><td class=&quot;mono&quot;>${p.sms||'—'}</td><td>${p.loggedIn?'<span class=&quot;pill open&quot;>Yes</span>':'<span class=&quot;pill closed&quot;>No</span>'}</td><td><div class=&quot;row-actions&quot;><button class=&quot;act&quot; onclick=&quot;editPlacement('${encodeURIComponent(p.index)}')&quot;>Edit</button><button class=&quot;act&quot; onclick=&quot;deletePlacement('${encodeURIComponent(p.index)}')&quot;>Delete</button></div></td></tr>`).join(''):emptyRow(9,'No placement records yet.');
+  const qEl=$('placeSearch'); const q=(qEl&amp;&amp;qEl.value||'').trim().toLowerCase();
+  const list=q?placement.filter(p=>((p.name||'').toLowerCase().includes(q)||(p.other||'').toLowerCase().includes(q)||String(p.index||'').toLowerCase().includes(q))):placement;
+  $('placeCount').textContent=q?(list.length+' of '+placement.length):placement.length;
+  $('placeRows').innerHTML=list.length?list.slice(0,200).map(p=>`<tr><td class=&quot;mono&quot;>${p.index}</td><td class=&quot;nm&quot;>${p.name}${p.other?' '+p.other:''}</td><td>${p.gender||'—'}</td><td>${p.res||'—'}</td><td>${p.prog||'—'}</td><td class=&quot;mono&quot;>${p.agg||'—'}</td><td class=&quot;mono&quot;>${p.sms||'—'}</td><td>${p.loggedIn?'<span class=&quot;pill open&quot;>Yes</span>':'<span class=&quot;pill closed&quot;>No</span>'}</td><td><div class=&quot;row-actions&quot;><button class=&quot;act&quot; onclick=&quot;editPlacement('${encodeURIComponent(p.index)}')&quot;>Edit</button><button class=&quot;act&quot; onclick=&quot;deletePlacement('${encodeURIComponent(p.index)}')&quot;>Delete</button></div></td></tr>`).join(''):emptyRow(9,q?'No records match your search.':'No placement records yet.');
 }
 function editPlacement(encIdx){
   const idx=decodeURIComponent(encIdx);
