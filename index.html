@@ -9,16 +9,17 @@
   html,body{margin:0;height:100%;overflow:hidden;font-family:'Inter',system-ui,Arial,sans-serif;background:#0a1f33}
   .qa-tabs{position:fixed;top:0;left:0;right:0;height:72px;z-index:100000;display:flex;align-items:center;
     padding:0 18px;background:#ffffff;border-bottom:1px solid #d7e2f0;box-shadow:0 2px 10px rgba(18,38,72,.08)}
-  .qa-logo{height:72px;width:auto;display:block;object-fit:contain}
+  .qa-logo{height:72px;width:auto;display:block;object-fit:contain;flex:none}
   .qa-tabs .spacer{flex:1}
   .qa-tab{appearance:none;border:1px solid transparent;background:transparent;color:#1557B0;font-size:13px;font-weight:600;
-    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:6px}
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:6px;white-space:nowrap}
   .qa-tab:hover{background:#E2ECFB}
   .qa-tab.active{background:#1557B0;color:#fff}
   .qa-stack{position:fixed;top:72px;left:0;right:0;bottom:0}
   .app-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:#fff}
   .app-frame.active{display:block}
-  @media(max-width:520px){.qa-tabs{height:60px}.qa-logo{height:60px}.qa-stack{top:60px}.qa-tab{padding:7px 10px;font-size:11.5px;margin-left:3px}}
+  @media(max-width:560px){.qa-tabs{height:56px;padding:0 10px}.qa-logo{height:52px}.qa-stack{top:56px}.qa-tab{padding:6px 9px;font-size:11px;margin-left:3px}}
+  @media(max-width:380px){.qa-logo{height:44px}.qa-tab{padding:5px 7px;font-size:10px}}
 </style>
 </head>
 <body>
@@ -1298,6 +1299,14 @@ loadSchools();
     .content{padding:18px 16px 40px}.topbar{padding:12px 16px}
     .composer{grid-template-columns:1fr}.grid-2,.grid-3{grid-template-columns:1fr}
   }
+  @media(max-width:560px){
+    .stat-grid{grid-template-columns:1fr!important}
+    .toolbar,.dt-toolbar,.dt-actions,.topbar-right,.panel-head{flex-wrap:wrap;gap:8px}
+    .pagetitle{font-size:15px}.pagetitle small{display:none}
+    .content{padding:14px 12px 56px}
+    .modal{max-width:96vw}
+    table{font-size:12px}
+  }
   /* ===== Registered Students (View Students) ===== */
   .reg-dl{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
   .btn-grn{display:inline-flex;align-items:center;gap:8px;background:#2f9e54;color:#fff;font-weight:600;font-size:13px;padding:11px 15px;border-radius:8px;transition:.14s}
@@ -1471,7 +1480,6 @@ loadSchools();
     <header class=&quot;topbar&quot;>
       <button class=&quot;hamburger&quot; id=&quot;hamburger&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><line x1=&quot;3&quot; y1=&quot;6&quot; x2=&quot;21&quot; y2=&quot;6&quot;/><line x1=&quot;3&quot; y1=&quot;12&quot; x2=&quot;21&quot; y2=&quot;12&quot;/><line x1=&quot;3&quot; y1=&quot;18&quot; x2=&quot;21&quot; y2=&quot;18&quot;/></svg></button>
       <div class=&quot;pagetitle&quot; id=&quot;pagetitle&quot;>Dashboard<small id=&quot;pagesub&quot;>Admission overview for 2025/2026</small></div>
-      <select id=&quot;navSelect&quot; class=&quot;nav-select&quot; aria-label=&quot;Navigate&quot; onchange=&quot;if(this.value){go(this.value);}&quot;></select>
       <div class=&quot;topbar-right&quot;>
         <div class=&quot;adm-badge open&quot; id=&quot;admBadge&quot; onclick=&quot;toggleAdmission()&quot;><span class=&quot;d&quot;></span><span id=&quot;admText&quot;>Admission OPEN</span></div>
         <button class=&quot;icon-btn&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0&quot;/></svg></button>
@@ -3587,6 +3595,14 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; try
     .clock{display:none}
     .composer{grid-template-columns:1fr}
     .grid-2,.grid-3{grid-template-columns:1fr}
+  }
+  @media(max-width:560px){
+    .stat-grid{grid-template-columns:1fr!important}
+    .toolbar,.dt-toolbar,.dt-actions,.topbar-right,.panel-head{flex-wrap:wrap;gap:8px}
+    .pagetitle{font-size:15px}
+    .content{padding:14px 12px 56px}
+    .modal{max-width:96vw}
+    table{font-size:12px}
   }
   .env-badge{position:fixed;top:8px;right:10px;z-index:99999;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;padding:4px 9px;border-radius:20px;background:#0E3F86;color:#AFD3FF;border:1px solid #173F7A;box-shadow:0 4px 14px -6px rgba(0,0,0,.5);pointer-events:none}
   .env-badge.dev{background:#5b3a08;color:#FBD37A;border-color:#7a5409}
