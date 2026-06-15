@@ -1149,6 +1149,26 @@ loadSchools();
 
   /* stats */
   .stat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:22px}
+  /* ===== Dashboard summary cards ===== */
+  .adm-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:18px}
+  .adm-card{border-radius:16px;padding:20px 22px;color:#fff;display:flex;flex-direction:column;box-shadow:0 12px 28px -12px rgba(18,38,72,.4)}
+  .adm-card.amber{background:#F4A800;color:#241900}
+  .adm-card.green{background:#27a544}
+  .adm-card.red{background:#e0414e}
+  .adm-card .ttl{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;letter-spacing:.01em;text-transform:uppercase}
+  .adm-card .big{font-family:'Space Grotesk',sans-serif;font-size:38px;font-weight:700;line-height:.9}
+  .adm-card .pct{font-size:22px;font-weight:700;margin-top:8px}
+  .adm-card .rows{font-size:13px;line-height:1.7;margin-top:12px}
+  .adm-card .rows.sub{border-top:1px solid rgba(255,255,255,.35);padding-top:8px}
+  .adm-card.amber .rows.sub{border-top-color:rgba(0,0,0,.18)}
+  .adm-card .dup{font-size:12.5px;font-weight:600;margin-top:8px;color:#9c1f1f}
+  .adm-card.green .dup,.adm-card.red .dup{color:#fff3}
+  .adm-card .mi{margin-top:auto;padding-top:16px}
+  .adm-card .mi button{width:100%;border:0;border-radius:9px;padding:11px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+  .adm-card.amber .mi button{background:#2b3440;color:#fff}
+  .adm-card.green .mi button,.adm-card.red .mi button{background:#fff;color:#14202b}
+  .adm-card .mi button:hover{opacity:.92}
+  @media(max-width:900px){.adm-cards{grid-template-columns:1fr}}
   .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px}
   .stat .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
   .stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
@@ -1494,7 +1514,7 @@ loadSchools();
     <div class=&quot;content&quot;>
       <!-- DASHBOARD -->
       <section class=&quot;view active&quot; id=&quot;view-dashboard&quot;>
-        <div class=&quot;stat-grid&quot; id=&quot;statGrid&quot;></div>
+        <div class=&quot;adm-cards&quot; id=&quot;admCards&quot;></div>
         <div class=&quot;qa-row&quot;>
           <button class=&quot;qa&quot; onclick=&quot;toggleAdmission()&quot;><span class=&quot;ico&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M13 3v18M3 21h18M6 21V5a2 2 0 0 1 2-2h7&quot;/></svg></span><span id=&quot;qaToggle&quot;>Close admission<small>Currently accepting</small></span></button>
           <button class=&quot;qa&quot; onclick=&quot;go('sms')&quot;><span class=&quot;ico&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><line x1=&quot;22&quot; y1=&quot;2&quot; x2=&quot;11&quot; y2=&quot;13&quot;/><polygon points=&quot;22 2 15 22 11 13 2 9 22 2&quot;/></svg></span><span>Send bulk SMS<small>Message students</small></span></button>
@@ -1966,20 +1986,44 @@ function toggleAdmission(){
 
 /* ===== DASHBOARD ===== */
 function renderStats(){
-  const total=students.length;
-  const today=new Date().toISOString().slice(0,10);
-  const todayReg=students.filter(s=>(s.reg||'')===today).length;
-  const cards=[
-    {lbl:'Total Students',val:total,ico:'users',d:'enrolled'},
-    {lbl:&quot;Today's Reg.&quot;,val:todayReg,ico:'bolt',d:'live'},
-    {lbl:'Programmes',val:programmes.length,ico:'check',d:'offered'},
-    {lbl:'Placement',val:(typeof placement!=='undefined'?placement.length:0),ico:'clock',d:'CSSPS records'},
-    {lbl:'SMS Credits',val:fmt(smsBalance),ico:'sms',d:'remaining'},
-    {lbl:'Revenue',val:totalRevenue(),cur:true,ico:'cash',d:'collected'},
-  ];
-  const ic={users:'<path d=&quot;M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2&quot;/><circle cx=&quot;9&quot; cy=&quot;7&quot; r=&quot;4&quot;/>',bolt:'<polygon points=&quot;13 2 3 14 12 14 11 22 21 10 12 10 13 2&quot;/>',check:'<path d=&quot;M22 10v6M2 10l10-5 10 5-10 5z&quot;/><path d=&quot;M6 12v5c3 3 9 3 12 0v-5&quot;/>',clock:'<path d=&quot;M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z&quot;/><polyline points=&quot;14 2 14 8 20 8&quot;/>',sms:'<path d=&quot;M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z&quot;/>',cash:'<line x1=&quot;12&quot; y1=&quot;1&quot; x2=&quot;12&quot; y2=&quot;23&quot;/><path d=&quot;M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6&quot;/>'};
-  $('statGrid').innerHTML=cards.map(c=>`<div class=&quot;stat&quot; ${c.d==='live'?'data-live=&quot;1&quot;':''}><div class=&quot;top&quot;><span class=&quot;lbl&quot;>${c.lbl}</span><span class=&quot;ico&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;>${ic[c.ico]}</svg></span></div><div class=&quot;val&quot;>${c.cur?'<span class=&quot;cur&quot;>GHS</span>'+fmt(c.val):c.val}</div><div class=&quot;delta&quot;>${c.d==='live'?'updating live':c.d}</div></div>`).join('');
-  var bp=$('badge-pending'); if(bp) bp.textContent=total;
+  const host=$('admCards'); if(!host)return;
+  const plc=(typeof placement!=='undefined'?placement:[])||[];
+  const norm=g=>{g=(g||'').toString().trim().toLowerCase();if(g==='m'||g==='male')return 'M';if(g==='f'||g==='female')return 'F';return '';};
+  const resOf=r=>{r=(r||'').toString().trim().toLowerCase();if(r.indexOf('board')===0)return 'B';if(r==='day')return 'D';return '';};
+  const tally=rows=>{const t={n:rows.length,day:0,boarding:0,male:0,female:0,md:0,fd:0,mb:0,fb:0};
+    rows.forEach(x=>{const g=norm(x.gender),rr=resOf(x.res);
+      if(rr==='D')t.day++;if(rr==='B')t.boarding++;if(g==='M')t.male++;if(g==='F')t.female++;
+      if(g==='M'&amp;&amp;rr==='D')t.md++;if(g==='F'&amp;&amp;rr==='D')t.fd++;if(g==='M'&amp;&amp;rr==='B')t.mb++;if(g==='F'&amp;&amp;rr==='B')t.fb++;});
+    return t;};
+  const subIdx=new Set((students||[]).filter(s=>s.submitted).map(s=>String(s.index)));
+  const completedRows=plc.filter(p=>subIdx.has(String(p.index)));
+  const pendingRows=plc.filter(p=>!subIdx.has(String(p.index)));
+  const placed=plc.length, completed=completedRows.length, pending=pendingRows.length;
+  const pc=placed?Math.round(completed/placed*1000)/10:0, pp=placed?Math.round(pending/placed*1000)/10:0;
+  const seen={}; let dup=0; plc.forEach(p=>{const k=String(p.index);if(seen[k])dup++;else seen[k]=1;});
+  const P=tally(plc), C=tally(completedRows), N=tally(pendingRows);
+  const rowsBlk=t=>`<div class=&quot;rows&quot;><div><b>DAY:</b> ${t.day} &amp;nbsp;|&amp;nbsp; <b>BOARDING:</b> ${t.boarding}</div><div><b>MALE:</b> ${t.male} &amp;nbsp;|&amp;nbsp; <b>FEMALE:</b> ${t.female}</div></div>`+
+    `<div class=&quot;rows sub&quot;><div><b>MALE DAY:</b> ${t.md} &amp;nbsp;|&amp;nbsp; <b>FEMALE DAY:</b> ${t.fd}</div><div><b>MALE BOARDING:</b> ${t.mb} &amp;nbsp;|&amp;nbsp; <b>FEMALE BOARDING:</b> ${t.fb}</div></div>`;
+  host.innerHTML=
+    `<div class=&quot;adm-card amber&quot;>
+      <div class=&quot;ttl&quot;><span>Placed by CSSPS</span><span class=&quot;big&quot;>${fmt(placed)}</span></div>
+      ${rowsBlk(P)}
+      <div class=&quot;dup&quot;>Duplicate Reg. Found: ${dup}</div>
+      <div class=&quot;mi&quot;><button onclick=&quot;go('placement')&quot;>More info →</button></div>
+    </div>
+    <div class=&quot;adm-card green&quot;>
+      <div class=&quot;ttl&quot;><span>Completed Admissions</span><span class=&quot;big&quot;>${fmt(completed)}</span></div>
+      <div class=&quot;pct&quot;>${pc}%</div>
+      ${rowsBlk(C)}
+      <div class=&quot;mi&quot;><button onclick=&quot;go('students')&quot;>More info →</button></div>
+    </div>
+    <div class=&quot;adm-card red&quot;>
+      <div class=&quot;ttl&quot;><span>Pending Admissions</span><span class=&quot;big&quot;>${fmt(pending)}</span></div>
+      <div class=&quot;pct&quot;>${pp}%</div>
+      ${rowsBlk(N)}
+      <div class=&quot;mi&quot;><button onclick=&quot;go('manage-students')&quot;>View Details →</button></div>
+    </div>`;
+  var bp=$('badge-pending'); if(bp) bp.textContent=pending;
 }
 function renderRecent(){
   const rows=[...students].sort((a,b)=>b.reg.localeCompare(a.reg)).slice(0,8);
