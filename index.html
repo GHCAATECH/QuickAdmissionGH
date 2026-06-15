@@ -455,10 +455,10 @@
             <!-- STEP 1 — PERSONAL -->
             <section class=&quot;stepcard&quot; data-step=&quot;1&quot;><div class=&quot;card2&quot;><div class=&quot;card2-head&quot;><h2>Personal data</h2><p>Some fields are mandatory.</p></div><div class=&quot;card2-body&quot;>
               <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Date of Birth <span class=&quot;rq&quot;>*</span></label><input type=&quot;date&quot; id=&quot;pf-dob&quot;></div><div class=&quot;field&quot;><label>Place of Birth <span class=&quot;rq&quot;>*</span></label><input id=&quot;pf-pob&quot;></div></div>
-              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Nationality <span class=&quot;rq&quot;>*</span></label><select id=&quot;pf-nat&quot;></select></div><div class=&quot;field&quot;><label>Religion <span class=&quot;rq&quot;>*</span></label><select id=&quot;pf-rel&quot;><option value=&quot;&quot;>Select…</option><option>Christianity</option><option>Islam</option><option>Traditional African Religions</option><option>Buddhism</option><option>Hinduism</option><option>Judaism</option><option>Atheism/Agnosticism</option><option>Other</option></select></div></div>
-              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Religious Denomination <span class=&quot;hint&quot;>(Christians only)</span></label><select id=&quot;pf-den&quot;><option value=&quot;&quot;>Select…</option><option>Catholic</option><option>Methodist</option><option>Anglican</option><option>Presbyterian</option><option>Pentecostal</option><option>Baptist</option><option>Lutheran</option><option>Seventh-Day Adventist</option><option>Evangelical Charismatic</option><option>Church of Christ</option><option>Other</option></select></div><div class=&quot;field&quot;><label>Permanent Address <span class=&quot;rq&quot;>*</span></label><input id=&quot;pf-addr&quot; placeholder=&quot;House / digital address&quot;></div></div>
+              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Nationality <span class=&quot;rq&quot;>*</span></label><select id=&quot;pf-nat&quot; onchange=&quot;toggleOther('pf-nat')&quot;></select><input id=&quot;pf-nat-other&quot; placeholder=&quot;Please specify nationality&quot; style=&quot;display:none;margin-top:6px&quot;></div><div class=&quot;field&quot;><label>Religion <span class=&quot;rq&quot;>*</span></label><select id=&quot;pf-rel&quot; onchange=&quot;toggleOther('pf-rel')&quot;><option value=&quot;&quot;>Select…</option><option>Christianity</option><option>Islam</option><option>Traditional African Religions</option><option>Buddhism</option><option>Hinduism</option><option>Judaism</option><option>Atheism/Agnosticism</option><option>Other</option></select><input id=&quot;pf-rel-other&quot; placeholder=&quot;Please specify religion&quot; style=&quot;display:none;margin-top:6px&quot;></div></div>
+              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Religious Denomination <span class=&quot;hint&quot;>(Christians only)</span></label><select id=&quot;pf-den&quot; onchange=&quot;toggleOther('pf-den')&quot;><option value=&quot;&quot;>Select…</option><option>Catholic</option><option>Methodist</option><option>Anglican</option><option>Presbyterian</option><option>Pentecostal</option><option>Baptist</option><option>Lutheran</option><option>Seventh-Day Adventist</option><option>Evangelical Charismatic</option><option>Church of Christ</option><option>Other</option></select><input id=&quot;pf-den-other&quot; placeholder=&quot;Please specify denomination&quot; style=&quot;display:none;margin-top:6px&quot;></div><div class=&quot;field&quot;><label>Permanent Address <span class=&quot;rq&quot;>*</span></label><input id=&quot;pf-addr&quot; placeholder=&quot;House / digital address&quot;></div></div>
               <div class=&quot;grid-3&quot;><div class=&quot;field&quot;><label>Town <span class=&quot;rq&quot;>*</span></label><input id=&quot;pf-town&quot;></div><div class=&quot;field&quot;><label>Region <span class=&quot;rq&quot;>*</span></label><select id=&quot;pf-region&quot;></select></div><div class=&quot;field&quot;><label>District <span class=&quot;rq&quot;>*</span></label><input id=&quot;pf-district&quot; placeholder=&quot;Type your district&quot;></div></div>
-              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Interest(s) <span class=&quot;rq&quot;>*</span></label><select id=&quot;pf-interest&quot;><option value=&quot;&quot;>Select…</option><option>Athletics</option><option>Football</option><option>Debating Club</option><option>Drama</option><option>Music</option><option>Others</option></select></div><div class=&quot;field&quot;><label>Ghana Card / NHIS No</label><input id=&quot;pf-card&quot; placeholder=&quot;NA&quot;></div></div>
+              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Interest(s) <span class=&quot;rq&quot;>*</span></label><select id=&quot;pf-interest&quot; onchange=&quot;toggleOther('pf-interest')&quot;><option value=&quot;&quot;>Select…</option><option>Athletics</option><option>Football</option><option>Debating Club</option><option>Drama</option><option>Music</option><option>Others</option></select><input id=&quot;pf-interest-other&quot; placeholder=&quot;Please specify your interest&quot; style=&quot;display:none;margin-top:6px&quot;></div><div class=&quot;field&quot;><label>Ghana Card / NHIS No</label><input id=&quot;pf-card&quot; placeholder=&quot;NA&quot;></div></div>
               <div class=&quot;sub-h&quot;>Class selection <span class=&quot;req-note&quot;>pick a class based on the available subject combinations — you must choose one</span></div>
               <div class=&quot;cls-wrap&quot;><table class=&quot;cls-table&quot;><thead><tr><th>Class</th><th>Subject combination</th><th>Seats</th></tr></thead><tbody id=&quot;clsRows&quot;></tbody></table></div>
               <div class=&quot;step-nav&quot;><button class=&quot;btn btn-ghost&quot; onclick=&quot;goStep(0)&quot;>Back</button><button class=&quot;btn btn-primary&quot; onclick=&quot;stepNext(1)&quot;>Next<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M5 12h14M12 5l7 7-7 7&quot;/></svg></button></div>
@@ -775,10 +775,17 @@ async function handleEnrFile(inp){
 }
 function removeEnr(){app.enrUploaded=false;app.fields.enrolment_form_url='';app.fields.enrolment_uploaded=false;$('enrWrap').innerHTML=`<div class=&quot;dropzone&quot; onclick=&quot;uploadEnr()&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.6&quot;><path d=&quot;M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4&quot;/><polyline points=&quot;17 8 12 3 7 8&quot;/><line x1=&quot;12&quot; y1=&quot;3&quot; x2=&quot;12&quot; y2=&quot;15&quot;/></svg><b>Tap to upload your enrolment form</b><small>JPG only · up to 2 MB · enrolment code must be visible</small></div>`;}
 
+function toggleOther(selId){ const s=$(selId), o=$(selId+'-other'); if(!s||!o)return; const isOther=/^others?$/i.test((s.value||'').trim()); o.style.display=isOther?'block':'none'; if(!isOther)o.value=''; }
+function otherVal(selId){ const s=$(selId), o=$(selId+'-other'); if(s&amp;&amp;/^others?$/i.test((s.value||'').trim())&amp;&amp;o&amp;&amp;o.value.trim()) return o.value.trim(); return s?s.value:''; }
+function setSelectMaybeOther(selId,v){ const s=$(selId), o=$(selId+'-other'); if(!s)return; if(v==null||v==='')return;
+  const has=[...s.options].some(op=>op.value===v||op.text===v);
+  if(has){ s.value=v; } else { const oo=[...s.options].find(op=>/^others?$/i.test(op.value||op.text)); if(oo){ s.value=oo.value||oo.text; if(o){o.value=v;} } else { s.value=v; } }
+  toggleOther(selId);
+}
 function collect(step){
   const f=app.fields;
   if(step===0){Object.assign(f,{raw_score:val('pf-raw'),enrolment_code:val('pf-enrol').toUpperCase(),jhs_attended:val('pf-jhs'),jhs_type:val('pf-jhstype'),enrolment_uploaded:app.enrUploaded});}
-  if(step===1){Object.assign(f,{dob:val('pf-dob'),place_of_birth:val('pf-pob'),nationality:val('pf-nat'),religion:val('pf-rel'),denomination:val('pf-den'),address:val('pf-addr'),town:val('pf-town'),region:val('pf-region'),district:val('pf-district'),interest:val('pf-interest'),ghana_card:val('pf-card'),class_id:app.classId,class_name:app.className});}
+  if(step===1){Object.assign(f,{dob:val('pf-dob'),place_of_birth:val('pf-pob'),nationality:otherVal('pf-nat'),religion:otherVal('pf-rel'),denomination:otherVal('pf-den'),address:val('pf-addr'),town:val('pf-town'),region:val('pf-region'),district:val('pf-district'),interest:otherVal('pf-interest'),ghana_card:val('pf-card'),class_id:app.classId,class_name:app.className});}
   if(step===2){Object.assign(f,{sms_contact:val('pf-sms'),whatsapp:val('pf-wa'),other_phone:val('pf-other'),email:val('pf-email'),father_name:val('pf-fname'),father_occupation:val('pf-focc'),father_phone:val('pf-fphone'),mother_name:val('pf-mname'),mother_occupation:val('pf-mocc'),mother_phone:val('pf-mphone'),guardian:val('pf-guard'),guardian_phone:val('pf-gphone'),digital_address:val('pf-digital')});}
 }
 function stepNext(step){
@@ -791,8 +798,8 @@ function prefillRecords(r){
   if(!r)return;
   const set=(id,v)=>{const e=$(id);if(e&amp;&amp;v!=null)e.value=v;};
   set('pf-raw',r.raw_score);set('pf-enrol',r.enrolment_code);set('pf-jhs',r.jhs_attended);set('pf-jhstype',r.jhs_type);
-  set('pf-dob',r.dob);set('pf-pob',r.place_of_birth);set('pf-nat',r.nationality);set('pf-rel',r.religion);set('pf-den',r.denomination);
-  set('pf-addr',r.address);set('pf-town',r.town);set('pf-region',r.region);set('pf-district',r.district);set('pf-interest',r.interest);set('pf-card',r.ghana_card);
+  set('pf-dob',r.dob);set('pf-pob',r.place_of_birth);setSelectMaybeOther('pf-nat',r.nationality);setSelectMaybeOther('pf-rel',r.religion);setSelectMaybeOther('pf-den',r.denomination);
+  set('pf-addr',r.address);set('pf-town',r.town);set('pf-region',r.region);set('pf-district',r.district);setSelectMaybeOther('pf-interest',r.interest);set('pf-card',r.ghana_card);
   set('pf-sms',r.sms_contact);set('pf-wa',r.whatsapp);set('pf-other',r.other_phone);set('pf-email',r.email);
   set('pf-fname',r.father_name);set('pf-focc',r.father_occupation);set('pf-fphone',r.father_phone);set('pf-mname',r.mother_name);set('pf-mocc',r.mother_occupation);set('pf-mphone',r.mother_phone);
   set('pf-guard',r.guardian);set('pf-gphone',r.guardian_phone);set('pf-digital',r.digital_address);
@@ -943,6 +950,17 @@ function docProspectus(){
 function logout(){session=null;STU=null;showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
 
 buildSteps();
+// Phone/contact fields: digits only, max 10
+(function(){
+  const PHONE_IDS=['pf-sms','pf-wa','pf-other','pf-fphone','pf-mphone','pf-gphone','p-phone'];
+  document.addEventListener('input',function(e){
+    const el=e.target;
+    if(el&amp;&amp;el.tagName==='INPUT'&amp;&amp;(PHONE_IDS.indexOf(el.id)>-1||el.type==='tel'||el.getAttribute('inputmode')==='tel')){
+      const v=(el.value||'').replace(/\D/g,'').slice(0,10);
+      if(v!==el.value) el.value=v;
+    }
+  });
+})();
 // Populate the school selectors (login / purchase / retrieve)
 let SCHOOLS_LIST=[];
 async function loadSchools(){
@@ -2671,6 +2689,14 @@ function toggleNavGroup(lbl){
   if(willOpen) g.classList.add('open');
 }
 $('nav').addEventListener('click',e=>{const b=e.target.closest('.nav-item,.nav-sub');if(b&amp;&amp;b.dataset.view)go(b.dataset.view);});
+// Phone/contact fields: digits only, max 10 (e.g. pl_sms, ep_sms, es_sms)
+document.addEventListener('input',function(e){
+  const el=e.target;
+  if(el&amp;&amp;el.tagName==='INPUT'&amp;&amp;(/sms|phone|contact/i.test(el.id)||el.type==='tel'||el.getAttribute('inputmode')==='tel')){
+    const v=(el.value||'').replace(/\D/g,'').slice(0,10);
+    if(v!==el.value) el.value=v;
+  }
+});
 
 /* ===== MODAL / SIDEBAR ===== */
 function closeModal(){$('overlay').classList.remove('show');}
@@ -4180,6 +4206,14 @@ function go(view){
   closeSidebar();window.scrollTo(0,0);
 }
 $('nav').addEventListener('click',e=>{const b=e.target.closest('.nav-item');if(b)go(b.dataset.view);});
+// Phone/contact fields: digits only, max 10
+document.addEventListener('input',function(e){
+  const el=e.target;
+  if(el&amp;&amp;el.tagName==='INPUT'&amp;&amp;(/sms|phone|contact/i.test(el.id)||el.type==='tel'||el.getAttribute('inputmode')==='tel')){
+    const v=(el.value||'').replace(/\D/g,'').slice(0,10);
+    if(v!==el.value) el.value=v;
+  }
+});
 
 /* ============ MOBILE SIDEBAR ============ */
 function closeSidebar(){$('sidebar').classList.remove('open');$('backdrop').classList.remove('show');}
