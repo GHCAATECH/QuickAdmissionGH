@@ -2241,17 +2241,26 @@ async function handlePlacementFile(inp){
   const {data,error}=await sb.rpc('import_placement',{p_school:SB_SCHOOL.id,p_rows:rows});
   if(error){toast('Import failed: '+error.message);return;}
   const res=data||{};
-  toast('Done — inserted: '+(res.inserted||0)+', updated: '+(res.updated||0)+', skipped: '+(res.skipped_submitted||0));
+  const dup=(res.skipped_duplicate||0)+(res.skipped_submitted||0);
+  toast('Done — added: '+(res.inserted||0)+(dup?' · '+dup+' duplicate(s) ignored':'')+((res.invalid||0)?' · '+res.invalid+' invalid':''));
   closePop('importPop');
   const {data:plcData}=await sb.from('placement_list').select('*');
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   renderPlacement();
 }
-function addPlacement(){
+async function addPlacement(){
   if(roGuard())return;
+  if(!SB_SCHOOL){toast('School not loaded yet');return;}
   const i=$('pl_index').value.trim(),n=$('pl_name').value.trim();
   if(!i||!n){toast('Index and name required');return;}
-  placement.unshift({index:i,name:n,prog:$('pl_prog').value,code:$('pl_code').value||'—',loggedIn:false});
+  // DUPLICATE PROTECTION: ignore if this index already exists
+  if(placement.some(x=>x.index===i)){toast('Student '+i+' already exists — ignored');return;}
+  const {count}=await sb.from('placement_list').select('index_number',{count:'exact',head:true}).eq('school_id',SB_SCHOOL.id).eq('index_number',i);
+  if(count&amp;&amp;count>0){toast('Student '+i+' already exists — ignored');return;}
+  const code=$('pl_code').value||null;
+  const {error}=await sb.from('placement_list').insert({school_id:SB_SCHOOL.id,index_number:i,student_name:n,programme:$('pl_prog').value||null,enrolment_code:code,imported_at:new Date().toISOString()});
+  if(error){ if((error.code==='23505')||/duplicate/i.test(error.message||'')){toast('Student '+i+' already exists — ignored');return;} toast('Add failed: '+error.message);return; }
+  placement.unshift({index:i,name:n,prog:$('pl_prog').value,code:code||'—',loggedIn:false});
   $('pl_index').value='';$('pl_name').value='';$('pl_code').value='';
   renderPlacement();toast('Record added');
 }
