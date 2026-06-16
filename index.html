@@ -3172,11 +3172,19 @@ function uploadSchoolCrest(inp){
     let w=img.width,h=img.height; const sc=Math.min(260/w,260/h,1); w=Math.round(w*sc); h=Math.round(h*sc);
     const c=document.createElement('canvas'); c.width=w; c.height=h;
     const x=c.getContext('2d'); x.drawImage(img,0,0,w,h);
+    let uri;
     try{ const d=x.getImageData(0,0,w,h),p=d.data;
       for(let i=0;i<p.length;i+=4){ if(p[i]>232&amp;&amp;p[i+1]>232&amp;&amp;p[i+2]>232) p[i+3]=0; }
       x.putImageData(d,0,0);
+      // auto-crop: trim transparent border so the crest fills its box
+      let minX=w,minY=h,maxX=-1,maxY=-1;
+      for(let yy=0;yy<h;yy++){ for(let xx=0;xx<w;xx++){ if(p[(yy*w+xx)*4+3]>16){ if(xx<minX)minX=xx; if(xx>maxX)maxX=xx; if(yy<minY)minY=yy; if(yy>maxY)maxY=yy; } } }
+      if(maxX>=minX&amp;&amp;maxY>=minY){ const pad=2; const cx=Math.max(0,minX-pad),cy=Math.max(0,minY-pad);
+        const cw=Math.min(w-cx,maxX-minX+1+2*pad), ch=Math.min(h-cy,maxY-minY+1+2*pad);
+        const cc=document.createElement('canvas'); cc.width=cw; cc.height=ch;
+        cc.getContext('2d').drawImage(c,cx,cy,cw,ch,0,0,cw,ch); uri=cc.toDataURL('image/png'); }
     }catch(e){}
-    const uri=c.toDataURL('image/png');
+    if(!uri) uri=c.toDataURL('image/png');
     SCHOOL_CREST=uri;
     const prev=$('s_crest_prev'); if(prev){prev.src=uri;prev.style.display='block';}
     const bm=$('brandCrest'); if(bm){bm.src=uri;bm.style.display='block';} const lt=$('brandLogoText'); if(lt) lt.style.display='none';
