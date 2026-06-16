@@ -579,7 +579,7 @@ const progById=id=>PROGRAMMES.find(p=>p.id===id);
 const initials=n=>{const w=(n||'').trim().split(' ').filter(Boolean);return ((w[0]&amp;&amp;w[0][0]||'?')+(w[1]&amp;&amp;w[1][0]||'')).toUpperCase();};
 function studentName(s){
   if(!s)return '';
-  return (s.full_name||s.student_name||s.name||[s.surname,s.other_names].filter(Boolean).join(' ')||'').trim();
+  return (s.student_name||s.placement_name||s.name||[s.surname,s.other_names].filter(Boolean).join(' ')||s.full_name||'').trim();
 }
 function normalizeStudent(s){
   if(!s)return s;
@@ -603,9 +603,9 @@ async function applySchool(data){
   try{
     normalizeStudent(STU);
     const sid=(data.school&amp;&amp;data.school.id)||(session&amp;&amp;session.school);
-    if(STU&amp;&amp;sid&amp;&amp;STU.index&amp;&amp;!STU.student_name){
+    if(STU&amp;&amp;sid&amp;&amp;STU.index){
       const {data:pl}=await sb.from('placement_list').select('student_name,other_names').eq('school_id',sid).eq('index_number',STU.index).single();
-      if(pl){STU.student_name=pl.student_name;STU.other_names=STU.other_names||pl.other_names;normalizeStudent(STU);}
+      if(pl){STU.student_name=pl.student_name;STU.placement_name=pl.student_name;STU.other_names=STU.other_names||pl.other_names;normalizeStudent(STU);}
     }
   }catch(e){}
   if(data.school){
