@@ -1705,7 +1705,7 @@ bootStudent();
         <div class=&quot;pop-overlay&quot; id=&quot;importPop&quot; onclick=&quot;if(event.target===this)closePop('importPop')&quot;>
           <div class=&quot;panel panel-pad pop-card&quot; style=&quot;max-width:560px&quot;>
             <div style=&quot;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px&quot;><h3 class=&quot;section-title&quot; style=&quot;margin:0&quot;>Import CSSPS placement list</h3><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;closePop('importPop')&quot;>×</button></div>
-            <input type=&quot;file&quot; id=&quot;csvFileInput&quot; accept=&quot;.csv,text/csv&quot; style=&quot;display:none&quot; onchange=&quot;handlePlacementFile(this)&quot;>
+            <input type=&quot;file&quot; id=&quot;csvFileInput&quot; accept=&quot;.csv,.xlsx,.xls,text/csv&quot; style=&quot;display:none&quot; onchange=&quot;handlePlacementFile(this)&quot;>
             <div class=&quot;dropzone&quot; onclick=&quot;importPlacement()&quot; style=&quot;padding:22px&quot;>
               <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.6&quot;><path d=&quot;M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4&quot;/><polyline points=&quot;17 8 12 3 7 8&quot;/><line x1=&quot;12&quot; y1=&quot;3&quot; x2=&quot;12&quot; y2=&quot;15&quot;/></svg>
               <b>Click to browse CSV file</b>
@@ -2280,28 +2280,46 @@ function downloadPlacementTemplate(){
   const csv='index_number,student_name,gender,residential_status,programme,aggregate,dob,sms_contact\n';
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='placement_template.csv';a.click();
 }
+function normHdr(h){ return String(h).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,''); }
 async function handlePlacementFile(inp){
   const file=inp.files[0];inp.value='';
   if(!file)return;
   if(!SB_SCHOOL){toast('School not loaded yet');return;}
-  const text=await file.text();
-  const lines=text.split(/\r?\n/).filter(l=>l.trim());
-  if(lines.length<2){toast('CSV file appears empty');return;}
-  const hdrs=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,''));
-  const rows=lines.slice(1).map(line=>{
-    const cols=line.split(',').map(c=>c.trim().replace(/^&quot;|&quot;$/g,''));
-    const obj={};
-    hdrs.forEach((h,i)=>{if(cols[i]!==undefined&amp;&amp;cols[i]!=='')obj[h]=cols[i];});
-    return obj;
-  }).filter(r=>r.index_number);
-  if(!rows.length){toast('No valid rows found in CSV');return;}
+  let rows=[];
+  const isExcel=/\.(xlsx|xls)$/i.test(file.name);
+  if(isExcel){
+    if(typeof XLSX==='undefined'){toast('Spreadsheet reader still loading — try again in a moment');return;}
+    try{
+      const buf=await file.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+      const nonEmpty=aoa.filter(r=>r.some(c=>String(c).trim()!==''));
+      if(nonEmpty.length<2){toast('Spreadsheet has no data rows');return;}
+      const hdrs=nonEmpty[0].map(normHdr);
+      rows=nonEmpty.slice(1).map(r=>{const o={};hdrs.forEach((h,i)=>{const v=(r[i]!==undefined&amp;&amp;r[i]!==null)?String(r[i]).trim():'';if(v!=='')o[h]=v;});return o;}).filter(r=>r.index_number);
+    }catch(e){toast('Could not read spreadsheet: '+e.message);return;}
+  } else {
+    const text=await file.text();
+    // handle Windows (\r\n), Unix (\n) and old-Mac (\r) line endings
+    const lines=text.split(/\r\n|\r|\n/).filter(l=>l.trim());
+    if(lines.length<2){toast('CSV file appears empty');return;}
+    const hdrs=lines[0].split(',').map(normHdr);
+    rows=lines.slice(1).map(line=>{
+      const cols=line.split(',').map(c=>c.trim().replace(/^&quot;|&quot;$/g,''));
+      const obj={};
+      hdrs.forEach((h,i)=>{if(cols[i]!==undefined&amp;&amp;cols[i]!=='')obj[h]=cols[i];});
+      return obj;
+    }).filter(r=>r.index_number);
+  }
+  if(!rows.length){toast('No valid rows found — check the column headers match the template');return;}
   toast('Importing '+rows.length+' rows…');
   const {data,error}=await sb.rpc('import_placement',{p_school:SB_SCHOOL.id,p_rows:rows});
   if(error){toast('Import failed: '+error.message);return;}
   const res=data||{};
   toast('Done — added: '+(res.inserted||0)+(res.updated?' · '+res.updated+' updated':'')+((res.invalid||0)?' · '+res.invalid+' invalid':''));
   closePop('importPop');
-  const {data:plcData}=await sb.from('placement_list').select('*');
+  const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   renderPlacement();
 }
@@ -2900,6 +2918,7 @@ fillSelects();renderStats();renderRecent();buildColvis();
 </script>
 <script src=&quot;https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js&quot;></script>
 <script src=&quot;https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js&quot;></script>
+<script src=&quot;https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js&quot;></script>
 <script>
 /* ================= SUPABASE INTEGRATION (school admin) ================= */
 const SB_URL='https://datxaylostmyroleisdl.supabase.co';
