@@ -2918,6 +2918,22 @@ fillSelects();renderStats();renderRecent();buildColvis();
 const SB_URL='https://datxaylostmyroleisdl.supabase.co';
 const SB_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-school-auth'}});
+// Always attach a FRESH user token to privileged Edge Function calls, otherwise an
+// expired session makes the client send the publishable key and the function 401s.
+async function freshToken(){
+  let {data:s}=await sb.auth.getSession();
+  let tok=s&amp;&amp;s.session&amp;&amp;s.session.access_token;
+  const exp=s&amp;&amp;s.session&amp;&amp;s.session.expires_at;
+  if(!tok||(exp&amp;&amp;exp*1000<Date.now()+10000)){
+    try{ const r=await sb.auth.refreshSession(); tok=(r.data&amp;&amp;r.data.session&amp;&amp;r.data.session.access_token)||tok; }catch(e){}
+  }
+  return tok;
+}
+async function invokeFn(name,body){
+  const tok=await freshToken();
+  if(!tok) return {data:null,error:{message:'Your session expired — please sign in again.'}};
+  return await sb.functions.invoke(name,{body,headers:{Authorization:'Bearer '+tok}});
+}
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'● PRODUCTION':'● DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 var SB_SCHOOL=null, SB_CFG=null, SB_ADMIN_NAME='Admin', SB_PERMS=null, SB_UID=null, SB_HOUSE=null, READONLY=false;
 // Capability catalogue (key -> friendly label)
@@ -3194,7 +3210,7 @@ sendSms=async function(){
   const btn=event&amp;&amp;event.target?event.target.closest('button'):null; if(btn)btn.textContent='Sending…';
   let status='sent', delivered=n;
   try{
-    const {data,error}=await sb.functions.invoke('send-sms',{body:{school_id:SB_SCHOOL.id,sender,messages}});
+    const {data,error}=await invokeFn('send-sms',{school_id:SB_SCHOOL.id,sender,messages});
     if(error) throw error;
     if(data){ delivered=data.sent!=null?data.sent:n; if(data.sent===0)status='failed'; else if(data.failed)status='partial'; }
   }catch(e){
@@ -3376,7 +3392,7 @@ async function createUser(){
   if(pass.length<8){toast('Password must be at least 8 characters');return;}
   const permissions=collectPerms('u_perms'); const hv=(val('u_house')||''); if(hv) permissions.house=hv;
   const btn=$('u_btn'); if(btn)btn.textContent='Creating…';
-  const {data,error}=await sb.functions.invoke('create-school-admin',{body:{email,password:pass,full_name:name,permissions}});
+  const {data,error}=await invokeFn('create-school-admin',{email,password:pass,full_name:name,permissions});
   if(btn)btn.textContent='Create user';
   if(error||(data&amp;&amp;data.error)){toast('Could not create: '+((data&amp;&amp;data.message)||(error&amp;&amp;error.message)||'error'));return;}
   closeModal(); renderUsers();
@@ -3398,7 +3414,7 @@ async function saveUserPerms(id){
   if(roGuard())return;
   const permissions=collectPerms('u_eperms'); const hv=(val('u_house')||''); if(hv) permissions.house=hv;
   const btn=$('up_btn'); if(btn)btn.textContent='Saving…';
-  const {data,error}=await sb.functions.invoke('manage-user',{body:{action:'permissions',user_id:id,permissions}});
+  const {data,error}=await invokeFn('manage-user',{action:'permissions',user_id:id,permissions});
   if(btn)btn.textContent='Save privileges';
   if(error||(data&amp;&amp;data.error)){toast('Could not save: '+((data&amp;&amp;data.message)||(error&amp;&amp;error.message)||'error'));return;}
   closeModal(); renderUsers(); toast('Privileges updated');
@@ -3408,7 +3424,7 @@ async function resetUserPwd(id){
   const u=schoolUsers.find(x=>x.id===id); if(!u)return;
   const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)];
   if(!confirm('Reset password for '+(u.full_name||u.email)+'?\nNew password: '+p+'\n\nCopy it now — share it with the user.'))return;
-  const {data,error}=await sb.functions.invoke('manage-user',{body:{action:'password',user_id:id,password:p}});
+  const {data,error}=await invokeFn('manage-user',{action:'password',user_id:id,password:p});
   if(error||(data&amp;&amp;data.error)){toast('Could not reset: '+((data&amp;&amp;data.message)||(error&amp;&amp;error.message)||'error'));return;}
   toast('Password reset to: '+p);
 }
@@ -3416,7 +3432,7 @@ async function deleteUser(id){
   if(roGuard())return;
   const u=schoolUsers.find(x=>x.id===id); if(!u)return;
   if(!confirm('Delete '+(u.full_name||u.email)+'? This removes their login permanently.'))return;
-  const {data,error}=await sb.functions.invoke('manage-user',{body:{action:'delete',user_id:id}});
+  const {data,error}=await invokeFn('manage-user',{action:'delete',user_id:id});
   if(error||(data&amp;&amp;data.error)){toast('Could not delete: '+((data&amp;&amp;data.message)||(error&amp;&amp;error.message)||'error'));return;}
   renderUsers(); toast('User deleted');
 }
@@ -4488,6 +4504,22 @@ renderAll();buildCharts();
 const SB_URL='https://datxaylostmyroleisdl.supabase.co';
 const SB_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-super-auth'}});
+// Always attach a FRESH user token to privileged Edge Function calls, otherwise an
+// expired session makes the client send the publishable key and the function 401s.
+async function freshToken(){
+  let {data:s}=await sb.auth.getSession();
+  let tok=s&amp;&amp;s.session&amp;&amp;s.session.access_token;
+  const exp=s&amp;&amp;s.session&amp;&amp;s.session.expires_at;
+  if(!tok||(exp&amp;&amp;exp*1000<Date.now()+10000)){
+    try{ const r=await sb.auth.refreshSession(); tok=(r.data&amp;&amp;r.data.session&amp;&amp;r.data.session.access_token)||tok; }catch(e){}
+  }
+  return tok;
+}
+async function invokeFn(name,body){
+  const tok=await freshToken();
+  if(!tok) return {data:null,error:{message:'Your session expired — please sign in again.'}};
+  return await sb.functions.invoke(name,{body,headers:{Authorization:'Bearer '+tok}});
+}
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'● PRODUCTION':'● DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 const sval=id=>document.getElementById(id).value;
 const sa_init=n=>{const w=(n||'').replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean);return ((w[0]&amp;&amp;w[0][0]||'S')+(w[1]&amp;&amp;w[1][0]||(w[0]&amp;&amp;w[0][1])||'C')).toUpperCase();};
@@ -4608,7 +4640,7 @@ saveAdminEdit=async function(uid){
   if(error){ if(btn)btn.textContent='Save changes'; toast('Could not save: '+error.message); return; }
   if(pass){
     if(pass.length<8){ if(btn)btn.textContent='Save changes'; toast('Password must be at least 8 characters'); return; }
-    const {data,error:pe}=await sb.functions.invoke('manage-user',{body:{action:'password',user_id:uid,password:pass}});
+    const {data,error:pe}=await invokeFn('manage-user',{action:'password',user_id:uid,password:pass});
     if(pe||(data&amp;&amp;data.error)){ if(btn)btn.textContent='Save changes'; toast('Name saved, but password change failed: '+((data&amp;&amp;data.message)||(pe&amp;&amp;pe.message)||'error')); await loadSA(); go('admins'); return; }
   }
   closeModal(); await loadSA(); go('admins'); toast(name+' updated');
@@ -4617,7 +4649,7 @@ deleteAdmin=async function(uid){
   const a=admins.find(x=>x.uid===uid); if(!a)return;
   if(uid===SA_UID){toast('You cannot delete your own account.');return;}
   if(!confirm('Delete admin '+a.name+' ('+a.email+')? They lose access immediately. This cannot be undone.'))return;
-  const {data,error}=await sb.functions.invoke('manage-user',{body:{action:'delete',user_id:uid}});
+  const {data,error}=await invokeFn('manage-user',{action:'delete',user_id:uid});
   if(error||(data&amp;&amp;data.error)){toast('Could not delete: '+((data&amp;&amp;data.message)||(error&amp;&amp;error.message)||'error'));return;}
   await loadSA(); go('admins'); toast(a.name+' removed');
 };
@@ -4626,7 +4658,7 @@ resetAdminPwd=async function(uid){
   if(uid===SA_UID){toast('Reset your own password from Supabase, not here.');return;}
   const pass=genStr(10);
   if(!confirm('Reset password for '+a.name+'?\n\nNew temporary password:\n'+pass+'\n\nClick OK to set it.'))return;
-  const {data,error}=await sb.functions.invoke('manage-user',{body:{action:'password',user_id:uid,password:pass}});
+  const {data,error}=await invokeFn('manage-user',{action:'password',user_id:uid,password:pass});
   if(error||(data&amp;&amp;data.error)){toast('Could not reset: '+((data&amp;&amp;data.message)||(error&amp;&amp;error.message)||'error'));return;}
   alert('New password for '+a.email+':\n\n'+pass+'\n\nShare it with them; they can change it after signing in.');
   toast('Password reset for '+a.name);
@@ -4665,7 +4697,7 @@ createAdmin=async function(){
   if(!email||!pass){toast('Email and a temporary password are required');return;}
   if(pass.length<8){toast('Password must be at least 8 characters');return;}
   const btn=$('a_btn'); if(btn)btn.textContent='Creating…';
-  const {data,error}=await sb.functions.invoke('create-school-admin',{body:{email,password:pass,full_name:name,school_id:s._id}});
+  const {data,error}=await invokeFn('create-school-admin',{email,password:pass,full_name:name,school_id:s._id});
   if(btn)btn.textContent='Create admin';
   if(error||(data&amp;&amp;data.error)){toast('Could not create: '+((data&amp;&amp;data.message)||(error&amp;&amp;error.message)||'error'));return;}
   closeModal(); await loadSA(); go('admins');
