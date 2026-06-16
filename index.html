@@ -588,6 +588,24 @@ function normalizeStudent(s){
   if(!s.surname&amp;&amp;nm)s.surname=nm;
   return s;
 }
+function nameFromLookup(d){
+  return d&amp;&amp;(d.student_name||d.placement_name||d.applicant_name||d.full_name||d.name_on_placement||d.candidate_name||'');
+}
+async function lookupPlacementName(idx,school){
+  if(!idx)return '';
+  try{
+    if(school){
+      const {data:pl}=await sb.from('placement_list').select('student_name,other_names').eq('school_id',school).eq('index_number',idx).single();
+      if(pl&amp;&amp;pl.student_name)return pl.student_name;
+    }
+  }catch(e){}
+  try{
+    const {data}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:school||null});
+    const nm=nameFromLookup(data);
+    if(nm)return nm;
+  }catch(e){}
+  return '';
+}
 
 async function applySchool(data){
   // data carries school + config + programmes + classes from login
@@ -604,8 +622,8 @@ async function applySchool(data){
     normalizeStudent(STU);
     const sid=(data.school&amp;&amp;data.school.id)||(session&amp;&amp;session.school);
     if(STU&amp;&amp;sid&amp;&amp;STU.index){
-      const {data:pl}=await sb.from('placement_list').select('student_name,other_names').eq('school_id',sid).eq('index_number',STU.index).single();
-      if(pl){STU.student_name=pl.student_name;STU.placement_name=pl.student_name;STU.other_names=STU.other_names||pl.other_names;normalizeStudent(STU);}
+      const nm=await lookupPlacementName(STU.index,sid);
+      if(nm){STU.student_name=nm;STU.placement_name=nm;normalizeStudent(STU);}
     }
   }catch(e){}
   if(data.school){
@@ -767,6 +785,7 @@ async function payToken(method){
   if(has&amp;&amp;has.ok&amp;&amp;has.paid){ toast('This index has already paid. Use “Retrieve token” to get your token.'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
   const {data:sch}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:sid});
   if(!sch||!sch.ok){toast('This index is not on any participating school\u2019s placement list');return;}
+  const verifiedName=nameFromLookup(sch)||await lookupPlacementName(idx,sid)||name;
   const amount=Math.round(Number(sch.charge||0)*100);
   if(!amount){toast('This school has no service charge set');return;}
   const email=$('p-email').value.trim()||(idx+'@noemail.qadmission');
@@ -776,10 +795,10 @@ async function payToken(method){
     key:PAYSTACK_PUBLIC_KEY, email, amount, currency:'GHS',
     metadata:{custom_fields:[
       {display_name:'Index Number',variable_name:'index',value:idx},
-      {display_name:'Applicant',variable_name:'name',value:name},
+      {display_name:'Applicant',variable_name:'name',value:verifiedName},
       {display_name:'School',variable_name:'school',value:sch.name}
     ]},
-    callback:function(resp){ savePending({reference:resp.reference,index:idx,name:name,school:sid}); verifyPayment(resp.reference, idx, name, sid); },
+    callback:function(resp){ savePending({reference:resp.reference,index:idx,name:verifiedName,school:sid}); verifyPayment(resp.reference, idx, verifiedName, sid); },
     onClose:function(){ toast('Payment window closed'); }
   });
   handler.openIframe();
@@ -788,6 +807,7 @@ function retryVerify(){ const p=getPending(); if(!p||!p.reference){toast('No pen
 async function verifyPayment(reference, idx, name, school){
   toast('Verifying payment\u2026');
   if(!school){ const p=getPending(); school=(p&amp;&amp;p.school)||$('p-school-sel').value||null; }
+  name=(await lookupPlacementName(idx,school))||name;
   let data=null, netErr=null;
   try{
     const r=await fetch(SUPABASE_URL+'/functions/v1/verify-payment',{
