@@ -2282,6 +2282,9 @@ function downloadPlacementTemplate(){
   if(typeof XLSX!=='undefined'){
     const ws=XLSX.utils.aoa_to_sheet([headers,example]);
     ws['!cols']=headers.map(()=>({wch:18}));
+    // Force index_number (col A) and sms_contact (col H) to TEXT so Excel keeps leading zeros
+    ['A','H'].forEach(col=>{ for(let row=2;row<=200;row++){ const ref=col+row; const c=ws[ref]||(ws[ref]={t:'s',v:''}); c.t='s'; c.z='@'; } });
+    if(!ws['!ref']||XLSX.utils.decode_range(ws['!ref']).e.r<199){ ws['!ref']='A1:H200'; }
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Placement');
     XLSX.writeFile(wb,'placement_template.xlsx');
@@ -2324,6 +2327,11 @@ async function handlePlacementFile(inp){
     }).filter(r=>r.index_number);
   }
   if(!rows.length){toast('No valid rows found — check the column headers match the template');return;}
+  // Restore leading zeros Excel may have stripped (index = 12 digits, SMS = 10 digits)
+  rows.forEach(r=>{
+    if(r.index_number&amp;&amp;/^\d+$/.test(r.index_number)&amp;&amp;r.index_number.length<12) r.index_number=r.index_number.padStart(12,'0');
+    if(r.sms_contact&amp;&amp;/^\d+$/.test(r.sms_contact)&amp;&amp;r.sms_contact.length<10) r.sms_contact=r.sms_contact.padStart(10,'0');
+  });
   toast('Importing '+rows.length+' rows…');
   const {data,error}=await sb.rpc('import_placement',{p_school:SB_SCHOOL.id,p_rows:rows});
   if(error){toast('Import failed: '+error.message);return;}
