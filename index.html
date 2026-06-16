@@ -2278,12 +2278,12 @@ function closePop(id){ const o=document.getElementById(id); if(o) o.classList.re
 function downloadPlacementTemplate(){
   // Columns match the manual &quot;Add record&quot; form (all required). Download as Excel.
   const headers=['index_number','student_name','gender','residential_status','programme','aggregate','dob','sms_contact'];
-  const example=['100000000026','AMA MENSAH','Female','Boarding','General Science','12','2009-03-12','0244000000'];
+  const example=['100000000026','AMA MENSAH','Female','Boarding','General Science','12','Nov 26, 2010','0244000000'];
   if(typeof XLSX!=='undefined'){
     const ws=XLSX.utils.aoa_to_sheet([headers,example]);
     ws['!cols']=headers.map(()=>({wch:18}));
     // Force index_number (col A) and sms_contact (col H) to TEXT so Excel keeps leading zeros
-    ['A','H'].forEach(col=>{ for(let row=2;row<=200;row++){ const ref=col+row; const c=ws[ref]||(ws[ref]={t:'s',v:''}); c.t='s'; c.z='@'; } });
+    ['A','G','H'].forEach(col=>{ for(let row=2;row<=200;row++){ const ref=col+row; const c=ws[ref]||(ws[ref]={t:'s',v:''}); c.t='s'; c.z='@'; } });
     if(!ws['!ref']||XLSX.utils.decode_range(ws['!ref']).e.r<199){ ws['!ref']='A1:H200'; }
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Placement');
@@ -2295,6 +2295,15 @@ function downloadPlacementTemplate(){
   }
 }
 function normHdr(h){ return String(h).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,''); }
+// Convert dates like &quot;Nov 26, 2010&quot;, &quot;26/11/2010&quot; or an Excel date to YYYY-MM-DD.
+function toISODate(v){
+  if(v==null) return '';
+  v=String(v).trim(); if(!v) return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const d=new Date(v);
+  if(isNaN(d.getTime())) return '';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 async function handlePlacementFile(inp){
   const file=inp.files[0];inp.value='';
   if(!file)return;
@@ -2328,9 +2337,11 @@ async function handlePlacementFile(inp){
   }
   if(!rows.length){toast('No valid rows found — check the column headers match the template');return;}
   // Restore leading zeros Excel may have stripped (index = 12 digits, SMS = 10 digits)
+  // and normalise the date of birth (e.g. &quot;Nov 26, 2010&quot;) to YYYY-MM-DD for storage.
   rows.forEach(r=>{
     if(r.index_number&amp;&amp;/^\d+$/.test(r.index_number)&amp;&amp;r.index_number.length<12) r.index_number=r.index_number.padStart(12,'0');
     if(r.sms_contact&amp;&amp;/^\d+$/.test(r.sms_contact)&amp;&amp;r.sms_contact.length<10) r.sms_contact=r.sms_contact.padStart(10,'0');
+    if(r.dob){ const iso=toISODate(r.dob); if(iso) r.dob=iso; else delete r.dob; }
   });
   toast('Importing '+rows.length+' rows…');
   const {data,error}=await sb.rpc('import_placement',{p_school:SB_SCHOOL.id,p_rows:rows});
