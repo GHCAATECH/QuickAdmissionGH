@@ -578,10 +578,17 @@ function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classL
 const progById=id=>PROGRAMMES.find(p=>p.id===id);
 const initials=n=>{const w=(n||'').trim().split(' ').filter(Boolean);return ((w[0]&amp;&amp;w[0][0]||'?')+(w[1]&amp;&amp;w[1][0]||'')).toUpperCase();};
 
-function applySchool(data){
+async function applySchool(data){
   // data carries school + config + programmes + classes from login
   SCHOOL={school:data.school,config:data.config,classes:data.classes||[]};
   PROGRAMMES=data.programmes||[];
+  try{
+    const sid=(data.school&amp;&amp;data.school.id)||(session&amp;&amp;session.school);
+    if(sid){
+      const {data:cfg}=await sb.from('school_config').select('*').eq('school_id',sid).single();
+      if(cfg) SCHOOL.config=Object.assign({},SCHOOL.config||{},cfg);
+    }
+  }catch(e){}
   if(data.school){
     $('topSchool').textContent=(data.school.name||'').toUpperCase();
     document.querySelectorAll('.helpline a').forEach(a=>{if(data.school.helpdesk){a.textContent=data.school.helpdesk;a.href='tel:'+data.school.helpdesk;}});
@@ -606,7 +613,7 @@ async function doLogin(){
     else toast('Could not sign in');
     return;
   }
-  session={index:idx,token:tok,school:sid}; STU=data.student; applySchool(data);
+  session={index:idx,token:tok,school:sid}; STU=data.student; await applySchool(data);
   try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){}
   hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion();
   showDisclaimer();
@@ -616,7 +623,7 @@ async function bootStudent(){
   if(!s||!s.index||!s.token) return;
   try{
     const {data}=await sb.rpc('student_login',{p_index:s.index,p_token:s.token,p_school:s.school||null});
-    if(data&amp;&amp;data.ok){ session=s; STU=data.student; applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); }
+    if(data&amp;&amp;data.ok){ session=s; STU=data.student; await applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); }
     else { session=null; STU=null; try{localStorage.removeItem('qag_student');}catch(e){} showScreen('s-login'); }
   }catch(e){}
 }
@@ -631,7 +638,7 @@ function acceptDisclaimer(){ const ov=$('discOverlay'); if(ov) ov.classList.remo
 function declineDisclaimer(){ const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); logout(); }
 async function refreshStudent(){
   const {data}=await sb.rpc('student_login',{p_index:session.index,p_token:session.token,p_school:session.school||null});
-  if(data&amp;&amp;data.ok){STU=data.student;applySchool(data);hydrate();}
+  if(data&amp;&amp;data.ok){STU=data.student;await applySchool(data);hydrate();}
   else if(data&amp;&amp;!data.ok){ revokeAccess(); }
 }
 // If the student's record has been deleted by the school, drop their access immediately.
@@ -695,7 +702,8 @@ function hydrate(){
     {h:'',l:'Log Out',btn:'<button class=&quot;btn btn-danger btn-sm&quot; onclick=&quot;logout()&quot;><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9\'/></svg>Log Out</button>'},
   ];
   $('wuGrid').innerHTML=blocks.map(b=>`<div class=&quot;wu-block&quot;><div class=&quot;h&quot;>${b.h}</div>${b.btn||''}<div class=&quot;l&quot;>[${b.l}]</div></div>`).join('');
-  const docs=(SCHOOL&amp;&amp;SCHOOL.config.req_docs||[]).filter(Boolean);
+  const cfg=(SCHOOL&amp;&amp;SCHOOL.config)||{};
+  const docs=(Array.isArray(cfg.req_docs)?cfg.req_docs:[cfg.req_doc_line1,cfg.req_doc_line2,cfg.req_doc_line3,cfg.req_doc_line4,cfg.req_doc_line5]).filter(Boolean);
   $('dashChecklist').innerHTML=docs.map((l,i)=>`<li><span class=&quot;n&quot;>${i+1}</span><span>${l}</span></li>`).join('');
   buildSteps(); refreshRail();
 }
@@ -788,7 +796,7 @@ async function verifyPayment(reference, idx, name, school){
   toast('Payment confirmed \u2014 signing you in\u2026');
   session={index:idx,token:data.token,school:school||null};
   const {data:login}=await sb.rpc('student_login',{p_index:idx,p_token:data.token,p_school:school||null});
-  if(login&amp;&amp;login.ok){ STU=login.student; applySchool(login); try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){} hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); showDisclaimer(); toast('Welcome! Save your token: '+data.token); }
+  if(login&amp;&amp;login.ok){ STU=login.student; await applySchool(login); try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){} hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); showDisclaimer(); toast('Welcome! Save your token: '+data.token); }
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }
 function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in — tap Log in');}
@@ -1687,7 +1695,7 @@ bootStudent();
             <p style=&quot;font-size:12px;color:var(--muted);margin-bottom:14px&quot;>These five lines appear on the student dashboard as the documents to bring on reporting day.</p>
             <div id=&quot;docLines&quot;></div>
           </fieldset>
-          <button class=&quot;btn btn-primary&quot; onclick=&quot;toast('Student portal configuration saved')&quot;>Save portal setup</button>
+          <button class=&quot;btn btn-primary&quot; onclick=&quot;savePortalSetup()&quot;>Save portal setup</button>
         </div>
       </section>
 
@@ -2668,6 +2676,18 @@ function buildCharts(){
 
 /* ===== DOC LINES + LOG ===== */
 function renderDocLines(){$('docLines').innerHTML=docLines.map((l,i)=>`<div class=&quot;doc-line&quot;><span class=&quot;num&quot;>${i+1}</span><textarea oninput=&quot;docLines[${i}]=this.value&quot; rows=&quot;2&quot;>${l}</textarea></div>`).join('');}
+async function savePortalSetup(){
+  if(roGuard())return;
+  if(!SB_SCHOOL){toast('School not loaded');return;}
+  const lines=docLines.slice(0,5).map(x=>(x||'').trim());
+  while(lines.length<5)lines.push('');
+  const patch={req_doc_line1:lines[0],req_doc_line2:lines[1],req_doc_line3:lines[2],req_doc_line4:lines[3],req_doc_line5:lines[4]};
+  const {error}=await sb.from('school_config').update(patch).eq('school_id',SB_SCHOOL.id);
+  if(error){toast('Could not save portal setup: '+error.message);return;}
+  docLines=lines;
+  if(SB_CFG) Object.assign(SB_CFG,patch);
+  toast('Student portal configuration saved');
+}
 function renderLog(){$('logRows').innerHTML=activityLog.map(l=>`<tr><td class=&quot;mono&quot; style=&quot;font-size:12px&quot;>${l.time}</td><td>${l.action}</td><td>${l.by}</td></tr>`).join('');renderArchives();}
 const DOC_COL={prospectus:'prospectus_url',undertaking:'undertaking_url',subjects:'subjects_url'};
 function showSchoolDocLink(kind,url){
