@@ -1709,9 +1709,9 @@ bootStudent();
             <div class=&quot;dropzone&quot; onclick=&quot;importPlacement()&quot; style=&quot;padding:22px&quot;>
               <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.6&quot;><path d=&quot;M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4&quot;/><polyline points=&quot;17 8 12 3 7 8&quot;/><line x1=&quot;12&quot; y1=&quot;3&quot; x2=&quot;12&quot; y2=&quot;15&quot;/></svg>
               <b>Click to browse CSV file</b>
-              <small>Columns: index_number, student_name, other_names, gender, residential_status, programme, aggregate, jhs_attended, dob, sms_contact, enrolment_code</small>
+              <small>Columns: index_number, student_name, gender, residential_status, programme, aggregate, dob, sms_contact</small>
             </div>
-            <button class=&quot;btn btn-ghost btn-sm&quot; style=&quot;margin-top:10px&quot; onclick=&quot;downloadPlacementTemplate()&quot;>⬇ Download Template CSV</button>
+            <button class=&quot;btn btn-ghost btn-sm&quot; style=&quot;margin-top:10px&quot; onclick=&quot;downloadPlacementTemplate()&quot;>⬇ Download Excel Template</button>
           </div>
         </div>
 
@@ -2276,9 +2276,20 @@ function openPop(id){
 }
 function closePop(id){ const o=document.getElementById(id); if(o) o.classList.remove('show'); }
 function downloadPlacementTemplate(){
-  // Columns match the manual &quot;Add record&quot; form (all required)
-  const csv='index_number,student_name,gender,residential_status,programme,aggregate,dob,sms_contact\n';
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='placement_template.csv';a.click();
+  // Columns match the manual &quot;Add record&quot; form (all required). Download as Excel.
+  const headers=['index_number','student_name','gender','residential_status','programme','aggregate','dob','sms_contact'];
+  const example=['100000000026','AMA MENSAH','Female','Boarding','General Science','12','2009-03-12','0244000000'];
+  if(typeof XLSX!=='undefined'){
+    const ws=XLSX.utils.aoa_to_sheet([headers,example]);
+    ws['!cols']=headers.map(()=>({wch:18}));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Placement');
+    XLSX.writeFile(wb,'placement_template.xlsx');
+  } else {
+    // fallback if the spreadsheet library hasn't loaded
+    const csv=headers.join(',')+'\n'+example.join(',')+'\n';
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='placement_template.csv';a.click();
+  }
 }
 function normHdr(h){ return String(h).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,''); }
 async function handlePlacementFile(inp){
