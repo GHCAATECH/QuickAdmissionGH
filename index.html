@@ -181,7 +181,9 @@
   .pnav button:hover{background:var(--sb-soft);color:#e7efec}
   .pnav button.active{background:var(--sb-active);color:#fff}
   .pcrest{text-align:center;padding:18px}
-  .pcrest .cb{width:120px;height:90px;margin:0 auto;border:6px double #3a4a44;border-radius:6px;display:grid;place-items:center;background:#16304D;color:#6F86A8;font-family:'Space Grotesk';font-weight:700;font-size:13px}
+  .pcrest .cb{width:120px;height:90px;margin:0 auto;border:6px double #3a4a44;border-radius:6px;display:grid;place-items:center;background:#16304D;color:#6F86A8;font-family:'Space Grotesk';font-weight:700;font-size:13px;overflow:hidden;padding:6px}
+  .pcrest .cb.has-img{background:#fff;border-color:#cfe0f5}
+  .pcrest .cb img{max-width:100%;max-height:100%;object-fit:contain}
   .pmain{padding:22px;max-width:1000px}
 
   /* welcome */
@@ -632,9 +634,9 @@ function hydrate(){
   const s=STU;
   $('sbName').textContent=s.full_name||'Applicant';
   $('sbAvatar').textContent=initials(s.full_name);
-  { const url=schoolCrest(); const im=$('sbCrestImg'), tx=$('sbCrestText');
-    if(url){ if(im){im.src=url;im.style.display='block';} if(tx)tx.style.display='none'; }
-    else { if(im)im.style.display='none'; if(tx)tx.style.display=''; } }
+  { const url=schoolCrest(); const im=$('sbCrestImg'), tx=$('sbCrestText'), box=$('sbCrest');
+    if(url){ if(im){im.src=url;im.style.display='block';} if(tx)tx.style.display='none'; if(box)box.classList.add('has-img'); }
+    else { if(im)im.style.display='none'; if(tx)tx.style.display=''; if(box)box.classList.remove('has-img'); } }
   $('wuName').textContent=s.full_name||'Applicant';
   $('wuAvatar').textContent=initials(s.full_name);
   $('wuSchoolNo').textContent='School No.: '+(s.school_no||'—');
