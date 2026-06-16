@@ -1933,6 +1933,11 @@ bootStudent();
           <div class=&quot;tbl-wrap&quot;><table><thead><tr><th>Academic Year</th><th>Students</th><th>Placements</th><th>Payments</th><th>Saved</th><th></th></tr></thead><tbody id=&quot;archiveRows&quot;></tbody></table></div>
         </div>
         <div class=&quot;panel&quot; style=&quot;margin-top:18px&quot;><div class=&quot;panel-head&quot;><h3>Activity log</h3></div><div class=&quot;tbl-wrap&quot;><table><thead><tr><th>Time</th><th>Action</th><th>By</th></tr></thead><tbody id=&quot;logRows&quot;></tbody></table></div></div>
+        <div class=&quot;panel panel-pad&quot; style=&quot;margin-top:18px;border:1px solid #f3c2c2;background:#fff7f7&quot;>
+          <h3 class=&quot;section-title&quot; style=&quot;color:#b42318&quot;>Danger zone</h3>
+          <p style=&quot;font-size:12.5px;color:var(--muted);margin:0 0 12px&quot;>Permanently delete <b>all student records for this school</b> — the entire <b>placement list</b> and the <b>admission list</b> (submitted students, payments and uploaded forms). This cannot be undone. Use it to clear data before a new academic year.</p>
+          <button class=&quot;btn btn-sm&quot; style=&quot;background:#b42318;color:#fff&quot; onclick=&quot;deleteAllStudentRecords()&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; style=&quot;width:15px;height:15px;vertical-align:-2px;margin-right:5px&quot;><polyline points=&quot;3 6 5 6 21 6&quot;/><path d=&quot;M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2&quot;/></svg>Delete all student records</button>
+        </div>
       </section>
     </div>
   </div>
@@ -2212,6 +2217,25 @@ async function deletePlacementBatch(scope){
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   renderPlacement();
   toast('Deleted '+data.deleted+' record(s)'+(data.skipped_submitted?' · '+data.skipped_submitted+' kept (submitted)':''));
+}
+async function deleteAllStudentRecords(){
+  if(roGuard())return;
+  if(!SB_SCHOOL){toast('School not loaded');return;}
+  if(!confirm('Delete ALL student records for '+(SB_SCHOOL.name||'this school')+'?\n\nThis permanently removes the ENTIRE placement list AND the admission list (submitted students, payments and tokens). This CANNOT be undone.'))return;
+  const typed=prompt('This is irreversible. Type DELETE to confirm:');
+  if((typed||'').trim().toUpperCase()!=='DELETE'){toast('Cancelled — not deleted');return;}
+  toast('Deleting all student records…');
+  const {data,error}=await sb.rpc('delete_all_student_records',{p_school:SB_SCHOOL.id});
+  if(error){toast('Delete failed: '+error.message);return;}
+  if(!data||!data.ok){
+    const e=data&amp;&amp;data.error;
+    toast('Delete failed: '+(e==='owner_only'?'only the school owner can do this':(e||'unknown')));return;
+  }
+  placement=[]; students=[]; selected&amp;&amp;selected.clear&amp;&amp;selected.clear();
+  if(typeof renderPlacement==='function')renderPlacement();
+  if(typeof renderStudents==='function')renderStudents();
+  if(typeof renderStats==='function')renderStats();
+  toast('Done — deleted '+(data.students||0)+' student(s), '+(data.placements||0)+' placement(s), '+(data.payments||0)+' payment(s)');
 }
 function importPlacement(){
   document.getElementById('csvFileInput').click();
