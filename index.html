@@ -577,6 +577,17 @@ function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));window.scrollTo(0,0);if(id==='s-purchase'){try{showPendingBanner();}catch(e){}}}
 const progById=id=>PROGRAMMES.find(p=>p.id===id);
 const initials=n=>{const w=(n||'').trim().split(' ').filter(Boolean);return ((w[0]&amp;&amp;w[0][0]||'?')+(w[1]&amp;&amp;w[1][0]||'')).toUpperCase();};
+function studentName(s){
+  if(!s)return '';
+  return (s.full_name||s.student_name||s.name||[s.surname,s.other_names].filter(Boolean).join(' ')||'').trim();
+}
+function normalizeStudent(s){
+  if(!s)return s;
+  const nm=studentName(s);
+  if(nm&amp;&amp;!s.full_name)s.full_name=nm;
+  if(!s.surname&amp;&amp;nm)s.surname=nm;
+  return s;
+}
 
 async function applySchool(data){
   // data carries school + config + programmes + classes from login
@@ -587,6 +598,14 @@ async function applySchool(data){
     if(sid){
       const {data:cfg}=await sb.from('school_config').select('*').eq('school_id',sid).single();
       if(cfg) SCHOOL.config=Object.assign({},SCHOOL.config||{},cfg);
+    }
+  }catch(e){}
+  try{
+    normalizeStudent(STU);
+    const sid=(data.school&amp;&amp;data.school.id)||(session&amp;&amp;session.school);
+    if(STU&amp;&amp;sid&amp;&amp;STU.index&amp;&amp;!STU.student_name){
+      const {data:pl}=await sb.from('placement_list').select('student_name,other_names').eq('school_id',sid).eq('index_number',STU.index).single();
+      if(pl){STU.student_name=pl.student_name;STU.other_names=STU.other_names||pl.other_names;normalizeStudent(STU);}
     }
   }catch(e){}
   if(data.school){
@@ -670,26 +689,27 @@ function watchDeletion(){
 function stopWatchDeletion(){ if(stuChannel){ try{sb.removeChannel(stuChannel);}catch(e){} stuChannel=null; } }
 function hydrate(){
   const s=STU;
-  $('sbName').textContent=s.full_name||'Applicant';
-  $('sbAvatar').textContent=initials(s.full_name);
+  const displayName=studentName(s)||'Applicant';
+  $('sbName').textContent=displayName;
+  $('sbAvatar').textContent=initials(displayName);
   { const url=schoolCrest(); const im=$('sbCrestImg'), tx=$('sbCrestText'), box=$('sbCrest');
     if(url){ if(im){im.src=url;im.style.display='block';} if(tx)tx.style.display='none'; if(box)box.classList.add('has-img'); }
     else { if(im)im.style.display='none'; if(tx)tx.style.display=''; if(box)box.classList.remove('has-img'); } }
-  $('wuName').textContent=s.full_name||'Applicant';
-  $('wuAvatar').textContent=initials(s.full_name);
+  $('wuName').textContent=displayName;
+  $('wuAvatar').textContent=initials(displayName);
   $('wuSchoolNo').textContent='School No.: '+(s.school_no||'—');
   app.done=[s.personal_done,s.programme_done,s.undertaking_done,s.documents_done];
   app.done=s.submitted?[true,true,true]:[false,false,false];
   app.classId=s.class_id||null;
   $('pf1-index').value=s.index||''; $('pf1-gender').value=s.gender||''; $('pf1-prog').value=s.programme||'';
-  $('pf1-res').value=s.residential||'—'; $('pf1-surname').value=s.surname||s.full_name||''; $('pf1-other').value=s.other_names||'';
+  $('pf1-res').value=s.residential||'—'; $('pf1-surname').value=s.surname||displayName||''; $('pf1-other').value=s.other_names||'';
   $('pf1-agg').value=(s.aggregate!=null?s.aggregate:'—');
   buildPickers(); buildClassTable(); prefillRecords(s.records);
   const done=s.submitted;
   $('welcomeCard').classList.toggle('pending',!done);
   $('welcomeMsg').textContent=done
-    ? (s.full_name||'')+', WELL DONE! You have completed your Personal Records Form. Kindly download all the necessary documents. Thank you!'
-    : (s.full_name||'')+', please complete your Personal Records Form to proceed with your admission.';
+    ? displayName+', WELL DONE! You have completed your Personal Records Form. Kindly download all the necessary documents. Thank you!'
+    : displayName+', please complete your Personal Records Form to proceed with your admission.';
   const blocks=[
     {h:s.programme||'—',l:'Programme'},
     {h:s.residential||'—',l:'Residential Status'},
@@ -965,7 +985,7 @@ function recordsTableHTML(){
   const section=(letter,title)=>{ n=0; return '<tr><td class=&quot;sec-h&quot; colspan=&quot;2&quot;>'+letter+'. '+title+'</td></tr>'; };
   return '<table class=&quot;records-table&quot;>'
     +section('A','Placement')
-    +rowN('Full name',s.full_name)+rowN('Gender',s.gender)+rowN('JHS Index No.',s.index)
+    +rowN('Full name',studentName(s))+rowN('Gender',s.gender)+rowN('JHS Index No.',s.index)
     +rowN('Programme',s.programme)+rowN('Residential Status',s.residential)+rowN('Class',s.class||r.class_name)+rowN('House',s.house)+rowN('Admission No.',s.school_no)
     +section('B','Enrolment Data')
     +rowN('Aggregate of Best Six',(s.aggregate!=null?s.aggregate:''))+rowN('Raw Score',r.raw_score)+rowN('Enrolment Code',r.enrolment_code)
@@ -989,7 +1009,7 @@ function tplVars(){
     HEADMASTER:sc.headmaster_name||'', ACADEMIC_YEAR:cf.academic_year||'2025/2026',
     DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
     REPORTING_DATE:reopening(), REPORTING_TIME:cf.reopening_time||'',
-    STUDENT_NAME:s.full_name||'', INDEX:s.index||'', ADMISSION_NO:s.school_no||'',
+    STUDENT_NAME:studentName(s), INDEX:s.index||'', ADMISSION_NO:s.school_no||'',
     PROGRAMME:s.programme||'', CLASS:s.class||'To be assigned', HOUSE:s.house||'To be assigned',
     GENDER:s.gender||'', RESIDENTIAL:s.residential||'', AGGREGATE:(s.aggregate!=null?s.aggregate:''), CONTACT:s.contact||''
   };
