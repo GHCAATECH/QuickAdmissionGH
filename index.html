@@ -2393,6 +2393,8 @@ async function deleteStudent(id){
   const {data,error}=await sb.rpc('delete_student',{p_school:SB_SCHOOL.id,p_student:s._id});
   if(error){toast('Delete failed: '+error.message);return;}
   if(!data||!data.ok){toast('Delete failed: '+((data&amp;&amp;data.error)||'unknown'));return;}
+  // best-effort: remove the uploaded enrolment-form file from storage
+  if(data.form_url){ try{ const m=String(data.form_url).match(/enrolment-forms\/(.+)$/); if(m) await sb.storage.from('enrolment-forms').remove([decodeURIComponent(m[1])]); }catch(e){} }
   students=students.filter(x=>x.id!==id);
   placement=placement.filter(x=>x.index!==s.index);
   selected.delete(id);
