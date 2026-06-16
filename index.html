@@ -605,7 +605,7 @@ async function doLogin(){
   }
   session={index:idx,token:tok,school:sid}; STU=data.student; applySchool(data);
   try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){}
-  hydrate(); showScreen('s-app'); showPanel('dash');
+  hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion();
   showDisclaimer();
 }
 async function bootStudent(){
@@ -613,7 +613,7 @@ async function bootStudent(){
   if(!s||!s.index||!s.token) return;
   try{
     const {data}=await sb.rpc('student_login',{p_index:s.index,p_token:s.token,p_school:s.school||null});
-    if(data&amp;&amp;data.ok){ session=s; STU=data.student; applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); }
+    if(data&amp;&amp;data.ok){ session=s; STU=data.student; applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); }
     else { session=null; STU=null; try{localStorage.removeItem('qag_student');}catch(e){} showScreen('s-login'); }
   }catch(e){}
 }
@@ -645,6 +645,19 @@ async function validateSession(){
 }
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') validateSession(); });
 setInterval(function(){ if(session) validateSession(); }, 60000);
+// Realtime: the school broadcasts when a student is deleted — revoke access instantly.
+let stuChannel=null;
+function watchDeletion(){
+  if(!session||!session.school) return;
+  if(stuChannel){ try{sb.removeChannel(stuChannel);}catch(e){} stuChannel=null; }
+  stuChannel=sb.channel('school:'+session.school)
+    .on('broadcast',{event:'student_deleted'},function(msg){
+      const p=(msg&amp;&amp;msg.payload)||{};
+      if(session&amp;&amp;String(p.index)===String(session.index)) revokeAccess();
+    })
+    .subscribe();
+}
+function stopWatchDeletion(){ if(stuChannel){ try{sb.removeChannel(stuChannel);}catch(e){} stuChannel=null; } }
 function hydrate(){
   const s=STU;
   $('sbName').textContent=s.full_name||'Applicant';
@@ -772,7 +785,7 @@ async function verifyPayment(reference, idx, name, school){
   toast('Payment confirmed \u2014 signing you in\u2026');
   session={index:idx,token:data.token,school:school||null};
   const {data:login}=await sb.rpc('student_login',{p_index:idx,p_token:data.token,p_school:school||null});
-  if(login&amp;&amp;login.ok){ STU=login.student; applySchool(login); try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){} hydrate(); showScreen('s-app'); showPanel('dash'); showDisclaimer(); toast('Welcome! Save your token: '+data.token); }
+  if(login&amp;&amp;login.ok){ STU=login.student; applySchool(login); try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){} hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); showDisclaimer(); toast('Welcome! Save your token: '+data.token); }
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }
 function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in — tap Log in');}
@@ -1024,7 +1037,7 @@ function docProspectus(){
 }
 
 function gotoSuper(){ try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin_12.html'; }
-function logout(){session=null;STU=null;try{localStorage.removeItem('qag_student');}catch(e){}showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
+function logout(){stopWatchDeletion();session=null;STU=null;try{localStorage.removeItem('qag_student');}catch(e){}showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
 
 buildSteps();
 // Phone/contact fields: digits only, max 10
