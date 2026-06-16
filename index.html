@@ -614,7 +614,7 @@ async function bootStudent(){
   try{
     const {data}=await sb.rpc('student_login',{p_index:s.index,p_token:s.token,p_school:s.school||null});
     if(data&amp;&amp;data.ok){ session=s; STU=data.student; applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); }
-    else { try{localStorage.removeItem('qag_student');}catch(e){} }
+    else { session=null; STU=null; try{localStorage.removeItem('qag_student');}catch(e){} showScreen('s-login'); }
   }catch(e){}
 }
 function showDisclaimer(){
@@ -629,7 +629,22 @@ function declineDisclaimer(){ const ov=$('discOverlay'); if(ov) ov.classList.rem
 async function refreshStudent(){
   const {data}=await sb.rpc('student_login',{p_index:session.index,p_token:session.token,p_school:session.school||null});
   if(data&amp;&amp;data.ok){STU=data.student;applySchool(data);hydrate();}
+  else if(data&amp;&amp;!data.ok){ revokeAccess(); }
 }
+// If the student's record has been deleted by the school, drop their access immediately.
+function revokeAccess(){
+  toast('Your record is no longer available — please contact your school.');
+  logout();
+}
+async function validateSession(){
+  if(!session||!session.index) return;
+  try{
+    const {data}=await sb.rpc('student_login',{p_index:session.index,p_token:session.token,p_school:session.school||null});
+    if(!data||!data.ok) revokeAccess();
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') validateSession(); });
+setInterval(function(){ if(session) validateSession(); }, 60000);
 function hydrate(){
   const s=STU;
   $('sbName').textContent=s.full_name||'Applicant';
