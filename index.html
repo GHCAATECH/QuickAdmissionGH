@@ -1718,11 +1718,11 @@ bootStudent();
         <div class=&quot;pop-overlay&quot; id=&quot;manualPop&quot; onclick=&quot;if(event.target===this)closePop('manualPop')&quot;>
           <div class=&quot;panel panel-pad pop-card&quot; style=&quot;max-width:760px&quot;>
             <div style=&quot;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px&quot;><h3 class=&quot;section-title&quot; style=&quot;margin:0&quot;>Add record manually</h3><button class=&quot;btn btn-ghost btn-sm&quot; onclick=&quot;closePop('manualPop')&quot;>×</button></div>
-            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Index number</label><input id=&quot;pl_index&quot; placeholder=&quot;e.g. 100000000026&quot;></div><div class=&quot;field&quot;><label>SMS contact</label><input id=&quot;pl_sms&quot; type=&quot;tel&quot; placeholder=&quot;024…&quot;></div></div>
-            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Full name</label><input id=&quot;pl_name&quot; placeholder=&quot;Surname / full name&quot;></div><div class=&quot;field&quot;><label>Other name(s)</label><input id=&quot;pl_other&quot; placeholder=&quot;Other names&quot;></div></div>
-            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Gender</label><select id=&quot;pl_gender&quot;><option value=&quot;&quot;>Select…</option><option>Male</option><option>Female</option></select></div><div class=&quot;field&quot;><label>Residential status</label><select id=&quot;pl_res&quot;><option value=&quot;&quot;>Select…</option><option>Boarding</option><option>Day</option></select></div></div>
-            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Programme offered / learning area</label><select id=&quot;pl_prog&quot;></select></div><div class=&quot;field&quot;><label>Aggregate of best six</label><input id=&quot;pl_agg&quot; type=&quot;number&quot; min=&quot;6&quot; max=&quot;54&quot; placeholder=&quot;e.g. 12&quot;></div></div>
-            <div class=&quot;field&quot;><label>Date of birth</label><input id=&quot;pl_dob&quot; type=&quot;date&quot;></div>
+            <p style=&quot;font-size:12px;color:var(--muted);margin:0 0 10px&quot;>All fields are required.</p>
+            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Index number *</label><input id=&quot;pl_index&quot; placeholder=&quot;e.g. 100000000026&quot;></div><div class=&quot;field&quot;><label>Full name *</label><input id=&quot;pl_name&quot; placeholder=&quot;Full name&quot;></div></div>
+            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Gender *</label><select id=&quot;pl_gender&quot;><option value=&quot;&quot;>Select…</option><option>Male</option><option>Female</option></select></div><div class=&quot;field&quot;><label>Residential status *</label><select id=&quot;pl_res&quot;><option value=&quot;&quot;>Select…</option><option>Boarding</option><option>Day</option></select></div></div>
+            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Programme offered / learning area *</label><select id=&quot;pl_prog&quot;></select></div><div class=&quot;field&quot;><label>Aggregate of best six *</label><input id=&quot;pl_agg&quot; type=&quot;number&quot; min=&quot;6&quot; max=&quot;54&quot; placeholder=&quot;e.g. 12&quot;></div></div>
+            <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Date of birth *</label><input id=&quot;pl_dob&quot; type=&quot;date&quot;></div><div class=&quot;field&quot;><label>SMS contact *</label><input id=&quot;pl_sms&quot; type=&quot;tel&quot; placeholder=&quot;024…&quot;></div></div>
             <button class=&quot;btn btn-primary btn-sm&quot; onclick=&quot;addPlacement()&quot;>Add record</button>
           </div>
         </div>
@@ -2276,7 +2276,8 @@ function openPop(id){
 }
 function closePop(id){ const o=document.getElementById(id); if(o) o.classList.remove('show'); }
 function downloadPlacementTemplate(){
-  const csv='index_number,student_name,other_names,gender,residential_status,programme,aggregate,jhs_attended,dob,sms_contact,enrolment_code\n';
+  // Columns match the manual &quot;Add record&quot; form (all required)
+  const csv='index_number,student_name,gender,residential_status,programme,aggregate,dob,sms_contact\n';
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='placement_template.csv';a.click();
 }
 async function handlePlacementFile(inp){
@@ -2304,25 +2305,7 @@ async function handlePlacementFile(inp){
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   renderPlacement();
 }
-async function addPlacement(){
-  if(roGuard())return;
-  if(!SB_SCHOOL){toast('School not loaded yet');return;}
-  const i=$('pl_index').value.trim(),n=$('pl_name').value.trim();
-  if(!i||!n){toast('Index and name required');return;}
-  const existed=placement.some(x=>x.index===i);
-  // Upsert via the RPC: if the index exists, its info is REPLACED across
-  // placement list, admission list and student portal; otherwise it's added.
-  const row={index_number:i,student_name:n,programme:$('pl_prog').value||'',enrolment_code:$('pl_code').value||''};
-  const {data,error}=await sb.rpc('import_placement',{p_school:SB_SCHOOL.id,p_rows:[row]});
-  if(error){toast('Save failed: '+error.message);return;}
-  if(!data||!data.ok){toast('Save failed: '+((data&amp;&amp;data.error)||'unknown'));return;}
-  // reload the placement list so the table reflects the change
-  const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
-  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
-  $('pl_index').value='';$('pl_name').value='';$('pl_code').value='';
-  renderPlacement();
-  toast(existed?('Student '+i+' updated — information replaced'):'Record added');
-}
+// addPlacement is defined later (single canonical version that requires all fields)
 
 /* ===== STUDENTS + BULK ===== */
 function filteredStudents(){
@@ -3495,19 +3478,25 @@ delItem=async function(type,id){
 
 addPlacement=async function(){
   if(roGuard())return;
-  const i=val('pl_index').trim(),n=val('pl_name').trim(); if(!i||!n){toast('Index number and full name are required');return;}
-  const rec={
-    school_id:SB_SCHOOL.id, index_number:i, student_name:n,
-    other_names:val('pl_other')||null, gender:val('pl_gender')||null,
-    residential_status:val('pl_res')||null, programme:val('pl_prog')||null,
-    aggregate: val('pl_agg')? parseInt(val('pl_agg')) : null,
-    dob: val('pl_dob')||null, sms_contact:val('pl_sms')||null
-  };
-  const {error}=await sb.from('placement_list').upsert(rec,{onConflict:'school_id,index_number'});
+  if(!SB_SCHOOL){toast('School not loaded yet');return;}
+  // All fields are required
+  const i=val('pl_index').trim(), n=val('pl_name').trim(), g=val('pl_gender'),
+        res=val('pl_res'), prog=val('pl_prog'), agg=val('pl_agg').trim(),
+        dob=val('pl_dob'), sms=val('pl_sms').trim();
+  if(!i||!n||!g||!res||!prog||!agg||!dob||!sms){toast('All fields are required');return;}
+  const existed=placement.some(x=>x.index===i);
+  // Route through import_placement so an existing index is REPLACED across
+  // placement list, admission list and student portal.
+  const row={index_number:i,student_name:n,gender:g,residential_status:res,
+             programme:prog,aggregate:agg,dob:dob,sms_contact:sms};
+  const {data,error}=await sb.rpc('import_placement',{p_school:SB_SCHOOL.id,p_rows:[row]});
   if(error){toast('Could not save: '+error.message);return;}
-  placement.unshift({index:i,name:n,other:rec.other_names||'',gender:rec.gender||'',res:rec.residential_status||'',prog:rec.programme||'',agg:rec.aggregate,dob:rec.dob||'',sms:rec.sms_contact||'',code:null,loggedIn:false});
-  ['pl_index','pl_name','pl_other','pl_gender','pl_res','pl_agg','pl_dob','pl_sms'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  renderPlacement(); closePop('manualPop'); toast('Placement record added');
+  if(!data||!data.ok){toast('Could not save: '+((data&amp;&amp;data.error)||'unknown'));return;}
+  const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
+  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  ['pl_index','pl_name','pl_gender','pl_res','pl_agg','pl_dob','pl_sms'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderPlacement(); closePop('manualPop');
+  toast(existed?('Student '+i+' updated — information replaced'):'Placement record added');
 };
 
 /* ===== DISCLAIMER (shown after successful login) ===== */
