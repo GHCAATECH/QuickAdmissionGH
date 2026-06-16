@@ -3038,9 +3038,20 @@ async function adminLogin(){
 }
 
 async function loadSchoolData(prof){
-  // Resolve THIS admin's school so we never read another school's data
+  // Resolve THIS admin's school so we never read another school's data.
+  // IMPORTANT: never fall back to an arbitrary school — that would show the wrong
+  // school's data to an account that isn't linked to one (e.g. a super admin).
   let myId=(prof&amp;&amp;prof.school_id)||null;
-  if(!myId){ const {data:sd}=await sb.from('schools').select('id').limit(1); myId=(sd&amp;&amp;sd[0]&amp;&amp;sd[0].id)||null; }
+  if(!myId){
+    SB_SCHOOL=null; SB_CFG={};
+    const nm=$('brandName'); if(nm) nm.textContent='No school linked';
+    const bm=$('brandCrest'); if(bm){bm.removeAttribute('src');bm.style.display='none';}
+    const lt=$('brandLogoText'); if(lt) lt.style.display='';
+    toast(prof&amp;&amp;prof.role==='super_admin'
+      ? 'Super admins manage schools from the Super Admin portal.'
+      : 'This account is not linked to a school — contact your administrator.');
+    return;
+  }
   const [sch,cfg,progs,hs,cls,stu,plc,pay,sms,log]=await Promise.all([
     sb.from('schools').select('*').eq('id',myId),
     sb.from('school_config').select('*').eq('school_id',myId),
