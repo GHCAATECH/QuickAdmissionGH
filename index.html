@@ -38,11 +38,43 @@
   .qa-stack{position:fixed;top:72px;left:0;right:0;bottom:0}
   .app-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:#fff}
   .app-frame.active{display:block}
+  body.qa-booting .qa-tabs,body.qa-booting .qa-stack{visibility:hidden}
   @media(max-width:560px){.qa-tabs{height:56px;padding:0 10px}.qa-logo{height:52px}.qa-stack{top:56px}.qa-tab{padding:6px 9px;font-size:11px;margin-left:3px}}
   @media(max-width:380px){.qa-logo{height:44px}.qa-tab{padding:5px 7px;font-size:10px}}
 </style>
 </head>
-<body>
+<body class="qa-booting">
+  <script>
+    (function qaTabIdentity(){
+      try{
+        if(!window.name || window.name.indexOf('qag_tab_')!==0){
+          window.name='qag_tab_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2);
+        }
+      }catch(e){}
+    })();
+    (function qaCleanupLegacyStorage(){
+      function shouldDrop(key){
+        return key==='qag_student' ||
+          key==='qag_active_tab' ||
+          key.indexOf('qag-school-auth')===0 ||
+          key.indexOf('qag-super-auth')===0;
+      }
+      function clean(store){
+        try{
+          var keys=[];
+          for(var i=0;i<store.length;i++){
+            var key=store.key(i);
+            if(key) keys.push(key);
+          }
+          keys.forEach(function(key){
+            if(shouldDrop(key)) store.removeItem(key);
+          });
+        }catch(e){}
+      }
+      clean(window.sessionStorage);
+      clean(window.localStorage);
+    })();
+  </script>
   <div class="qa-tabs">
     <img class="qa-logo" src="veloxis-logo.png" alt="VELOXIS TECH HUB">
     <span class="spacer"></span>
@@ -85,6 +117,7 @@
   .btn-accent{background:var(--accent);color:#3a2906}.btn-accent:hover{filter:brightness(.96)}
   .btn-danger{background:var(--danger);color:#fff}.btn-sm{padding:8px 13px;font-size:13px}
   .screen{display:none;min-height:100vh}.screen.active{display:block;animation:fade .3s ease}
+  body.booting .screen{display:none!important}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
   /* ===== AUTH ===== */
@@ -339,10 +372,17 @@
   .disc-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
   .disc-actions .btn:disabled{opacity:.5;cursor:not-allowed}
   @media(max-width:520px){.disc-actions{flex-direction:column-reverse}.disc-actions .btn{width:100%;justify-content:center}}
+  .boot-splash{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  body.booting .boot-splash{display:flex}
+  .boot-card{display:flex;align-items:center;gap:12px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
+  .boot-spinner{width:18px;height:18px;border:2px solid var(--primary-soft);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
+  .boot-copy{font-size:13px;font-weight:600;color:var(--ink-soft)}
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
-<body>
+<body class=&quot;booting&quot;>
 <div class=&quot;env-badge&quot; id=&quot;envBadge&quot;>● LIVE</div>
+<div class=&quot;boot-splash&quot; id=&quot;bootSplash&quot;><div class=&quot;boot-card&quot;><span class=&quot;boot-spinner&quot; aria-hidden=&quot;true&quot;></span><span class=&quot;boot-copy&quot;>Loading your session...</span></div></div>
 
 <!-- ===== LOGIN ===== -->
 <div class=&quot;screen active&quot; id=&quot;s-login&quot;>
@@ -577,6 +617,25 @@ function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));window.scrollTo(0,0);if(id==='s-purchase'){try{showPendingBanner();}catch(e){}}}
 const progById=id=>PROGRAMMES.find(p=>p.id===id);
 const initials=n=>{const w=(n||'').trim().split(' ').filter(Boolean);return ((w[0]&amp;&amp;w[0][0]||'?')+(w[1]&amp;&amp;w[1][0]||'')).toUpperCase();};
+function qagTabScope(){
+  try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.name) return window.parent.name; }catch(e){}
+  try{ return window.name||'qag_tab_fallback'; }catch(e){ return 'qag_tab_fallback'; }
+}
+function qagTabKey(key){
+  return 'qag_tab_state::'+qagTabScope()+'::'+key;
+}
+function getStudentSession(){
+  try{return JSON.parse(localStorage.getItem(qagTabKey('qag_student'))||'null');}catch(e){return null;}
+}
+function setStudentSession(next){
+  try{localStorage.setItem(qagTabKey('qag_student'),JSON.stringify(next));}catch(e){}
+}
+function clearStudentSession(){
+  try{localStorage.removeItem(qagTabKey('qag_student'));}catch(e){}
+}
+function finishStudentBoot(){
+  try{document.body.classList.remove('booting');}catch(e){}
+}
 function studentName(s){
   if(!s)return '';
   return (s.student_name||s.placement_name||s.name||[s.surname,s.other_names].filter(Boolean).join(' ')||s.full_name||'').trim();
@@ -591,6 +650,17 @@ function normalizeStudent(s){
 function nameFromLookup(d){
   return d&amp;&amp;(d.student_name||d.placement_name||d.applicant_name||d.full_name||d.name_on_placement||d.candidate_name||'');
 }
+function cleanContact(v){ return v==null?'':String(v).trim(); }
+function placementSmsFromLookup(d){
+  if(!d)return '';
+  const x=d.student||d.placement||d;
+  return cleanContact(x.sms_contact||x.placement_sms_contact||x.imported_sms_contact||x.cssps_sms_contact||x.sms);
+}
+function studentContact(s){
+  if(!s)return '';
+  const r=s.records||{};
+  return cleanContact(r.sms_contact||s.parent_phone||s.placement_sms_contact||s.sms_contact||s.imported_sms_contact||s.cssps_sms_contact||s.sms||s.contact);
+}
 async function lookupPlacementName(idx,school){
   if(!idx)return '';
   try{
@@ -603,6 +673,20 @@ async function lookupPlacementName(idx,school){
     const {data}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:school||null});
     const nm=nameFromLookup(data);
     if(nm)return nm;
+  }catch(e){}
+  return '';
+}
+async function lookupPlacementSms(idx,school){
+  if(!idx)return '';
+  try{
+    if(school){
+      const {data:pl,error}=await sb.from('placement_list').select('sms_contact').eq('school_id',school).eq('index_number',idx).maybeSingle();
+      if(!error&amp;&amp;pl&amp;&amp;pl.sms_contact)return cleanContact(pl.sms_contact);
+    }
+  }catch(e){}
+  try{
+    const {data}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:school||null});
+    return placementSmsFromLookup(data);
   }catch(e){}
   return '';
 }
@@ -624,6 +708,8 @@ async function applySchool(data){
     if(STU&amp;&amp;sid&amp;&amp;STU.index){
       const nm=await lookupPlacementName(STU.index,sid);
       if(nm){STU.student_name=nm;STU.placement_name=nm;normalizeStudent(STU);}
+      const sms=placementSmsFromLookup(data)||await lookupPlacementSms(STU.index,sid);
+      if(sms){STU.sms_contact=sms;STU.placement_sms_contact=sms;STU.contact=sms;}
     }
   }catch(e){}
   if(data.school){
@@ -651,27 +737,59 @@ async function doLogin(){
     return;
   }
   session={index:idx,token:tok,school:sid}; STU=data.student; await applySchool(data);
-  try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){}
+  setStudentSession(session);
   hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion();
-  showDisclaimer();
+  const skipDisclaimer=hasAcceptedStudentDisclaimer(idx,sid)||await hasStudentLoggedInBefore(idx,sid);
+  showDisclaimer(typeof data.show_disclaimer==='boolean' ? data.show_disclaimer : !skipDisclaimer);
 }
 async function bootStudent(){
-  let s=null; try{ s=JSON.parse(localStorage.getItem('qag_student')||'null'); }catch(e){}
+  const s=getStudentSession();
   if(!s||!s.index||!s.token) return;
   try{
     const {data}=await sb.rpc('student_login',{p_index:s.index,p_token:s.token,p_school:s.school||null});
     if(data&amp;&amp;data.ok){ session=s; STU=data.student; await applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); }
-    else { session=null; STU=null; try{localStorage.removeItem('qag_student');}catch(e){} showScreen('s-login'); }
+    else { session=null; STU=null; clearStudentSession(); showScreen('s-login'); }
   }catch(e){}
 }
-function showDisclaimer(){
+async function hasStudentLoggedInBefore(idx,school){
+  if(!idx||!school) return false;
+  try{
+    const {data,error}=await sb.from('placement_list').select('logged_in').eq('school_id',school).eq('index_number',idx).maybeSingle();
+    if(error) return hasAcceptedStudentDisclaimer(idx,school);
+    return !!(data&amp;&amp;data.logged_in);
+  }catch(e){
+    return hasAcceptedStudentDisclaimer(idx,school);
+  }
+}
+function studentDisclaimerKey(idx,school){
+  return 'qag_disclaimer_student_'+(school||'school')+'_'+(idx||'student');
+}
+function qagStorage(){
+  try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.localStorage) return window.parent.localStorage; }catch(e){}
+  try{ return window.localStorage; }catch(e){ return null; }
+}
+function hasAcceptedStudentDisclaimer(idx,school){
+  try{const s=qagStorage(); return !!s&amp;&amp;s.getItem(studentDisclaimerKey(idx,school))==='1';}catch(e){return false;}
+}
+function showDisclaimer(isFirstLogin){
+  const ov=$('discOverlay');
+  if(isFirstLogin===false){ if(ov) ov.classList.remove('show'); return; }
+  if(isFirstLogin!==true&amp;&amp;hasAcceptedDisclaimer()) return;
   const sch=(SCHOOL&amp;&amp;SCHOOL.school&amp;&amp;SCHOOL.school.name)||&quot;your school&quot;;
   const sn=$('discSchool'); if(sn) sn.textContent=sch;
   const cb=$('discAgree'); if(cb) cb.checked=false;
   const btn=$('discBtn'); if(btn) btn.disabled=true;
-  const ov=$('discOverlay'); if(ov){ ov.classList.add('show'); const b=$('discBody'); if(b) b.scrollTop=0; }
+  markDisclaimerAccepted();
+  if(ov){ ov.classList.add('show'); const b=$('discBody'); if(b) b.scrollTop=0; }
 }
-function acceptDisclaimer(){ const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); }
+function disclaimerKey(){
+  const sid=(session&amp;&amp;session.school)||(SCHOOL&amp;&amp;SCHOOL.school&amp;&amp;SCHOOL.school.id)||'school';
+  const idx=(session&amp;&amp;session.index)||(STU&amp;&amp;STU.index)||'student';
+  return studentDisclaimerKey(idx,sid);
+}
+function hasAcceptedDisclaimer(){ try{const s=qagStorage(); return !!s&amp;&amp;s.getItem(disclaimerKey())==='1';}catch(e){return false;} }
+function markDisclaimerAccepted(){ try{const s=qagStorage(); if(s)s.setItem(disclaimerKey(),'1');}catch(e){} }
+function acceptDisclaimer(){ markDisclaimerAccepted(); const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); }
 function declineDisclaimer(){ const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); logout(); }
 async function refreshStudent(){
   const {data}=await sb.rpc('student_login',{p_index:session.index,p_token:session.token,p_school:session.school||null});
@@ -708,6 +826,8 @@ function stopWatchDeletion(){ if(stuChannel){ try{sb.removeChannel(stuChannel);}
 function hydrate(){
   const s=STU;
   const displayName=studentName(s)||'Applicant';
+  const smsContact=studentContact(s);
+  if(smsContact)s.contact=smsContact;
   $('sbName').textContent=displayName;
   $('sbAvatar').textContent=initials(displayName);
   { const url=schoolCrest(); const im=$('sbCrestImg'), tx=$('sbCrestText'), box=$('sbCrest');
@@ -723,6 +843,8 @@ function hydrate(){
   $('pf1-res').value=s.residential||'—'; $('pf1-surname').value=s.surname||displayName||''; $('pf1-other').value=s.other_names||'';
   $('pf1-agg').value=(s.aggregate!=null?s.aggregate:'—');
   buildPickers(); buildClassTable(); prefillRecords(s.records);
+  if(!$('pf-sms').value&&smsContact)$('pf-sms').value=smsContact;
+  if(!app.fields.sms_contact&&smsContact)app.fields.sms_contact=smsContact;
   const done=s.submitted;
   $('welcomeCard').classList.toggle('pending',!done);
   $('welcomeMsg').textContent=done
@@ -836,7 +958,7 @@ async function verifyPayment(reference, idx, name, school){
   toast('Payment confirmed \u2014 signing you in\u2026');
   session={index:idx,token:data.token,school:school||null};
   const {data:login}=await sb.rpc('student_login',{p_index:idx,p_token:data.token,p_school:school||null});
-  if(login&amp;&amp;login.ok){ STU=login.student; await applySchool(login); try{localStorage.setItem('qag_student',JSON.stringify(session));}catch(e){} hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); showDisclaimer(); toast('Welcome! Save your token: '+data.token); }
+  if(login&amp;&amp;login.ok){ STU=login.student; await applySchool(login); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); const skipDisclaimer=hasAcceptedStudentDisclaimer(idx,school||null)||await hasStudentLoggedInBefore(idx,school||null); showDisclaimer(typeof login.show_disclaimer==='boolean' ? login.show_disclaimer : !skipDisclaimer); toast('Welcome! Save your token: '+data.token); }
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }
 function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in — tap Log in');}
@@ -1099,7 +1221,7 @@ function docProspectus(){
 }
 
 function gotoSuper(){ try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin_12.html'; }
-function logout(){stopWatchDeletion();session=null;STU=null;try{localStorage.removeItem('qag_student');}catch(e){}showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
+function logout(){stopWatchDeletion();session=null;STU=null;clearStudentSession(); const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
 
 buildSteps();
 // Phone/contact fields: digits only, max 10
@@ -1148,8 +1270,14 @@ function onLoginSchoolChange(){
   const lb=$('loginBtn'); if(lb){ lb.disabled=closed; lb.style.opacity=closed?'.5':''; lb.style.pointerEvents=closed?'none':''; }
   const bt=$('buyTokenBtn'); if(bt){ bt.disabled=closed; bt.style.opacity=closed?'.5':''; bt.style.pointerEvents=closed?'none':''; }
 }
-loadSchools();
-bootStudent();
+async function initStudentPortal(){
+  try{
+    await Promise.allSettled([loadSchools(),bootStudent()]);
+  }finally{
+    finishStudentBoot();
+  }
+}
+initStudentPortal();
 // Live school detection on the purchase form
 (function(){
   var pi=document.getElementById('p-index'); if(!pi)return;
@@ -1201,6 +1329,7 @@ bootStudent();
 
   html,body{height:100%;overflow:hidden}
   .app{display:grid;grid-template-columns:248px 1fr;height:100vh;overflow:hidden}
+  body.auth-booting .app{display:none!important}
 
   /* sidebar */
   .sidebar{background:var(--sb);color:var(--sb-text);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40}
@@ -1581,7 +1710,7 @@ bootStudent();
   @media(max-width:520px){.disc-actions{flex-direction:column-reverse}.disc-actions .btn{width:100%;justify-content:center}}
 </style>
 </head>
-<body>
+<body class=&quot;auth-booting&quot;>
 <div class=&quot;app&quot;>
   <!-- SIDEBAR -->
   <aside class=&quot;sidebar&quot; id=&quot;sidebar&quot;>
@@ -3028,7 +3157,19 @@ fillSelects();renderStats();renderRecent();buildColvis();
 /* ================= SUPABASE INTEGRATION (school admin) ================= */
 const SB_URL='https://datxaylostmyroleisdl.supabase.co';
 const SB_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-school-auth'}});
+function schoolAuthScope(){
+  try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.name) return window.parent.name; }catch(e){}
+  try{ return window.name||'qag_tab_fallback'; }catch(e){ return 'qag_tab_fallback'; }
+}
+function schoolAuthKey(k){
+  return 'qag_auth_scope::'+schoolAuthScope()+'::'+k;
+}
+const schoolAuthStorage={
+  getItem:function(k){ try{ return window.localStorage.getItem(schoolAuthKey(k)); }catch(e){ return null; } },
+  setItem:function(k,v){ try{ window.localStorage.setItem(schoolAuthKey(k),v); }catch(e){} },
+  removeItem:function(k){ try{ window.localStorage.removeItem(schoolAuthKey(k)); }catch(e){} }
+};
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-school-auth',storage:schoolAuthStorage}});
 // Always attach a FRESH user token to privileged Edge Function calls, otherwise an
 // expired session makes the client send the publishable key and the function 401s.
 async function freshToken(){
@@ -3115,7 +3256,7 @@ const fmtT=ts=>{ if(!ts) return '—'; const d=new Date(ts), n=new Date(); const
   document.querySelector('.app').style.display='none';
   const ov=document.createElement('div');
   ov.id='authGate';
-  ov.style.cssText='position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(120% 80% at 50% -10%,rgba(17,94,74,.12),transparent 60%),linear-gradient(180deg,#e6ebe8,#EEF2F8)';
+  ov.style.cssText='position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(120% 80% at 50% -10%,rgba(17,94,74,.12),transparent 60%),linear-gradient(180deg,#e6ebe8,#EEF2F8)';
   ov.innerHTML=`<div style=&quot;width:100%;max-width:400px&quot;>
     <div style=&quot;text-align:center;margin-bottom:18px&quot;>
       <div style=&quot;width:64px;height:64px;border-radius:16px;margin:0 auto 12px;display:grid;place-items:center;background:linear-gradient(150deg,#1557B0,#2F74D0);color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:22px&quot;>QA</div>
@@ -3131,14 +3272,18 @@ const fmtT=ts=>{ if(!ts) return '—'; const d=new Date(ts), n=new Date(); const
   document.body.appendChild(ov);
   document.getElementById('ag_btn').addEventListener('click',adminLogin);
   document.getElementById('ag_pass').addEventListener('keydown',e=>{if(e.key==='Enter')adminLogin();});
-  bootSession();
+  bootSession().finally(function(){
+    const gate=document.getElementById('authGate');
+    if(gate&&document.querySelector('.app').style.display==='none') gate.style.display='flex';
+  });
 })();
 
 async function enterAdmin(prof,uid){
   SB_UID=uid; SB_PERMS=(prof.permissions===undefined?null:prof.permissions); SB_HOUSE=(SB_PERMS&amp;&amp;SB_PERMS.house)||null;
   await loadSchoolData(prof);
   const g=document.getElementById('authGate'); if(g)g.remove();
-  document.querySelector('.app').style.display='';
+  document.body.classList.remove('auth-booting');
+  document.querySelector('.app').style.display='grid';
   applyPermissions();
   go(firstAllowedView());
 }
@@ -3645,13 +3790,21 @@ addPlacement=async function(){
 
 /* ===== DISCLAIMER (shown after successful login) ===== */
 function showDisclaimer(){
+  if(hasAcceptedDisclaimer()) return;
   const sch=(SB_SCHOOL&amp;&amp;SB_SCHOOL.name)||&quot;your school&quot;;
   const sn=document.getElementById('discSchool'); if(sn) sn.textContent=sch;
   const cb=document.getElementById('discAgree'); if(cb) cb.checked=false;
   const btn=document.getElementById('discBtn'); if(btn) btn.disabled=true;
   const ov=document.getElementById('discOverlay'); if(ov){ ov.classList.add('show'); const b=document.getElementById('discBody'); if(b) b.scrollTop=0; }
 }
-function acceptDisclaimer(){ const ov=document.getElementById('discOverlay'); if(ov) ov.classList.remove('show'); }
+function disclaimerKey(){
+  const scope=(typeof SB_SCHOOL!=='undefined'&amp;&amp;SB_SCHOOL&amp;&amp;SB_SCHOOL.id)||'platform';
+  const uid=(typeof SB_UID!=='undefined'&amp;&amp;SB_UID)||'admin';
+  return 'qag_disclaimer_admin_'+scope+'_'+uid;
+}
+function hasAcceptedDisclaimer(){ try{return localStorage.getItem(disclaimerKey())==='1';}catch(e){return false;} }
+function markDisclaimerAccepted(){ try{localStorage.setItem(disclaimerKey(),'1');}catch(e){} }
+function acceptDisclaimer(){ markDisclaimerAccepted(); const ov=document.getElementById('discOverlay'); if(ov) ov.classList.remove('show'); }
 async function declineDisclaimer(){ const ov=document.getElementById('discOverlay'); if(ov) ov.classList.remove('show'); try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 async function logout(){ if(!confirm('Log out of the admin portal?'))return; try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 </script>
@@ -3723,6 +3876,7 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; try
 
   /* ---------- App shell ---------- */
   .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+  body.auth-booting .app{display:none!important}
 
   /* ---------- Sidebar ---------- */
   .sidebar{
@@ -3974,7 +4128,7 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; try
   .demo-faint:hover{color:var(--primary)}.demo-faint:hover code{color:var(--primary)}
 </style>
 </head>
-<body>
+<body class=&quot;auth-booting&quot;>
 <div class=&quot;app&quot;>
   <!-- ============ SIDEBAR ============ -->
   <aside class=&quot;sidebar&quot; id=&quot;sidebar&quot;>
@@ -4640,7 +4794,19 @@ renderAll();buildCharts();
 /* ================= SUPABASE INTEGRATION (super admin) ================= */
 const SB_URL='https://datxaylostmyroleisdl.supabase.co';
 const SB_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-super-auth'}});
+function superAuthScope(){
+  try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.name) return window.parent.name; }catch(e){}
+  try{ return window.name||'qag_tab_fallback'; }catch(e){ return 'qag_tab_fallback'; }
+}
+function superAuthKey(k){
+  return 'qag_auth_scope::'+superAuthScope()+'::'+k;
+}
+const superAuthStorage={
+  getItem:function(k){ try{ return window.localStorage.getItem(superAuthKey(k)); }catch(e){ return null; } },
+  setItem:function(k,v){ try{ window.localStorage.setItem(superAuthKey(k),v); }catch(e){} },
+  removeItem:function(k){ try{ window.localStorage.removeItem(superAuthKey(k)); }catch(e){} }
+};
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-super-auth',storage:superAuthStorage}});
 // Always attach a FRESH user token to privileged Edge Function calls, otherwise an
 // expired session makes the client send the publishable key and the function 401s.
 async function freshToken(){
@@ -4668,7 +4834,7 @@ const sa_time=ts=>{ if(!ts)return '—'; const d=new Date(ts),n=new Date(),m=Mat
 (function buildGate(){
   document.querySelector('.app').style.display='none';
   const ov=document.createElement('div'); ov.id='authGate';
-  ov.style.cssText='position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(120% 80% at 50% -10%,rgba(17,94,74,.12),transparent 60%),linear-gradient(180deg,#e6ebe8,#EEF2F8)';
+  ov.style.cssText='position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(120% 80% at 50% -10%,rgba(17,94,74,.12),transparent 60%),linear-gradient(180deg,#e6ebe8,#EEF2F8)';
   ov.innerHTML=`<div style=&quot;width:100%;max-width:400px&quot;>
     <div style=&quot;text-align:center;margin-bottom:18px&quot;>
       <div style=&quot;width:64px;height:64px;border-radius:16px;margin:0 auto 12px;display:grid;place-items:center;background:linear-gradient(150deg,#1557B0,#2F74D0);color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:22px&quot;>C</div>
@@ -4684,14 +4850,18 @@ const sa_time=ts=>{ if(!ts)return '—'; const d=new Date(ts),n=new Date(),m=Mat
   document.body.appendChild(ov);
   document.getElementById('ag_btn').addEventListener('click',superLogin);
   document.getElementById('ag_pass').addEventListener('keydown',e=>{if(e.key==='Enter')superLogin();});
-  bootSuperSession();
+  bootSuperSession().finally(function(){
+    const gate=document.getElementById('authGate');
+    if(gate&&document.querySelector('.app').style.display==='none') gate.style.display='flex';
+  });
 })();
 
 async function enterSuper(uid){
   SA_UID=uid;
   await loadSA();
   const g=document.getElementById('authGate'); if(g)g.remove();
-  document.querySelector('.app').style.display='';
+  document.body.classList.remove('auth-booting');
+  document.querySelector('.app').style.display='grid';
   go('dashboard');
 }
 async function bootSuperSession(){
@@ -4942,7 +5112,7 @@ sendBulkSms=async function(){
     <h3>2.3 Retrieve a lost token</h3>
     <p>Use <b>Retrieve token</b> — search by index number or payment receipt (select your school first).</p>
     <h3>2.4 The Personal Records Form</h3>
-    <p>After login you accept a short disclaimer, then complete four parts:</p>
+    <p>At first login you accept a short disclaimer, then complete four parts:</p>
     <ul>
       <li><b>A. Placement</b> — auto-filled from your placement data.</li>
       <li><b>B. Enrolment Data</b> — raw score, enrolment code, JHS details, and <b>upload your enrolment form</b> (JPG, max 2 MB).</li>
@@ -4957,7 +5127,7 @@ sendBulkSms=async function(){
   <section class=&quot;card&quot; id=&quot;school&quot;>
     <h2>3. School Admin Portal</h2>
     <h3>3.1 Logging in</h3>
-    <p>Sign in with your school-admin email and password, then accept the disclaimer. The owner has full access; sub-users are read-only.</p>
+    <p>Sign in with your school-admin email and password, then accept the disclaimer on first login. The owner has full access; sub-users are read-only.</p>
     <h3>3.2 Navigation</h3>
     <p>The sidebar groups pages into collapsible dropdowns: <b>Dashboard</b>, <b>Configuration</b> (School Setup, Student Portal Setup, Financials, SMS, Reports, Templates, Users, Utilities), <b>Academic structure</b> (Programmes, Houses, Classrooms), <b>Admissions</b> (Placement List, View/Manage Students, House/Class Allocation). Your name and <b>Log out</b> are bottom-left.</p>
     <h3>3.3 Placement List</h3>
@@ -5019,10 +5189,24 @@ sendBulkSms=async function(){
 "></iframe>
   </div>
 <script>
+function qaStorageKey(key){
+  try{ return 'qag_tab_state::'+(window.name||'qag_tab_fallback')+'::'+key; }catch(e){ return 'qag_tab_state::qag_tab_fallback::'+key; }
+}
 function qaShow(t){
   document.querySelectorAll('.qa-tab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
   document.querySelectorAll('.app-frame').forEach(f=>f.classList.toggle('active',f.dataset.t===t));
+  try{localStorage.setItem(qaStorageKey('qag_active_tab'),t);}catch(e){}
 }
+(function qaBoot(){
+  const tabs=Array.from(document.querySelectorAll('.qa-tab')).map(b=>b.dataset.t);
+  let next='student';
+  try{
+    const saved=localStorage.getItem(qaStorageKey('qag_active_tab'));
+    if(saved&&tabs.indexOf(saved)>-1) next=saved;
+  }catch(e){}
+  qaShow(next);
+  document.body.classList.remove('qa-booting');
+})();
 </script>
 </body>
 </html>

@@ -41,7 +41,7 @@ QuickAdmissionGH lets schools run their entire admission process online. It has 
 Use **Retrieve token** — search by index number or payment receipt (select your school first).
 
 ### 2.4 The Personal Records Form
-After login you accept a short **disclaimer**, then complete the form in four parts:
+At first login you accept a short **disclaimer**. After that, complete the form in four parts:
 
 - **A. Placement** — auto-filled from your placement data.
 - **B. Enrolment Data** — raw score, enrolment code, JHS attended/type, and **upload your enrolment form** (JPG, max 2 MB).
@@ -67,7 +67,7 @@ From the dashboard you can open/print:
 ## 3. School Admin Portal
 
 ### 3.1 Logging in
-Sign in with your school-admin email and password, then accept the disclaimer.
+Sign in with your school-admin email and password, then accept the disclaimer on first login.
 - The **school owner** has full edit access.
 - **Sub-users** created by the owner have **read-only** access.
 
