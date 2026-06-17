@@ -273,16 +273,9 @@
   #s-login .portal-quick-links{display:grid;gap:12px}
   #s-login .portal-link-btn{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;padding:16px 18px;border:1px solid #d6e3f3;border-radius:16px;background:#fff;color:#1557B0;text-align:left;font-size:15px;font-weight:600;box-shadow:0 16px 28px -30px rgba(21,87,176,.45);transition:border-color .14s,transform .14s,box-shadow .14s}
   #s-login .portal-link-btn:hover{border-color:#9fc1ff;transform:translateY(-1px);box-shadow:0 18px 30px -28px rgba(21,87,176,.5)}
-  #s-login .portal-link-btn .ico,#s-login .portal-contact-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,#eef5ff,#ddeafe);color:#1557B0;flex:none}
-  #s-login .portal-link-btn .ico svg,#s-login .portal-contact-icon svg{width:20px;height:20px}
+  #s-login .portal-link-btn .ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,#eef5ff,#ddeafe);color:#1557B0;flex:none}
+  #s-login .portal-link-btn .ico svg{width:20px;height:20px}
   #s-login .portal-link-btn .arrow{font-size:22px;line-height:1;color:#2d79ff}
-  #s-login .portal-contact-bar{display:grid;grid-template-columns:auto auto auto minmax(0,1fr);max-width:1180px;margin:18px auto 0;background:rgba(255,255,255,.94);border:1px solid rgba(146,180,233,.24);border-radius:24px;overflow:hidden;box-shadow:0 24px 48px -34px rgba(21,87,176,.32)}
-  #s-login .portal-contact-item{display:flex;align-items:center;gap:12px;min-width:0;padding:18px 22px}
-  #s-login .portal-contact-item + .portal-contact-item{border-left:1px solid rgba(212,225,242,.8)}
-  #s-login .portal-contact-item h3{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#1557B0}
-  #s-login .portal-contact-item p,#s-login .portal-contact-item a{font-size:15px;line-height:1.45;color:#17315f}
-  #s-login .portal-contact-item a{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  #s-login .portal-contact-item--security p{color:#556882}
   #s-login .portal-login-foot{text-align:center;margin-top:14px}
   #s-login .portal-login-foot a{font-size:11px;color:#8fa0ba;letter-spacing:.08em;text-transform:uppercase}
   @media(max-width:1023px){
@@ -291,9 +284,6 @@
     #s-login .portal-brand-copy h1{font-size:clamp(24px,3vw,34px)}
     #s-login .portal-brand-helpdesk-links{gap:10px}
     #s-login .portal-login-shell{grid-template-columns:1fr}
-    #s-login .portal-contact-bar{grid-template-columns:repeat(2,minmax(0,1fr))}
-    #s-login .portal-contact-item:nth-child(3){border-left:none;border-top:1px solid rgba(212,225,242,.8)}
-    #s-login .portal-contact-item:nth-child(4){border-top:1px solid rgba(212,225,242,.8)}
   }
   @media(max-width:767px){
     #s-login .auth{padding-left:12px;padding-right:12px}
@@ -310,9 +300,6 @@
     #s-login .portal-info-copy{font-size:16px}
     #s-login .login-token-row{grid-template-columns:1fr}
     #s-login #buyTokenBtn{width:100%;min-height:52px}
-    #s-login .portal-contact-bar{grid-template-columns:1fr}
-    #s-login .portal-contact-item{padding:16px 18px}
-    #s-login .portal-contact-item + .portal-contact-item{border-left:none;border-top:1px solid rgba(212,225,242,.8)}
   }
   @media(max-width:480px){
     #s-login .portal-brand-copy h1{font-size:24px}
@@ -324,9 +311,9 @@
     #s-login .portal-info-item{grid-template-columns:44px minmax(0,1fr);gap:12px}
     #s-login .portal-info-icon{width:44px;height:44px}
     #s-login .portal-info-item b{font-size:14px}
-    #s-login .portal-info-item span,#s-login .portal-contact-item p,#s-login .portal-contact-item a{font-size:13px}
+    #s-login .portal-info-item span{font-size:13px}
     #s-login .portal-link-btn{padding:14px 16px;font-size:14px}
-    #s-login .portal-link-btn .ico,#s-login .portal-contact-icon{width:36px;height:36px}
+    #s-login .portal-link-btn .ico{width:36px;height:36px}
   }
   .notice{border-radius:var(--r-sm);padding:9px 12px;font-size:11.5px;line-height:1.4;margin-bottom:9px;border:1px solid}
   .notice b{font-weight:600}
@@ -576,14 +563,14 @@
             <span>Helpdesk:</span>
           </div>
           <div class=&quot;portal-brand-helpdesk-links&quot;>
-            <a id=&quot;loginHeaderHelpPhone&quot; href=&quot;tel:0256744028&quot; class=&quot;mono&quot;>
+            <a id=&quot;blueBannerHelpdeskPhoneLink&quot; href=&quot;tel:0256744028&quot; class=&quot;mono&quot;>
               <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.9&quot;><path d=&quot;M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.9l-1.3 1.3a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 1.9-.6l3 .5a2 2 0 0 1 1.7 2Z&quot;/></svg>
-              <span>0256744028</span>
+              <span id=&quot;blueBannerHelpdeskPhone&quot;>0256744028</span>
             </a>
             <span class=&quot;portal-brand-helpdesk-sep&quot; aria-hidden=&quot;true&quot;>|</span>
-            <a id=&quot;loginHeaderHelpEmail&quot; href=&quot;mailto:admissions@quickadmissiongh.com&quot;>
+            <a id=&quot;blueBannerHelpdeskEmailLink&quot; href=&quot;mailto:admissions@quickadmissiongh.com&quot;>
               <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.9&quot;><rect x=&quot;3&quot; y=&quot;5&quot; width=&quot;18&quot; height=&quot;14&quot; rx=&quot;2&quot;/><path d=&quot;m4 7 8 6 8-6&quot;/></svg>
-              <span>admissions@quickadmissiongh.com</span>
+              <span id=&quot;blueBannerHelpdeskEmail&quot;>admissions@quickadmissiongh.com</span>
             </a>
           </div>
         </div>
@@ -676,25 +663,6 @@
           </button>
         </div>
       </section>
-    </div>
-
-    <div class=&quot;portal-contact-bar&quot;>
-      <div class=&quot;portal-contact-item&quot;>
-        <div class=&quot;portal-contact-icon&quot; aria-hidden=&quot;true&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;><path d=&quot;M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.9l-1.3 1.3a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 1.9-.6l3 .5a2 2 0 0 1 1.7 2Z&quot;/></svg></div>
-        <div><h3>Need Help?</h3></div>
-      </div>
-      <div class=&quot;portal-contact-item&quot;>
-        <div class=&quot;portal-contact-icon&quot; aria-hidden=&quot;true&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;><path d=&quot;M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.9l-1.3 1.3a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 1.9-.6l3 .5a2 2 0 0 1 1.7 2Z&quot;/></svg></div>
-        <div><a id=&quot;loginHelpPhone&quot; href=&quot;tel:0256744028&quot; class=&quot;mono&quot;>0256744028</a></div>
-      </div>
-      <div class=&quot;portal-contact-item&quot;>
-        <div class=&quot;portal-contact-icon&quot; aria-hidden=&quot;true&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;><rect x=&quot;3&quot; y=&quot;5&quot; width=&quot;18&quot; height=&quot;14&quot; rx=&quot;2&quot;/><path d=&quot;m4 7 8 6 8-6&quot;/></svg></div>
-        <div><a id=&quot;loginHelpEmail&quot; href=&quot;mailto:admissions@quickadmissiongh.com&quot;>admissions@quickadmissiongh.com</a></div>
-      </div>
-      <div class=&quot;portal-contact-item portal-contact-item--security&quot;>
-        <div class=&quot;portal-contact-icon&quot; aria-hidden=&quot;true&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;><path d=&quot;M12 3 5 6v5c0 4.3 2.6 8.3 7 10 4.4-1.7 7-5.7 7-10V6l-7-3Z&quot;/><path d=&quot;m9.4 11.8 1.9 1.9 3.8-3.8&quot;/></svg></div>
-        <div><p>Your information is secure and will be used for admission purposes only.</p></div>
-      </div>
     </div>
 
     <div class=&quot;auth-foot portal-login-foot&quot;><a onclick=&quot;gotoSuper()&quot; style=&quot;cursor:pointer&quot;>Super Admin</a></div>
@@ -1504,11 +1472,16 @@ const LOGIN_DEFAULTS={
   charge:30,
   code:'QA'
 };
-function schoolField(s,keys,fallback){
-  for(const key of keys){
-    const value=s&amp;&amp;s[key];
+function firstNonEmpty(){
+  for(let i=0;i<arguments.length;i++){
+    const value=arguments[i];
     if(value!==undefined&amp;&amp;value!==null&amp;&amp;String(value).trim()!=='') return value;
   }
+  return '';
+}
+function schoolField(s,keys,fallback){
+  const value=firstNonEmpty(...keys.map(key=&gt;s&amp;&amp;s[key]));
+  if(value!=='') return value;
   return fallback;
 }
 function schoolShortLabel(s){
@@ -1519,9 +1492,18 @@ function schoolShortLabel(s){
   const initials=name.split(/\s+/).filter(Boolean).map(word=&gt;word.charAt(0)).join('').slice(0,4).toUpperCase();
   return initials||LOGIN_DEFAULTS.code;
 }
-function selectedLoginSchool(){
-  const sid=$('login-school')?$('login-school').value:'';
-  return SCHOOLS_LIST.find(x=&gt;String(x.id)===String(sid))||null;
+function getSelectedSchool(){
+  const select=document.getElementById('login-school');
+  const selectedValue=select?select.value:'';
+  if(!selectedValue||!Array.isArray(SCHOOLS_LIST)) return null;
+  return SCHOOLS_LIST.find(s=&gt;
+    String(s.id)===String(selectedValue) ||
+    String(s.school_id)===String(selectedValue) ||
+    String(s.code)===String(selectedValue) ||
+    String(s.school_code)===String(selectedValue) ||
+    String(s.name)===String(selectedValue) ||
+    String(s.school_name)===String(selectedValue)
+  )||null;
 }
 function setButtonDisabled(el,disabled){
   if(!el) return;
@@ -1529,47 +1511,46 @@ function setButtonDisabled(el,disabled){
   el.style.opacity=disabled?'.55':'';
   el.style.pointerEvents=disabled?'none':'';
 }
-function applyLoginContacts(phone,email){
+function updateBlueBannerHelpdesk(){
+  const selectedSchool=getSelectedSchool();
+  const phone=selectedSchool
+    ? firstNonEmpty(
+        selectedSchool.helpdesk_line,
+        selectedSchool.helpdeskLine,
+        selectedSchool.helpdesk_phone,
+        selectedSchool.helpdeskPhone,
+        selectedSchool.support_phone,
+        selectedSchool.supportPhone
+      )||LOGIN_DEFAULTS.phone
+    : LOGIN_DEFAULTS.phone;
+  const email=selectedSchool
+    ? firstNonEmpty(
+        selectedSchool.helpdesk_email,
+        selectedSchool.helpdeskEmail,
+        selectedSchool.support_email,
+        selectedSchool.supportEmail
+      )||LOGIN_DEFAULTS.email
+    : LOGIN_DEFAULTS.email;
   const finalPhone=String(phone||LOGIN_DEFAULTS.phone).trim()||LOGIN_DEFAULTS.phone;
   const finalEmail=String(email||LOGIN_DEFAULTS.email).trim()||LOGIN_DEFAULTS.email;
-  const phoneLink=$('loginHelpPhone');
-  const emailLink=$('loginHelpEmail');
-  if(phoneLink){
-    phoneLink.textContent=finalPhone;
-    phoneLink.href='tel:'+finalPhone.replace(/\s+/g,'');
-  }
-  if(emailLink){
-    emailLink.textContent=finalEmail;
-    emailLink.href='mailto:'+finalEmail;
-  }
-}
-function applyLoginHeaderHelpdesk(phone,email){
-  const finalPhone=String(phone||LOGIN_DEFAULTS.phone).trim()||LOGIN_DEFAULTS.phone;
-  const finalEmail=String(email||LOGIN_DEFAULTS.email).trim()||LOGIN_DEFAULTS.email;
-  const phoneLink=$('loginHeaderHelpPhone');
-  const emailLink=$('loginHeaderHelpEmail');
-  if(phoneLink){
-    const text=phoneLink.querySelector('span');
-    if(text) text.textContent=finalPhone;
-    phoneLink.href='tel:'+finalPhone.replace(/\s+/g,'');
-  }
-  if(emailLink){
-    const text=emailLink.querySelector('span');
-    if(text) text.textContent=finalEmail;
-    emailLink.href='mailto:'+finalEmail;
-  }
+  const phoneText=$('blueBannerHelpdeskPhone');
+  const phoneLink=$('blueBannerHelpdeskPhoneLink');
+  const emailText=$('blueBannerHelpdeskEmail');
+  const emailLink=$('blueBannerHelpdeskEmailLink');
+  if(phoneText) phoneText.textContent=finalPhone;
+  if(phoneLink) phoneLink.href='tel:'+finalPhone.replace(/\s+/g,'');
+  if(emailText) emailText.textContent=finalEmail;
+  if(emailLink) emailLink.href='mailto:'+finalEmail;
 }
 async function loadSchools(){
   const ids=['login-school','p-school-sel','r-school'];
   const selected=Object.fromEntries(ids.map(id=&gt;[id,document.getElementById(id)?document.getElementById(id).value:'']));
-  let rpcList=[],schools=[],schoolContacts=[],schoolAltContacts=[],configs=[];
+  let rpcList=[],schools=[],configs=[];
   try{ const {data}=await sb.rpc('list_schools'); rpcList=Array.isArray(data)?data:[]; }catch(e){}
-  try{ const {data}=await sb.from('schools').select('id,name,code,crest_url,helpdesk,phone,email'); schools=Array.isArray(data)?data:[]; }catch(e){}
-  try{ const {data}=await sb.from('schools').select('id,contact_phone,contact_email'); schoolContacts=Array.isArray(data)?data:[]; }catch(e){}
-  try{ const {data}=await sb.from('schools').select('id,school_phone,school_email'); schoolAltContacts=Array.isArray(data)?data:[]; }catch(e){}
-  try{ const {data}=await sb.from('school_config').select('school_id,admission_status,admission_year,service_charge'); configs=Array.isArray(data)?data:[]; }catch(e){}
+  try{ const {data}=await sb.from('schools').select('*'); schools=Array.isArray(data)?data:[]; }catch(e){}
+  try{ const {data}=await sb.from('school_config').select('*'); configs=Array.isArray(data)?data:[]; }catch(e){}
   const merged=new Map();
-  [rpcList,schools,schoolContacts,schoolAltContacts].forEach(rows=&gt;{
+  [rpcList,schools].forEach(rows=&gt;{
     rows.forEach(row=&gt;{
       const id=row&amp;&amp;(row.id||row.school_id);
       if(!id) return;
@@ -1614,12 +1595,8 @@ function admissionClosed(id){
 }
 function onLoginSchoolChange(){
   const sid=$('login-school')?$('login-school').value:'';
-  const s=selectedLoginSchool();
+  const s=getSelectedSchool();
   const schoolName=String(schoolField(s,['name','school_name'],LOGIN_DEFAULTS.title));
-  const schoolHelpdeskPhone=schoolField(s,['helpdesk_phone','helpdesk','phone','contact_phone','school_phone'],LOGIN_DEFAULTS.phone);
-  const schoolHelpdeskEmail=schoolField(s,['helpdesk_email','helpdeskEmail','email','contact_email','school_email'],LOGIN_DEFAULTS.email);
-  const schoolPhone=schoolField(s,['phone','contact_phone','school_phone'],LOGIN_DEFAULTS.phone);
-  const schoolEmail=schoolField(s,['email','contact_email','school_email'],LOGIN_DEFAULTS.email);
   const schoolCharge=Number(schoolField(s,['service_charge'],LOGIN_DEFAULTS.charge));
   const chargeValue=Number.isFinite(schoolCharge)?schoolCharge:Number(LOGIN_DEFAULTS.charge);
   const title=$('schTitle');
@@ -1658,8 +1635,7 @@ function onLoginSchoolChange(){
       }
     }
   }
-  applyLoginHeaderHelpdesk(schoolHelpdeskPhone,schoolHelpdeskEmail);
-  applyLoginContacts(schoolPhone,schoolEmail);
+  updateBlueBannerHelpdesk();
   const closed=admissionClosed(sid);
   const banner=$('admClosedBanner');
   if(banner) banner.style.display=closed?'block':'none';
