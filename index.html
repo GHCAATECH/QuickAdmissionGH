@@ -26,14 +26,14 @@
 <meta name="twitter:image" content="https://www.quickadmissiongh.com/veloxis-logo.png">
 <style>
   *{box-sizing:border-box}
-  :root{--qa-shell-top:88px}
+  :root{--qa-shell-top:74px}
   html,body{margin:0;height:100%;overflow:hidden;font-family:'Inter',system-ui,Arial,sans-serif;background:#0a1f33}
   .qa-tabs{position:fixed;top:0;left:0;right:0;height:var(--qa-shell-top);z-index:100000;display:flex;align-items:center;
-    gap:8px;padding:0 22px;background:#ffffff;border-bottom:1px solid #d7e2f0;box-shadow:0 2px 10px rgba(18,38,72,.08);overflow:hidden}
-  .qa-logo{width:168px;max-width:34vw;max-height:76px;height:auto;display:block;object-fit:contain;object-position:left center;flex:0 0 auto}
-  .qa-tabs .spacer{flex:1 1 auto;min-width:8px}
-  .qa-tab{appearance:none;border:1px solid transparent;background:transparent;color:#1557B0;font-size:13px;font-weight:600;
-    padding:9px 14px;border-radius:8px;cursor:pointer;font-family:inherit;margin:0;white-space:nowrap;min-width:0;flex:0 1 auto}
+    gap:6px;padding:0 14px 0 12px;background:#ffffff;border-bottom:1px solid #d7e2f0;box-shadow:0 2px 10px rgba(18,38,72,.08);overflow:hidden}
+  .qa-logo{width:156px;max-width:30vw;max-height:54px;height:auto;display:block;object-fit:contain;object-position:left center;flex:0 0 auto}
+  .qa-tabs .spacer{flex:1 1 auto;min-width:6px}
+  .qa-tab{appearance:none;border:1px solid transparent;background:transparent;color:#1557B0;font-size:12.5px;font-weight:600;
+    padding:8px 12px;border-radius:10px;cursor:pointer;font-family:inherit;margin:0;white-space:nowrap;min-width:0;line-height:1.15;flex:0 1 auto}
   .qa-tab:hover{background:#E2ECFB}
   .qa-tab.active{background:#1557B0;color:#fff}
   .qa-stack{position:fixed;top:var(--qa-shell-top);left:0;right:0;bottom:0}
@@ -65,17 +65,17 @@
   .qa-disc-btn-ghost{background:#fff;color:#122648}
   .qa-disc-btn-ghost:hover{background:#eef4ff}
   @media(max-width:900px){
-    :root{--qa-shell-top:82px}
-    .qa-tabs{padding:0 14px;gap:6px}
-    .qa-logo{width:144px;max-width:28vw;max-height:62px}
-    .qa-tab{padding:8px 11px;font-size:12px}
+    :root{--qa-shell-top:68px}
+    .qa-tabs{padding:0 12px 0 10px;gap:5px}
+    .qa-logo{width:132px;max-width:25vw;max-height:46px}
+    .qa-tab{padding:7px 10px;font-size:11px}
   }
   @media(max-width:560px){
-    :root{--qa-shell-top:74px}
-    .qa-tabs{padding:0 10px;gap:4px}
-    .qa-logo{width:102px;max-width:none;max-height:48px}
-    .qa-tabs .spacer{min-width:2px}
-    .qa-tab{padding:7px 8px;font-size:11px}
+    :root{--qa-shell-top:60px}
+    .qa-tabs{padding:0 8px 0 6px;gap:3px}
+    .qa-logo{width:76px;max-width:none;max-height:34px}
+    .qa-tabs .spacer{min-width:1px}
+    .qa-tab{padding:5px 6px;font-size:9.5px;border-radius:7px}
     .qa-disc-overlay{padding:0}
     .qa-disc-overlay.show{display:block}
     .qa-disc-modal{position:fixed;top:10px;left:10px;bottom:10px;width:calc(100vw - 20px);max-width:calc(100vw - 20px);max-height:none;min-width:0;margin:0;border-radius:18px}
@@ -91,8 +91,8 @@
     .qa-disc-btn{width:100%}
   }
   @media(max-width:420px){
-    .qa-logo{width:88px;max-height:42px}
-    .qa-tab{padding:6px 7px;font-size:10px}
+    .qa-logo{width:66px;max-height:30px}
+    .qa-tab{padding:4px 5px;font-size:8.9px}
   }
 </style>
 </head>
@@ -211,22 +211,19 @@
   /* ===== Student login redesign ===== */
   #s-login .auth{
     align-items:flex-start;
-    padding:clamp(20px,3vw,38px) clamp(12px,2.5vw,26px) calc(38px + env(safe-area-inset-bottom));
+    padding:clamp(14px,2.4vw,24px) clamp(12px,2.2vw,22px) calc(28px + env(safe-area-inset-bottom));
     background:
       radial-gradient(125% 110% at 50% -5%,rgba(66,140,255,.18),transparent 58%),
       radial-gradient(70% 90% at 100% 100%,rgba(21,87,176,.16),transparent 34%),
       linear-gradient(180deg,#f9fbff 0%,#eff4fd 56%,#e6eefb 100%);
   }
-  #s-login .portal-login-wrap{width:min(1280px,100%);margin:0 auto}
-  #s-login .portal-login-brand{display:flex;align-items:center;gap:22px;max-width:1180px;margin:0 auto 20px;padding:0 10px}
-  #s-login .portal-brand-crest{width:112px;height:112px;border-radius:32px;overflow:hidden;flex:none;display:grid;place-items:center;background:rgba(255,255,255,.96);border:1px solid rgba(63,118,214,.18);box-shadow:0 24px 54px -30px rgba(21,87,176,.55)}
-  #s-login .portal-brand-crest img{width:100%;height:100%;object-fit:contain;padding:10px}
-  #s-login .portal-brand-crest span{font-family:'Space Grotesk';font-size:34px;font-weight:700;letter-spacing:.08em;color:var(--primary)}
-  #s-login .portal-brand-copy{min-width:0;display:flex;flex-direction:column;gap:4px}
-  #s-login .portal-brand-copy .sch-code{margin-bottom:0;font-size:15px;letter-spacing:.22em}
-  #s-login .portal-brand-copy h1{font-family:'Space Grotesk';font-size:clamp(30px,4vw,56px);line-height:1.02;font-weight:700;color:#122648}
-  #s-login .portal-brand-copy p{font-size:18px;color:#5e7192;font-weight:500}
-  #s-login .portal-brand-meta{display:inline-flex;align-items:center;gap:10px;width:max-content;max-width:100%;margin-top:4px;padding:8px 15px;border-radius:999px;background:rgba(21,87,176,.08);border:1px solid rgba(21,87,176,.12);font-size:13px;font-weight:700;letter-spacing:.12em;color:#1557B0;text-transform:uppercase}
+  #s-login .portal-login-wrap{width:min(1240px,100%);margin:0 auto}
+  #s-login .portal-login-brand{display:flex;align-items:center;gap:16px;max-width:1180px;margin:0 auto 14px;padding:14px 18px;background:linear-gradient(135deg,#0f53d8 0%,#1557B0 58%,#2f8bff 100%);border:1px solid rgba(108,160,248,.3);border-radius:24px;box-shadow:0 26px 54px -36px rgba(21,87,176,.72)}
+  #s-login .portal-brand-crest{width:82px;height:82px;border-radius:22px;overflow:hidden;flex:none;display:grid;place-items:center;background:rgba(255,255,255,.96);border:1px solid rgba(63,118,214,.18);box-shadow:0 18px 34px -24px rgba(21,87,176,.58)}
+  #s-login .portal-brand-crest img{width:100%;height:100%;object-fit:contain;padding:8px}
+  #s-login .portal-brand-crest span{font-family:'Space Grotesk';font-size:26px;font-weight:700;letter-spacing:.08em;color:var(--primary)}
+  #s-login .portal-brand-copy{min-width:0;flex:1;display:flex;align-items:center}
+  #s-login .portal-brand-copy h1{font-family:'Space Grotesk';font-size:clamp(26px,3.3vw,44px);line-height:1.04;font-weight:700;color:#fff;white-space:nowrap}
   #s-login .portal-login-shell{display:grid;grid-template-columns:minmax(310px,.92fr) minmax(0,1.08fr);gap:22px;max-width:1180px;margin:0 auto;padding:20px;border-radius:30px;background:linear-gradient(180deg,rgba(255,255,255,.76),rgba(255,255,255,.92));border:1px solid rgba(93,138,214,.2);box-shadow:0 30px 72px -36px rgba(21,87,176,.48);backdrop-filter:blur(14px)}
   #s-login .portal-login-info,#s-login .portal-login-form{border-radius:24px;border:1px solid rgba(146,180,233,.24);box-shadow:0 18px 36px -28px rgba(21,87,176,.28);padding:32px}
   #s-login .portal-login-info{background:linear-gradient(180deg,rgba(242,247,255,.98),rgba(236,244,255,.94))}
@@ -281,7 +278,9 @@
   #s-login .portal-login-foot{text-align:center;margin-top:14px}
   #s-login .portal-login-foot a{font-size:11px;color:#8fa0ba;letter-spacing:.08em;text-transform:uppercase}
   @media(max-width:1023px){
-    #s-login .portal-login-brand{max-width:980px}
+    #s-login .portal-login-brand{max-width:980px;padding:12px 16px}
+    #s-login .portal-brand-crest{width:74px;height:74px;border-radius:20px}
+    #s-login .portal-brand-copy h1{font-size:clamp(24px,3vw,34px)}
     #s-login .portal-login-shell{grid-template-columns:1fr}
     #s-login .portal-contact-bar{grid-template-columns:repeat(2,minmax(0,1fr))}
     #s-login .portal-contact-item:nth-child(3){border-left:none;border-top:1px solid rgba(212,225,242,.8)}
@@ -289,10 +288,10 @@
   }
   @media(max-width:767px){
     #s-login .auth{padding-left:12px;padding-right:12px}
-    #s-login .portal-login-brand{flex-direction:column;text-align:center;gap:14px;padding:0 2px}
-    #s-login .portal-brand-copy{align-items:center}
-    #s-login .portal-brand-copy .sch-code,#s-login .portal-brand-meta{justify-content:center}
-    #s-login .portal-brand-crest{width:88px;height:88px;border-radius:24px}
+    #s-login .portal-login-brand{flex-direction:column;text-align:center;gap:10px;padding:12px 14px}
+    #s-login .portal-brand-copy{align-items:center;justify-content:center}
+    #s-login .portal-brand-copy h1{white-space:normal;text-align:center;font-size:28px}
+    #s-login .portal-brand-crest{width:68px;height:68px;border-radius:18px}
     #s-login .portal-login-shell{padding:14px;border-radius:24px}
     #s-login .portal-login-info,#s-login .portal-login-form{padding:22px}
     #s-login .portal-info-head h2,#s-login .portal-form-head h2{font-size:32px}
@@ -304,9 +303,7 @@
     #s-login .portal-contact-item + .portal-contact-item{border-left:none;border-top:1px solid rgba(212,225,242,.8)}
   }
   @media(max-width:480px){
-    #s-login .portal-brand-copy h1{font-size:32px}
-    #s-login .portal-brand-copy p{font-size:15px}
-    #s-login .portal-brand-meta{font-size:11px;letter-spacing:.08em}
+    #s-login .portal-brand-copy h1{font-size:24px}
     #s-login .portal-login-info,#s-login .portal-login-form{padding:18px}
     #s-login .portal-info-head h2,#s-login .portal-form-head h2{font-size:27px}
     #s-login .portal-info-head p,#s-login .portal-form-head p{font-size:14px}
@@ -558,10 +555,7 @@
         <img id=&quot;schLogo&quot; src=&quot;veloxis-logo.png&quot; alt=&quot;School or platform logo&quot; onerror=&quot;this.style.display='none';var t=document.getElementById('schCrestText');if(t){t.style.display='';t.textContent='QA';}&quot;>
       </div>
       <div class=&quot;portal-brand-copy&quot;>
-        <div id=&quot;schCodeTop&quot; class=&quot;sch-code&quot; style=&quot;display:none&quot;></div>
         <h1 id=&quot;schTitle&quot;>QuickAdmissionGH</h1>
-        <p id=&quot;schSubtitle&quot;>Ghana SHS Online Admission System</p>
-        <div class=&quot;portal-brand-meta&quot; id=&quot;schAdmissionTag&quot;>ONLINE ADMISSION &amp;middot; 2025/2026</div>
       </div>
     </div>
 
@@ -1474,10 +1468,8 @@ buildSteps();
 let SCHOOLS_LIST=[];
 const LOGIN_DEFAULTS={
   title:'QuickAdmissionGH',
-  subtitle:'Ghana SHS Online Admission System',
   phone:'0256744028',
   email:'admissions@quickadmissiongh.com',
-  year:'2025/2026',
   charge:30,
   code:'QA'
 };
@@ -1487,12 +1479,6 @@ function schoolField(s,keys,fallback){
     if(value!==undefined&amp;&amp;value!==null&amp;&amp;String(value).trim()!=='') return value;
   }
   return fallback;
-}
-function formatAdmissionYear(value){
-  const raw=String(value||'').trim();
-  if(!raw) return LOGIN_DEFAULTS.year;
-  if(/^\d{4}$/.test(raw)) return raw+'/'+(Number(raw)+1);
-  return raw.replace(/\s*[-|]\s*/g,'/').replace(/\s+/g,'');
 }
 function schoolShortLabel(s){
   const code=String(schoolField(s,['code','school_code'],'')||'').trim();
@@ -1529,12 +1515,14 @@ function applyLoginContacts(phone,email){
 async function loadSchools(){
   const ids=['login-school','p-school-sel','r-school'];
   const selected=Object.fromEntries(ids.map(id=&gt;[id,document.getElementById(id)?document.getElementById(id).value:'']));
-  let rpcList=[],schools=[],configs=[];
+  let rpcList=[],schools=[],schoolContacts=[],schoolAltContacts=[],configs=[];
   try{ const {data}=await sb.rpc('list_schools'); rpcList=Array.isArray(data)?data:[]; }catch(e){}
   try{ const {data}=await sb.from('schools').select('id,name,code,crest_url,phone,email'); schools=Array.isArray(data)?data:[]; }catch(e){}
+  try{ const {data}=await sb.from('schools').select('id,contact_phone,contact_email'); schoolContacts=Array.isArray(data)?data:[]; }catch(e){}
+  try{ const {data}=await sb.from('schools').select('id,school_phone,school_email'); schoolAltContacts=Array.isArray(data)?data:[]; }catch(e){}
   try{ const {data}=await sb.from('school_config').select('school_id,admission_status,admission_year,service_charge'); configs=Array.isArray(data)?data:[]; }catch(e){}
   const merged=new Map();
-  [rpcList,schools].forEach(rows=&gt;{
+  [rpcList,schools,schoolContacts,schoolAltContacts].forEach(rows=&gt;{
     rows.forEach(row=&gt;{
       const id=row&amp;&amp;(row.id||row.school_id);
       if(!id) return;
@@ -1581,26 +1569,18 @@ function onLoginSchoolChange(){
   const sid=$('login-school')?$('login-school').value:'';
   const s=selectedLoginSchool();
   const schoolName=String(schoolField(s,['name','school_name'],LOGIN_DEFAULTS.title));
-  const schoolCode=String(schoolField(s,['code','school_code'],'')||'').trim();
-  const schoolYear=formatAdmissionYear(schoolField(s,['admission_year','academic_year'],LOGIN_DEFAULTS.year));
-  const schoolPhone=schoolField(s,['phone','contact_phone'],LOGIN_DEFAULTS.phone);
-  const schoolEmail=schoolField(s,['email','contact_email'],LOGIN_DEFAULTS.email);
+  const schoolPhone=schoolField(s,['phone','contact_phone','school_phone'],LOGIN_DEFAULTS.phone);
+  const schoolEmail=schoolField(s,['email','contact_email','school_email'],LOGIN_DEFAULTS.email);
   const schoolCharge=Number(schoolField(s,['service_charge'],LOGIN_DEFAULTS.charge));
   const chargeValue=Number.isFinite(schoolCharge)?schoolCharge:Number(LOGIN_DEFAULTS.charge);
-  const title=$('schTitle'), subtitle=$('schSubtitle'), code=$('schCodeTop'), tag=$('schAdmissionTag');
+  const title=$('schTitle');
   const logo=$('schLogo'), crestText=$('schCrestText');
   const welcomeTitle=$('loginWelcomeTitle'), welcomeSub=$('loginWelcomeSubtitle');
   const charge=$('loginCharge'), formSub=$('loginFormSub');
   const crestLabel=schoolShortLabel(s);
   const crestUrl=String(schoolField(s,['crest_url','logo_url'],'')||'').trim();
   if(title) title.textContent=s?schoolName:LOGIN_DEFAULTS.title;
-  if(subtitle) subtitle.textContent=s?'Online Admission Portal':LOGIN_DEFAULTS.subtitle;
-  if(code){
-    code.textContent=schoolCode;
-    code.style.display=schoolCode?'block':'none';
-  }
-  if(tag) tag.innerHTML='ONLINE ADMISSION &amp;middot; '+schoolYear;
-  if(welcomeTitle) welcomeTitle.textContent='Welcome to '+(s?(schoolCode||schoolName):LOGIN_DEFAULTS.title);
+  if(welcomeTitle) welcomeTitle.textContent='Welcome to '+(s?schoolName:LOGIN_DEFAULTS.title);
   if(welcomeSub) welcomeSub.textContent='Online Admission Portal';
   if(formSub) formSub.textContent=s?'Enter your BECE index number and admission token to continue.':'Select your school and enter your details to continue.';
   if(charge) charge.textContent='A service charge of GHS '+chargeValue.toFixed(2)+' is required.';
