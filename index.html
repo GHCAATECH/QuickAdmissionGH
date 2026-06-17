@@ -1472,12 +1472,30 @@ const LOGIN_DEFAULTS={
   charge:30,
   code:'QA'
 };
+const SCHOOL_PROFILE_CACHE_KEY='qag_public_school_profile_cache';
 function firstNonEmpty(){
   for(let i=0;i<arguments.length;i++){
     const value=arguments[i];
     if(value!==undefined&amp;&amp;value!==null&amp;&amp;String(value).trim()!=='') return value;
   }
   return '';
+}
+function readSchoolProfileCache(){
+  try{
+    const raw=localStorage.getItem(SCHOOL_PROFILE_CACHE_KEY);
+    const parsed=raw?JSON.parse(raw):{};
+    return parsed&amp;&amp;typeof parsed==='object'?parsed:{};
+  }catch(e){
+    return {};
+  }
+}
+function mergeCachedSchoolProfile(s){
+  if(!s) return s;
+  const key=String(s.id||s.school_id||'');
+  if(!key) return s;
+  const cached=readSchoolProfileCache()[key];
+  if(!cached||typeof cached!=='object') return s;
+  return Object.assign({},s,cached,{id:s.id||cached.id||key});
 }
 function schoolField(s,keys,fallback){
   const value=firstNonEmpty(...keys.map(key=&gt;s&amp;&amp;s[key]));
@@ -1496,7 +1514,7 @@ function getSelectedSchool(){
   const select=document.getElementById('login-school');
   const selectedValue=select?select.value:'';
   if(!selectedValue||!Array.isArray(SCHOOLS_LIST)) return null;
-  return SCHOOLS_LIST.find(s=&gt;
+  const found=SCHOOLS_LIST.find(s=&gt;
     String(s.id)===String(selectedValue) ||
     String(s.school_id)===String(selectedValue) ||
     String(s.code)===String(selectedValue) ||
@@ -1504,6 +1522,7 @@ function getSelectedSchool(){
     String(s.name)===String(selectedValue) ||
     String(s.school_name)===String(selectedValue)
   )||null;
+  return mergeCachedSchoolProfile(found);
 }
 function setButtonDisabled(el,disabled){
   if(!el) return;
@@ -1511,28 +1530,48 @@ function setButtonDisabled(el,disabled){
   el.style.opacity=disabled?'.55':'';
   el.style.pointerEvents=disabled?'none':'';
 }
+function selectedSchoolHelpdeskPhone(selectedSchool){
+  if(!selectedSchool) return LOGIN_DEFAULTS.phone;
+  const helpdeskPhone=firstNonEmpty(
+    selectedSchool.helpdesk_line,
+    selectedSchool.helpdeskLine,
+    selectedSchool.helpdesk_phone,
+    selectedSchool.helpdeskPhone,
+    selectedSchool.support_phone,
+    selectedSchool.supportPhone,
+    selectedSchool.helpdesk,
+    selectedSchool.helpline,
+    selectedSchool.help_line
+  );
+  const schoolPhone=firstNonEmpty(
+    selectedSchool.phone,
+    selectedSchool.contact_phone,
+    selectedSchool.school_phone,
+    selectedSchool.admin_phone
+  );
+  return String(helpdeskPhone||schoolPhone||LOGIN_DEFAULTS.phone).trim()||LOGIN_DEFAULTS.phone;
+}
+function selectedSchoolHelpdeskEmail(selectedSchool){
+  if(!selectedSchool) return LOGIN_DEFAULTS.email;
+  const helpdeskEmail=firstNonEmpty(
+    selectedSchool.helpdesk_email,
+    selectedSchool.helpdeskEmail,
+    selectedSchool.support_email,
+    selectedSchool.supportEmail,
+    selectedSchool.help_email
+  );
+  const schoolEmail=firstNonEmpty(
+    selectedSchool.email,
+    selectedSchool.contact_email,
+    selectedSchool.school_email,
+    selectedSchool.admin_email
+  );
+  return String(helpdeskEmail||schoolEmail||LOGIN_DEFAULTS.email).trim()||LOGIN_DEFAULTS.email;
+}
 function updateBlueBannerHelpdesk(){
   const selectedSchool=getSelectedSchool();
-  const phone=selectedSchool
-    ? firstNonEmpty(
-        selectedSchool.helpdesk_line,
-        selectedSchool.helpdeskLine,
-        selectedSchool.helpdesk_phone,
-        selectedSchool.helpdeskPhone,
-        selectedSchool.support_phone,
-        selectedSchool.supportPhone
-      )||LOGIN_DEFAULTS.phone
-    : LOGIN_DEFAULTS.phone;
-  const email=selectedSchool
-    ? firstNonEmpty(
-        selectedSchool.helpdesk_email,
-        selectedSchool.helpdeskEmail,
-        selectedSchool.support_email,
-        selectedSchool.supportEmail
-      )||LOGIN_DEFAULTS.email
-    : LOGIN_DEFAULTS.email;
-  const finalPhone=String(phone||LOGIN_DEFAULTS.phone).trim()||LOGIN_DEFAULTS.phone;
-  const finalEmail=String(email||LOGIN_DEFAULTS.email).trim()||LOGIN_DEFAULTS.email;
+  const finalPhone=selectedSchoolHelpdeskPhone(selectedSchool);
+  const finalEmail=selectedSchoolHelpdeskEmail(selectedSchool);
   const phoneText=$('blueBannerHelpdeskPhone');
   const phoneLink=$('blueBannerHelpdeskPhoneLink');
   const emailText=$('blueBannerHelpdeskEmail');
@@ -1570,7 +1609,7 @@ async function loadSchools(){
     const an=String(schoolField(a,['name','school_name'],'')||'');
     const bn=String(schoolField(b,['name','school_name'],'')||'');
     return an.localeCompare(bn);
-  });
+  }).map(function(s){ return mergeCachedSchoolProfile(s)||s; });
   const opts='<option value=&quot;&quot;>-- Select your school --</option>'+SCHOOLS_LIST.map(s=&gt;`<option value=&quot;${s.id}&quot;>${String(schoolField(s,['name','school_name'],'Unnamed school')).replace(/</g,'&amp;lt;')}</option>`).join('');
   ids.forEach(id=&gt;{
     const el=document.getElementById(id);
@@ -1650,6 +1689,11 @@ async function initStudentPortal(){
   }
 }
 initStudentPortal();
+window.addEventListener('storage',function(evt){
+  if(evt&amp;&amp;evt.key===SCHOOL_PROFILE_CACHE_KEY){
+    try{ onLoginSchoolChange(); }catch(e){}
+  }
+});
 // Live school detection on the purchase form
 (function(){
   var pi=document.getElementById('p-index'); if(!pi)return;
@@ -2254,19 +2298,19 @@ initStudentPortal();
         <div class=&quot;tab-panel active&quot; data-tab=&quot;0&quot;>
           <div style=&quot;max-width:720px&quot;>
             <fieldset><legend>School information</legend>
-              <div class=&quot;field&quot;><label>School name</label><input value=&quot;Asuom Senior High School&quot;></div>
-              <div class=&quot;field&quot;><label>Address</label><textarea>P.O. Box 8, Asuom-Akyem</textarea></div>
-              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Phone</label><input value=&quot;0244791325&quot;></div><div class=&quot;field&quot;><label>Email</label><input value=&quot;asuomshs1970@gmail.com&quot;></div></div>
+              <div class=&quot;field&quot;><label>School name</label><input id=&quot;s_profile_name&quot; placeholder=&quot;School name&quot;></div>
+              <div class=&quot;field&quot;><label>Address</label><textarea id=&quot;s_profile_address&quot; placeholder=&quot;School address&quot;></textarea></div>
+              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Phone</label><input id=&quot;s_profile_phone&quot; placeholder=&quot;024…&quot;></div><div class=&quot;field&quot;><label>Email</label><input id=&quot;s_profile_email&quot; type=&quot;email&quot; placeholder=&quot;school@…&quot;></div></div>
             </fieldset>
             <fieldset><legend>Head of school &amp; support</legend>
-              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Headmaster name</label><input value=&quot;Isaac Addo&quot;></div><div class=&quot;field&quot;><label>Title</label><input value=&quot;Headmaster&quot;></div></div>
-              <div class=&quot;field&quot;><label>Helpdesk line</label><input value=&quot;0256744028&quot;></div>
+              <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>Headmaster name</label><input id=&quot;s_profile_headmaster&quot; placeholder=&quot;Headmaster name&quot;></div><div class=&quot;field&quot;><label>Title</label><input id=&quot;s_profile_title&quot; value=&quot;Headmaster&quot;></div></div>
+              <div class=&quot;field&quot;><label>Helpdesk line</label><input id=&quot;s_profile_helpdesk&quot; placeholder=&quot;025…&quot;></div>
             </fieldset>
             <fieldset><legend>Branding</legend>
               <div class=&quot;grid-2&quot;><div class=&quot;field&quot;><label>School crest</label><input type=&quot;file&quot; id=&quot;s_crest_input&quot; accept=&quot;image/*&quot; onchange=&quot;uploadSchoolCrest(this)&quot;><div style=&quot;margin-top:8px;display:flex;align-items:center;gap:10px&quot;><img id=&quot;s_crest_prev&quot; style=&quot;width:54px;height:54px;object-fit:contain;border:1px solid var(--line);border-radius:8px;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 50%/12px 12px;display:none&quot;><small style=&quot;color:var(--muted)&quot;>Background is auto-removed (transparent). Used on the letter, portal and corner logo.</small></div></div><div class=&quot;field&quot;><label>Logo</label><input type=&quot;file&quot; accept=&quot;image/*&quot;></div></div>
-              <div class=&quot;field&quot; style=&quot;max-width:160px&quot;><label>Theme colour</label><input type=&quot;color&quot; value=&quot;#1557B0&quot;></div>
+              <div class=&quot;field&quot; style=&quot;max-width:160px&quot;><label>Theme colour</label><input id=&quot;s_profile_theme&quot; type=&quot;color&quot; value=&quot;#1557B0&quot;></div>
             </fieldset>
-            <button class=&quot;btn btn-primary&quot; onclick=&quot;toast('School profile saved')&quot;>Save profile</button>
+            <button class=&quot;btn btn-primary&quot; onclick=&quot;saveSchoolProfile()&quot;>Save profile</button>
           </div>
         </div>
         <div class=&quot;tab-panel&quot; data-tab=&quot;1&quot;>
@@ -3410,6 +3454,40 @@ function buildCharts(){
 }
 
 /* ===== DOC LINES + LOG ===== */
+function populateSchoolProfileForm(){
+  if(!$('s_profile_name')) return;
+  const school=SB_SCHOOL||{};
+  $('s_profile_name').value=school.name||'';
+  $('s_profile_address').value=school.address||'';
+  $('s_profile_phone').value=school.phone||'';
+  $('s_profile_email').value=school.email||'';
+  $('s_profile_headmaster').value=school.headmaster_name||'';
+  $('s_profile_helpdesk').value=school.helpdesk||'';
+  if($('s_profile_theme')) $('s_profile_theme').value=school.theme_color||'#1557B0';
+  if($('s_profile_title')) $('s_profile_title').value=school.headmaster_title||$('s_profile_title').value||'Headmaster';
+}
+async function saveSchoolProfile(){
+  if(roGuard())return;
+  if(!SB_SCHOOL||!SB_SCHOOL.id){toast('School not loaded');return;}
+  const patch={
+    name:val('s_profile_name').trim(),
+    address:val('s_profile_address').trim(),
+    phone:val('s_profile_phone').trim(),
+    email:val('s_profile_email').trim(),
+    headmaster_name:val('s_profile_headmaster').trim(),
+    helpdesk:val('s_profile_helpdesk').trim(),
+    theme_color:val('s_profile_theme')||SB_SCHOOL.theme_color||'#1557B0'
+  };
+  if('headmaster_title' in SB_SCHOOL) patch.headmaster_title=val('s_profile_title').trim();
+  if(!patch.name){toast('School name is required');return;}
+  const {error}=await sb.from('schools').update(patch).eq('id',SB_SCHOOL.id);
+  if(error){toast('Could not save school profile: '+error.message);return;}
+  Object.assign(SB_SCHOOL,patch);
+  cachePublicSchoolProfile(SB_SCHOOL);
+  const brand=$('brandName'); if(brand) brand.textContent=SB_SCHOOL.name||'School Name';
+  notifyStudentPortalRefresh('school-profile');
+  toast('School profile saved');
+}
 function renderDocLines(){$('docLines').innerHTML=docLines.map((l,i)=>`<div class=&quot;doc-line&quot;><span class=&quot;num&quot;>${i+1}</span><textarea oninput=&quot;docLines[${i}]=this.value&quot; rows=&quot;2&quot;>${l}</textarea></div>`).join('');}
 async function savePortalSetup(){
   if(roGuard())return;
@@ -3829,6 +3907,29 @@ function applyPermissions(){
 }
 var pMap={},hMap={},cMap={};               // numeric -> uuid
 const val=id=>document.getElementById(id).value;
+const SCHOOL_PROFILE_CACHE_KEY='qag_public_school_profile_cache';
+function cachePublicSchoolProfile(school){
+  if(!school||!school.id) return;
+  try{
+    const raw=localStorage.getItem(SCHOOL_PROFILE_CACHE_KEY);
+    const cache=raw?JSON.parse(raw):{};
+    const next=cache&amp;&amp;typeof cache==='object'?cache:{};
+    next[String(school.id)]={
+      id:school.id,
+      name:school.name||'',
+      school_name:school.name||'',
+      crest_url:school.crest_url||'',
+      email:school.email||'',
+      school_email:school.email||'',
+      phone:school.phone||'',
+      school_phone:school.phone||'',
+      helpdesk:school.helpdesk||'',
+      helpdesk_line:school.helpdesk||'',
+      updated_at:Date.now()
+    };
+    localStorage.setItem(SCHOOL_PROFILE_CACHE_KEY,JSON.stringify(next));
+  }catch(e){}
+}
 const fmtT=ts=>{ if(!ts) return '—'; const d=new Date(ts), n=new Date(); const days=Math.floor((n-d)/86400000);
   return days===0?('Today '+d.toTimeString().slice(0,5)):(days===1?'Yesterday':days+'d ago'); };
 
@@ -3968,6 +4069,8 @@ async function loadSchoolData(prof){
   if(SB_SCHOOL){ const nm=$('brandName'); if(nm) nm.textContent=SB_SCHOOL.name||'School Name'; }
   if(SB_SCHOOL&amp;&amp;SB_SCHOOL.crest_url){ SCHOOL_CREST=SB_SCHOOL.crest_url; const bm=$('brandCrest'); if(bm){bm.src=SCHOOL_CREST;bm.style.display='block';} const lt=$('brandLogoText'); if(lt) lt.style.display='none'; const pv=$('s_crest_prev'); if(pv){pv.src=SCHOOL_CREST;pv.style.display='block';} }
   else { const bm=$('brandCrest'); if(bm){bm.removeAttribute('src');bm.style.display='none';} const lt=$('brandLogoText'); if(lt) lt.style.display=''; }
+  cachePublicSchoolProfile(SB_SCHOOL);
+  populateSchoolProfileForm();
   // House-scoped user: only see that house and its students
   if(SB_HOUSE){ stu.data=(stu.data||[]).filter(s=>s.house_id===SB_HOUSE); hs.data=(hs.data||[]).filter(h=>h.id===SB_HOUSE); }
 
@@ -4204,7 +4307,7 @@ function uploadSchoolCrest(inp){
     SCHOOL_CREST=uri;
     const prev=$('s_crest_prev'); if(prev){prev.src=uri;prev.style.display='block';}
     const bm=$('brandCrest'); if(bm){bm.src=uri;bm.style.display='block';} const lt=$('brandLogoText'); if(lt) lt.style.display='none';
-    if(window.SB_SCHOOL&amp;&amp;SB_SCHOOL.id){ sb.from('schools').update({crest_url:uri}).eq('id',SB_SCHOOL.id).then(({error})=>{ if(error){toast('Crest set (not saved: '+error.message+')');} else {SB_SCHOOL.crest_url=uri; notifyStudentPortalRefresh('crest-update'); toast('Crest uploaded &amp; saved');} }); }
+    if(window.SB_SCHOOL&amp;&amp;SB_SCHOOL.id){ sb.from('schools').update({crest_url:uri}).eq('id',SB_SCHOOL.id).then(({error})=>{ if(error){toast('Crest set (not saved: '+error.message+')');} else {SB_SCHOOL.crest_url=uri; cachePublicSchoolProfile(SB_SCHOOL); notifyStudentPortalRefresh('crest-update'); toast('Crest uploaded &amp; saved');} }); }
     else toast('Crest set');
     URL.revokeObjectURL(img.src);
   };
@@ -5511,7 +5614,7 @@ function createSchool(){
   if(!code||!name){toast('School code and name are required');return;}
   const words=name.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean);
   const short=(words[0]?.[0]||'S')+(words[1]?.[0]||words[0]?.[1]||'C');
-  schools.unshift({id:nextSchoolId++,code,name,short:short.toUpperCase(),admin:$('f_admin').value.trim()||'—',plan:$('f_plan').value,students:0,admission:$('f_admission').value,status:'active',charge:parseFloat($('f_charge').value)||30,expiry:$('f_expiry').value,email:$('f_aemail').value||$('f_email').value,phone:$('f_phone').value,color:Math.floor(Math.random()*crestColors.length)});
+  schools.unshift({id:nextSchoolId++,code,name,short:short.toUpperCase(),admin:$('f_admin').value.trim()||'—',plan:$('f_plan').value,students:0,admission:$('f_admission').value,status:'active',charge:parseFloat($('f_charge').value)||30,expiry:$('f_expiry').value,email:$('f_email').value,phone:$('f_phone').value,color:Math.floor(Math.random()*crestColors.length)});
   activity.unshift({type:'sys',school:schools[0].id,text:'New school created',time:'just now'});
   closeModal();renderAll();go('schools');
   toast(`${name} created · admin password sent to ${$('f_aemail').value||'admin'}`);
@@ -5779,7 +5882,7 @@ createSchool=async function(){
   const code=sval('f_code').trim().toUpperCase(), name=sval('f_name').trim();
   if(!code||!name){toast('School code and name are required');return;}
   const {data:school,error}=await sb.from('schools').insert({
-    code,name,phone:sval('f_phone'),email:sval('f_aemail')||sval('f_email'),
+    code,name,phone:sval('f_phone'),email:sval('f_email'),
     subscription_plan:sval('f_plan').toLowerCase(),subscription_expiry:sval('f_expiry')||null,status:'active'
   }).select().single();
   if(error){toast('Could not create: '+error.message);return;}
