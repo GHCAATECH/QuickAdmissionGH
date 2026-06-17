@@ -12,8 +12,8 @@
   body{margin:0;font-family:'Inter',system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
   .wrap{max-width:880px;margin:0 auto;padding:28px 20px 80px}
   .hero{background:linear-gradient(150deg,var(--primary),var(--deep));color:#fff;border-radius:18px;padding:30px 28px;box-shadow:0 18px 40px -16px rgba(18,38,72,.4);margin-bottom:24px}
-  .hero h1{font-family:'Space Grotesk';font-size:28px;margin:0 0 6px}
-  .hero p{margin:0;opacity:.9;font-size:14px}
+  .hero h1{font-family:'Space Grotesk';font-size:28px;line-height:1.12;margin:0 0 6px;overflow-wrap:anywhere}
+  .hero p{margin:0;opacity:.9;font-size:14px;overflow-wrap:anywhere}
   .toc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:24px;box-shadow:0 8px 20px -12px rgba(18,38,72,.18)}
   .toc h3{margin:0 0 8px;font-family:'Space Grotesk';font-size:14px;color:var(--primary);text-transform:uppercase;letter-spacing:.08em}
   .toc a{display:block;color:var(--soft);text-decoration:none;font-size:13.5px;padding:3px 0}
@@ -24,13 +24,32 @@
   p,li{font-size:14px}
   ul,ol{padding-left:20px;margin:6px 0}
   li{margin-bottom:5px}
-  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0}
+  table{width:100%;border-collapse:collapse;margin:0;font-size:13.5px;min-width:600px}
   th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
   th{background:var(--primary);color:#fff;font-weight:600}
   tr:nth-child(even) td{background:#f6f9fe}
   .note{background:#E2ECFB;border-left:3px solid var(--primary);border-radius:8px;padding:10px 14px;font-size:13.5px;margin:10px 0}
   code{background:#eef2f8;padding:1px 6px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:12.5px}
   .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}
+  @media(max-width:760px){
+    .wrap{padding:20px 16px 56px}
+    .hero{padding:24px 22px}
+    .hero h1{font-size:24px}
+    section.card{padding:18px 18px 20px}
+    h2{font-size:18px}
+  }
+  @media(max-width:480px){
+    .wrap{padding:14px 12px 42px}
+    .hero{padding:22px 18px;border-radius:16px}
+    .hero h1{font-size:20px}
+    .hero p,p,li{font-size:13px}
+    .toc{padding:14px 16px}
+    section.card{padding:16px}
+    h2{font-size:17px}
+    th,td{padding:8px}
+    .foot{font-size:11px}
+  }
 </style>
 </head>
 <body>
@@ -54,12 +73,12 @@
   <section class="card" id="overview">
     <h2>1. Overview</h2>
     <p>QuickAdmissionGH runs a school's entire admission process online. It has three portals in one app:</p>
-    <table>
+    <div class="table-wrap"><table>
       <tr><th>Portal</th><th>Who uses it</th><th>What it does</th></tr>
       <tr><td>Student Portal</td><td>Applicants / parents</td><td>Buy a token, fill the personal records form, download documents</td></tr>
       <tr><td>School Admin</td><td>School staff</td><td>Manage placements, students, classes, houses, fees, SMS, templates, documents</td></tr>
       <tr><td>Super Admin</td><td>Platform owner</td><td>Create and oversee all schools</td></tr>
-    </table>
+    </table></div>
     <h3>Getting around</h3>
     <ul>
       <li>Top-right tabs switch between <b>Student Portal</b> and <b>School Admin</b>, and this <b>User Manual</b>.</li>
@@ -141,14 +160,14 @@
 
   <section class="card" id="trouble">
     <h2>6. Troubleshooting</h2>
-    <table>
+    <div class="table-wrap"><table>
       <tr><th>Problem</th><th>Fix</th></tr>
       <tr><td>Document won't open</td><td>Allow pop-ups, then click again</td></tr>
       <tr><td>"Admission is closed"</td><td>The school hasn't opened admission — contact the office</td></tr>
       <tr><td>Can't log in</td><td>Select the correct school; check index/token</td></tr>
       <tr><td>Logo/banner missing</td><td>Keep <code>banner.png</code> and <code>veloxis-logo.png</code> beside <code>index.html</code></td></tr>
       <tr><td>Phone rejected</td><td>Digits only, 10 max (e.g. <code>0244000000</code>)</td></tr>
-    </table>
+    </table></div>
   </section>
 
   <div class="foot">Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</div>

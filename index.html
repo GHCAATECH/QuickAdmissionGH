@@ -26,21 +26,72 @@
 <meta name="twitter:image" content="https://www.quickadmissiongh.com/veloxis-logo.png">
 <style>
   *{box-sizing:border-box}
+  :root{--qa-shell-top:72px}
   html,body{margin:0;height:100%;overflow:hidden;font-family:'Inter',system-ui,Arial,sans-serif;background:#0a1f33}
-  .qa-tabs{position:fixed;top:0;left:0;right:0;height:72px;z-index:100000;display:flex;align-items:center;
+  .qa-tabs{position:fixed;top:0;left:0;right:0;height:var(--qa-shell-top);z-index:100000;display:flex;align-items:center;
     padding:0 18px;background:#ffffff;border-bottom:1px solid #d7e2f0;box-shadow:0 2px 10px rgba(18,38,72,.08)}
   .qa-logo{height:72px;width:auto;display:block;object-fit:contain;flex:none}
   .qa-tabs .spacer{flex:1}
   .qa-tab{appearance:none;border:1px solid transparent;background:transparent;color:#1557B0;font-size:13px;font-weight:600;
-    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:6px;white-space:nowrap}
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:6px;white-space:nowrap;min-width:0}
   .qa-tab:hover{background:#E2ECFB}
   .qa-tab.active{background:#1557B0;color:#fff}
-  .qa-stack{position:fixed;top:72px;left:0;right:0;bottom:0}
+  .qa-stack{position:fixed;top:var(--qa-shell-top);left:0;right:0;bottom:0}
   .app-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:#fff}
   .app-frame.active{display:block}
   body.qa-booting .qa-tabs,body.qa-booting .qa-stack{visibility:hidden}
-  @media(max-width:560px){.qa-tabs{height:56px;padding:0 10px}.qa-logo{height:52px}.qa-stack{top:56px}.qa-tab{padding:6px 9px;font-size:11px;margin-left:3px}}
-  @media(max-width:380px){.qa-logo{height:44px}.qa-tab{padding:5px 7px;font-size:10px}}
+  .qa-disc-overlay{position:fixed;inset:0;z-index:120000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(8,20,40,.66);backdrop-filter:blur(8px)}
+  .qa-disc-overlay.show{display:flex}
+  .qa-disc-modal{width:min(720px,100%);max-height:calc(100vh - 40px);min-width:0;display:flex;flex-direction:column;background:#fff;border:1px solid #d7e2f0;border-radius:22px;box-shadow:0 28px 72px -26px rgba(8,20,40,.48);overflow:hidden}
+  .qa-disc-head{display:flex;align-items:flex-start;gap:14px;padding:22px 24px 16px;border-bottom:1px solid #e7edf6}
+  .qa-disc-head>div{min-width:0;flex:1}
+  .qa-disc-mark{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:#e8f0ff;color:#1557B0;flex:none}
+  .qa-disc-mark svg{width:24px;height:24px}
+  .qa-disc-head h2{margin:0;font:700 23px/1.08 'Space Grotesk',system-ui,sans-serif;color:#122648;overflow-wrap:anywhere}
+  .qa-disc-head p{margin:7px 0 0;font-size:13px;line-height:1.55;color:#5d6b80}
+  .qa-disc-body{padding:18px 24px 10px;font-size:14px;line-height:1.7;color:#21344d;overflow:auto}
+  .qa-disc-body p{margin:0 0 12px}
+  .qa-disc-body ul{margin:0;padding-left:19px}
+  .qa-disc-body li{margin-bottom:10px}
+  .qa-disc-foot{padding:16px 24px 24px;background:#f7f9fc;border-top:1px solid #e7edf6}
+  .qa-disc-check{display:flex;align-items:flex-start;gap:10px;font-size:13px;font-weight:600;color:#122648;margin-bottom:16px;cursor:pointer}
+  .qa-disc-check input{width:18px;height:18px;accent-color:#1557B0;cursor:pointer}
+  .qa-disc-meta{font-size:12px;color:#6f7d91;margin-bottom:14px}
+  .qa-disc-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+  .qa-disc-btn{appearance:none;border:1px solid #d7e2f0;border-radius:11px;padding:11px 16px;font:600 14px/1 'Inter',system-ui,sans-serif;cursor:pointer;transition:.15s}
+  .qa-disc-btn-primary{background:#1557B0;border-color:#1557B0;color:#fff}
+  .qa-disc-btn-primary:hover{background:#0E3F86;border-color:#0E3F86}
+  .qa-disc-btn-primary:disabled{opacity:.5;cursor:not-allowed}
+  .qa-disc-btn-ghost{background:#fff;color:#122648}
+  .qa-disc-btn-ghost:hover{background:#eef4ff}
+  @media(max-width:700px){
+    :root{--qa-shell-top:148px}
+    .qa-tabs{height:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;padding:10px 12px;gap:8px}
+    .qa-logo{grid-column:1 / -1;width:min(150px,100%);height:34px;max-width:none;object-fit:contain;object-position:left center}
+    .qa-tabs .spacer{display:none}
+    .qa-tab{width:100%;min-width:0;display:flex;align-items:center;justify-content:center;min-height:40px;margin:0;padding:8px 6px;font-size:12px;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere}
+    .qa-tab[data-t="manual"]{grid-column:1 / -1}
+  }
+  @media(max-width:560px){
+    .qa-disc-overlay{padding:0}
+    .qa-disc-overlay.show{display:block}
+    .qa-disc-modal{position:fixed;top:10px;left:10px;bottom:10px;width:calc(100vw - 20px);max-width:calc(100vw - 20px);max-height:none;min-width:0;margin:0;border-radius:18px}
+    .qa-disc-head{display:block}
+    .qa-disc-mark{margin-bottom:12px}
+    .qa-disc-head,.qa-disc-body,.qa-disc-foot{max-width:100%;padding-left:18px;padding-right:18px}
+    .qa-disc-head h2{font-size:20px}
+    .qa-disc-head p,.qa-disc-body li,.qa-disc-meta,.qa-disc-check{overflow-wrap:anywhere}
+    .qa-disc-body{font-size:13.5px}
+    .qa-disc-body ul{padding-left:18px}
+    .qa-disc-check{font-size:12px}
+    .qa-disc-actions{flex-direction:column-reverse}
+    .qa-disc-btn{width:100%}
+  }
+  @media(max-width:420px){
+    .qa-tabs{padding:8px 8px;gap:6px}
+    .qa-logo{height:28px;width:min(120px,100%)}
+    .qa-tab{min-height:38px;padding:7px 4px;font-size:10.5px}
+  }
 </style>
 </head>
 <body class="qa-booting">
@@ -336,6 +387,8 @@
 
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:13px 18px;border-radius:10px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 12px 30px -8px rgba(0,0,0,.4);z-index:90;opacity:0;transition:.3s}
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}.toast svg{width:17px;height:17px;color:var(--accent)}
+  .footer-gap{height:46px}
+  .portal-footer{position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))}
   .pbackdrop{display:none}
   @media(max-width:880px){
     .pbody{grid-template-columns:1fr}
@@ -351,6 +404,17 @@
     .step{flex-direction:column;align-items:center;min-width:70px;text-align:center}.step .lbl{font-size:11px;padding-top:0}
     .grid-2,.grid-3,.prog-grid,.pay-methods{grid-template-columns:1fr}
     .pmain{padding:16px}
+  }
+  @media(max-width:640px){
+    .ptopbar{padding:10px 12px;gap:10px;flex-wrap:wrap}
+    .ptopbar .sch{font-size:14px;line-height:1.25;flex:1 1 calc(100% - 96px)}
+    .ptopbar .yr{margin-left:0;order:3;width:100%;font-size:11px}
+    .wu-grid{grid-template-columns:1fr}
+    .wu-block{border-right:none!important}
+    .doc-btns .btn{min-width:100%}
+    .step-nav{flex-direction:column-reverse}
+    .step-nav .btn{width:100%}
+    .rev-body{grid-template-columns:1fr}
   }
   .env-badge{position:fixed;bottom:10px;right:12px;z-index:99999;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;padding:4px 9px;border-radius:20px;background:#0E3F86;color:#AFD3FF;border:1px solid #173F7A;box-shadow:0 4px 14px -6px rgba(0,0,0,.5);pointer-events:none}
   .env-badge.dev{background:#5b3a08;color:#FBD37A;border-color:#7a5409}
@@ -378,6 +442,10 @@
   .boot-spinner{width:18px;height:18px;border:2px solid var(--primary-soft);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
   .boot-copy{font-size:13px;font-weight:600;color:var(--ink-soft)}
   @keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:520px){
+    .portal-footer{position:static;margin-top:18px}
+    .footer-gap{display:none}
+  }
 </style>
 </head>
 <body class=&quot;booting&quot;>
@@ -571,34 +639,6 @@
 
 <div class=&quot;toast&quot; id=&quot;toast&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M22 11.08V12a10 10 0 1 1-5.93-9.14&quot;/><polyline points=&quot;22 4 12 14.01 9 11.01&quot;/></svg><span id=&quot;toastMsg&quot;></span></div>
 
-<!-- DISCLAIMER (shown after successful login) -->
-<div class=&quot;disc-overlay&quot; id=&quot;discOverlay&quot;>
-  <div class=&quot;disc-modal&quot;>
-    <div class=&quot;disc-head&quot;>
-      <div class=&quot;disc-ico&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z&quot;/><line x1=&quot;12&quot; y1=&quot;9&quot; x2=&quot;12&quot; y2=&quot;13&quot;/><line x1=&quot;12&quot; y1=&quot;17&quot; x2=&quot;12.01&quot; y2=&quot;17&quot;/></svg></div>
-      <h2>Disclaimer &amp;amp; Declaration</h2>
-    </div>
-    <div class=&quot;disc-body&quot; id=&quot;discBody&quot;>
-      <p>Welcome to <b id=&quot;discSchool&quot;>your school's</b> online admission portal. Before you continue, please read and accept the following:</p>
-      <ul>
-        <li>All information you provide <b>must match exactly</b> the details on your CSSPS Placement / Enrolment Form. Any false, altered, or mismatched information may lead to the <b>cancellation of your admission</b>.</li>
-        <li>The <b>service charge is non-refundable</b>, whether or not you complete or are granted admission.</li>
-        <li>Your admission token and login details are personal — keep them confidential. The school is not liable for misuse arising from shared credentials.</li>
-        <li>Uploaded documents (e.g. your enrolment form) must be <b>clear and genuine</b>. Submitting forged documents is an offence and will void your placement.</li>
-        <li>Submitting this form does not constitute final admission until verified and approved by the school administration.</li>
-      </ul>
-      <p>By clicking <b>“I Understand &amp;amp; Agree”</b>, you confirm that you have read, understood, and accepted these terms.</p>
-    </div>
-    <div class=&quot;disc-foot&quot;>
-      <label class=&quot;disc-check&quot;><input type=&quot;checkbox&quot; id=&quot;discAgree&quot; onchange=&quot;document.getElementById('discBtn').disabled=!this.checked&quot;> I have read and agree to the above.</label>
-      <div class=&quot;disc-actions&quot;>
-        <button class=&quot;btn btn-ghost&quot; onclick=&quot;declineDisclaimer()&quot;>Decline &amp;amp; Log out</button>
-        <button class=&quot;btn btn-primary&quot; id=&quot;discBtn&quot; disabled onclick=&quot;acceptDisclaimer()&quot;>I Understand &amp;amp; Agree</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 const SUPABASE_URL='https://datxaylostmyroleisdl.supabase.co';
 const SUPABASE_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
@@ -739,8 +779,6 @@ async function doLogin(){
   session={index:idx,token:tok,school:sid}; STU=data.student; await applySchool(data);
   setStudentSession(session);
   hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion();
-  const skipDisclaimer=hasAcceptedStudentDisclaimer(idx,sid)||await hasStudentLoggedInBefore(idx,sid);
-  showDisclaimer(typeof data.show_disclaimer==='boolean' ? data.show_disclaimer : !skipDisclaimer);
 }
 async function bootStudent(){
   const s=getStudentSession();
@@ -751,46 +789,6 @@ async function bootStudent(){
     else { session=null; STU=null; clearStudentSession(); showScreen('s-login'); }
   }catch(e){}
 }
-async function hasStudentLoggedInBefore(idx,school){
-  if(!idx||!school) return false;
-  try{
-    const {data,error}=await sb.from('placement_list').select('logged_in').eq('school_id',school).eq('index_number',idx).maybeSingle();
-    if(error) return hasAcceptedStudentDisclaimer(idx,school);
-    return !!(data&amp;&amp;data.logged_in);
-  }catch(e){
-    return hasAcceptedStudentDisclaimer(idx,school);
-  }
-}
-function studentDisclaimerKey(idx,school){
-  return 'qag_disclaimer_student_'+(school||'school')+'_'+(idx||'student');
-}
-function qagStorage(){
-  try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.localStorage) return window.parent.localStorage; }catch(e){}
-  try{ return window.localStorage; }catch(e){ return null; }
-}
-function hasAcceptedStudentDisclaimer(idx,school){
-  try{const s=qagStorage(); return !!s&amp;&amp;s.getItem(studentDisclaimerKey(idx,school))==='1';}catch(e){return false;}
-}
-function showDisclaimer(isFirstLogin){
-  const ov=$('discOverlay');
-  if(isFirstLogin===false){ if(ov) ov.classList.remove('show'); return; }
-  if(isFirstLogin!==true&amp;&amp;hasAcceptedDisclaimer()) return;
-  const sch=(SCHOOL&amp;&amp;SCHOOL.school&amp;&amp;SCHOOL.school.name)||&quot;your school&quot;;
-  const sn=$('discSchool'); if(sn) sn.textContent=sch;
-  const cb=$('discAgree'); if(cb) cb.checked=false;
-  const btn=$('discBtn'); if(btn) btn.disabled=true;
-  markDisclaimerAccepted();
-  if(ov){ ov.classList.add('show'); const b=$('discBody'); if(b) b.scrollTop=0; }
-}
-function disclaimerKey(){
-  const sid=(session&amp;&amp;session.school)||(SCHOOL&amp;&amp;SCHOOL.school&amp;&amp;SCHOOL.school.id)||'school';
-  const idx=(session&amp;&amp;session.index)||(STU&amp;&amp;STU.index)||'student';
-  return studentDisclaimerKey(idx,sid);
-}
-function hasAcceptedDisclaimer(){ try{const s=qagStorage(); return !!s&amp;&amp;s.getItem(disclaimerKey())==='1';}catch(e){return false;} }
-function markDisclaimerAccepted(){ try{const s=qagStorage(); if(s)s.setItem(disclaimerKey(),'1');}catch(e){} }
-function acceptDisclaimer(){ markDisclaimerAccepted(); const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); }
-function declineDisclaimer(){ const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); logout(); }
 async function refreshStudent(){
   if(!session||!session.index||!session.token) return;
   const activeSession={index:session.index,token:session.token,school:session.school||null};
@@ -997,7 +995,7 @@ async function verifyPayment(reference, idx, name, school){
   toast('Payment confirmed \u2014 signing you in\u2026');
   session={index:idx,token:data.token,school:school||null};
   const {data:login}=await sb.rpc('student_login',{p_index:idx,p_token:data.token,p_school:school||null});
-  if(login&amp;&amp;login.ok){ STU=login.student; await applySchool(login); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); const skipDisclaimer=hasAcceptedStudentDisclaimer(idx,school||null)||await hasStudentLoggedInBefore(idx,school||null); showDisclaimer(typeof login.show_disclaimer==='boolean' ? login.show_disclaimer : !skipDisclaimer); toast('Welcome! Save your token: '+data.token); }
+  if(login&amp;&amp;login.ok){ STU=login.student; await applySchool(login); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome! Save your token: '+data.token); }
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }
 function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in — tap Log in');}
@@ -1260,7 +1258,7 @@ function docProspectus(){
 }
 
 function gotoSuper(){ try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin_12.html'; }
-function logout(){stopWatchDeletion();session=null;STU=null;clearStudentSession(); const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
+function logout(){stopWatchDeletion();session=null;STU=null;clearStudentSession(); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
 
 buildSteps();
 // Phone/contact fields: digits only, max 10
@@ -1333,8 +1331,8 @@ initStudentPortal();
   });
 })();
 </script>
-<div style=&quot;height:46px&quot; aria-hidden=&quot;true&quot;></div>
-<footer style=&quot;position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
+<div class=&quot;footer-gap&quot; aria-hidden=&quot;true&quot;></div>
+<footer class=&quot;portal-footer&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
 </body>
 </html>
 "></iframe>
@@ -1369,6 +1367,36 @@ initStudentPortal();
   html,body{height:100%;overflow:hidden}
   .app{display:grid;grid-template-columns:248px 1fr;height:100vh;overflow:hidden}
   body.auth-booting .app{display:none!important}
+  #authGate.gate-screen{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(120% 90% at 12% 10%,rgba(21,87,176,.28),transparent 46%),radial-gradient(90% 80% at 100% 0%,rgba(210,148,26,.18),transparent 38%),linear-gradient(180deg,#dfe8f6,#edf2f8)}
+  .gate-shell{width:min(1080px,100%);display:grid;grid-template-columns:minmax(300px,1.05fr) minmax(360px,.95fr);background:rgba(255,255,255,.34);border:1px solid rgba(255,255,255,.42);border-radius:28px;overflow:hidden;box-shadow:0 28px 80px -30px rgba(8,20,40,.45);backdrop-filter:blur(10px)}
+  .gate-panel{padding:36px;background:linear-gradient(160deg,#10254f 0%,#1557B0 58%,#0E3F86 100%);color:#fff;display:flex;flex-direction:column;gap:22px;min-height:520px}
+  .gate-mark{width:74px;height:74px;border-radius:22px;display:grid;place-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+  .gate-mark span{font:700 26px/1 'Space Grotesk',system-ui,sans-serif;letter-spacing:.04em}
+  .gate-kicker{display:inline-flex;align-items:center;gap:8px;width:max-content;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  .gate-panel h1{margin:0;font:700 34px/1.02 'Space Grotesk',system-ui,sans-serif}
+  .gate-panel p{margin:0;font-size:14px;line-height:1.65;color:rgba(255,255,255,.82);max-width:42ch}
+  .gate-points{display:grid;gap:12px;margin-top:auto}
+  .gate-point{display:flex;gap:12px;align-items:flex-start;padding:14px 15px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14)}
+  .gate-point svg{width:18px;height:18px;flex:none;margin-top:2px;color:#d7e8ff}
+  .gate-point b{display:block;font-size:13px;line-height:1.2;margin-bottom:4px}
+  .gate-point span{display:block;font-size:12px;line-height:1.55;color:rgba(255,255,255,.72)}
+  .gate-card-wrap{padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.9),#f4f7fc)}
+  .gate-card{max-width:430px;margin:auto;background:#fff;border:1px solid #e4ecf7;border-radius:24px;padding:28px;box-shadow:0 18px 40px -22px rgba(8,20,40,.35)}
+  .gate-card h2{margin:0;font:700 28px/1.06 'Space Grotesk',system-ui,sans-serif;color:#122648}
+  .gate-card p{margin:10px 0 0;font-size:13px;line-height:1.6;color:#607087}
+  .gate-status{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:13px;background:#f5f8fd;border:1px solid #dfe8f6;color:#607087;font-size:12px;font-weight:600;margin:18px 0 14px}
+  .gate-spinner{width:15px;height:15px;border-radius:50%;border:2px solid rgba(21,87,176,.16);border-top-color:#1557B0;animation:gateSpin .8s linear infinite;flex:none}
+  .gate-form{transition:opacity .16s ease}
+  #authGate.is-checking .gate-form{opacity:.94}
+  #authGate.is-ready .gate-status{display:none}
+  .gate-error{display:none;border-radius:12px;background:#fff3f3;border:1px solid #f0d1d1;color:#a73c3c;padding:10px 12px;font-size:12.5px;font-weight:600;margin:0 0 12px}
+  .gate-help{margin-top:14px;font-size:12px;line-height:1.55;color:#718096}
+  .gate-help b{color:#122648}
+  .gate-card .field{margin-bottom:12px}
+  .gate-card input{background:#fff}
+  @keyframes gateSpin{to{transform:rotate(360deg)}}
+  @media(max-width:920px){.gate-shell{grid-template-columns:1fr}.gate-panel{min-height:unset;padding:28px}.gate-card-wrap{padding:20px}.gate-panel h1{font-size:30px}}
+  @media(max-width:560px){#authGate.gate-screen{padding:14px}.gate-panel,.gate-card{padding:22px}.gate-panel h1{font-size:27px}.gate-card h2{font-size:24px}}
 
   /* sidebar */
   .sidebar{background:var(--sb);color:var(--sb-text);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40}
@@ -1686,6 +1714,13 @@ initStudentPortal();
   .env-badge.dev{background:#5b3a08;color:#FBD37A;border-color:#7a5409}
   .sms-preview{margin-top:10px;font-size:12.5px;font-weight:600;color:var(--primary);background:var(--primary-soft);border:1px solid #cfe6dd;border-radius:var(--r-sm);padding:9px 12px}
   .sms-preview.empty{color:var(--accent-ink);background:var(--accent-soft);border-color:#f0dcae}
+  .sms-builder textarea{min-height:240px}
+  .sms-lead{font-size:13px;color:var(--muted);margin:0 0 18px}
+  .sms-note{font-size:12.5px;color:var(--muted);margin:0 0 10px}
+  .sms-inline-meta{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;color:var(--muted)}
+  .sms-inline-meta b{color:var(--ink)}
+  .sms-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .sms-side{display:grid;gap:16px}
   .sms-vars{margin-top:8px;font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   .sms-vars button{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--primary);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:3px 7px;transition:.12s}
   .sms-vars button:hover{background:var(--primary-soft);border-color:var(--primary)}
@@ -1763,6 +1798,37 @@ initStudentPortal();
 </style>
 </head>
 <body class=&quot;auth-booting&quot;>
+<div id=&quot;authGate&quot; class=&quot;gate-screen is-checking&quot;>
+  <div class=&quot;gate-shell&quot;>
+    <div class=&quot;gate-panel&quot;>
+      <div class=&quot;gate-mark&quot;><span>QA</span></div>
+      <div class=&quot;gate-kicker&quot;>Secure school access</div>
+      <div>
+        <h1>School Admin Portal</h1>
+        <p>Manage placements, submitted students, SMS communication, document templates, and admission settings from one secure workspace.</p>
+      </div>
+      <div class=&quot;gate-points&quot;>
+        <div class=&quot;gate-point&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M20 6 9 17l-5-5&quot;/></svg><div><b>Submitted-student workflow</b><span>Review records that students have actually submitted, not just raw imported placements.</span></div></div>
+        <div class=&quot;gate-point&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M12 1v22&quot;/><path d=&quot;M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6&quot;/></svg><div><b>Payments, SMS and portal setup</b><span>Control service charge, student-facing content, and programme-based communication from the same portal.</span></div></div>
+        <div class=&quot;gate-point&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z&quot;/></svg><div><b>Verified access only</b><span>Only linked school-admin accounts can continue past this gate and open confidential student records.</span></div></div>
+      </div>
+    </div>
+    <div class=&quot;gate-card-wrap&quot;>
+      <div class=&quot;gate-card&quot;>
+        <h2>Sign in</h2>
+        <p>Use the email and password assigned to your school-admin account.</p>
+        <div class=&quot;gate-status&quot;><span class=&quot;gate-spinner&quot;></span>Checking for an existing secure session...</div>
+        <div class=&quot;gate-form&quot;>
+          <div class=&quot;field&quot;><label>Email</label><input id=&quot;ag_email&quot; placeholder=&quot;you@school.gh&quot; autocomplete=&quot;username&quot;></div>
+          <div class=&quot;field&quot;><label>Password</label><input id=&quot;ag_pass&quot; type=&quot;password&quot; placeholder=&quot;Enter your password&quot; autocomplete=&quot;current-password&quot;></div>
+          <div id=&quot;ag_err&quot; class=&quot;gate-error&quot;></div>
+          <button class=&quot;btn btn-primary btn-block&quot; type=&quot;button&quot; id=&quot;ag_btn&quot; onclick=&quot;adminLogin()&quot;>Sign in</button>
+          <div class=&quot;gate-help&quot;><b>Need access?</b> Contact the platform owner or the school account owner to create or reconnect your school-admin login.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class=&quot;app&quot;>
   <!-- SIDEBAR -->
   <aside class=&quot;sidebar&quot; id=&quot;sidebar&quot;>
@@ -2086,20 +2152,24 @@ initStudentPortal();
       <!-- SMS -->
       <section class=&quot;view&quot; id=&quot;view-sms&quot;>
         <div class=&quot;composer&quot;>
-          <div class=&quot;panel panel-pad&quot; style=&quot;margin:0&quot;>
-            <h3 class=&quot;section-title&quot;>Send bulk SMS</h3>
-            <div class=&quot;field&quot;><label>Recipients</label><select id=&quot;smsGroup&quot; onchange=&quot;updateSms()&quot;><option value=&quot;all&quot;>All students</option></select></div>
-            <div class=&quot;sms-preview&quot; id=&quot;smsPreview&quot;>No recipients</div>
-            <div class=&quot;field&quot; style=&quot;margin-top:14px&quot;><label>Message</label><textarea id=&quot;smsBody&quot; rows=&quot;5&quot; placeholder=&quot;Type your message…&quot; oninput=&quot;updateSms()&quot;></textarea>
-              <div class=&quot;char-count&quot;><span id=&quot;smsChars&quot;>0</span> chars · <span id=&quot;smsCred&quot;>1</span> SMS part(s) each · est. <span id=&quot;smsCost&quot;>0</span> credits</div>
-              <div class=&quot;sms-vars&quot;>Insert: <button type=&quot;button&quot; onclick=&quot;insVar('{NAME}')&quot;>{NAME}</button><button type=&quot;button&quot; onclick=&quot;insVar('{INDEX}')&quot;>{INDEX}</button><button type=&quot;button&quot; onclick=&quot;insVar('{SCHOOL}')&quot;>{SCHOOL}</button><button type=&quot;button&quot; onclick=&quot;insVar('{PROGRAMME}')&quot;>{PROGRAMME}</button><button type=&quot;button&quot; onclick=&quot;insVar('{REPORTING}')&quot;>{REPORTING}</button></div>
+          <div class=&quot;panel panel-pad sms-builder&quot; style=&quot;margin:0&quot;>
+            <h3 class=&quot;section-title&quot;>Send Bulk Notifications</h3>
+            <p class=&quot;sms-lead&quot;>Select a programme and send messages to students placed.</p>
+            <div class=&quot;field&quot;><label>Programme</label><select id=&quot;smsProgramme&quot; onchange=&quot;updateSms()&quot;><option value=&quot;all&quot;>- Select -</option></select></div>
+            <div class=&quot;sms-preview empty&quot; id=&quot;smsPreview&quot;>Select a programme to prepare recipients.</div>
+            <p class=&quot;sms-note&quot;>Use <b>{STUDNAME}</b> wherever you want the student's name to appear in the message.</p>
+            <p class=&quot;sms-note&quot;>Maximum 300 characters allowed.</p>
+            <div class=&quot;field&quot; style=&quot;margin-top:18px&quot;><label>Sample Message</label><textarea id=&quot;smsBody&quot; rows=&quot;7&quot; maxlength=&quot;300&quot; placeholder=&quot;Type your message...&quot; oninput=&quot;updateSms()&quot;></textarea>
+              <div class=&quot;char-count&quot;><span id=&quot;smsRemain&quot;>300</span> characters remaining - <span id=&quot;smsCred&quot;>1</span> SMS part(s) each - est. <span id=&quot;smsCost&quot;>0</span> credits</div>
+              <div class=&quot;sms-vars&quot;>Insert: <button type=&quot;button&quot; onclick=&quot;insVar('{STUDNAME}')&quot;>{STUDNAME}</button><button type=&quot;button&quot; onclick=&quot;insVar('{INDEX}')&quot;>{INDEX}</button><button type=&quot;button&quot; onclick=&quot;insVar('{SCHOOL}')&quot;>{SCHOOL}</button><button type=&quot;button&quot; onclick=&quot;insVar('{PROGRAMME}')&quot;>{PROGRAMME}</button><button type=&quot;button&quot; onclick=&quot;insVar('{REPORTING}')&quot;>{REPORTING}</button><button type=&quot;button&quot; onclick=&quot;insVar('{HELPDESK}')&quot;>{HELPDESK}</button></div>
             </div>
-            <button class=&quot;btn btn-primary&quot; onclick=&quot;sendSms()&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><line x1=&quot;22&quot; y1=&quot;2&quot; x2=&quot;11&quot; y2=&quot;13&quot;/><polygon points=&quot;22 2 15 22 11 13 2 9 22 2&quot;/></svg>Send to <span id=&quot;smsRecip&quot;>0</span> recipients</button>
+            <div class=&quot;sms-inline-meta&quot;><span id=&quot;smsRecipMeta&quot;><b>0</b> ready</span><span id=&quot;smsSkipMeta&quot;><b>0</b> without SMS contact</span><span id=&quot;smsDupMeta&quot;><b>0</b> duplicate records removed</span></div>
+            <div class=&quot;sms-actions&quot;><button class=&quot;btn btn-primary&quot; onclick=&quot;sendSms()&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><line x1=&quot;22&quot; y1=&quot;2&quot; x2=&quot;11&quot; y2=&quot;13&quot;/><polygon points=&quot;22 2 15 22 11 13 2 9 22 2&quot;/></svg>Send SMS to Selected Candidates (<span id=&quot;smsRecip&quot;>0</span>)</button><button class=&quot;btn btn-ghost&quot; type=&quot;button&quot; onclick=&quot;loadTpl('welcome')&quot;>Load sample</button></div>
           </div>
-          <div>
+          <div class=&quot;sms-side&quot;>
             <div class=&quot;credit-box&quot; style=&quot;margin-bottom:16px&quot;><small>SMS credits</small><div class=&quot;big mono&quot; id=&quot;smsBalance&quot;>0</div><button class=&quot;btn btn-ghost btn-sm&quot; style=&quot;margin-top:10px;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)&quot; onclick=&quot;buyCredits()&quot;>Buy credits</button></div>
             <div class=&quot;panel panel-pad&quot; style=&quot;margin:0 0 16px&quot;><label style=&quot;font-size:12px;font-weight:600;color:var(--ink-soft)&quot;>Sender ID</label><input id=&quot;smsSender&quot; maxlength=&quot;11&quot; placeholder=&quot;SCHOOLSMS&quot; style=&quot;margin-top:6px&quot;><div style=&quot;font-size:11px;color:var(--muted);margin-top:5px&quot;>Max 11 characters. Must be registered with your SMS provider.</div></div>
-            <div class=&quot;panel panel-pad&quot; style=&quot;margin:0&quot;><label style=&quot;font-size:12px;font-weight:600;color:var(--ink-soft)&quot;>Templates</label><select style=&quot;margin-top:6px&quot; id=&quot;smsTpl&quot; onchange=&quot;loadTpl(this.value)&quot;><option value=&quot;&quot;>— Insert template —</option><option value=&quot;reminder&quot;>Reporting reminder</option><option value=&quot;payment&quot;>Token / login</option><option value=&quot;docs&quot;>Documents reminder</option><option value=&quot;welcome&quot;>Welcome / congratulations</option></select></div>
+            <div class=&quot;panel panel-pad&quot; style=&quot;margin:0&quot;><label style=&quot;font-size:12px;font-weight:600;color:var(--ink-soft)&quot;>Templates</label><select style=&quot;margin-top:6px&quot; id=&quot;smsTpl&quot; onchange=&quot;loadTpl(this.value)&quot;><option value=&quot;&quot;>- Insert template -</option><option value=&quot;reminder&quot;>Reporting reminder</option><option value=&quot;payment&quot;>Token / login</option><option value=&quot;docs&quot;>Documents reminder</option><option value=&quot;welcome&quot;>Welcome / congratulations</option></select></div>
           </div>
         </div>
         <div class=&quot;panel&quot; style=&quot;margin-top:18px&quot;><div class=&quot;panel-head&quot;><h3>SMS history</h3></div><div class=&quot;tbl-wrap&quot;><table><thead><tr><th>Date</th><th>Group</th><th>Recipients</th><th>Message</th><th>Status</th></tr></thead><tbody id=&quot;smsRows&quot;></tbody></table></div></div>
@@ -2293,6 +2363,24 @@ const money=n=>'GHS '+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumF
 function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 const pendingCount=()=>students.filter(s=>s.status==='pending').length;
 const totalRevenue=()=>payments.filter(p=>p.status==='completed').reduce((a,p)=>a+p.amount,0);
+function cleanSmsText(v){ return v==null?'':String(v).trim(); }
+function preferredStudentSms(rawStudent,placementRow){
+  const rec=(rawStudent&&rawStudent.records)||{};
+  return cleanSmsText(rec.sms_contact||rawStudent.parent_phone||rawStudent.sms_contact||(placementRow&&placementRow.sms_contact)||'');
+}
+function submittedStudents(){ return students.filter(s=>s.submitted); }
+function studentSmsContact(s){
+  if(!s) return '';
+  return cleanSmsText((s.rec&&s.rec.sms_contact)||s.smsRaw||(s.sms&&s.sms!=='â€”'?s.sms:''));
+}
+function studentDisplayNameByIndex(index,fallback){
+  const s=students.find(function(row){ return String(row.index)===String(index); });
+  return cleanSmsText((s&&s.name)||fallback||'Student');
+}
+function placementSmsContact(row){
+  const s=students.find(function(item){ return String(item.index)===String(row.index); });
+  return cleanSmsText((s&&studentSmsContact(s))||row.sms||'');
+}
 
 /* ===== ADMISSION TOGGLE ===== */
 function toggleAdmission(){
@@ -2341,7 +2429,7 @@ function renderStats(){
       <div class=&quot;ttl&quot;><span>Pending Admissions</span><span class=&quot;big&quot;>${fmt(pending)}</span></div>
       <div class=&quot;pct&quot;>${pp}%</div>
       ${rowsBlk(N)}
-      <div class=&quot;mi&quot;><button onclick=&quot;go('manage-students')&quot;>View Details →</button></div>
+      <div class=&quot;mi&quot;><button onclick=&quot;go('placement')&quot;>View Placement →</button></div>
     </div>`;
   var bp=$('badge-pending'); if(bp) bp.textContent=pending;
 }
@@ -2608,7 +2696,7 @@ async function handlePlacementFile(inp){
 /* ===== STUDENTS + BULK ===== */
 function filteredStudents(){
   const q=($('stuSearch').value||'').toLowerCase();const pr=$('stuProg').value;
-  return students.filter(s=>(s.name.toLowerCase().includes(q)||s.index.includes(q))&amp;&amp;(pr==='all'||s.progId==pr));
+  return submittedStudents().filter(s=>(s.name.toLowerCase().includes(q)||s.index.includes(q))&amp;&amp;(pr==='all'||s.progId==pr));
 }
 function renderStudents(){
   const rows=filteredStudents();
@@ -2643,7 +2731,17 @@ function applyBulk(){
   activityLog.unshift({time:'Just now',action:`Bulk allocation on ${n} students`,by:(SB_ADMIN_NAME||'Admin')});
   clearSel();renderStats();toast(`Updated ${n} students`);
 }
-function bulkSms(){go('sms');toast(`${selected.size} students loaded into SMS composer`);}
+function bulkSms(){
+  var chosen=students.filter(function(s){ return selected.has(s.id); });
+  var programmeNames=[...new Set(chosen.map(function(s){
+    var prog=progById(s.progId)||{};
+    return cleanSmsText(prog.name);
+  }).filter(Boolean))];
+  smsPrefillProgramme=(programmeNames.length===1?programmeNames[0]:'all');
+  go('sms');
+  if(programmeNames.length===1) toast('SMS composer filtered to '+programmeNames[0]);
+  else toast('SMS composer is grouped by programme. Pick a programme to continue.');
+}
 function clearSel(){selected.clear();renderStudents();}
 function viewStudent(id){
   const s=students.find(x=>x.id===id);
@@ -2824,76 +2922,141 @@ function renderFinance(){
 }
 
 /* ===== SMS ===== */
-function buildSmsGroups(){
-  var sel=$('smsGroup'); if(!sel)return; var cur=sel.value;
-  var html='<optgroup label=&quot;General&quot;>'
-    +'<option value=&quot;all&quot;>All students</option>'
-    +'<option value=&quot;submitted&quot;>Records submitted</option>'
-    +'<option value=&quot;pending&quot;>Records pending</option>'
-    +'<option value=&quot;paid&quot;>Paid</option>'
-    +'<option value=&quot;unpaid&quot;>Unpaid</option>'
-    +'<option value=&quot;boarding&quot;>Boarding</option>'
-    +'<option value=&quot;day&quot;>Day</option>'
-    +'<option value=&quot;notloggedin&quot;>Not yet logged in</option></optgroup>';
-  if(programmes.length) html+='<optgroup label=&quot;By programme&quot;>'+programmes.map(p=>`<option value=&quot;prog:${p.id}&quot;>${p.name}</option>`).join('')+'</optgroup>';
-  if(classes.length) html+='<optgroup label=&quot;By class&quot;>'+classes.map(c=>`<option value=&quot;class:${c.id}&quot;>${c.name}</option>`).join('')+'</optgroup>';
-  if(houses.length) html+='<optgroup label=&quot;By house&quot;>'+houses.map(h=>`<option value=&quot;house:${h.id}&quot;>${h.name}</option>`).join('')+'</optgroup>';
-  sel.innerHTML=html; if(cur)sel.value=cur;
+var smsPrefillProgramme='all';
+function buildSmsProgrammes(){
+  var sel=$('smsProgramme'); if(!sel)return;
+  var cur=sel.value||smsPrefillProgramme||'all';
+  var counts={};
+  placement.forEach(function(row){
+    var key=cleanSmsText(row.prog)||'Unassigned';
+    counts[key]=(counts[key]||0)+1;
+  });
+  var esc=function(v){ return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  var opts=['<option value=&quot;all&quot;>- Select -</option>'];
+  Object.keys(counts).sort(function(a,b){ return a.localeCompare(b); }).forEach(function(name){
+    opts.push('<option value=&quot;'+esc(name)+'&quot;>'+esc(name)+' ('+counts[name]+')</option>');
+  });
+  sel.innerHTML=opts.join('');
+  if(cur && Array.from(sel.options).some(function(o){ return o.value===cur; })) sel.value=cur;
+  else sel.value='all';
+  smsPrefillProgramme='all';
 }
 function validPhone(p){ return /\d{9,}/.test(((p||'')+'').replace(/\D/g,'')); }
+function smsGroupLabel(){
+  var prog=($('smsProgramme')&&$('smsProgramme').value)||'all';
+  return prog==='all' ? 'All placed students' : 'Programme: '+prog;
+}
+function smsTargetName(row){
+  return studentDisplayNameByIndex(row.index,[row.name,row.other].filter(Boolean).join(' ').trim()||row.name||'Student');
+}
 function smsTargets(){
-  var g=($('smsGroup')&amp;&amp;$('smsGroup').value)||'all';
-  var list=students.slice();
-  if(g==='submitted') list=list.filter(s=>s.submitted);
-  else if(g==='pending') list=list.filter(s=>!s.submitted);
-  else if(g==='paid') list=list.filter(s=>s.pay==='paid');
-  else if(g==='unpaid') list=list.filter(s=>s.pay!=='paid');
-  else if(g==='boarding') list=list.filter(s=>(s.res||'').toLowerCase().indexOf('board')>-1);
-  else if(g==='day') list=list.filter(s=>(s.res||'').toLowerCase().indexOf('day')>-1);
-  else if(g==='notloggedin') list=list.filter(s=>!s.loggedIn);
-  else if(g.indexOf('prog:')===0) list=list.filter(s=>String(s.progId)===g.slice(5));
-  else if(g.indexOf('class:')===0) list=list.filter(s=>String(s.classId)===g.slice(6));
-  else if(g.indexOf('house:')===0) list=list.filter(s=>String(s.houseId)===g.slice(6));
-  return list.filter(s=>validPhone(s.sms));
+  var prog=($('smsProgramme')&&$('smsProgramme').value)||'all';
+  var list=placement.slice();
+  if(prog!=='all') list=list.filter(function(row){ return cleanSmsText(row.prog)===prog; });
+  var merged={}, dup=0;
+  list.forEach(function(row){
+    var idx=String(row.index||'').trim();
+    if(!idx) return;
+    var phone=placementSmsContact(row);
+    if(!merged[idx]){ merged[idx]={row:row, phone:phone}; return; }
+    dup++;
+    if(!validPhone(merged[idx].phone) && validPhone(phone)) merged[idx]={row:row, phone:phone};
+  });
+  var targets=[], missing=0;
+  Object.keys(merged).forEach(function(idx){
+    var item=merged[idx], phone=cleanSmsText(item.phone);
+    if(!validPhone(phone)){ missing++; return; }
+    targets.push({index:idx,name:smsTargetName(item.row),prog:cleanSmsText(item.row.prog),sms:phone});
+  });
+  targets.sort(function(a,b){ return a.name.localeCompare(b.name)||a.index.localeCompare(b.index); });
+  targets.total=list.length;
+  targets.missing=missing;
+  targets.duplicates=dup;
+  return targets;
 }
 function smsParts(t){return Math.max(1,Math.ceil((t||'').length/160));}
+function smsReportingText(){
+  var bits=[SB_CFG&&SB_CFG.reopening_date,SB_CFG&&SB_CFG.reopening_time].filter(Boolean);
+  return bits.length?bits.join(' '):((typeof REPORTING_DATE!=='undefined'&&REPORTING_DATE)||'the reporting date');
+}
+function smsHelpdeskText(){
+  return (SB_SCHOOL&&SB_SCHOOL.helpdesk)||(SB_SCHOOL&&SB_SCHOOL.phone)||(SB_CFG&&SB_CFG.helpdesk)||'';
+}
 function personalize(tpl,s){
   return (tpl||'')
+    .replace(/\{STUDNAME\}/g, s.name||'')
     .replace(/\{NAME\}/g, s.name||'')
     .replace(/\{INDEX\}/g, s.index||'')
     .replace(/\{SCHOOL\}/g, (SB_SCHOOL&amp;&amp;SB_SCHOOL.name)|| (typeof SCHOOL_NAME!=='undefined'?SCHOOL_NAME:'') || 'the school')
-    .replace(/\{PROGRAMME\}/g, (progById(s.progId)||{}).name||'')
-    .replace(/\{REPORTING\}/g, (typeof REPORTING_DATE!=='undefined'&amp;&amp;REPORTING_DATE)||'the reporting date');
+    .replace(/\{PROGRAMME\}/g, s.prog||((progById(s.progId)||{}).name||''))
+    .replace(/\{REPORTING\}/g, smsReportingText())
+    .replace(/\{HELPDESK\}/g, smsHelpdeskText());
 }
 function insVar(v){var t=$('smsBody');var st=t.selectionStart||t.value.length;t.value=t.value.slice(0,st)+v+t.value.slice(t.selectionEnd||st);updateSms();t.focus();}
 function loadTpl(v){
   const t={
-    reminder:'Hello {NAME}, this is {SCHOOL}. Reporting day is {REPORTING}. Please bring all required documents. Thank you.',
-    payment:'Hi {NAME}, your {SCHOOL} admission login uses index {INDEX}. Keep your token safe. Log in at the admission portal.',
-    docs:'Dear {NAME}, please complete your Personal Records Form and download your admission documents on the {SCHOOL} portal before {REPORTING}.',
-    welcome:'Congratulations {NAME}! You have been admitted to {SCHOOL} ({PROGRAMME}). Log in to complete your enrolment.'
+    reminder:'Hello {STUDNAME}, congratulations on your placement to {SCHOOL}. Complete your admission online before {REPORTING}. For help, call {HELPDESK}.',
+    payment:'Hi {STUDNAME}, your {SCHOOL} admission login uses index {INDEX}. Keep your token safe and complete your admission online as soon as possible.',
+    docs:'Dear {STUDNAME}, please complete your Personal Records Form and download your admission documents on the {SCHOOL} portal before {REPORTING}.',
+    welcome:'Congratulations {STUDNAME}! You have been placed at {SCHOOL}. Complete your admission online at https://www.quickadmissiongh.com/ using your BECE Index Number. For assistance, call {HELPDESK}.'
   };
   if(t[v]){$('smsBody').value=t[v];updateSms();}
 }
 function updateSms(){
-  var body=($('smsBody').value||''); var parts=smsParts(body);
+  var body=($('smsBody').value||''); if(body.length>300){ body=body.slice(0,300); $('smsBody').value=body; } var parts=smsParts(body);
   var targets=smsTargets(); var n=targets.length; var cost=parts*n;
-  $('smsChars').textContent=body.length;
+  if($('smsRemain'))$('smsRemain').textContent=Math.max(0,300-body.length);
   $('smsCred').textContent=parts;
   if($('smsCost'))$('smsCost').textContent=cost;
   $('smsRecip').textContent=n;
+  if($('smsRecipMeta'))$('smsRecipMeta').innerHTML='<b>'+n+'</b> ready';
+  if($('smsSkipMeta'))$('smsSkipMeta').innerHTML='<b>'+(targets.missing||0)+'</b> without SMS contact';
+  if($('smsDupMeta'))$('smsDupMeta').innerHTML='<b>'+(targets.duplicates||0)+'</b> duplicate records removed';
   $('smsBalance').textContent=fmt(smsBalance);
   var pv=$('smsPreview');
-  if(pv){ var skipped=smsTargets.skipped||0;
-    pv.textContent=n? (n+' recipient'+(n===1?'':'s')+' with a valid phone number') : 'No recipients with a valid phone number in this group';
+  if(pv){
+    if(n){
+      pv.textContent=n+' recipient'+(n===1?'':'s')+' ready from '+smsGroupLabel()+'. '+(targets.missing||0)+' without SMS contact'+((targets.duplicates||0)?' - '+targets.duplicates+' duplicate record(s) removed':'')+'.';
+    }else{
+      pv.textContent='No recipients with a valid SMS contact in the selected programme.';
+    }
     pv.className='sms-preview'+(n?'':' empty'); }
 }
-function buyCredits(){ toast('Credit top-up is set up with your SMS provider — connect it to enable purchases.'); }
-function sendSms(){ toast('Connect your SMS provider to send.'); }
+function buyCredits(){ toast('Credit top-up is set up with your SMS provider - connect it to enable purchases.'); }
+sendSms=async function(){
+  if(roGuard())return;
+  const tpl=(val('smsBody')||'').trim(); if(!tpl){toast('Type a message first');return;}
+  const targets=smsTargets(); const n=targets.length;
+  if(!n){toast('No recipients with a valid SMS contact in the selected programme');return;}
+  const parts=smsParts(tpl); const cost=parts*n;
+  if(cost>smsBalance){toast('Not enough credits - need '+cost+', have '+smsBalance);return;}
+  if(!confirm('Send to '+n+' recipient(s) in '+smsGroupLabel()+'? This will use '+cost+' credit(s).'))return;
+  const group=smsGroupLabel();
+  const sender=(val('smsSender')||'SCHOOLSMS').slice(0,11);
+  const messages=targets.map(function(s){ return {to:(s.sms+'').replace(/\s/g,''),body:personalize(tpl,s)}; });
+  const btn=event&amp;&amp;event.target?event.target.closest('button'):null; if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
+  let status='sent', delivered=n;
+  try{
+    const {data,error}=await invokeFn('send-sms',{school_id:SB_SCHOOL.id,sender,messages,group,programme:(($('smsProgramme')&&$('smsProgramme').value)||'all')});
+    if(error) throw error;
+    if(data){ delivered=data.sent!=null?data.sent:n; if(data.sent===0)status='failed'; else if(data.failed)status='partial'; }
+  }catch(e){
+    status='pending';
+    toast('Saved, but delivery is not connected yet - add your SMS API and we can wire it in.');
+  }
+  await sb.from('sms_log').insert({school_id:SB_SCHOOL.id,recipient_group:group,recipients:n,message:tpl,sent_by:(SB_ADMIN_NAME||'Admin'),status});
+  if(SB_CFG&&SB_CFG.sms_sender_id!==sender){ await sb.from('school_config').update({sms_sender_id:sender}).eq('school_id',SB_SCHOOL.id); SB_CFG.sms_sender_id=sender; }
+  if(status!=='pending'){ smsBalance=Math.max(0,smsBalance-cost); await sb.from('school_config').update({sms_balance:smsBalance}).eq('school_id',SB_SCHOOL.id); }
+  smsHistory.unshift({date:new Date().toISOString().slice(0,10),group,recip:n,msg:tpl,status});
+  document.getElementById('smsBody').value=''; if($('smsTpl')) $('smsTpl').value=''; renderSms(); renderStats();
+  if(btn){ btn.disabled=false; btn.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><line x1=&quot;22&quot; y1=&quot;2&quot; x2=&quot;11&quot; y2=&quot;13&quot;/><polygon points=&quot;22 2 15 22 11 13 2 9 22 2&quot;/></svg>Send SMS to Selected Candidates (<span id=&quot;smsRecip&quot;>'+n+'</span>)'; }
+  if(status==='sent') toast('Sent to '+delivered+' recipient(s) - '+cost+' credits used');
+};
 function renderSms(){
-  buildSmsGroups();
+  buildSmsProgrammes();
   if($('smsSender')&amp;&amp;!$('smsSender').value) $('smsSender').value=(SB_CFG&amp;&amp;SB_CFG.sms_sender_id)|| (typeof SMS_SENDER!=='undefined'?SMS_SENDER:'') || 'SCHOOLSMS';
   $('smsRows').innerHTML=smsHistory.length?smsHistory.map(h=>`<tr><td class=&quot;mono&quot;>${h.date}</td><td>${h.group}</td><td class=&quot;mono&quot;>${h.recip}</td><td style=&quot;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap&quot;>${h.msg}</td><td><span class=&quot;pill ${h.status==='sent'?'open':(h.status==='failed'?'closed':'')}&quot;>${h.status}</span></td></tr>`).join(''):emptyRow(5,'No messages sent yet.');
+  if($('smsBody') && !$('smsBody').value) loadTpl('welcome');
   updateSms();
 }
 
@@ -3019,7 +3182,7 @@ function toggleColumn(k){ regHidden.has(k)?regHidden.delete(k):regHidden.add(k);
 function sortReg(key){ if(regSort.key===key)regSort.dir=regSort.dir==='asc'?'desc':'asc'; else {regSort.key=key;regSort.dir='asc';} renderRegistered(); }
 function regFiltered(){
   var q=(document.getElementById('regSearch').value||'').toLowerCase();
-  var rows=students.filter(s=>!q||[s.index,s.name,s.adm,s.sms,s.enrol].some(v=>(v||'').toString().toLowerCase().includes(q)));
+  var rows=submittedStudents().filter(s=>!q||[s.index,s.name,s.adm,s.sms,s.enrol].some(v=>(v||'').toString().toLowerCase().includes(q)));
   var k=regSort.key,dir=regSort.dir==='asc'?1:-1;
   rows=rows.slice().sort((a,b)=>((a[k]||'').toString()).localeCompare((b[k]||'').toString(),undefined,{numeric:true})*dir);
   return rows;
@@ -3155,7 +3318,7 @@ function repPrint(title,headers,rows){
   w.document.close(); setTimeout(function(){w.print();},300);
 }
 
-const titles={dashboard:['Dashboard','Admission overview for 2025/2026'],setup:['School Setup','Profile, calendar and admission configuration'],portal:['Student Portal Setup','Control what students see and fill in'],programmes:['Programmes','Define programmes and subject combinations'],houses:['Houses','Manage houses and allocation'],classes:['Classrooms','Manage classes and capacity'],placement:['Placement List','Import and manage CSSPS placements'],students:['View Students','Browse all admitted students'],'manage-students':['Manage Students','Edit and update student records'],'house-alloc':['Manage House Allocation','Assign students to houses'],'class-alloc':['Manage Class Allocation','Assign students to classes'],finance:['Financials','Payments and gateway configuration'],sms:['SMS','Broadcast messaging'],reports:['Reports','Enrolment analytics'],templates:['Document templates','Design your admission letter &amp; records printout'],users:['Users','Manage who can sign in to this school'],utilities:['Utilities','Account and document tools']};
+const titles={dashboard:['Dashboard','Admission overview for 2025/2026'],setup:['School Setup','Profile, calendar and admission configuration'],portal:['Student Portal Setup','Control what students see and fill in'],programmes:['Programmes','Define programmes and subject combinations'],houses:['Houses','Manage houses and allocation'],classes:['Classrooms','Manage classes and capacity'],placement:['Placement List','Import and manage CSSPS placements'],students:['View Students','Browse submitted student records'],'manage-students':['Manage Students','Edit submitted student records'],'house-alloc':['Manage House Allocation','Assign students to houses'],'class-alloc':['Manage Class Allocation','Assign students to classes'],finance:['Financials','Payments and gateway configuration'],sms:['SMS','Programme-based bulk notifications'],reports:['Reports','Enrolment analytics'],templates:['Document templates','Design your admission letter &amp; records printout'],users:['Users','Manage who can sign in to this school'],utilities:['Utilities','Account and document tools']};
 function go(view){
   if(!can(VIEW_CAP[view])){ view=firstAllowedView(); }
   document.querySelectorAll('.nav-item,.nav-sub').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
@@ -3238,10 +3401,21 @@ const schoolAuthStorage={
   setItem:function(k,v){ try{ window.localStorage.setItem(schoolAuthKey(k),v); }catch(e){} },
   removeItem:function(k){ try{ window.localStorage.removeItem(schoolAuthKey(k)); }catch(e){} }
 };
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-school-auth',storage:schoolAuthStorage}});
+function schoolGateError(msg){
+  const err=document.getElementById('ag_err');
+  if(err){
+    err.textContent=msg;
+    err.style.display='block';
+  }
+  try{ toast(msg); }catch(e){}
+}
+const sb=(window.supabase&&window.supabase.createClient)
+  ? window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-school-auth',storage:schoolAuthStorage}})
+  : null;
 // Always attach a FRESH user token to privileged Edge Function calls, otherwise an
 // expired session makes the client send the publishable key and the function 401s.
 async function freshToken(){
+  if(!sb) return null;
   let {data:s}=await sb.auth.getSession();
   let tok=s&amp;&amp;s.session&amp;&amp;s.session.access_token;
   const exp=s&amp;&amp;s.session&amp;&amp;s.session.expires_at;
@@ -3251,6 +3425,7 @@ async function freshToken(){
   return tok;
 }
 async function invokeFn(name,body){
+  if(!sb) return {data:null,error:{message:'Login service did not load. Reload the page and try again.'}};
   const tok=await freshToken();
   if(!tok) return {data:null,error:{message:'Your session expired — please sign in again.'}};
   return await sb.functions.invoke(name,{body,headers:{Authorization:'Bearer '+tok}});
@@ -3323,27 +3498,24 @@ const fmtT=ts=>{ if(!ts) return '—'; const d=new Date(ts), n=new Date(); const
 /* ---- AUTH GATE ---- */
 (function buildGate(){
   document.querySelector('.app').style.display='none';
-  const ov=document.createElement('div');
-  ov.id='authGate';
-  ov.style.cssText='position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(120% 80% at 50% -10%,rgba(17,94,74,.12),transparent 60%),linear-gradient(180deg,#e6ebe8,#EEF2F8)';
-  ov.innerHTML=`<div style=&quot;width:100%;max-width:400px&quot;>
-    <div style=&quot;text-align:center;margin-bottom:18px&quot;>
-      <div style=&quot;width:64px;height:64px;border-radius:16px;margin:0 auto 12px;display:grid;place-items:center;background:linear-gradient(150deg,#1557B0,#2F74D0);color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:22px&quot;>QA</div>
-      <div style=&quot;font-family:'Space Grotesk';font-weight:600;font-size:19px&quot;>School Admin</div>
-      <div style=&quot;color:#8A9893;font-size:12.5px;margin-top:3px&quot;>Sign in to manage admissions</div>
-    </div>
-    <div class=&quot;card2&quot; style=&quot;padding:22px&quot;>
-      <div class=&quot;field&quot;><label>Email</label><input id=&quot;ag_email&quot; placeholder=&quot;you@school.gh&quot;></div>
-      <div class=&quot;field&quot;><label>Password</label><input id=&quot;ag_pass&quot; type=&quot;password&quot; placeholder=&quot;••••••••&quot;></div>
-      <div id=&quot;ag_err&quot; style=&quot;display:none;color:#B23A3A;font-size:12.5px;font-weight:500;margin-bottom:10px&quot;></div>
-      <button class=&quot;btn btn-primary&quot; style=&quot;width:100%&quot; id=&quot;ag_btn&quot;>Sign in</button>
-    </div></div>`;
-  document.body.appendChild(ov);
+  const ov=document.getElementById('authGate');
+  if(!ov) return;
+  if(!sb){
+    schoolGateError('Login service did not load. Check your internet connection and reload the page.');
+  }
+  const setGateReady=function(){
+    const gate=document.getElementById('authGate');
+    if(gate&&document.querySelector('.app').style.display==='none'){
+      gate.classList.remove('is-checking');
+      gate.classList.add('is-ready');
+    }
+  };
   document.getElementById('ag_btn').addEventListener('click',adminLogin);
   document.getElementById('ag_pass').addEventListener('keydown',e=>{if(e.key==='Enter')adminLogin();});
+  const gateFallback=setTimeout(setGateReady,1500);
   bootSession().finally(function(){
-    const gate=document.getElementById('authGate');
-    if(gate&&document.querySelector('.app').style.display==='none') gate.style.display='flex';
+    clearTimeout(gateFallback);
+    setGateReady();
   });
 })();
 
@@ -3357,6 +3529,7 @@ async function enterAdmin(prof,uid){
   go(firstAllowedView());
 }
 async function bootSession(){
+  if(!sb) return;
   try{
     const {data}=await sb.auth.getSession();
     const session=data&amp;&amp;data.session;
@@ -3368,14 +3541,63 @@ async function bootSession(){
 }
 async function adminLogin(){
   const btn=document.getElementById('ag_btn'), err=document.getElementById('ag_err');
-  btn.textContent='Signing in…'; err.style.display='none';
-  const {data,error}=await sb.auth.signInWithPassword({email:val('ag_email').trim(),password:val('ag_pass')});
-  if(error){ err.textContent=error.message; err.style.display='block'; btn.textContent='Sign in'; return; }
-  const {data:prof}=await sb.from('profiles').select('full_name,role,school_id,permissions').eq('id',data.user.id).single();
-  if(!prof||(prof.role!=='school_admin'&amp;&amp;prof.role!=='super_admin')){ err.textContent='This account has no school-admin access.'; err.style.display='block'; btn.textContent='Sign in'; await sb.auth.signOut(); return; }
-  try{ await enterAdmin(prof,data.user.id); }
-  catch(e){ err.textContent='Could not load school data.'; err.style.display='block'; btn.textContent='Sign in'; return; }
-  showDisclaimer();
+  const gate=document.getElementById('authGate');
+  if(!sb){
+    schoolGateError('Login service did not load. Check your internet connection and reload the page.');
+    return;
+  }
+  const email=val('ag_email').trim();
+  const password=val('ag_pass');
+  if(!email||!password){
+    err.textContent='Enter both email and password.';
+    err.style.display='block';
+    return;
+  }
+  if(gate){ gate.classList.add('is-checking'); gate.classList.remove('is-ready'); }
+  btn.textContent='Signing in...';
+  btn.disabled=true;
+  err.style.display='none';
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error){
+      err.textContent=error.message||'Could not sign in.';
+      err.style.display='block';
+      return;
+    }
+    const {data:prof,error:profError}=await sb.from('profiles').select('full_name,role,school_id,permissions').eq('id',data.user.id).single();
+    if(profError){
+      err.textContent=profError.message||'Could not load account profile.';
+      err.style.display='block';
+      return;
+    }
+    if(!prof||(prof.role!=='school_admin'&amp;&amp;prof.role!=='super_admin')){
+      err.textContent='This account has no school-admin access.';
+      err.style.display='block';
+      await sb.auth.signOut();
+      return;
+    }
+    try{
+      await enterAdmin(prof,data.user.id);
+      return;
+    }catch(e){
+      err.textContent='Could not load school data.';
+      err.style.display='block';
+      return;
+    }
+  }catch(e){
+    err.textContent=(e&amp;&amp;e.message)||'Sign-in failed. Check your internet connection and try again.';
+    err.style.display='block';
+    return;
+  }finally{
+    if(document.getElementById('authGate')){
+      gate.classList.remove('is-checking');
+      gate.classList.add('is-ready');
+    }
+    if(document.getElementById('ag_btn')){
+      btn.textContent='Sign in';
+      btn.disabled=false;
+    }
+  }
 }
 
 async function loadSchoolData(prof){
@@ -3417,17 +3639,33 @@ async function loadSchoolData(prof){
   houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,gender:h.gender||'',rtype:h.residential_type||'',occ:(stu.data||[]).filter(s=>s.house_id===h.id).length};});
   classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:(stu.data||[]).filter(s=>s.class_id===c.id).length};});
   const plcByIdx={}; (plc.data||[]).forEach(p=>plcByIdx[p.index_number]=p);
-  students=(stu.data||[]).map((s,i)=>{ const pl=plcByIdx[s.bece_index]||{}; const dt=s.created_at?new Date(s.created_at):null;
+  students=(stu.data||[]).map((s,i)=>{ const pl=plcByIdx[s.bece_index]||{}; const rec=s.records||{}; const regAt=s.submitted_at||s.created_at||''; const dt=regAt?new Date(regAt):null; const sms=preferredStudentSms(s,pl);
     return {id:i+1,_id:s.id,index:s.bece_index,name:s.full_name||'(no name)',gender:s.gender||'M',
       progId:pRev[s.programme_id]||null,classId:cRev[s.class_id]||null,houseId:hRev[s.house_id]||null,
-      status:s.status,adm:s.admission_no||'—',reg:(s.created_at||'').slice(0,10),
-      time: dt?dt.toTimeString().slice(0,8):'—',
-      sms: s.parent_phone||pl.sms_contact||'—',
-      enrol: pl.enrolment_code||'—',
+      status:s.status,adm:s.admission_no||'-',reg:(regAt||'').slice(0,10),
+      time: dt?dt.toTimeString().slice(0,8):'-',
+      sms: sms||'-',
+      enrol: pl.enrolment_code||'-',
       form: s.enrolment_form_url||null,
-      other: pl.other_names||'', dob: pl.dob||'', parent: s.parent_name||'—',
-      res: pl.residential_status||'—', rec: s.records||{},
+      other: pl.other_names||'', dob: pl.dob||'', parent: rec.guardian||rec.father_name||rec.mother_name||s.parent_name||'-',
+      res: pl.residential_status||'-', rec: rec,
       pay: s.payment_status||'unpaid', submitted: !!s.submitted_at, loggedIn: !!pl.logged_in};
+  });
+  const stuByIdx={}; (stu.data||[]).forEach(function(row){ if(row&&row.bece_index!=null) stuByIdx[String(row.bece_index)]=row; });
+  students=students.map(function(row){
+    const raw=stuByIdx[String(row.index)]||{};
+    const rec=(raw&&raw.records)||row.rec||{};
+    const regAt=raw.submitted_at||raw.created_at||'';
+    const dt=regAt?new Date(regAt):null;
+    const pl=plcByIdx[row.index]||{};
+    const sms=preferredStudentSms(raw,pl);
+    row.reg=(regAt||'').slice(0,10);
+    row.time=dt?dt.toTimeString().slice(0,8):'-';
+    row.sms=sms||'-';
+    row.smsRaw=sms||'';
+    row.parent=rec.guardian||rec.father_name||rec.mother_name||row.parent||'-';
+    row.rec=rec;
+    return row;
   });
   placement=(plc.data||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   payments=(pay.data||[]).map(p=>({date:(p.paid_at||p.created_at||'').slice(0,10),name:(p.students&amp;&amp;p.students.full_name)||p.payer_name||'—',index:(p.students&amp;&amp;p.students.bece_index)||'—',amount:(p.amount_pesewas||0)/100,method:p.channel,status:p.status,txn:p.reference}));
@@ -3568,35 +3806,6 @@ applyBulk=async function(){
   notifyStudentPortalRefresh('bulk-student-update',{indexes:studentIndexListFromIds(ids)});
   activityLog.unshift({time:'Just now',action:'Bulk allocation on '+ids.length+' students',by:(SB_ADMIN_NAME||'Admin')});
   clearSel(); renderStats(); toast('Updated '+ids.length+' students');
-};
-
-sendSms=async function(){
-  if(roGuard())return;
-  const tpl=(val('smsBody')||'').trim(); if(!tpl){toast('Type a message first');return;}
-  const targets=smsTargets(); const n=targets.length;
-  if(!n){toast('No recipients with a valid phone number in this group');return;}
-  const parts=smsParts(tpl); const cost=parts*n;
-  if(cost>smsBalance){toast('Not enough credits — need '+cost+', have '+smsBalance);return;}
-  if(!confirm('Send to '+n+' recipient(s)? This will use '+cost+' credit(s).'))return;
-  const group=smsGroupLabel();
-  const sender=(val('smsSender')||'SCHOOLSMS').slice(0,11);
-  const messages=targets.map(s=>({to:(s.sms+'').replace(/\s/g,''),body:personalize(tpl,s)}));
-  const btn=event&amp;&amp;event.target?event.target.closest('button'):null; if(btn)btn.textContent='Sending…';
-  let status='sent', delivered=n;
-  try{
-    const {data,error}=await invokeFn('send-sms',{school_id:SB_SCHOOL.id,sender,messages});
-    if(error) throw error;
-    if(data){ delivered=data.sent!=null?data.sent:n; if(data.sent===0)status='failed'; else if(data.failed)status='partial'; }
-  }catch(e){
-    status='pending';
-    toast('Saved, but delivery is not connected yet — set up the SMS provider Edge Function.');
-  }
-  await sb.from('sms_log').insert({school_id:SB_SCHOOL.id,recipient_group:group,recipients:n,message:tpl,sent_by:(SB_ADMIN_NAME||'Admin'),status});
-  if(status!=='pending'){ smsBalance=Math.max(0,smsBalance-cost); await sb.from('school_config').update({sms_balance:smsBalance}).eq('school_id',SB_SCHOOL.id); }
-  smsHistory.unshift({date:new Date().toISOString().slice(0,10),group,recip:n,msg:tpl,status});
-  document.getElementById('smsBody').value=''; renderSms(); renderStats();
-  if(btn)btn.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><line x1=&quot;22&quot; y1=&quot;2&quot; x2=&quot;11&quot; y2=&quot;13&quot;/><polygon points=&quot;22 2 15 22 11 13 2 9 22 2&quot;/></svg>Send to <span id=&quot;smsRecip&quot;>'+n+'</span> recipients';
-  if(status==='sent') toast('Sent to '+delivered+' recipient(s) · '+cost+' credits used');
 };
 
 /* ===== SCHOOL USERS ===== */
@@ -4079,54 +4288,8 @@ addPlacement=async function(){
   toast(existed?('Student '+i+' updated — information replaced'):'Placement record added');
 };
 
-/* ===== DISCLAIMER (shown after successful login) ===== */
-function showDisclaimer(){
-  if(hasAcceptedDisclaimer()) return;
-  const sch=(SB_SCHOOL&amp;&amp;SB_SCHOOL.name)||&quot;your school&quot;;
-  const sn=document.getElementById('discSchool'); if(sn) sn.textContent=sch;
-  const cb=document.getElementById('discAgree'); if(cb) cb.checked=false;
-  const btn=document.getElementById('discBtn'); if(btn) btn.disabled=true;
-  const ov=document.getElementById('discOverlay'); if(ov){ ov.classList.add('show'); const b=document.getElementById('discBody'); if(b) b.scrollTop=0; }
-}
-function disclaimerKey(){
-  const scope=(typeof SB_SCHOOL!=='undefined'&amp;&amp;SB_SCHOOL&amp;&amp;SB_SCHOOL.id)||'platform';
-  const uid=(typeof SB_UID!=='undefined'&amp;&amp;SB_UID)||'admin';
-  return 'qag_disclaimer_admin_'+scope+'_'+uid;
-}
-function hasAcceptedDisclaimer(){ try{return localStorage.getItem(disclaimerKey())==='1';}catch(e){return false;} }
-function markDisclaimerAccepted(){ try{localStorage.setItem(disclaimerKey(),'1');}catch(e){} }
-function acceptDisclaimer(){ markDisclaimerAccepted(); const ov=document.getElementById('discOverlay'); if(ov) ov.classList.remove('show'); }
-async function declineDisclaimer(){ const ov=document.getElementById('discOverlay'); if(ov) ov.classList.remove('show'); try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 async function logout(){ if(!confirm('Log out of the admin portal?'))return; try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 </script>
-
-<!-- DISCLAIMER (shown after successful login) -->
-<div class=&quot;disc-overlay&quot; id=&quot;discOverlay&quot;>
-  <div class=&quot;disc-modal&quot;>
-    <div class=&quot;disc-head&quot;>
-      <div class=&quot;disc-ico&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z&quot;/><line x1=&quot;12&quot; y1=&quot;9&quot; x2=&quot;12&quot; y2=&quot;13&quot;/><line x1=&quot;12&quot; y1=&quot;17&quot; x2=&quot;12.01&quot; y2=&quot;17&quot;/></svg></div>
-      <h2>Disclaimer &amp;amp; Declaration</h2>
-    </div>
-    <div class=&quot;disc-body&quot; id=&quot;discBody&quot;>
-      <p>Welcome to the <b id=&quot;discSchool&quot;>your school's</b> admission administration portal. Before you continue, please read and accept the following:</p>
-      <ul>
-        <li>You are accessing <b>confidential student and applicant data</b>. You must keep this information secure and use it only for legitimate admission and administrative purposes.</li>
-        <li>Any data you enter, edit, or import <b>must be accurate</b>. You are responsible for the correctness of records, placements, fees, and communications sent from this account.</li>
-        <li>Your login credentials are personal — do not share them. The school is not liable for actions taken through shared or compromised accounts.</li>
-        <li>Bulk actions, deletions, and SMS sends may be <b>irreversible</b> and may incur cost. Review carefully before confirming.</li>
-        <li>Handling of personal data must comply with the school's policies and applicable data-protection laws.</li>
-      </ul>
-      <p>By clicking <b>“I Understand &amp;amp; Agree”</b>, you confirm that you have read, understood, and accepted these terms.</p>
-    </div>
-    <div class=&quot;disc-foot&quot;>
-      <label class=&quot;disc-check&quot;><input type=&quot;checkbox&quot; id=&quot;discAgree&quot; onchange=&quot;document.getElementById('discBtn').disabled=!this.checked&quot;> I have read and agree to the above.</label>
-      <div class=&quot;disc-actions&quot;>
-        <button class=&quot;btn btn-ghost&quot; onclick=&quot;declineDisclaimer()&quot;>Decline &amp;amp; Log out</button>
-        <button class=&quot;btn btn-primary&quot; id=&quot;discBtn&quot; disabled onclick=&quot;acceptDisclaimer()&quot;>I Understand &amp;amp; Agree</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <footer style=&quot;position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:10px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
 </body>
@@ -5403,7 +5566,7 @@ sendBulkSms=async function(){
     <h3>2.3 Retrieve a lost token</h3>
     <p>Use <b>Retrieve token</b> — search by index number or payment receipt (select your school first).</p>
     <h3>2.4 The Personal Records Form</h3>
-    <p>At first login you accept a short disclaimer, then complete four parts:</p>
+    <p>After login you complete four parts:</p>
     <ul>
       <li><b>A. Placement</b> — auto-filled from your placement data.</li>
       <li><b>B. Enrolment Data</b> — raw score, enrolment code, JHS details, and <b>upload your enrolment form</b> (JPG, max 2 MB).</li>
@@ -5418,7 +5581,7 @@ sendBulkSms=async function(){
   <section class=&quot;card&quot; id=&quot;school&quot;>
     <h2>3. School Admin Portal</h2>
     <h3>3.1 Logging in</h3>
-    <p>Sign in with your school-admin email and password, then accept the disclaimer on first login. The owner has full access; sub-users are read-only.</p>
+    <p>Sign in with your school-admin email and password. The owner has full access; sub-users are read-only.</p>
     <h3>3.2 Navigation</h3>
     <p>The sidebar groups pages into collapsible dropdowns: <b>Dashboard</b>, <b>Configuration</b> (School Setup, Student Portal Setup, Financials, SMS, Reports, Templates, Users, Utilities), <b>Academic structure</b> (Programmes, Houses, Classrooms), <b>Admissions</b> (Placement List, View/Manage Students, House/Class Allocation). Your name and <b>Log out</b> are bottom-left.</p>
     <h3>3.3 Placement List</h3>
@@ -5479,24 +5642,112 @@ sendBulkSms=async function(){
 </html>
 "></iframe>
   </div>
+  <div class="qa-disc-overlay" id="qaFrontDisclaimer" aria-hidden="true">
+    <div class="qa-disc-modal" role="dialog" aria-modal="true" aria-labelledby="qaDiscTitle">
+      <div class="qa-disc-head">
+        <div class="qa-disc-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18A2 2 0 0 0 3.53 21h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></div>
+        <div>
+          <h2 id="qaDiscTitle">Disclaimer and Declaration</h2>
+          <p>This notice applies to use of the QuickAdmissionGH front page before you continue to the student or school-admin portals.</p>
+        </div>
+      </div>
+      <div class="qa-disc-body">
+        <p>Before continuing, please read and accept the following:</p>
+        <ul>
+          <li>All information entered on the platform must be accurate and must match official placement, enrolment, payment, and school records.</li>
+          <li>Student and school-admin credentials are personal and must not be shared with unauthorized users.</li>
+          <li>Uploaded documents and submitted records must be genuine, complete, and suitable for official admission processing.</li>
+          <li>School-admin access includes confidential student data and must be used only for legitimate admission and administrative work.</li>
+          <li>Payments, SMS charges, and other platform actions may carry cost and may not be reversible after confirmation.</li>
+        </ul>
+      </div>
+      <div class="qa-disc-foot">
+        <div class="qa-disc-meta">Your acceptance is stored in this browser so the front-page disclaimer does not keep interrupting you.</div>
+        <label class="qa-disc-check"><input type="checkbox" id="qaDiscAgree" onchange="qaSyncDisclaimerButton()"> I have read and agree to the above.</label>
+        <div class="qa-disc-actions">
+          <button class="qa-disc-btn qa-disc-btn-ghost" type="button" onclick="qaDeclineDisclaimer()">Decline</button>
+          <button class="qa-disc-btn qa-disc-btn-primary" type="button" id="qaDiscBtn" disabled onclick="qaAcceptDisclaimer()">Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
 <script>
 function qaStorageKey(key){
   try{ return 'qag_tab_state::'+(window.name||'qag_tab_fallback')+'::'+key; }catch(e){ return 'qag_tab_state::qag_tab_fallback::'+key; }
 }
-function qaShow(t){
+const QA_FRONT_DISC_KEY='qag_front_disclaimer_v1';
+let qaPendingTab='student';
+function qaHasAcceptedDisclaimer(){
+  try{ return localStorage.getItem(QA_FRONT_DISC_KEY)==='1'; }catch(e){ return false; }
+}
+function qaMarkDisclaimerAccepted(){
+  try{ localStorage.setItem(QA_FRONT_DISC_KEY,'1'); }catch(e){}
+}
+function qaSyncDisclaimerButton(){
+  const cb=document.getElementById('qaDiscAgree');
+  const btn=document.getElementById('qaDiscBtn');
+  if(btn) btn.disabled=!(cb&&cb.checked);
+}
+function qaOpenDisclaimer(tab){
+  qaPendingTab=tab||qaPendingTab||'student';
+  const ov=document.getElementById('qaFrontDisclaimer');
+  if(!ov) return;
+  const cb=document.getElementById('qaDiscAgree');
+  if(cb) cb.checked=false;
+  qaSyncDisclaimerButton();
+  ov.classList.add('show');
+  ov.setAttribute('aria-hidden','false');
+}
+function qaCloseDisclaimer(){
+  const ov=document.getElementById('qaFrontDisclaimer');
+  if(!ov) return;
+  ov.classList.remove('show');
+  ov.setAttribute('aria-hidden','true');
+}
+function qaAcceptDisclaimer(){
+  qaMarkDisclaimerAccepted();
+  qaCloseDisclaimer();
+  qaApplyTab(qaPendingTab||'student');
+}
+function qaDeclineDisclaimer(){
+  qaPendingTab='manual';
+  qaApplyTab('manual');
+  qaCloseDisclaimer();
+}
+function qaApplyTab(t){
   document.querySelectorAll('.qa-tab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
   document.querySelectorAll('.app-frame').forEach(f=>f.classList.toggle('active',f.dataset.t===t));
   try{localStorage.setItem(qaStorageKey('qag_active_tab'),t);}catch(e){}
 }
+function qaPrimeFrames(){
+  const school=document.getElementById('frame-school');
+  if(school&&!school.dataset.boundSrc){
+    school.dataset.boundSrc='1';
+    school.removeAttribute('srcdoc');
+    school.src='school-admin.html';
+  }
+  const manual=document.getElementById('frame-manual');
+  if(manual&&!manual.dataset.boundSrc){
+    manual.dataset.boundSrc='1';
+    manual.removeAttribute('srcdoc');
+    manual.src='manual.html';
+  }
+}
+function qaShow(t){
+  qaApplyTab(t);
+  if(t!=='manual'&&!qaHasAcceptedDisclaimer()) qaOpenDisclaimer(t);
+}
 (function qaBoot(){
+  qaPrimeFrames();
   const tabs=Array.from(document.querySelectorAll('.qa-tab')).map(b=>b.dataset.t);
   let next='student';
   try{
     const saved=localStorage.getItem(qaStorageKey('qag_active_tab'));
     if(saved&&tabs.indexOf(saved)>-1) next=saved;
   }catch(e){}
-  qaShow(next);
+  qaApplyTab(next);
   document.body.classList.remove('qa-booting');
+  if(next!=='manual'&&!qaHasAcceptedDisclaimer()) qaOpenDisclaimer(next);
 })();
 </script>
 </body>
