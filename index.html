@@ -222,8 +222,16 @@
   #s-login .portal-brand-crest{width:82px;height:82px;border-radius:22px;overflow:hidden;flex:none;display:grid;place-items:center;background:rgba(255,255,255,.96);border:1px solid rgba(63,118,214,.18);box-shadow:0 18px 34px -24px rgba(21,87,176,.58)}
   #s-login .portal-brand-crest img{width:100%;height:100%;object-fit:contain;padding:8px}
   #s-login .portal-brand-crest span{font-family:'Space Grotesk';font-size:26px;font-weight:700;letter-spacing:.08em;color:var(--primary)}
-  #s-login .portal-brand-copy{min-width:0;flex:1;display:flex;align-items:center}
-  #s-login .portal-brand-copy h1{font-family:'Space Grotesk';font-size:clamp(26px,3.3vw,44px);line-height:1.04;font-weight:700;color:#fff;white-space:nowrap}
+  #s-login .portal-brand-copy{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px}
+  #s-login .portal-brand-copy h1{margin:0;font-family:'Space Grotesk';font-size:clamp(26px,3.3vw,44px);line-height:1.04;font-weight:700;color:#fff;white-space:nowrap}
+  #s-login .portal-brand-helpdesk{display:grid;gap:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.24)}
+  #s-login .portal-brand-helpdesk-label{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.94)}
+  #s-login .portal-brand-helpdesk-label svg,#s-login .portal-brand-helpdesk-links svg{width:15px;height:15px;flex:none}
+  #s-login .portal-brand-helpdesk-links{display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
+  #s-login .portal-brand-helpdesk-links a{display:inline-flex;align-items:center;gap:8px;max-width:100%;color:#fff;font-size:14px;font-weight:600;line-height:1.45;text-decoration:none}
+  #s-login .portal-brand-helpdesk-links a:hover{text-decoration:underline}
+  #s-login .portal-brand-helpdesk-links a span{overflow-wrap:anywhere}
+  #s-login .portal-brand-helpdesk-sep{color:rgba(255,255,255,.7);font-weight:700}
   #s-login .portal-login-shell{display:grid;grid-template-columns:minmax(310px,.92fr) minmax(0,1.08fr);gap:22px;max-width:1180px;margin:0 auto;padding:20px;border-radius:30px;background:linear-gradient(180deg,rgba(255,255,255,.76),rgba(255,255,255,.92));border:1px solid rgba(93,138,214,.2);box-shadow:0 30px 72px -36px rgba(21,87,176,.48);backdrop-filter:blur(14px)}
   #s-login .portal-login-info,#s-login .portal-login-form{border-radius:24px;border:1px solid rgba(146,180,233,.24);box-shadow:0 18px 36px -28px rgba(21,87,176,.28);padding:32px}
   #s-login .portal-login-info{background:linear-gradient(180deg,rgba(242,247,255,.98),rgba(236,244,255,.94))}
@@ -281,6 +289,7 @@
     #s-login .portal-login-brand{max-width:980px;padding:12px 16px}
     #s-login .portal-brand-crest{width:74px;height:74px;border-radius:20px}
     #s-login .portal-brand-copy h1{font-size:clamp(24px,3vw,34px)}
+    #s-login .portal-brand-helpdesk-links{gap:10px}
     #s-login .portal-login-shell{grid-template-columns:1fr}
     #s-login .portal-contact-bar{grid-template-columns:repeat(2,minmax(0,1fr))}
     #s-login .portal-contact-item:nth-child(3){border-left:none;border-top:1px solid rgba(212,225,242,.8)}
@@ -291,6 +300,9 @@
     #s-login .portal-login-brand{flex-direction:column;text-align:center;gap:10px;padding:12px 14px}
     #s-login .portal-brand-copy{align-items:center;justify-content:center}
     #s-login .portal-brand-copy h1{white-space:normal;text-align:center;font-size:28px}
+    #s-login .portal-brand-helpdesk{width:100%;justify-items:center}
+    #s-login .portal-brand-helpdesk-links{justify-content:center;flex-direction:column;gap:8px}
+    #s-login .portal-brand-helpdesk-sep{display:none}
     #s-login .portal-brand-crest{width:68px;height:68px;border-radius:18px}
     #s-login .portal-login-shell{padding:14px;border-radius:24px}
     #s-login .portal-login-info,#s-login .portal-login-form{padding:22px}
@@ -304,6 +316,8 @@
   }
   @media(max-width:480px){
     #s-login .portal-brand-copy h1{font-size:24px}
+    #s-login .portal-brand-helpdesk-label{font-size:11px}
+    #s-login .portal-brand-helpdesk-links a{font-size:13px}
     #s-login .portal-login-info,#s-login .portal-login-form{padding:18px}
     #s-login .portal-info-head h2,#s-login .portal-form-head h2{font-size:27px}
     #s-login .portal-info-head p,#s-login .portal-form-head p{font-size:14px}
@@ -556,6 +570,23 @@
       </div>
       <div class=&quot;portal-brand-copy&quot;>
         <h1 id=&quot;schTitle&quot;>QuickAdmissionGH</h1>
+        <div class=&quot;portal-brand-helpdesk&quot;>
+          <div class=&quot;portal-brand-helpdesk-label&quot;>
+            <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.9&quot;><path d=&quot;M4 13a8 8 0 0 1 16 0&quot;/><path d=&quot;M4 13v4a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2Z&quot;/><path d=&quot;M20 13v4a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2Z&quot;/><path d=&quot;M9 19h6&quot;/></svg>
+            <span>Helpdesk:</span>
+          </div>
+          <div class=&quot;portal-brand-helpdesk-links&quot;>
+            <a id=&quot;loginHeaderHelpPhone&quot; href=&quot;tel:0256744028&quot; class=&quot;mono&quot;>
+              <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.9&quot;><path d=&quot;M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.9l-1.3 1.3a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 1.9-.6l3 .5a2 2 0 0 1 1.7 2Z&quot;/></svg>
+              <span>0256744028</span>
+            </a>
+            <span class=&quot;portal-brand-helpdesk-sep&quot; aria-hidden=&quot;true&quot;>|</span>
+            <a id=&quot;loginHeaderHelpEmail&quot; href=&quot;mailto:admissions@quickadmissiongh.com&quot;>
+              <svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.9&quot;><rect x=&quot;3&quot; y=&quot;5&quot; width=&quot;18&quot; height=&quot;14&quot; rx=&quot;2&quot;/><path d=&quot;m4 7 8 6 8-6&quot;/></svg>
+              <span>admissions@quickadmissiongh.com</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1512,12 +1543,28 @@ function applyLoginContacts(phone,email){
     emailLink.href='mailto:'+finalEmail;
   }
 }
+function applyLoginHeaderHelpdesk(phone,email){
+  const finalPhone=String(phone||LOGIN_DEFAULTS.phone).trim()||LOGIN_DEFAULTS.phone;
+  const finalEmail=String(email||LOGIN_DEFAULTS.email).trim()||LOGIN_DEFAULTS.email;
+  const phoneLink=$('loginHeaderHelpPhone');
+  const emailLink=$('loginHeaderHelpEmail');
+  if(phoneLink){
+    const text=phoneLink.querySelector('span');
+    if(text) text.textContent=finalPhone;
+    phoneLink.href='tel:'+finalPhone.replace(/\s+/g,'');
+  }
+  if(emailLink){
+    const text=emailLink.querySelector('span');
+    if(text) text.textContent=finalEmail;
+    emailLink.href='mailto:'+finalEmail;
+  }
+}
 async function loadSchools(){
   const ids=['login-school','p-school-sel','r-school'];
   const selected=Object.fromEntries(ids.map(id=&gt;[id,document.getElementById(id)?document.getElementById(id).value:'']));
   let rpcList=[],schools=[],schoolContacts=[],schoolAltContacts=[],configs=[];
   try{ const {data}=await sb.rpc('list_schools'); rpcList=Array.isArray(data)?data:[]; }catch(e){}
-  try{ const {data}=await sb.from('schools').select('id,name,code,crest_url,phone,email'); schools=Array.isArray(data)?data:[]; }catch(e){}
+  try{ const {data}=await sb.from('schools').select('id,name,code,crest_url,helpdesk,phone,email'); schools=Array.isArray(data)?data:[]; }catch(e){}
   try{ const {data}=await sb.from('schools').select('id,contact_phone,contact_email'); schoolContacts=Array.isArray(data)?data:[]; }catch(e){}
   try{ const {data}=await sb.from('schools').select('id,school_phone,school_email'); schoolAltContacts=Array.isArray(data)?data:[]; }catch(e){}
   try{ const {data}=await sb.from('school_config').select('school_id,admission_status,admission_year,service_charge'); configs=Array.isArray(data)?data:[]; }catch(e){}
@@ -1569,6 +1616,8 @@ function onLoginSchoolChange(){
   const sid=$('login-school')?$('login-school').value:'';
   const s=selectedLoginSchool();
   const schoolName=String(schoolField(s,['name','school_name'],LOGIN_DEFAULTS.title));
+  const schoolHelpdeskPhone=schoolField(s,['helpdesk_phone','helpdesk','phone','contact_phone','school_phone'],LOGIN_DEFAULTS.phone);
+  const schoolHelpdeskEmail=schoolField(s,['helpdesk_email','helpdeskEmail','email','contact_email','school_email'],LOGIN_DEFAULTS.email);
   const schoolPhone=schoolField(s,['phone','contact_phone','school_phone'],LOGIN_DEFAULTS.phone);
   const schoolEmail=schoolField(s,['email','contact_email','school_email'],LOGIN_DEFAULTS.email);
   const schoolCharge=Number(schoolField(s,['service_charge'],LOGIN_DEFAULTS.charge));
@@ -1609,6 +1658,7 @@ function onLoginSchoolChange(){
       }
     }
   }
+  applyLoginHeaderHelpdesk(schoolHelpdeskPhone,schoolHelpdeskEmail);
   applyLoginContacts(schoolPhone,schoolEmail);
   const closed=admissionClosed(sid);
   const banner=$('admClosedBanner');
