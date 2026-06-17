@@ -792,7 +792,10 @@ function markDisclaimerAccepted(){ try{const s=qagStorage(); if(s)s.setItem(disc
 function acceptDisclaimer(){ markDisclaimerAccepted(); const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); }
 function declineDisclaimer(){ const ov=$('discOverlay'); if(ov) ov.classList.remove('show'); logout(); }
 async function refreshStudent(){
-  const {data}=await sb.rpc('student_login',{p_index:session.index,p_token:session.token,p_school:session.school||null});
+  if(!session||!session.index||!session.token) return;
+  const activeSession={index:session.index,token:session.token,school:session.school||null};
+  const {data}=await sb.rpc('student_login',{p_index:activeSession.index,p_token:activeSession.token,p_school:activeSession.school});
+  if(!session||session.index!==activeSession.index||session.token!==activeSession.token||(session.school||null)!==activeSession.school) return;
   if(data&amp;&amp;data.ok){STU=data.student;await applySchool(data);hydrate();}
   else if(data&amp;&amp;!data.ok){ revokeAccess(); }
 }
@@ -808,10 +811,38 @@ async function validateSession(){
     if(!data||!data.ok) revokeAccess();
   }catch(e){}
 }
-document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') validateSession(); });
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&session) scheduleStudentRefresh('visible',true); });
 setInterval(function(){ if(session) validateSession(); }, 60000);
+setInterval(function(){ if(session) scheduleStudentRefresh('sync'); }, 30000);
 // Realtime: the school broadcasts when a student is deleted — revoke access instantly.
-let stuChannel=null;
+let stuChannel=null, stuRefreshTimer=null, stuRefreshBusy=false, stuRefreshQueued=false;
+function scheduleStudentRefresh(reason,immediate){
+  if(!session) return;
+  if(stuRefreshTimer){ clearTimeout(stuRefreshTimer); stuRefreshTimer=null; }
+  stuRefreshTimer=setTimeout(function(){ runStudentRefresh(reason); },immediate?0:700);
+}
+async function runStudentRefresh(reason){
+  if(!session) return;
+  if(stuRefreshBusy){ stuRefreshQueued=true; return; }
+  stuRefreshBusy=true;
+  try{ await refreshStudent(); }
+  catch(e){}
+  finally{
+    stuRefreshBusy=false;
+    if(stuRefreshQueued){ stuRefreshQueued=false; scheduleStudentRefresh(reason,true); }
+  }
+}
+function matchesStudentRefreshPayload(payload){
+  if(!session) return false;
+  const myIndex=String(session.index);
+  if(payload&amp;&amp;Array.isArray(payload.indexes)&amp;&amp;payload.indexes.length){
+    return payload.indexes.some(function(idx){ return String(idx)===myIndex; });
+  }
+  if(payload&amp;&amp;payload.index!=null){
+    return String(payload.index)===myIndex;
+  }
+  return !payload||payload.scope!=='none';
+}
 function watchDeletion(){
   if(!session||!session.school) return;
   if(stuChannel){ try{sb.removeChannel(stuChannel);}catch(e){} stuChannel=null; }
@@ -820,9 +851,17 @@ function watchDeletion(){
       const p=(msg&amp;&amp;msg.payload)||{};
       if(session&amp;&amp;String(p.index)===String(session.index)) revokeAccess();
     })
+    .on('broadcast',{event:'student_portal_refresh'},function(msg){
+      const p=(msg&amp;&amp;msg.payload)||{};
+      if(matchesStudentRefreshPayload(p)) scheduleStudentRefresh(p.reason||'school-update');
+    })
     .subscribe();
 }
-function stopWatchDeletion(){ if(stuChannel){ try{sb.removeChannel(stuChannel);}catch(e){} stuChannel=null; } }
+function stopWatchDeletion(){
+  if(stuRefreshTimer){ clearTimeout(stuRefreshTimer); stuRefreshTimer=null; }
+  stuRefreshBusy=false; stuRefreshQueued=false;
+  if(stuChannel){ try{sb.removeChannel(stuChannel);}catch(e){} stuChannel=null; }
+}
 function hydrate(){
   const s=STU;
   const displayName=studentName(s)||'Applicant';
@@ -1672,6 +1711,19 @@ initStudentPortal();
   .tpl-editor img{max-width:100%}
   .tpl-editor table{width:100%;border-collapse:collapse;margin:10px 0}
   .tpl-editor td{padding:6px 4px;border-bottom:1px solid #eee}
+  .tpl-move-zone{position:relative;min-height:54px}
+  .tpl-move-zone.header-zone{min-height:84px}
+  .tpl-float-object{position:absolute;z-index:4}
+  .tpl-editor .tpl-textbox{min-width:120px;max-width:100%;white-space:pre-wrap;cursor:move;user-select:none}
+  .tpl-editor .tpl-textbox:hover,
+  .tpl-editor .tpl-textbox:focus{outline:1px dashed rgba(21,87,176,.45);outline-offset:3px}
+  .tpl-editor .tpl-textbox.is-editing{cursor:text;user-select:text}
+  .tpl-editor .tpl-textbox.is-selected,
+  .tpl-editor .tpl-line-object.is-selected,
+  .tpl-editor img[data-float=&quot;1&quot;].is-selected{outline:2px solid rgba(21,87,176,.45);outline-offset:3px}
+  .tpl-editor .tpl-line-object{cursor:move}
+  .tpl-editor .tpl-line-object:hover .tpl-line-bar,
+  .tpl-editor .tpl-line-object:focus .tpl-line-bar{box-shadow:0 0 0 2px rgba(21,87,176,.18)}
   .tpl-vars{display:flex;flex-wrap:wrap;gap:6px}
   .tpl-vars button{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--primary);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer}
   .tpl-vars button:hover{background:var(--primary-soft);border-color:var(--primary)}
@@ -2108,14 +2160,15 @@ initStudentPortal();
               <span class=&quot;tb-sep&quot;></span>
               <button type=&quot;button&quot; title=&quot;Insert school crest (transparent)&quot; onclick=&quot;tplInsertCrest()&quot;>🛡 Crest</button>
               <button type=&quot;button&quot; title=&quot;Insert logo / image&quot; onclick=&quot;document.getElementById('tplImgInput').click()&quot;>🖼 Logo</button>
-              <button type=&quot;button&quot; title=&quot;Horizontal line&quot; onclick=&quot;tplCmd('insertHorizontalRule')&quot;>―</button>
+              <button type=&quot;button&quot; title=&quot;Insert movable text box&quot; onclick=&quot;tplInsertTextBox()&quot;>T Box</button>
+              <button type=&quot;button&quot; title=&quot;Insert movable line&quot; onclick=&quot;tplInsertLine()&quot;>―</button>
               <button type=&quot;button&quot; title=&quot;Clear formatting&quot; onclick=&quot;tplCmd('removeFormat')&quot;>⌫</button>
               <input type=&quot;file&quot; id=&quot;tplImgInput&quot; accept=&quot;image/*&quot; hidden onchange=&quot;tplInsertImage(this)&quot;>
             </div>
             <div class=&quot;tpl-fieldbar&quot;><span class=&quot;fb-label&quot;>Insert field</span><div class=&quot;tpl-vars&quot; id=&quot;tplVars&quot;></div></div>
             <div class=&quot;tpl-page&quot;><div id=&quot;tplEditor&quot; class=&quot;tpl-editor&quot; contenteditable=&quot;true&quot;></div></div>
         </div>
-        <p class=&quot;tpl-hint&quot;><span id=&quot;tplRecordsHint&quot; hidden>Tip: insert <code>{RECORDS_TABLE}</code> for the full auto-generated records table. · </span>Click an inserted logo to resize it. Press <b>Esc</b> to leave full screen.</p>
+        <p class=&quot;tpl-hint&quot;><span id=&quot;tplRecordsHint&quot; hidden>Tip: insert <code>{RECORDS_TABLE}</code> for the full auto-generated records table. · </span>Drag text boxes or lines anywhere, double-click a text box to edit it, and press <b>Delete</b> to remove the selected object. Press <b>Esc</b> to leave full screen.</p>
       </section>
 
       <!-- USERS -->
@@ -2407,6 +2460,7 @@ async function savePlacement(encIdx){
   p.name=name;p.other=upd.other_names||'';p.gender=upd.gender||'';p.res=upd.residential_status||'';
   p.prog=upd.programme||'';p.agg=upd.aggregate;p.jhs=upd.jhs_attended||'';p.dob=upd.dob||'';
   p.sms=upd.sms_contact||'';p.code=upd.enrolment_code||null;
+  notifyStudentPortalRefresh('placement-update',{index:idx});
   closeModal();renderPlacement();toast('Placement record saved');
 }
 async function deletePlacement(encIdx){
@@ -2417,6 +2471,7 @@ async function deletePlacement(encIdx){
   const {error}=await sb.from('placement_list').delete().eq('school_id',SB_SCHOOL.id).eq('index_number',idx);
   if(error){toast('Delete failed: '+error.message);return;}
   placement=placement.filter(x=>x.index!==idx);
+  notifyStudentPortalRefresh('placement-delete',{index:idx});
   renderPlacement();toast('Placement record deleted');
 }
 async function deletePlacementBatch(scope){
@@ -2434,6 +2489,7 @@ async function deletePlacementBatch(scope){
   if(!data||!data.ok){toast('Delete failed: '+((data&amp;&amp;data.error)||'unknown'));return;}
   const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  notifyStudentPortalRefresh('placement-batch-delete');
   renderPlacement();
   toast('Deleted '+data.deleted+' record(s)'+(data.skipped_submitted?' · '+data.skipped_submitted+' kept (submitted)':''));
 }
@@ -2454,6 +2510,7 @@ async function deleteAllStudentRecords(){
   if(typeof renderPlacement==='function')renderPlacement();
   if(typeof renderStudents==='function')renderStudents();
   if(typeof renderStats==='function')renderStats();
+  notifyStudentPortalRefresh('student-records-delete-all');
   toast('Done — deleted '+(data.students||0)+' student(s), '+(data.placements||0)+' placement(s), '+(data.payments||0)+' payment(s)');
 }
 function importPlacement(){
@@ -2543,6 +2600,7 @@ async function handlePlacementFile(inp){
   closePop('importPop');
   const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  notifyStudentPortalRefresh('placement-import');
   renderPlacement();
 }
 // addPlacement is defined later (single canonical version that requires all fields)
@@ -2621,6 +2679,7 @@ async function deleteStudent(id){
   students=students.filter(x=>x.id!==id);
   placement=placement.filter(x=>x.index!==s.index);
   selected.delete(id);
+  notifyStudentPortalRefresh('student-delete',{index:s.index});
   closeModal(); renderStudents(); renderStats&amp;&amp;renderStats();
   toast('Student deleted');
 }
@@ -2643,6 +2702,7 @@ async function saveStudent(id){
   if(error){toast('Save failed: '+error.message);return;}
   s.name=newName;s.gender=newGender;s.adm=newAdm||'—';s.sms=newSms||'—';
   s.progId=newProgId;s.classId=newClassId;s.houseId=newHouseId;
+  notifyStudentPortalRefresh('student-update',{index:s.index});
   closeModal();renderStudents();toast('Student record saved');
 }
 
@@ -2673,6 +2733,7 @@ async function haAssignSelected(){
   const {error}=await sb.from('students').update({house_id:hMap[hid]}).in('id',uuids);
   if(error){toast('Assign failed: '+error.message);return;}
   students.forEach(s=>{if(haSel.has(s.id))s.houseId=hid;});
+  notifyStudentPortalRefresh('house-assign',{indexes:studentIndexListFromIds(ids)});
   activityLog.unshift({time:'Just now',action:'Allocated '+ids.length+' students to '+h.name,by:(SB_ADMIN_NAME||'Admin')});
   haSel.clear(); renderHouseAlloc(); renderStats&amp;&amp;renderStats(); toast('Assigned '+ids.length+' to '+h.name);
 }
@@ -2681,6 +2742,7 @@ async function haRemove(id){
   const s=students.find(x=>x.id===id); if(!s)return;
   const {error}=await sb.from('students').update({house_id:null}).eq('id',s._id);
   if(error){toast('Failed: '+error.message);return;}
+  notifyStudentPortalRefresh('house-remove',{index:s.index});
   s.houseId=null; renderHouseAlloc(); toast('Removed from house');
 }
 async function haAutoFill(){
@@ -2694,6 +2756,7 @@ async function haAutoFill(){
   const {error}=await sb.from('students').update({house_id:hMap[hid]}).in('id',uuids);
   if(error){toast('Auto-fill failed: '+error.message);return;}
   pool.forEach(s=>s.houseId=hid);
+  notifyStudentPortalRefresh('house-autofill',{indexes:pool.map(function(s){ return s.index; })});
   activityLog.unshift({time:'Just now',action:'Auto-filled '+pool.length+' students into '+h.name,by:(SB_ADMIN_NAME||'Admin')});
   renderHouseAlloc(); renderStats&amp;&amp;renderStats(); toast('Auto-filled '+pool.length+' students');
 }
@@ -2719,6 +2782,7 @@ async function caAssignSelected(){
   const {error}=await sb.from('students').update({class_id:cMap[cid]}).in('id',uuids);
   if(error){toast('Assign failed: '+error.message);return;}
   students.forEach(s=>{if(caSel.has(s.id))s.classId=cid;});
+  notifyStudentPortalRefresh('class-assign',{indexes:studentIndexListFromIds(ids)});
   activityLog.unshift({time:'Just now',action:'Allocated '+ids.length+' students to '+c.name,by:(SB_ADMIN_NAME||'Admin')});
   caSel.clear(); renderClassAlloc(); renderStats&amp;&amp;renderStats(); toast('Assigned '+ids.length+' to '+c.name);
 }
@@ -2727,6 +2791,7 @@ async function caRemove(id){
   const s=students.find(x=>x.id===id); if(!s)return;
   const {error}=await sb.from('students').update({class_id:null}).eq('id',s._id);
   if(error){toast('Failed: '+error.message);return;}
+  notifyStudentPortalRefresh('class-remove',{index:s.index});
   s.classId=null; renderClassAlloc(); toast('Removed from class');
 }
 async function caAutoFill(){
@@ -2740,6 +2805,7 @@ async function caAutoFill(){
   const {error}=await sb.from('students').update({class_id:cMap[cid]}).in('id',uuids);
   if(error){toast('Auto-fill failed: '+error.message);return;}
   pool.forEach(s=>s.classId=cid);
+  notifyStudentPortalRefresh('class-autofill',{indexes:pool.map(function(s){ return s.index; })});
   activityLog.unshift({time:'Just now',action:'Auto-filled '+pool.length+' students into '+c.name,by:(SB_ADMIN_NAME||'Admin')});
   renderClassAlloc(); renderStats&amp;&amp;renderStats(); toast('Auto-filled '+pool.length+' students');
 }
@@ -2855,6 +2921,7 @@ async function savePortalSetup(){
   if(error){toast('Could not save portal setup: '+error.message);return;}
   docLines=lines;
   if(SB_CFG) Object.assign(SB_CFG,patch);
+  notifyStudentPortalRefresh('portal-setup');
   toast('Student portal configuration saved');
 }
 function renderLog(){$('logRows').innerHTML=activityLog.map(l=>`<tr><td class=&quot;mono&quot; style=&quot;font-size:12px&quot;>${l.time}</td><td>${l.action}</td><td>${l.by}</td></tr>`).join('');renderArchives();}
@@ -2880,6 +2947,7 @@ async function uploadSchoolDoc(kind,inp){
   if(e2){toast('Saved file but could not record: '+e2.message);return;}
   if(SB_CFG) SB_CFG[col]=pub.publicUrl;
   showSchoolDocLink(kind,pub.publicUrl);
+  notifyStudentPortalRefresh('school-doc');
   toast(({prospectus:'Prospectus',undertaking:'Acceptance / Undertaking',subjects:'Subject Combination'}[kind])+' uploaded');
 }
 async function renderArchives(){
@@ -2912,6 +2980,7 @@ async function restoreArchive(encYear){
   const {data,error}=await sb.rpc('switch_academic_year',{p_school:SB_SCHOOL.id,p_new_year:year});
   if(error){toast('Switch failed: '+error.message);return;}
   if(!data||!data.ok){toast('Switch failed: '+((data&amp;&amp;data.error)||'unknown'));return;}
+  notifyStudentPortalRefresh('academic-year-switch');
   alert('Year &quot;'+year+'&quot; is now active and editable.\n\n• '+data.students+' students\n• '+data.placements+' placements\n• '+data.payments+' payments'
     +'\n\nYour previous year (&quot;'+(data.old_year||cur)+'&quot;) was saved and can be switched back to.');
   await loadSchoolData({full_name:SB_ADMIN_NAME,role:(SB_PERMS==null?'super_admin':'school_admin'),permissions:SB_PERMS,school_id:(SB_SCHOOL&amp;&amp;SB_SCHOOL.id)||null});
@@ -3383,6 +3452,51 @@ async function loadSchoolData(prof){
   fillSelects();
 }
 
+let sbStudentSyncChannel=null, sbStudentSyncChannelName='', sbStudentSyncReady=null;
+function studentIndexListFromIds(ids){
+  return (ids||[]).map(function(id){
+    const s=students.find(function(row){ return row.id===id; });
+    return s&amp;&amp;s.index;
+  }).filter(Boolean);
+}
+async function ensureStudentSyncChannel(){
+  if(!SB_SCHOOL||!SB_SCHOOL.id) return null;
+  const name='school:'+SB_SCHOOL.id;
+  if(sbStudentSyncChannel&amp;&amp;sbStudentSyncChannelName===name){
+    if(sbStudentSyncReady) await sbStudentSyncReady;
+    return sbStudentSyncChannel;
+  }
+  if(sbStudentSyncChannel){ try{sb.removeChannel(sbStudentSyncChannel);}catch(e){} }
+  sbStudentSyncChannelName=name;
+  sbStudentSyncChannel=sb.channel(name);
+  sbStudentSyncReady=new Promise(function(resolve){
+    let done=false;
+    const finish=function(){ if(done) return; done=true; resolve(); };
+    try{
+      sbStudentSyncChannel.subscribe(function(status){
+        if(status==='SUBSCRIBED'||status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED') finish();
+      });
+    }catch(e){ finish(); return; }
+    setTimeout(finish,1200);
+  });
+  await sbStudentSyncReady;
+  return sbStudentSyncChannel;
+}
+async function notifyStudentPortalRefresh(reason,details){
+  if(!SB_SCHOOL||!SB_SCHOOL.id) return false;
+  const payload=Object.assign({reason:reason||'school-update',school_id:SB_SCHOOL.id,scope:'school',ts:Date.now()},details||{});
+  if(Array.isArray(payload.indexes)) payload.indexes=payload.indexes.filter(Boolean).map(String);
+  if(payload.index!=null) payload.index=String(payload.index);
+  try{
+    const ch=await ensureStudentSyncChannel();
+    if(!ch) return false;
+    const res=await ch.send({type:'broadcast',event:'student_portal_refresh',payload});
+    return !(res&amp;&amp;res.error);
+  }catch(e){
+    return false;
+  }
+}
+
 /* ---- PERSISTING ACTION OVERRIDES ---- */
 toggleAdmission=async function(){
   if(roGuard())return;
@@ -3391,6 +3505,7 @@ toggleAdmission=async function(){
   document.getElementById('admText').textContent='Admission '+(admissionOpen?'OPEN':'CLOSED');
   const qa=document.getElementById('qaToggle'); if(qa) qa.innerHTML=(admissionOpen?'Close admission':'Open admission')+'<small>'+(admissionOpen?'Currently accepting':'Not accepting')+'</small>';
   await sb.from('school_config').update({admission_status:admissionOpen?'OPENED':'CLOSED'}).eq('school_id',SB_SCHOOL.id);
+  notifyStudentPortalRefresh('admission-status');
   activityLog.unshift({time:'Just now',action:'Admission '+(admissionOpen?'opened':'closed'),by:(SB_ADMIN_NAME||'Admin')});
   toast('Admission '+(admissionOpen?'opened':'closed'));
 };
@@ -3426,6 +3541,7 @@ async function saveAcademicConfig(){
     if(error){toast('Switch failed: '+error.message);return;}
     if(!data||!data.ok){toast('Switch failed: '+((data&amp;&amp;data.error)||'unknown'));return;}
     if(newAdmYear) await sb.from('school_config').update({admission_year:newAdmYear}).eq('school_id',SB_SCHOOL.id);
+    notifyStudentPortalRefresh('academic-year-switch');
     alert('Academic year is now '+newYear+'.\n\n'+(data.restored
       ? 'Loaded saved data for '+newYear+':\n• '+data.students+' students\n• '+data.placements+' placements\n• '+data.payments+' payments'
       : 'This is a new year — starting empty.')
@@ -3438,6 +3554,7 @@ async function saveAcademicConfig(){
   const {error}=await sb.from('school_config').update({academic_year:newYear,admission_year:newAdmYear}).eq('school_id',SB_SCHOOL.id);
   if(error){toast('Could not save: '+error.message);return;}
   if(SB_CFG){SB_CFG.academic_year=newYear;SB_CFG.admission_year=newAdmYear;}
+  notifyStudentPortalRefresh('academic-config');
   toast('Admission configuration saved');
 }
 
@@ -3448,6 +3565,7 @@ applyBulk=async function(){
   const patch={}; if(cl)patch.class_id=cMap[cl]; if(ho)patch.house_id=hMap[ho];
   await sb.from('students').update(patch).in('id',uuids);
   students.forEach(s=>{ if(selected.has(s.id)){ if(cl)s.classId=+cl; if(ho)s.houseId=+ho; } });
+  notifyStudentPortalRefresh('bulk-student-update',{indexes:studentIndexListFromIds(ids)});
   activityLog.unshift({time:'Just now',action:'Bulk allocation on '+ids.length+' students',by:(SB_ADMIN_NAME||'Admin')});
   clearSel(); renderStats(); toast('Updated '+ids.length+' students');
 };
@@ -3505,7 +3623,7 @@ const TPL_DEFAULT={
   +'<p style=&quot;margin-top:18px&quot;>Signature: _______________________ &amp;nbsp;&amp;nbsp; Date: _______________</p>'
 };
 const TPL_VARS=['CREST','SCHOOL_NAME','SCHOOL_ADDRESS','SCHOOL_PHONE','HEADMASTER','ACADEMIC_YEAR','DATE','REPORTING_DATE','REPORTING_TIME','STUDENT_NAME','INDEX','ADMISSION_NO','PROGRAMME','CLASS','HOUSE','GENDER','RESIDENTIAL','AGGREGATE','CONTACT'];
-let TPL={letter:'',records:''}, tplCur='letter', tplRange=null, tplLoaded=false, tplBound=false;
+let TPL={letter:'',records:''}, tplCur='letter', tplRange=null, tplLoaded=false, tplBound=false, tplSelectedFloat=null;
 function tplSaveSel(){const s=window.getSelection();const ed=$('tplEditor');if(s&amp;&amp;s.rangeCount&amp;&amp;ed&amp;&amp;ed.contains(s.anchorNode))tplRange=s.getRangeAt(0).cloneRange();}
 function tplRestore(){const ed=$('tplEditor');ed.focus();if(tplRange){const s=window.getSelection();s.removeAllRanges();s.addRange(tplRange);}}
 function tplExec(c,v){tplRestore();try{document.execCommand('styleWithCSS',false,true);}catch(e){}document.execCommand(c,false,v===undefined?null:v);tplSaveSel();}
@@ -3540,21 +3658,163 @@ function uploadSchoolCrest(inp){
     SCHOOL_CREST=uri;
     const prev=$('s_crest_prev'); if(prev){prev.src=uri;prev.style.display='block';}
     const bm=$('brandCrest'); if(bm){bm.src=uri;bm.style.display='block';} const lt=$('brandLogoText'); if(lt) lt.style.display='none';
-    if(window.SB_SCHOOL&amp;&amp;SB_SCHOOL.id){ sb.from('schools').update({crest_url:uri}).eq('id',SB_SCHOOL.id).then(({error})=>{ if(error){toast('Crest set (not saved: '+error.message+')');} else {SB_SCHOOL.crest_url=uri; toast('Crest uploaded &amp; saved');} }); }
+    if(window.SB_SCHOOL&amp;&amp;SB_SCHOOL.id){ sb.from('schools').update({crest_url:uri}).eq('id',SB_SCHOOL.id).then(({error})=>{ if(error){toast('Crest set (not saved: '+error.message+')');} else {SB_SCHOOL.crest_url=uri; notifyStudentPortalRefresh('crest-update'); toast('Crest uploaded &amp; saved');} }); }
     else toast('Crest set');
     URL.revokeObjectURL(img.src);
   };
   img.onerror=function(){toast('Could not read that image');};
   img.src=URL.createObjectURL(f);
 }
-function tplInsertCrest(){ const ed=$('tplEditor'); ed.focus(); if(tplRange){const s=window.getSelection();s.removeAllRanges();s.addRange(tplRange);} document.execCommand('insertHTML',false,'<img src=&quot;'+SCHOOL_CREST+'&quot; data-float=&quot;1&quot; draggable=&quot;false&quot; style=&quot;position:absolute;left:60%;top:18px;width:90px;height:auto;z-index:9;background:transparent;cursor:move&quot; alt=&quot;crest&quot;>'); tplSaveSel(); toast('Crest placed — drag it anywhere; double-click to resize.'); }
+function tplInsertHTML(html){ tplRestore(); document.execCommand('insertHTML',false,html); tplSaveSel(); }
+function tplInsertCrest(){ tplInsertHTML('<img src=&quot;'+SCHOOL_CREST+'&quot; data-float=&quot;1&quot; draggable=&quot;false&quot; style=&quot;position:absolute;left:60%;top:18px;width:90px;height:auto;z-index:9;background:transparent;cursor:move&quot; alt=&quot;crest&quot;>'); toast('Crest placed — drag it anywhere; double-click to resize.'); }
 function tplInsertImage(inp){
   const f=inp.files&amp;&amp;inp.files[0]; inp.value='';
   if(!f)return;
   if(f.size>800*1024){toast('Please use a logo under 800 KB');return;}
   const r=new FileReader();
-  r.onload=function(){ tplRestore(); document.execCommand('insertHTML',false,'<img src=&quot;'+r.result+'&quot; style=&quot;max-width:140px;height:auto&quot; alt=&quot;logo&quot;>'); tplSaveSel(); toast('Logo inserted — click it to resize'); };
+  r.onload=function(){ tplInsertHTML('<img src=&quot;'+r.result+'&quot; style=&quot;max-width:140px;height:auto&quot; alt=&quot;logo&quot;>'); toast('Logo inserted — click it to resize'); };
   r.readAsDataURL(f);
+}
+function tplTextBoxHTML(content,style){
+  return '<div class=&quot;tpl-float-object tpl-textbox&quot; data-float=&quot;1&quot; data-float-type=&quot;text&quot; data-editing=&quot;0&quot; contenteditable=&quot;false&quot; spellcheck=&quot;false&quot; tabindex=&quot;0&quot; style=&quot;position:absolute;left:12px;top:10px;width:220px;min-height:20px;padding:0 2px;z-index:4;'+(style||'')+'&quot;>'+(content||'Text box')+'</div>';
+}
+function tplLineHTML(style){
+  return '<div class=&quot;tpl-float-object tpl-line-object&quot; data-float=&quot;1&quot; data-float-type=&quot;line&quot; contenteditable=&quot;false&quot; tabindex=&quot;0&quot; style=&quot;position:absolute;left:0;top:10px;width:620px;height:18px;z-index:4;cursor:move;'+(style||'')+'&quot;><div class=&quot;tpl-line-bar&quot; style=&quot;position:absolute;left:0;right:0;top:8px;border-top:2px solid #000&quot;></div></div>';
+}
+function tplSetTextBoxEditing(el,on){
+  if(!el||el.getAttribute('data-float-type')!=='text') return;
+  el.setAttribute('data-editing',on?'1':'0');
+  el.setAttribute('contenteditable',on?'true':'false');
+  el.classList.toggle('is-editing',!!on);
+  if(on){
+    el.focus();
+    const sel=window.getSelection();
+    const range=document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    tplSaveSel();
+  }else{
+    if(document.activeElement===el) $('tplEditor').focus();
+    tplSaveSel();
+  }
+}
+function tplClearFloatSelection(){
+  if(!tplSelectedFloat) return;
+  tplSetTextBoxEditing(tplSelectedFloat,false);
+  tplSelectedFloat.classList.remove('is-selected');
+  tplSelectedFloat=null;
+}
+function tplSelectFloat(el){
+  if(!el) return;
+  if(tplSelectedFloat===el) return;
+  tplClearFloatSelection();
+  tplSelectedFloat=el;
+  el.classList.add('is-selected');
+  if(typeof el.focus==='function') el.focus();
+}
+function tplDeleteSelectedFloat(){
+  if(!tplSelectedFloat) return false;
+  const el=tplSelectedFloat;
+  if(el.getAttribute('data-float-type')==='text' && el.getAttribute('data-editing')==='1') return false;
+  const zone=el.closest('.tpl-move-zone');
+  tplSelectedFloat=null;
+  el.remove();
+  if(zone && !zone.querySelector('[data-float=&quot;1&quot;],img[data-float=&quot;1&quot;]')) zone.remove();
+  tplSaveSel();
+  toast('Object deleted');
+  return true;
+}
+function tplEditorHTML(){
+  const ed=$('tplEditor');
+  if(!ed) return '';
+  const clone=ed.cloneNode(true);
+  clone.querySelectorAll('.is-selected').forEach(function(el){ el.classList.remove('is-selected'); });
+  clone.querySelectorAll('.is-editing').forEach(function(el){ el.classList.remove('is-editing'); });
+  clone.querySelectorAll('[data-float-type=&quot;text&quot;]').forEach(function(el){
+    el.setAttribute('data-editing','0');
+    el.setAttribute('contenteditable','false');
+  });
+  return clone.innerHTML;
+}
+function tplInsertTextBox(){
+  const id='tpl_tb_'+Date.now();
+  tplInsertHTML('<div class=&quot;tpl-move-zone&quot; contenteditable=&quot;false&quot; style=&quot;min-height:72px&quot;>'+tplTextBoxHTML('Text box','left:14px;top:16px;width:220px;').replace('class=&quot;tpl-float-object tpl-textbox&quot;','id=&quot;'+id+'&quot; class=&quot;tpl-float-object tpl-textbox&quot;')+'</div>');
+  const box=document.getElementById(id);
+  if(box){ tplSelectFloat(box); box.focus(); }
+  toast('Text box inserted - drag it anywhere, double-click to edit');
+}
+function tplInsertLine(){
+  const id='tpl_ln_'+Date.now();
+  tplInsertHTML('<div class=&quot;tpl-move-zone&quot; contenteditable=&quot;false&quot; style=&quot;min-height:40px&quot;>'+tplLineHTML('left:0;top:10px;width:620px;').replace('class=&quot;tpl-float-object tpl-line-object&quot;','id=&quot;'+id+'&quot; class=&quot;tpl-float-object tpl-line-object&quot;')+'</div>');
+  const line=document.getElementById(id);
+  if(line) tplSelectFloat(line);
+  toast('Line inserted - drag it to position it');
+}
+function tplMakeLegacyHeaderZone(tbl){
+  const zone=document.createElement('div');
+  zone.className='tpl-move-zone header-zone';
+  zone.setAttribute('contenteditable','false');
+  const leftCell=tbl.rows[0].cells[0], rightCell=tbl.rows[0].cells[1];
+  const size=tbl.style.fontSize||'12px';
+  zone.innerHTML=
+    tplTextBoxHTML(leftCell.innerHTML,'left:0;top:0;width:290px;font-size:'+size+';line-height:1.45;')+
+    tplTextBoxHTML(rightCell.innerHTML,'left:calc(100% - 176px);top:18px;width:170px;font-size:'+size+';line-height:1.4;text-align:right;');
+  tbl.replaceWith(zone);
+}
+function tplMakeLegacyLineZone(hr){
+  const zone=document.createElement('div');
+  zone.className='tpl-move-zone';
+  zone.setAttribute('contenteditable','false');
+  zone.style.minHeight='30px';
+  const cs=getComputedStyle(hr);
+  const width=Math.max(180,Math.round(hr.getBoundingClientRect().width||620));
+  const topWidth=Math.max(1,Math.round(parseFloat(cs.borderTopWidth)||2));
+  const color=cs.borderTopColor||'#000';
+  zone.innerHTML=tplLineHTML('left:0;top:6px;width:'+width+'px;').replace('border-top:2px solid #000','border-top:'+topWidth+'px solid '+color);
+  hr.replaceWith(zone);
+}
+function tplUpgradeLegacyLayout(ed){
+  Array.from(ed.querySelectorAll('table')).forEach(function(tbl){
+    if(tbl.closest('.tpl-move-zone')) return;
+    if(!tbl.rows||tbl.rows.length!==1||!tbl.rows[0]||tbl.rows[0].cells.length!==2) return;
+    const text=(tbl.innerText||'').replace(/\s+/g,' ');
+    if(/Our\s*Ref/i.test(text) && /Date:/i.test(text)) tplMakeLegacyHeaderZone(tbl);
+  });
+  Array.from(ed.querySelectorAll('hr')).forEach(function(hr){
+    if(hr.closest('.tpl-move-zone')) return;
+    tplMakeLegacyLineZone(hr);
+  });
+}
+function tplFloatRoot(el){
+  return (el&&el.closest('.tpl-move-zone')) || $('tplEditor');
+}
+function tplResizeFloat(el){
+  if(!el) return;
+  if(el.tagName==='IMG'){
+    const cur=parseInt(el.style.width)||el.width||120;
+    const w=prompt('Image width in pixels:',cur);
+    if(w&&!isNaN(parseInt(w))){el.style.width=parseInt(w)+'px';el.style.height='auto';tplSaveSel();}
+    return;
+  }
+  const type=el.getAttribute('data-float-type');
+  if(type==='text'){
+    const cur=parseInt(el.style.width)||Math.round(el.getBoundingClientRect().width)||220;
+    const w=prompt('Text box width in pixels:',cur);
+    if(w&&!isNaN(parseInt(w))){el.style.width=Math.max(80,parseInt(w))+'px';tplSaveSel();}
+    return;
+  }
+  if(type==='line'){
+    const cur=parseInt(el.style.width)||Math.round(el.getBoundingClientRect().width)||620;
+    const w=prompt('Line width in pixels:',cur);
+    if(w&&!isNaN(parseInt(w))) el.style.width=Math.max(80,parseInt(w))+'px';
+    const bar=el.querySelector('.tpl-line-bar');
+    const curThick=bar?Math.max(1,Math.round(parseFloat((bar.style.borderTopWidth||'2').replace('px',''))||2)):2;
+    const thick=prompt('Line thickness in pixels:',curThick);
+    if(bar&&thick&&!isNaN(parseInt(thick))) bar.style.borderTopWidth=Math.max(1,parseInt(thick))+'px';
+    tplSaveSel();
+  }
 }
 function buildTplVars(){ $('tplVars').innerHTML=TPL_VARS.map(v=>`<button type=&quot;button&quot; onclick=&quot;insertTplVar('{${v}}')&quot;>{${v}}</button>`).join('')+(tplCur==='records'?`<button type=&quot;button&quot; onclick=&quot;insertTplVar('{RECORDS_TABLE}')&quot;>{RECORDS_TABLE}</button>`:'')+`<button type=&quot;button&quot; title=&quot;Scannable QR of the student's details&quot; onclick=&quot;insertTplVar('{QR_CODE}')&quot;>{QR_CODE}</button>`; $('tplRecordsHint').hidden=tplCur!=='records'; }
 function renderTemplates(){
@@ -3566,27 +3826,53 @@ function renderTemplates(){
     document.querySelectorAll('.tpl-toolbar, .tpl-fieldbar').forEach(bar=>{
       bar.addEventListener('mousedown',function(e){ if(e.target.closest('button')) e.preventDefault(); });
     });
-    ed.addEventListener('dblclick',function(e){ if(e.target&amp;&amp;e.target.tagName==='IMG'){ const cur=parseInt(e.target.style.width)||e.target.width||120; const w=prompt('Image width in pixels:',cur); if(w&amp;&amp;!isNaN(parseInt(w))){e.target.style.width=parseInt(w)+'px';e.target.style.height='auto';tplSaveSel();} } });
+    ed.addEventListener('dblclick',function(e){ const t=e.target.closest ? e.target.closest('[data-float=&quot;1&quot;],img') : null; if(!t)return; tplSelectFloat(t); if(t.getAttribute('data-float-type')==='text'){ tplSetTextBoxEditing(t,true); return; } tplResizeFloat(t); });
     let drag=null;
-    ed.addEventListener('mousedown',function(e){ const t=e.target; if(t&amp;&amp;t.tagName==='IMG'&amp;&amp;t.getAttribute('data-float')==='1'){ e.preventDefault(); const ir=t.getBoundingClientRect(); drag={el:t,offX:e.clientX-ir.left,offY:e.clientY-ir.top}; t.style.opacity='.85'; } });
-    document.addEventListener('mousemove',function(e){ if(!drag)return; const r=ed.getBoundingClientRect(); const cs=getComputedStyle(ed); const padL=parseFloat(cs.paddingLeft)||0, padT=parseFloat(cs.paddingTop)||0;
-      let nl=(e.clientX-drag.offX-r.left)+ed.scrollLeft-padL; let nt=(e.clientY-drag.offY-r.top)+ed.scrollTop-padT;
-      nl=Math.max(-padL,Math.min(nl, ed.scrollWidth-padL-20)); nt=Math.max(-padT,Math.min(nt, ed.scrollHeight-padT-20));
+    ed.addEventListener('mousedown',function(e){ const t=e.target.closest ? e.target.closest('[data-float=&quot;1&quot;]') : null; if(!t){ tplClearFloatSelection(); return; } tplSelectFloat(t); if(t.getAttribute('data-float-type')==='text' && t.getAttribute('data-editing')==='1') return; e.preventDefault(); const ir=t.getBoundingClientRect(); const root=tplFloatRoot(t); drag={el:t,root,offX:e.clientX-ir.left,offY:e.clientY-ir.top}; t.style.opacity='.85'; });
+    document.addEventListener('mousemove',function(e){ if(!drag)return; const root=drag.root; const r=root.getBoundingClientRect(); const cs=getComputedStyle(root); const padL=parseFloat(cs.paddingLeft)||0, padT=parseFloat(cs.paddingTop)||0;
+      let nl=(e.clientX-drag.offX-r.left)+root.scrollLeft-padL; let nt=(e.clientY-drag.offY-r.top)+root.scrollTop-padT;
+      const maxL=Math.max(-padL,(root.clientWidth||root.scrollWidth)-drag.el.offsetWidth-padL); const maxT=Math.max(-padT,(root.clientHeight||root.scrollHeight)-drag.el.offsetHeight-padT);
+      nl=Math.max(-padL,Math.min(nl, maxL)); nt=Math.max(-padT,Math.min(nt, maxT));
       drag.el.style.left=Math.round(nl)+'px'; drag.el.style.top=Math.round(nt)+'px'; drag.el.style.right='auto'; });
     document.addEventListener('mouseup',function(){ if(drag){ drag.el.style.opacity=''; drag=null; tplSaveSel(); } });
+    document.addEventListener('mousedown',function(e){ if(!tplSelectedFloat) return; const edNow=$('tplEditor'); if(!edNow||!edNow.contains(e.target)) { tplClearFloatSelection(); return; } const t=e.target.closest ? e.target.closest('[data-float=&quot;1&quot;]') : null; if(t===tplSelectedFloat) return; if(!t) tplClearFloatSelection(); });
     tplBound=true; }
-  buildTplVars(); ed.innerHTML=TPL[tplCur]; tplApplyEditorFont();
+  tplClearFloatSelection(); buildTplVars(); ed.innerHTML=TPL[tplCur]; tplUpgradeLegacyLayout(ed); tplApplyEditorFont();
 }
 function tplApplyEditorFont(){ const ed=$('tplEditor'); if(ed) ed.style.fontFamily=(tplCur==='records')?&quot;'Times New Roman',Times,serif&quot;:'Georgia,serif'; }
-function tplTab(which){ TPL[tplCur]=$('tplEditor').innerHTML; tplCur=which; $('tplTabLetter').classList.toggle('active',which==='letter'); $('tplTabRecords').classList.toggle('active',which==='records'); buildTplVars(); $('tplEditor').innerHTML=TPL[tplCur]; tplApplyEditorFont(); }
+function tplTab(which){ TPL[tplCur]=tplEditorHTML(); tplCur=which; tplClearFloatSelection(); $('tplTabLetter').classList.toggle('active',which==='letter'); $('tplTabRecords').classList.toggle('active',which==='records'); buildTplVars(); $('tplEditor').innerHTML=TPL[tplCur]; tplUpgradeLegacyLayout($('tplEditor')); tplApplyEditorFont(); }
 function tplFull(){ const c=$('tplCard'); const on=c.classList.toggle('tpl-fs'); $('tplFullBtn').textContent=on?'⤢ Exit full screen':'⛶ Full screen'; document.body.style.overflow=on?'hidden':''; }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const c=document.getElementById('tplCard'); if(c&amp;&amp;c.classList.contains('tpl-fs')) tplFull(); } });
+document.addEventListener('keydown',e=>{
+  const tplCard=document.getElementById('tplCard');
+  const withinTpl=!!(tplCard && tplCard.contains(e.target));
+  if((e.key==='Delete'||e.key==='Backspace') && tplSelectedFloat){
+    if(!withinTpl) return;
+    const typing=tplSelectedFloat.getAttribute('data-float-type')==='text' && tplSelectedFloat.getAttribute('data-editing')==='1';
+    if(!typing){ e.preventDefault(); tplDeleteSelectedFloat(); return; }
+  }
+  if(e.key==='Enter' && tplSelectedFloat && tplSelectedFloat.getAttribute('data-float-type')==='text' && tplSelectedFloat.getAttribute('data-editing')!=='1'){
+    if(!withinTpl) return;
+    e.preventDefault();
+    tplSetTextBoxEditing(tplSelectedFloat,true);
+    return;
+  }
+  if(e.key==='Escape'){
+    if(tplSelectedFloat && tplSelectedFloat.getAttribute('data-float-type')==='text' && tplSelectedFloat.getAttribute('data-editing')==='1'){
+      e.preventDefault();
+      tplSetTextBoxEditing(tplSelectedFloat,false);
+      return;
+    }
+    const c=document.getElementById('tplCard');
+    if(c&amp;&amp;c.classList.contains('tpl-fs')) tplFull();
+  }
+});
 async function tplSave(){
   if(roGuard())return;
-  TPL[tplCur]=$('tplEditor').innerHTML;
+  TPL[tplCur]=tplEditorHTML();
   const {error}=await sb.from('school_config').update({letter_template:TPL.letter,records_template:TPL.records}).eq('school_id',SB_SCHOOL.id);
   if(error){toast('Could not save: '+error.message);return;}
   if(SB_CFG){SB_CFG.letter_template=TPL.letter;SB_CFG.records_template=TPL.records;}
+  notifyStudentPortalRefresh('template-save');
   toast('Template saved · students will see it on their printouts');
 }
 function tplSampleTable(){
@@ -3602,7 +3888,7 @@ function tplSampleTable(){
     +'</table>';
 }
 function tplPreview(){
-  TPL[tplCur]=$('tplEditor').innerHTML;
+  TPL[tplCur]=tplEditorHTML();
   const S=(SB_SCHOOL&amp;&amp;SB_SCHOOL.name)||'Senior High School';
   const _cr=(typeof SCHOOL_CREST!=='undefined'&amp;&amp;SCHOOL_CREST)||(SB_SCHOOL&amp;&amp;SB_SCHOOL.crest_url)||'';
   const sample={CREST:_cr?('<img src=&quot;'+_cr+'&quot; style=&quot;width:90px;height:auto;display:block;margin:0 auto 4px&quot; alt=&quot;&quot;>'):'',SCHOOL_NAME:S,SCHOOL_ADDRESS:(SB_SCHOOL&amp;&amp;SB_SCHOOL.address)||'P.O. Box 1',SCHOOL_PHONE:(SB_SCHOOL&amp;&amp;SB_SCHOOL.phone)||(SB_CFG&amp;&amp;SB_CFG.helpdesk)||'024 000 0000',HEADMASTER:(SB_SCHOOL&amp;&amp;SB_SCHOOL.headmaster_name)||'The Headmaster',ACADEMIC_YEAR:(SB_CFG&amp;&amp;SB_CFG.academic_year)||'2025/2026',DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),REPORTING_DATE:'18 October 2025',REPORTING_TIME:(SB_CFG&amp;&amp;SB_CFG.reopening_time)||'8:00 AM',STUDENT_NAME:'AMA MENSAH',INDEX:'100000000026',ADMISSION_NO:'SCI/2025/026',PROGRAMME:'General Science',CLASS:'Science 1',HOUSE:'Unity House',GENDER:'FEMALE',RESIDENTIAL:'Boarding',AGGREGATE:'06',CONTACT:'024 123 4567'};
@@ -3723,6 +4009,7 @@ openProg=function(id){
     async ()=>{ const code=val('c_code').toUpperCase(),name=val('c_name'); if(!code||!name){toast('Code and name required');return;}
       if(id){ await sb.from('programmes').update({code,name,subjects:val('c_sub'),capacity:+val('c_cap')||100}).eq('id',p._id); p.code=code;p.name=name;p.subjects=val('c_sub');p.cap=+val('c_cap')||100; }
       else { const {data}=await sb.from('programmes').insert({school_id:SB_SCHOOL.id,code,name,subjects:val('c_sub'),capacity:+val('c_cap')||100}).select().single(); const nid=Math.max(0,...programmes.map(x=>x.id))+1; pMap[nid]=data.id; programmes.push({id:nid,_id:data.id,code,name,subjects:val('c_sub'),cap:+val('c_cap')||100,enr:0}); }
+      notifyStudentPortalRefresh('programme-save');
       closeModal(); renderProg(); fillSelects(); toast('Programme saved'); });
 };
 openHouse=function(id){
@@ -3738,6 +4025,7 @@ openHouse=function(id){
       const gender=val('c_gender'), rtype=val('c_rtype');
       if(id){ await sb.from('houses').update({name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,gender,residential_type:rtype}).eq('id',h._id); h.name=name;h.color=val('c_color');h.motto=val('c_motto');h.cap=+val('c_cap')||100;h.gender=gender;h.rtype=rtype; }
       else { const {data}=await sb.from('houses').insert({school_id:SB_SCHOOL.id,name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,gender,residential_type:rtype}).select().single(); const nid=Math.max(0,...houses.map(x=>x.id))+1; hMap[nid]=data.id; houses.push({id:nid,_id:data.id,name,color:val('c_color'),motto:val('c_motto'),cap:+val('c_cap')||100,occ:0,gender,rtype}); }
+      notifyStudentPortalRefresh('house-save');
       closeModal(); renderHouses(); fillSelects&amp;&amp;fillSelects(); toast('House saved'); });
 };
 openClass=function(id){
@@ -3753,6 +4041,7 @@ openClass=function(id){
       const progNum=val('c_prog'); const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
       if(id){ await sb.from('classrooms').update({name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).eq('id',c._id); c.name=name;c.code=val('c_code');c.cap=+val('c_cap')||50;c.progId=progNum?+progNum:'';c.subjects=subj||''; }
       else { const {data}=await sb.from('classrooms').insert({school_id:SB_SCHOOL.id,name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).select().single(); const nid=Math.max(0,...classes.map(x=>x.id))+1; cMap[nid]=data.id; classes.push({id:nid,_id:data.id,name,code:val('c_code'),cap:+val('c_cap')||50,occ:0,progId:progNum?+progNum:'',subjects:subj||''}); }
+      notifyStudentPortalRefresh('class-save');
       closeModal(); renderClasses(); fillSelects&amp;&amp;fillSelects(); toast('Class saved'); });
 };
 delItem=async function(type,id){
@@ -3761,6 +4050,7 @@ delItem=async function(type,id){
   if(!confirm('Delete '+(item.name||item.code)+'?'))return;
   await sb.from(table).delete().eq('id',item._id);
   arr.splice(arr.indexOf(item),1);
+  notifyStudentPortalRefresh(type+'-delete');
   if(type==='prog')renderProg(); if(type==='house')renderHouses(); if(type==='class')renderClasses();
   fillSelects(); toast(label+' deleted');
 };
@@ -3784,6 +4074,7 @@ addPlacement=async function(){
   const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   ['pl_index','pl_name','pl_gender','pl_res','pl_agg','pl_dob','pl_sms'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  notifyStudentPortalRefresh('placement-save',{index:i});
   renderPlacement(); closePop('manualPop');
   toast(existed?('Student '+i+' updated — information replaced'):'Placement record added');
 };
