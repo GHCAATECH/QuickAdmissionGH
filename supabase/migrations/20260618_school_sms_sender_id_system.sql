@@ -12,7 +12,7 @@ returns varchar(11)
 language sql
 immutable
 as $$
-  select left(regexp_replace(upper(coalesce(p_value, '')), '[^A-Z0-9]', '', 'g'), 11)::varchar(11);
+  select left(trim(regexp_replace(regexp_replace(upper(coalesce(p_value, '')), '[^A-Z0-9 ]', '', 'g'), '\s+', ' ', 'g')), 11)::varchar(11);
 $$;
 
 alter table public.schools
@@ -73,7 +73,7 @@ begin
   ) then
     alter table public.schools
       add constraint schools_school_code_format_chk
-      check (school_code ~ '^[A-Z0-9]{1,11}$');
+      check (school_code ~ '^[A-Z0-9]+( [A-Z0-9]+)*$');
   end if;
 end
 $$;

@@ -1,0 +1,1 @@
+-- Placeholder to align local migration history with the linked production Supabase project.

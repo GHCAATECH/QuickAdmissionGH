@@ -2335,7 +2335,7 @@ function firstText(){
   return '';
 }
 function normalizeSenderId(value){
-  return String(value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,11);
+  return String(value||'').toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim().slice(0,11);
 }
 function schoolSenderId(){
   return normalizeSenderId((SB_SCHOOL&&((SB_SCHOOL.school_code)||(SB_SCHOOL.code)))||'');
@@ -2885,14 +2885,14 @@ function tplEditorHTML(){
 }
 function tplInsertTextBox(){
   const id='tpl_tb_'+Date.now();
-  tplInsertHTML('<div class="tpl-move-zone" contenteditable="false" style="min-height:72px">'+tplTextBoxHTML('Text box','left:14px;top:16px;width:220px;').replace('class="tpl-float-object tpl-textbox"','id="'+id+'" class="tpl-float-object tpl-textbox"')+'</div>');
+  tplInsertHTML(tplTextBoxHTML('Text box','left:14px;top:16px;width:220px;').replace('class="tpl-float-object tpl-textbox"','id="'+id+'" class="tpl-float-object tpl-textbox"'));
   const box=document.getElementById(id);
   if(box){ tplSelectFloat(box); box.focus(); }
   toast('Text box inserted - drag it anywhere, double-click to edit');
 }
 function tplInsertLine(){
   const id='tpl_ln_'+Date.now();
-  tplInsertHTML('<div class="tpl-move-zone" contenteditable="false" style="min-height:40px">'+tplLineHTML('left:0;top:10px;width:620px;').replace('class="tpl-float-object tpl-line-object"','id="'+id+'" class="tpl-float-object tpl-line-object"')+'</div>');
+  tplInsertHTML(tplLineHTML('left:0;top:10px;width:620px;').replace('class="tpl-float-object tpl-line-object"','id="'+id+'" class="tpl-float-object tpl-line-object"'));
   const line=document.getElementById(id);
   if(line) tplSelectFloat(line);
   toast('Line inserted - drag it to position it');
@@ -2932,8 +2932,30 @@ function tplUpgradeLegacyLayout(ed){
     tplMakeLegacyLineZone(hr);
   });
 }
-function tplFloatRoot(el){
-  return (el&&el.closest('.tpl-move-zone')) || $('tplEditor');
+function tplPromoteFloatToEditor(el){
+  const ed=$('tplEditor');
+  if(!el||!ed) return el;
+  const zone=el.closest('.tpl-move-zone');
+  if(!zone || zone===ed) return el;
+  const edRect=ed.getBoundingClientRect();
+  const elRect=el.getBoundingClientRect();
+  const left=Math.round(elRect.left-edRect.left+ed.scrollLeft);
+  const top=Math.round(elRect.top-edRect.top+ed.scrollTop);
+  const width=Math.round(elRect.width||el.offsetWidth||0);
+  const height=Math.round(elRect.height||el.offsetHeight||0);
+  zone.removeChild(el);
+  ed.appendChild(el);
+  el.style.left=left+'px';
+  el.style.top=top+'px';
+  el.style.right='auto';
+  el.style.bottom='auto';
+  if(width && el.getAttribute('data-float-type')!=='image') el.style.width=width+'px';
+  if(height && el.getAttribute('data-float-type')==='line') el.style.height=height+'px';
+  if(zone && !zone.querySelector('[data-float="1"],img[data-float="1"]')) zone.remove();
+  return el;
+}
+function tplFloatRoot(){
+  return $('tplEditor');
 }
 function tplResizeFloat(el){
   if(!el) return;
@@ -2973,7 +2995,7 @@ function renderTemplates(){
     });
     ed.addEventListener('dblclick',function(e){ const t=e.target.closest ? e.target.closest('[data-float="1"],img') : null; if(!t)return; tplSelectFloat(t); if(t.getAttribute('data-float-type')==='text'){ tplSetTextBoxEditing(t,true); return; } tplResizeFloat(t); });
     let drag=null;
-    ed.addEventListener('mousedown',function(e){ const t=e.target.closest ? e.target.closest('[data-float="1"]') : null; if(!t){ tplClearFloatSelection(); return; } tplSelectFloat(t); if(t.getAttribute('data-float-type')==='text' && t.getAttribute('data-editing')==='1') return; e.preventDefault(); const ir=t.getBoundingClientRect(); const root=tplFloatRoot(t); drag={el:t,root,offX:e.clientX-ir.left,offY:e.clientY-ir.top}; t.style.opacity='.85'; });
+    ed.addEventListener('mousedown',function(e){ let t=e.target.closest ? e.target.closest('[data-float="1"]') : null; if(!t){ tplClearFloatSelection(); return; } t=tplPromoteFloatToEditor(t); tplSelectFloat(t); if(t.getAttribute('data-float-type')==='text' && t.getAttribute('data-editing')==='1') return; e.preventDefault(); const ir=t.getBoundingClientRect(); const root=tplFloatRoot(); drag={el:t,root,offX:e.clientX-ir.left,offY:e.clientY-ir.top}; t.style.opacity='.85'; });
     document.addEventListener('mousemove',function(e){ if(!drag)return; const root=drag.root; const r=root.getBoundingClientRect(); const cs=getComputedStyle(root); const padL=parseFloat(cs.paddingLeft)||0, padT=parseFloat(cs.paddingTop)||0;
       let nl=(e.clientX-drag.offX-r.left)+root.scrollLeft-padL; let nt=(e.clientY-drag.offY-r.top)+root.scrollTop-padT;
       const maxL=Math.max(-padL,(root.clientWidth||root.scrollWidth)-drag.el.offsetWidth-padL); const maxT=Math.max(-padT,(root.clientHeight||root.scrollHeight)-drag.el.offsetHeight-padT);
@@ -3051,6 +3073,23 @@ function tplPreview(){
   w.document.close();
 }
 
+tplPreview=function(){
+  TPL[tplCur]=tplEditorHTML();
+  const S=(SB_SCHOOL&&SB_SCHOOL.name)||'Senior High School';
+  const _cr=(typeof SCHOOL_CREST!=='undefined'&&SCHOOL_CREST)||(SB_SCHOOL&&SB_SCHOOL.crest_url)||'';
+  const sample={CREST:_cr?('<img src="'+_cr+'" style="width:90px;height:auto;display:block;margin:0 auto 4px" alt="">'):'',SCHOOL_NAME:S,SCHOOL_ADDRESS:(SB_SCHOOL&&SB_SCHOOL.address)||'P.O. Box 1',SCHOOL_PHONE:(SB_SCHOOL&&SB_SCHOOL.phone)||(SB_CFG&&SB_CFG.helpdesk)||'024 000 0000',HEADMASTER:(SB_SCHOOL&&SB_SCHOOL.headmaster_name)||'The Headmaster',ACADEMIC_YEAR:(SB_CFG&&SB_CFG.academic_year)||'2025/2026',DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),REPORTING_DATE:'18 October 2025',REPORTING_TIME:(SB_CFG&&SB_CFG.reopening_time)||'8:00 AM',STUDENT_NAME:'AMA MENSAH',INDEX:'100000000026',ADMISSION_NO:'SCI/2025/026',PROGRAMME:'General Science',CLASS:'Science 1',HOUSE:'Unity House',GENDER:'FEMALE',RESIDENTIAL:'Boarding',AGGREGATE:'06',CONTACT:'024 123 4567'};
+  let body=TPL[tplCur].replace(/\{RECORDS_TABLE\}/g,tplSampleTable());
+  let qurl=''; try{ if(typeof qrcode!=='undefined'){ const q=qrcode(0,'M'); q.addData([sample.SCHOOL_NAME,'Name: '+sample.STUDENT_NAME,'Index: '+sample.INDEX,'Adm No: '+sample.ADMISSION_NO,'Programme: '+sample.PROGRAMME,'House: '+sample.HOUSE,'Residential: '+sample.RESIDENTIAL,'Year: '+sample.ACADEMIC_YEAR].join('\n')); q.make(); const cells=q.getModuleCount(); const cell=Math.max(2,Math.round(108/(cells+8))); qurl=q.createDataURL(cell,cell*4); } }catch(e){}
+  body=body.replace(/\{QR_CODE\}/g, qurl?'<img src="'+qurl+'" style="width:108px;height:108px" alt="QR code">':'[QR]').replace(/\{([A-Z_]+)\}/g,(m,k)=>k in sample?sample[k]:m);
+  const w=window.open('','_blank'); if(!w){toast('Allow pop-ups to preview');return;}
+  const previewFont=(tplCur==='records')?"'Times New Roman',Times,serif":'Georgia,serif';
+  const crest=(typeof SCHOOL_CREST!=='undefined'&&SCHOOL_CREST)||(SB_SCHOOL&&SB_SCHOOL.crest_url)||'';
+  const wm=crest?'<div class="qa-wm"><img src="'+crest+'" alt=""></div>':'';
+  const recCss='@page{size:A4;margin:12.7mm}.sec-h{background:#1557B0;color:#fff;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:5px 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.rn{color:#999;font-weight:600;margin-right:4px}'
+    +(tplCur==='records'?'.tpl-editor{line-height:1.3}.tpl-editor h2{font-size:14px;margin:6px 0}.tpl-editor p{margin:4px 0;font-size:12.5px}.tpl-editor table{margin:6px 0}.tpl-editor td{padding:3px 6px;font-size:12px}@media print{tr{page-break-inside:avoid}}':'');
+  w.document.write('<html><head><title>Preview</title><style>*{box-sizing:border-box}body{margin:0;background:#e9eef0;color:#14201c;font-family:'+previewFont+'}.tpl-preview-shell{padding:26px;display:flex;justify-content:center}.tpl-editor{position:relative;width:100%;max-width:794px;min-height:560px;background:#fff;box-shadow:0 2px 14px -4px rgba(0,0,0,.25);padding:48px 56px;font-family:'+previewFont+';font-size:14px;line-height:1.6;color:#14201c}.tpl-editor h1{font-size:20px;text-align:center;margin-bottom:2px}.tpl-editor .sub{text-align:center;color:#555;font-size:13px;margin-bottom:24px}.tpl-editor h2{font-size:16px;border-bottom:2px solid #1557B0;padding-bottom:4px}.tpl-editor img{max-width:100%}.tpl-editor table{width:100%;border-collapse:collapse;margin:12px 0}.tpl-editor td{padding:6px 4px;border-bottom:1px solid #eee;font-size:14px}.tpl-editor .lbl{color:#666;width:200px}.tpl-move-zone{position:relative;min-height:54px}.tpl-move-zone.header-zone{min-height:84px}.tpl-float-object{position:absolute;z-index:4}.tpl-textbox{min-width:120px;max-width:100%;white-space:pre-wrap}.tpl-line-object{cursor:default}.qa-wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:62%;max-width:520px;z-index:0;pointer-events:none;opacity:.2;-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm img{width:100%;height:auto;display:block}body>*{position:relative;z-index:1}'+recCss+'@media print{body{background:#fff}.tpl-preview-shell{padding:0}.tpl-editor{box-shadow:none;max-width:none;min-height:auto}.qa-wm{opacity:.2}}</style></head><body>'+wm+'<div class="tpl-preview-shell"><div class="tpl-editor">'+body+'</div></div><p style="margin:0 0 30px;text-align:center;color:#888;font-size:12px">PREVIEW · sample data</p></body></html>');
+  w.document.close();
+}
 let schoolUsers=[];
 function houseName(uid){ const h=(houses||[]).find(x=>x._id===uid); return h?h.name:'a house'; }
 function houseSelectHTML(cur){ return `<select id="u_house"><option value="">All houses (no restriction)</option>`+(houses||[]).map(h=>`<option value="${h._id}" ${cur===h._id?'selected':''}>${h.name}</option>`).join('')+`</select>`; }

@@ -29,7 +29,9 @@ function json(body: JsonRecord, status = 200) {
 function normalizeSchoolCode(value: unknown) {
   return String(value ?? "")
     .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
+    .replace(/[^A-Z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
     .slice(0, 11);
 }
 

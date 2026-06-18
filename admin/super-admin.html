@@ -1022,7 +1022,7 @@ const sa_init=n=>{const w=(n||'').replace(/[^A-Za-z ]/g,'').split(' ').filter(Bo
 const sa_cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
 const sa_time=ts=>{ if(!ts)return '-'; const d=new Date(ts),n=new Date(),m=Math.floor((n-d)/60000);
   return m<1?'just now':m<60?m+' min ago':m<1440?Math.floor(m/60)+' hr ago':Math.floor(m/1440)+'d ago'; };
-const normalizeSchoolCodeInput=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,11);
+const normalizeSchoolCodeInput=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim().slice(0,11);
 const schoolSenderCode=s=>normalizeSchoolCodeInput((s&&((s.schoolCode||s.school_code||s.code)))||'');
 function schoolCodeExists(code,excludeId){
   const normalized=normalizeSchoolCodeInput(code);
@@ -1044,7 +1044,7 @@ function bindSchoolCodeInput(inputId,usernameId){
 function schoolCodeErrorMessage(code){
   const normalized=normalizeSchoolCodeInput(code);
   if(!normalized) return 'School Code / SMS Sender ID is required.';
-  if(!/^[A-Z0-9]{1,11}$/.test(normalized)) return 'Use only letters and numbers, up to 11 characters.';
+  if(!/^[A-Z0-9]+(?: [A-Z0-9]+)*$/.test(normalized)) return 'Use only letters, numbers, and spaces, up to 11 characters.';
   return '';
 }
 function saNormalizePhone(value){
