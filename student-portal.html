@@ -248,6 +248,17 @@
   .welcome{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
   .welcome .wh{background:var(--primary);color:#fff;padding:13px 18px;font-size:13.5px;font-weight:600;line-height:1.45}
   .welcome.pending .wh{background:var(--accent);color:#3a2906}
+  .submit-success{display:none;background:var(--surface);border:1px solid rgba(21,87,176,.18);border-left:4px solid var(--primary);border-radius:var(--r);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:18px}
+  .submit-success.show{display:block}
+  .submit-success h3{font-family:'Space Grotesk';font-size:19px;font-weight:700;color:#12305f;margin-bottom:6px}
+  .submit-success p{font-size:13px;color:var(--ink-soft);margin:0 0 14px}
+  .submit-success-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .submit-success-item{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .submit-success-item small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .submit-success-item strong{display:block;font-size:14px;line-height:1.45;color:var(--ink);word-break:break-word}
+  .submit-success-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap}
+  .submit-success-note{font-size:12.5px;color:var(--primary);font-weight:600}
+  .submit-success .btn{padding:9px 14px}
 
   /* widget-user */
   .wu{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
@@ -382,6 +393,7 @@
     .ptopbar .yr{margin-left:0;order:3;width:100%;font-size:11px}
     .wu-grid{grid-template-columns:1fr}
     .wu-block{border-right:none!important}
+    .submit-success-grid{grid-template-columns:1fr}
     .doc-btns .btn{min-width:100%}
     .step-nav{flex-direction:column-reverse}
     .step-nav .btn{width:100%}
@@ -627,6 +639,19 @@
     <main class="pmain">
       <!-- DASHBOARD PANEL -->
       <div id="panel-dash">
+        <div class="submit-success" id="submissionSuccessCard">
+          <h3>Admission Submitted Successfully</h3>
+          <p>Your admission form has been received. Keep your admission details safe while the school continues processing your records.</p>
+          <div class="submit-success-grid">
+            <div class="submit-success-item"><small>School</small><strong id="submissionSuccessSchool">-</strong></div>
+            <div class="submit-success-item"><small>Application Number</small><strong id="submissionSuccessApplication">-</strong></div>
+            <div class="submit-success-item"><small>SMS Confirmation</small><strong id="submissionSuccessSms">-</strong></div>
+          </div>
+          <div class="submit-success-foot">
+            <span class="submit-success-note" id="submissionSuccessNote">A confirmation SMS has been sent to your phone number.</span>
+            <button class="btn btn-ghost btn-sm" type="button" onclick="dismissSubmissionSuccess()">Dismiss</button>
+          </div>
+        </div>
         <div class="welcome" id="welcomeCard"><div class="wh" id="welcomeMsg">-</div></div>
         <div class="wu">
           <div class="wu-head"><h3 id="wuName">-</h3><div class="sno" id="wuSchoolNo">-</div><div class="wu-avatar" id="wuAvatar">?</div></div>
@@ -750,6 +775,19 @@ function setStudentSession(next){
 function clearStudentSession(){
   try{localStorage.removeItem(qagTabKey('qag_student'));}catch(e){}
 }
+function readSubmissionSuccess(){
+  try{return JSON.parse(sessionStorage.getItem(qagTabKey('qag_submission_success'))||'null');}catch(e){return null;}
+}
+function writeSubmissionSuccess(next){
+  try{
+    if(next) sessionStorage.setItem(qagTabKey('qag_submission_success'),JSON.stringify(next));
+    else sessionStorage.removeItem(qagTabKey('qag_submission_success'));
+  }catch(e){}
+}
+function dismissSubmissionSuccess(){
+  writeSubmissionSuccess(null);
+  renderSubmissionSuccess();
+}
 function finishStudentBoot(){
   try{document.body.classList.remove('booting');}catch(e){}
 }
@@ -831,7 +869,8 @@ async function applySchool(data){
   }catch(e){}
   if(data.school){
     $('topSchool').textContent=(data.school.name||'').toUpperCase();
-    document.querySelectorAll('.helpline a').forEach(a=>{if(data.school.helpdesk){a.textContent=data.school.helpdesk;a.href='tel:'+data.school.helpdesk;}});
+    const helpdesk=firstText(data.school.helpdesk,data.school.phone,LOGIN_DEFAULTS.phone);
+    document.querySelectorAll('.helpline a').forEach(a=>{a.textContent=helpdesk;a.href='tel:'+helpdesk;});
   }
   if(data.config) $('topYear').textContent='Admission Year: '+(data.config.academic_year||'2025/2026');
 }
@@ -937,6 +976,24 @@ function stopWatchDeletion(){
   stuRefreshBusy=false; stuRefreshQueued=false;
   if(stuChannel){ try{sb.removeChannel(stuChannel);}catch(e){} stuChannel=null; }
 }
+function renderSubmissionSuccess(){
+  const card=$('submissionSuccessCard');
+  if(!card) return;
+  const payload=readSubmissionSuccess();
+  if(!payload||!payload.application_no){
+    card.classList.remove('show');
+    return;
+  }
+  const schoolText=$('submissionSuccessSchool');
+  const appText=$('submissionSuccessApplication');
+  const smsText=$('submissionSuccessSms');
+  const note=$('submissionSuccessNote');
+  if(schoolText) schoolText.textContent=payload.school_name||((SCHOOL&&SCHOOL.school&&SCHOOL.school.name)||'Your school');
+  if(appText) appText.textContent=payload.application_no||'-';
+  if(smsText) smsText.textContent=payload.sms_status_label||'Pending';
+  if(note) note.textContent=payload.sms_note||'A confirmation SMS has been sent to your phone number.';
+  card.classList.add('show');
+}
 function hydrate(){
   const s=STU;
   const displayName=studentName(s)||'Applicant';
@@ -979,6 +1036,7 @@ function hydrate(){
   const cfg=(SCHOOL&&SCHOOL.config)||{};
   const docs=(Array.isArray(cfg.req_docs)?cfg.req_docs:[cfg.req_doc_line1,cfg.req_doc_line2,cfg.req_doc_line3,cfg.req_doc_line4,cfg.req_doc_line5]).filter(Boolean);
   $('dashChecklist').innerHTML=docs.map((l,i)=>`<li><span class="n">${i+1}</span><span>${l}</span></li>`).join('');
+  renderSubmissionSuccess();
   buildSteps(); refreshRail();
 }
 
@@ -988,6 +1046,7 @@ function showPanel(p){
   $('panel-form').style.display=p==='form'?'':'none';
   $('navDash').classList.toggle('active',p==='dash');
   $('navForm').classList.toggle('active',p==='form');
+  if(p==='dash') renderSubmissionSuccess();
   if(p==='form'){ goStep(app.current||0); }
   document.querySelector('.psidebar').classList.remove('open');$('pbackdrop').classList.remove('open');
   window.scrollTo(0,0);
@@ -1186,6 +1245,21 @@ function buildReview(){
   h+=rev('Parental data',[["Father's Name",f.father_name],["Father's Occupation",f.father_occupation],["Father's Contact",f.father_phone],["Mother's Name",f.mother_name],["Mother's Occupation",f.mother_occupation],["Mother's Contact",f.mother_phone],['Guardian',f.guardian],['Residential Tel.',f.guardian_phone],['Digital Address',f.digital_address]],2);
   $('reviewBlocks').innerHTML=h;
 }
+async function sendSubmissionConfirmation(applicationNo){
+  if(!session||!session.index||!session.token) return {ok:false,status:'pending',message:'No active session.'};
+  try{
+    const res=await fetch(SUPABASE_URL+'/functions/v1/send-sms',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
+      body:JSON.stringify({mode:'submission-confirmation',index:session.index,token:session.token,school:session.school||null,application_no:applicationNo||''})
+    });
+    const data=await res.json().catch(()=>null);
+    if(!data) return {ok:false,status:'pending',message:'SMS confirmation is pending.'};
+    return data;
+  }catch(e){
+    return {ok:false,status:'pending',message:'SMS confirmation is pending.'};
+  }
+}
 async function submitApp(){
   collect(0);collect(1);collect(2);
   if(!app.done.every(Boolean)){toast('Please complete all sections first');goStep(app.done.findIndex(d=>!d));return;}
@@ -1197,7 +1271,21 @@ async function submitApp(){
     if(data&&data.error==='closed'){toast('Admission is closed for this school - submission not allowed.');return;}
     toast('Submission failed - please try again');return;
   }
+  const smsResult=await sendSubmissionConfirmation(data.admission_no);
   await refreshStudent(); app.current=0; showPanel('dash');
+  const smsStatus=(smsResult&&smsResult.status)||'pending';
+  const smsStatusLabel=smsStatus==='sent'||smsStatus==='duplicate'?'Sent':(smsStatus==='skipped'?'Skipped':'Pending');
+  const smsNote=smsStatusLabel==='Sent'
+    ? 'A confirmation SMS has been sent to your phone number.'
+    : ((smsResult&&smsResult.message)||'SMS confirmation is pending. Your submission has still been received.');
+  writeSubmissionSuccess({
+    school_name:(SCHOOL&&SCHOOL.school&&SCHOOL.school.name)||'Your school',
+    application_no:data.admission_no||'',
+    sms_status:smsStatus,
+    sms_status_label:smsStatusLabel,
+    sms_note:smsNote
+  });
+  renderSubmissionSuccess();
   toast('Enrolment submitted - Admission No '+data.admission_no);
 }
 
@@ -1335,7 +1423,7 @@ function docProspectus(){
 }
 
 function gotoSuper(){ try{ if(window.parent&&window.parent!==window&&window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin.html'; }
-function logout(){stopWatchDeletion();session=null;STU=null;clearStudentSession(); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
+function logout(){stopWatchDeletion();session=null;STU=null;clearStudentSession();writeSubmissionSuccess(null); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
 
 buildSteps();
 // Phone/contact fields: digits only, max 10
@@ -1432,8 +1520,7 @@ function selectedSchoolHelpdeskPhone(selectedSchool){
   const schoolPhone=firstNonEmpty(
     selectedSchool.phone,
     selectedSchool.contact_phone,
-    selectedSchool.school_phone,
-    selectedSchool.admin_phone
+    selectedSchool.school_phone
   );
   return String(helpdeskPhone||schoolPhone||LOGIN_DEFAULTS.phone).trim()||LOGIN_DEFAULTS.phone;
 }
@@ -1449,8 +1536,7 @@ function selectedSchoolHelpdeskEmail(selectedSchool){
   const schoolEmail=firstNonEmpty(
     selectedSchool.email,
     selectedSchool.contact_email,
-    selectedSchool.school_email,
-    selectedSchool.admin_email
+    selectedSchool.school_email
   );
   return String(helpdeskEmail||schoolEmail||LOGIN_DEFAULTS.email).trim()||LOGIN_DEFAULTS.email;
 }
@@ -1489,7 +1575,19 @@ async function loadSchools(){
     if(!id) return;
     const key=String(id);
     const current=merged.get(key)||{id:id};
-    merged.set(key,Object.assign({},current,row,{id:id}));
+    const preserved={
+      id:id,
+      name:firstNonEmpty(current.name,current.school_name,row.name,row.school_name),
+      school_name:firstNonEmpty(current.school_name,current.name,row.school_name,row.name),
+      code:firstNonEmpty(current.code,row.code),
+      school_code:firstNonEmpty(current.school_code,current.code,row.school_code,row.code),
+      phone:firstNonEmpty(current.phone,row.phone),
+      email:firstNonEmpty(current.email,row.email),
+      helpdesk:firstNonEmpty(current.helpdesk,row.helpdesk),
+      helpdesk_line:firstNonEmpty(current.helpdesk_line,current.helpdesk,row.helpdesk_line,row.helpdesk),
+      crest_url:firstNonEmpty(current.crest_url,row.crest_url)
+    };
+    merged.set(key,Object.assign({},current,row,preserved));
   });
   SCHOOLS_LIST=Array.from(merged.values()).sort((a,b)=>{
     const an=String(schoolField(a,['name','school_name'],'')||'');

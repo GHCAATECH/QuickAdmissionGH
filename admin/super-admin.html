@@ -410,7 +410,7 @@
           <button class="btn btn-primary" onclick="openAddSchool()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add new school</button>
         </div>
         <div class="panel"><div class="tbl-wrap"><table>
-          <thead><tr><th>School</th><th>Code</th><th>Admin</th><th>Plan</th><th>Students</th><th>Admission</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>School Name</th><th>School Code</th><th>Email</th><th>Phone</th><th>Status</th><th></th></tr></thead>
           <tbody id="schoolRows"></tbody>
         </table></div></div>
       </section>
@@ -483,13 +483,17 @@
               <textarea id="smsBody" rows="4" placeholder="Type your message..." oninput="updateSmsCount()"></textarea>
               <div class="char-count"><span id="smsChars">0</span> / 160 chars - <span id="smsCredits">1</span> credit each</div>
             </div>
+            <div class="panel panel-pad" style="margin:0 0 14px;background:#eef6ff;border:1px solid rgba(21,87,176,.16)">
+              <div style="font-size:13px;font-weight:700;color:#1557B0">Delivery uses each school's registered Sender ID.</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:6px">Platform broadcasts are grouped by school and sent through Arkesel with that school's School Code / SMS Sender ID. Schools without a sender ID or with SMS disabled will be skipped and logged as failed.</div>
+            </div>
             <button class="btn btn-primary" onclick="sendBulkSms()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send to <span id="smsRecip">-</span> recipients</button>
           </div>
           <div>
             <div class="credit-box" style="margin-bottom:16px">
               <small>Global SMS credits</small>
               <div class="big mono" id="smsBalance">12,480</div>
-              <button class="btn btn-ghost btn-sm" style="margin-top:10px;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="toast('Credit purchase flow (prototype)')">Purchase credits</button>
+              <button class="btn btn-ghost btn-sm" style="margin-top:10px;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="toast('Credits and provider billing are managed from the platform configuration.')">Purchase credits</button>
             </div>
             <div class="panel panel-pad">
               <label style="font-size:12px;font-weight:600;color:var(--ink-soft)">Templates</label>
@@ -595,17 +599,17 @@ let payments=[];
 let activity=[
   {type:'reg',school:1,text:'New student registered',time:'2 min ago'},
   {type:'pay',school:2,text:'Token payment completed - GHS 35',time:'6 min ago'},
-  {type:'sms',school:3,text:'Bulk SMS sent to 48 students',time:'14 min ago'},
+  {type:'sms',school:3,text:'Bulk SMS logged while delivery was disconnected',time:'14 min ago'},
   {type:'reg',school:4,text:'New student registered',time:'22 min ago'},
   {type:'sys',school:6,text:'Admission closed by school admin',time:'38 min ago'},
   {type:'pay',school:1,text:'Token payment completed - GHS 30',time:'51 min ago'},
   {type:'reg',school:2,text:'New student registered',time:'1 hr ago'},
-  {type:'sms',school:5,text:'Reporting reminder sent to 12 students',time:'1 hr ago'},
+  {type:'sms',school:5,text:'Reporting reminder logged while delivery was disconnected',time:'1 hr ago'},
 ];
 let smsHistory=[
-  {date:'2026-06-08',school:1,group:'Approved',recip:142,msg:'Your admission has been approved. Report on 18 Oct.',status:'sent'},
-  {date:'2026-06-07',school:2,group:'All',recip:512,msg:'Reminder: complete your application before 15 June.',status:'sent'},
-  {date:'2026-06-05',school:3,group:'Pending',recip:34,msg:'Action needed: finish your programme selection.',status:'sent'},
+  {date:'2026-06-08',school:1,group:'Approved',recip:142,msg:'Your admission has been approved. Report on 18 Oct.',status:'pending'},
+  {date:'2026-06-07',school:2,group:'All',recip:512,msg:'Reminder: complete your application before 15 June.',status:'pending'},
+  {date:'2026-06-05',school:3,group:'Pending',recip:34,msg:'Action needed: finish your programme selection.',status:'pending'},
 ];
 let smsBalance=12480;
 
@@ -651,13 +655,14 @@ function schoolRow(s,mode){
   const adm=`<span class="pill ${s.admission==='OPENED'?'open':'closed'}">${s.admission}</span>`;
   if(mode==='dash'){
     return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${s.name}</span></div></td>
-      <td><span class="code">${s.code}</span></td><td>${s.admin}</td>
+      <td><span class="code">${schoolSenderCode(s)||s.code}</span></td><td>${s.admin}</td>
       <td class="mono">${fmt(s.students)}</td><td>${adm}</td><td class="mono">${s.charge}</td>
       <td><div class="row-actions">${acts}</div></td></tr>`;
   }
   return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${s.name}</span></div></td>
-    <td><span class="code">${s.code}</span></td><td>${s.admin}</td><td>${s.plan}</td>
-    <td class="mono">${fmt(s.students)}</td><td>${adm}</td>
+    <td><span class="code">${schoolSenderCode(s)||'—'}</span></td>
+    <td class="mono" style="font-size:12px">${s.email||'—'}</td>
+    <td class="mono">${s.phone||'—'}</td>
     <td><span class="pill ${s.status}">${s.status}</span></td>
     <td><div class="row-actions">${acts}</div></td></tr>`;
 }
@@ -692,8 +697,8 @@ function buildCharts(){
 /* ============ VIEW RENDERERS ============ */
 function renderSchools(){
   const q=($('schoolSearch').value||'').toLowerCase();const f=$('schoolFilter').value;
-  const rows=schools.filter(s=>(s.name.toLowerCase().includes(q)||s.code.toLowerCase().includes(q))&&(f==='all'||s.status===f));
-  $('schoolRows').innerHTML=rows.length?rows.map(s=>schoolRow(s,'manage')).join(''):emptyRow(8,'No schools match your filters.');
+  const rows=schools.filter(s=>(s.name.toLowerCase().includes(q)||String(s.code||'').toLowerCase().includes(q)||schoolSenderCode(s).toLowerCase().includes(q))&&(f==='all'||s.status===f));
+  $('schoolRows').innerHTML=rows.length?rows.map(s=>schoolRow(s,'manage')).join(''):emptyRow(6,'No schools match your filters.');
   $('badge-schools').textContent=schools.filter(s=>s.status!=='suspended').length;
 }
 function aInit(n){return ((n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('')||'?').toUpperCase();}
@@ -753,7 +758,7 @@ function renderFinance(){
   $('payRows').innerHTML=payments.slice(0,14).map(p=>{const s=sById(p.schoolId);return `<tr><td class="mono">${p.date}</td><td>${p.student}</td><td><span class="code">${s.code}</span></td><td class="mono">${money(p.amount)}</td><td>${p.method}</td><td><span class="pill ${p.status}">${p.status}</span></td><td class="mono" style="font-size:12px">${p.txn}</td></tr>`;}).join('');
 }
 function renderSms(){
-  $('smsRows').innerHTML=smsHistory.map(h=>{const s=sById(h.school);return `<tr><td class="mono">${h.date}</td><td>${s.name}</td><td>${h.group}</td><td class="mono">${h.recip}</td><td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.msg}</td><td><span class="pill open">${h.status}</span></td></tr>`;}).join('');
+  $('smsRows').innerHTML=smsHistory.map(h=>{const s=sById(h.school)||{name:'Unknown school'};return `<tr><td class="mono">${h.date}</td><td>${s.name}</td><td>${h.group}</td><td class="mono">${h.recip}</td><td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.msg}</td><td><span class="pill ${h.status==='sent'?'open':(h.status==='failed'?'closed':'pending')}">${h.status}</span></td></tr>`;}).join('');
   $('smsBalance').textContent=fmt(smsBalance);
   updateSmsCount();
 }
@@ -761,11 +766,7 @@ function emptyRow(cols,msg){return `<tr><td colspan="${cols}"><div class="empty"
 
 /* ============ SMS LOGIC ============ */
 function recipientCount(){
-  const t=$('smsTarget').value;const g=$('smsGroup').value;
-  let pool=t==='all'?students:students.filter(s=>s.schoolId==t);
-  if(g!=='all')pool=pool.filter(s=>s.status===g);
-  const ratio=totalStudents()/students.length;
-  return Math.round(pool.length*ratio);
+  return smsTargets().length;
 }
 function updateSmsCount(){
   const len=($('smsBody').value||'').length;
@@ -777,14 +778,7 @@ function loadTemplate(v){
   if(t[v]){$('smsBody').value=t[v];updateSmsCount();}
 }
 function sendBulkSms(){
-  const body=($('smsBody').value||'').trim();if(!body){toast('Type a message first');return;}
-  const n=recipientCount();const credits=Math.max(1,Math.ceil(body.length/160))*n;
-  if(credits>smsBalance){toast('Not enough credits for this broadcast');return;}
-  smsBalance-=credits;
-  const t=$('smsTarget').value;
-  smsHistory.unshift({date:new Date().toISOString().slice(0,10),school:t==='all'?schools[0].id:parseInt(t),group:$('smsGroup').selectedOptions[0].text.replace(' students',''),recip:n,msg:body,status:'sent'});
-  $('smsBody').value='';renderSms();renderStats();
-  toast(`SMS sent to ${fmt(n)} recipients - ${fmt(credits)} credits used`);
+  toast('Preparing delivery...');
 }
 
 /* ============ SCHOOL ACTIONS ============ */
@@ -795,26 +789,27 @@ function toggleAdmission(id){const s=sById(id);s.admission=s.admission==='OPENED
 
 function openSchool(id){
   const s=sById(id);
+  const senderCode=schoolSenderCode(s)||'—';
   const schoolStudents=students.filter(st=>st.schoolId===id).slice(0,8);
   const schoolPays=payments.filter(p=>p.schoolId===id).slice(0,6);
   const m=$('modal');m.className='modal wide';
   m.innerHTML=`
   <div class="modal-head">
-    <div style="display:flex;gap:13px;align-items:center">${crest(s)}<div><h2>${s.name}</h2><p><span class="code">${s.code}</span> - ${s.plan} plan - expires ${s.expiry}</p></div></div>
+    <div style="display:flex;gap:13px;align-items:center">${crest(s)}<div><h2>${s.name}</h2><p><span class="code">${senderCode}</span> - ${s.plan} plan - expires ${s.expiry}</p></div></div>
     <button class="modal-x" onclick="closeModal()">&times;</button>
   </div>
   <div class="tabs" id="schoolTabs">
     ${['Profile','Admin','Students','Payments','Subscription','Danger zone'].map((t,i)=>`<button class="tab ${i===0?'active':''}" onclick="schoolTab(${i})">${t}</button>`).join('')}
   </div>
   <div class="tab-panel active" data-tab="0">
-    <dl class="kv"><dt>Full name</dt><dd>${s.name}</dd><dt>School code</dt><dd><span class="code">${s.code}</span></dd>
+    <dl class="kv"><dt>Full name</dt><dd>${s.name}</dd><dt>School code / Sender ID</dt><dd><span class="code">${senderCode}</span></dd>
     <dt>Email</dt><dd>${s.email}</dd><dt>Phone</dt><dd class="mono">${s.phone}</dd>
     <dt>Admission</dt><dd><span class="pill ${s.admission==='OPENED'?'open':'closed'}">${s.admission}</span></dd>
     <dt>Service charge</dt><dd class="mono">GHS ${s.charge.toFixed(2)}</dd><dt>Status</dt><dd><span class="pill ${s.status}">${s.status}</span></dd></dl>
     <div style="margin-top:16px;display:flex;gap:9px"><button class="btn btn-ghost btn-sm" onclick="editSchool(${id})">Edit profile</button><button class="btn btn-ghost btn-sm" onclick="toggleAdmission(${id});closeModal()">${s.admission==='OPENED'?'Close':'Open'} admission</button></div>
   </div>
   <div class="tab-panel" data-tab="1">
-    <dl class="kv"><dt>Primary admin</dt><dd>${s.admin}</dd><dt>Username</dt><dd><span class="code">${s.code.toLowerCase()}_admin</span></dd><dt>Email</dt><dd>${s.email}</dd></dl>
+    <dl class="kv"><dt>Primary admin</dt><dd>${s.admin}</dd><dt>Username</dt><dd><span class="code">${senderCode.toLowerCase()}_admin</span></dd><dt>Email</dt><dd>${s.email}</dd></dl>
     <p style="font-size:12px;color:var(--muted);margin:14px 0 10px">Admins manage their own school's config. You can reset their password or add a sub-admin.</p>
     <div style="display:flex;gap:9px"><button class="btn btn-ghost btn-sm" onclick="toast('Reset link sent to ${s.admin}')">Reset password</button><button class="btn btn-ghost btn-sm" onclick="toast('Add sub-admin (prototype)')">Add sub-admin</button></div>
   </div>
@@ -854,7 +849,7 @@ function editSchool(id){
   <div class="modal-head"><div><h2>Edit school</h2><p>Update ${s.name}'s information</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid">
     <fieldset><legend>School information</legend>
-      <div class="grid-2"><div class="field"><label>School code</label><input id="e_code" value="${s.code||''}"></div><div class="field"><label>Service charge (GHS)</label><input id="e_charge" type="number" step="0.5" value="${(s.charge!=null?s.charge:30)}"></div></div>
+      <div class="grid-2"><div class="field"><label>School Code / SMS Sender ID</label><input id="e_school_code" value="${schoolSenderCode(s)||''}" maxlength="11" placeholder="e.g. ASEC"></div><div class="field"><label>Service charge (GHS)</label><input id="e_charge" type="number" step="0.5" value="${(s.charge!=null?s.charge:30)}"></div></div>
       <div class="field"><label>Full school name</label><input id="e_name" value="${(s.name||'').replace(/"/g,'&quot;')}"></div>
       <div class="grid-2"><div class="field"><label>Phone</label><input id="e_phone" value="${s.phone||''}"></div><div class="field"><label>Email</label><input id="e_email" type="email" value="${s.email||''}"></div></div>
     </fieldset>
@@ -865,6 +860,7 @@ function editSchool(id){
   </div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="e_btn" onclick="saveSchoolEdit(${id})">Save changes</button></div>`;
   $('overlay').classList.add('show');
+  setTimeout(()=>bindSchoolCodeInput('e_school_code'),0);
 }
 function openAddSchool(){
   const m=$('modal');m.className='modal';
@@ -872,7 +868,7 @@ function openAddSchool(){
   <div class="modal-head"><div><h2>Add new school</h2><p>Creates the tenant and its primary admin account</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid">
     <fieldset><legend>School information</legend>
-      <div class="grid-2"><div class="field"><label>School code</label><input id="f_code" placeholder="e.g. ASM001"></div><div class="field"><label>Service charge (GHS)</label><input id="f_charge" type="number" value="30" step="0.5"></div></div>
+      <div class="grid-2"><div class="field"><label>School Code / SMS Sender ID</label><input id="f_code" placeholder="e.g. ASEC" maxlength="11"></div><div class="field"><label>Service charge (GHS)</label><input id="f_charge" type="number" value="30" step="0.5"></div></div>
       <div class="field"><label>Full school name</label><input id="f_name" placeholder="e.g. Asuom Senior High School"></div>
       <div class="grid-2"><div class="field"><label>Phone</label><input id="f_phone" placeholder="0244..."></div><div class="field"><label>Email</label><input id="f_email" type="email" placeholder="school@..."></div></div>
     </fieldset>
@@ -887,7 +883,7 @@ function openAddSchool(){
   </div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createSchool()">Create school</button></div>`;
   $('overlay').classList.add('show');
-  setTimeout(()=>{$('f_code').addEventListener('input',e=>$('f_uname').value=e.target.value.toLowerCase()+'_admin');},0);
+  setTimeout(()=>bindSchoolCodeInput('f_code','f_uname'),0);
 }
 function createSchool(){
   const code=$('f_code').value.trim().toUpperCase(),name=$('f_name').value.trim();
@@ -1003,6 +999,50 @@ const sa_init=n=>{const w=(n||'').replace(/[^A-Za-z ]/g,'').split(' ').filter(Bo
 const sa_cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
 const sa_time=ts=>{ if(!ts)return '-'; const d=new Date(ts),n=new Date(),m=Math.floor((n-d)/60000);
   return m<1?'just now':m<60?m+' min ago':m<1440?Math.floor(m/60)+' hr ago':Math.floor(m/1440)+'d ago'; };
+const normalizeSchoolCodeInput=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,11);
+const schoolSenderCode=s=>normalizeSchoolCodeInput((s&&((s.schoolCode||s.school_code||s.code)))||'');
+function schoolCodeExists(code,excludeId){
+  const normalized=normalizeSchoolCodeInput(code);
+  if(!normalized) return false;
+  return schools.some(s=>String(s._id||s.id)!==String(excludeId||'') && schoolSenderCode(s)===normalized);
+}
+function bindSchoolCodeInput(inputId,usernameId){
+  const input=document.getElementById(inputId);
+  if(!input) return;
+  const sync=function(){
+    const next=normalizeSchoolCodeInput(input.value);
+    if(input.value!==next) input.value=next;
+    const un=usernameId?document.getElementById(usernameId):null;
+    if(un) un.value=next?next.toLowerCase()+'_admin':'';
+  };
+  input.addEventListener('input',sync);
+  sync();
+}
+function schoolCodeErrorMessage(code){
+  const normalized=normalizeSchoolCodeInput(code);
+  if(!normalized) return 'School Code / SMS Sender ID is required.';
+  if(!/^[A-Z0-9]{1,11}$/.test(normalized)) return 'Use only letters and numbers, up to 11 characters.';
+  return '';
+}
+function saNormalizePhone(value){
+  const digits=String(value||'').replace(/\D/g,'');
+  if(!digits) return '';
+  if(digits.startsWith('233') && digits.length===12) return digits;
+  if(digits.startsWith('0') && digits.length===10) return '233'+digits.slice(1);
+  if(digits.length===9) return '233'+digits;
+  return digits;
+}
+function saStudentSms(row){
+  const rec=(row&&row.records&&typeof row.records==='object')?row.records:{};
+  return saNormalizePhone((rec&&rec.sms_contact)||row.parent_phone||row.smsRaw||row.sms||'');
+}
+function smsTargets(){
+  const t=$('smsTarget').value; const g=$('smsGroup').value;
+  let pool=students.filter(s=>!!saStudentSms(s));
+  if(t!=='all') pool=pool.filter(s=>String(s.schoolId)===String(t));
+  if(g!=='all') pool=pool.filter(s=>String(s.status)===String(g));
+  return pool;
+}
 
 /* ---- AUTH GATE ---- */
 (function buildGate(){
@@ -1060,18 +1100,30 @@ async function superLogin(){
 }
 async function logout(){ if(!confirm('Log out of the Super Admin portal?'))return; try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 
+async function fetchPlatformSmsHistory(){
+  let res=await sb.from('sms_logs').select('*').order('sent_at',{ascending:false});
+  if(res&&res.error){
+    res=await sb.from('sms_log').select('*').order('sent_at',{ascending:false});
+  }
+  return res;
+}
+
 async function loadSA(){
-  const [sch,cfg,prof,stu,pay,sms,log,progs]=await Promise.all([
+  const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl]=await Promise.all([
     sb.from('schools').select('*').order('created_at'),
     sb.from('school_config').select('school_id,admission_status,service_charge,sms_balance'),
     sb.from('profiles').select('id,full_name,email,school_id,role'),
-    sb.from('students').select('school_id,bece_index,full_name,programme_id,status,created_at'),
+    sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,admission_no'),
     sb.from('payments').select('amount_pesewas,channel,status,reference,school_id,paid_at,created_at,payer_name, students(full_name)'),
-    sb.from('sms_log').select('*').order('sent_at',{ascending:false}),
+    fetchPlatformSmsHistory(),
     sb.from('activity_log').select('*').order('created_at',{ascending:false}),
     sb.from('programmes').select('id,name'),
+    sb.from('placement_list').select('school_id,index_number,sms_contact'),
+    sb.from('school_sms_templates').select('school_id,sms_enabled'),
   ]);
   const cfgBy={}; (cfg.data||[]).forEach(c=>cfgBy[c.school_id]=c);
+  const tplBy={}; (tmpl.data||[]).forEach(t=>tplBy[t.school_id]=t);
+  const plcSmsBy={}; (plc.data||[]).forEach(function(row){ plcSmsBy[String(row.school_id)+'::'+String(row.index_number)]=row.sms_contact||''; });
   const adminBy={}; (prof.data||[]).forEach(p=>{ if(p.role==='school_admin'&&p.school_id) adminBy[p.school_id]=p.full_name; });
   const schNameById={}; (sch.data||[]).forEach(s=>schNameById[s.id]=s.name);
   admins=(prof.data||[]).map(p=>({uid:p.id,name:p.full_name||'-',email:p.email||'-',role:p.role,
@@ -1079,12 +1131,20 @@ async function loadSA(){
   const pName={}; (progs.data||[]).forEach(p=>pName[p.id]=p.name);
   const sRev={};
   schools=(sch.data||[]).map((s,i)=>{ const id=i+1; sRev[s.id]=id; const c=cfgBy[s.id]||{};
-    return {id,_id:s.id,code:s.code,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
+    const schoolCode=normalizeSchoolCodeInput(s.school_code||s.code||'');
+    const smsCfg=tplBy[s.id]||{};
+    return {id,_id:s.id,code:s.code,school_code:schoolCode,schoolCode:schoolCode,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
       plan:sa_cap(s.subscription_plan||'standard'),students:(stu.data||[]).filter(x=>x.school_id===s.id).length,
       admission:c.admission_status||'CLOSED',status:s.status,charge:Number(c.service_charge||0),
-      expiry:s.subscription_expiry||'-',email:s.email||'',phone:s.phone||'',color:i%crestColors.length}; });
+      expiry:s.subscription_expiry||'-',email:s.email||'',phone:s.phone||'',smsEnabled:smsCfg.sms_enabled!==false,color:i%crestColors.length}; });
   nextSchoolId=schools.length+1;
-  students=(stu.data||[]).map(s=>({name:s.full_name||'(no name)',index:s.bece_index,schoolId:sRev[s.school_id],programme:pName[s.programme_id]||'-',status:s.status,reg:(s.created_at||'').slice(0,10)}));
+  students=(stu.data||[]).map(function(s){
+    const placementSms=plcSmsBy[String(s.school_id)+'::'+String(s.bece_index)]||'';
+    const smsRaw=saNormalizePhone((((s.records&&typeof s.records==='object')?s.records.sms_contact:'')||s.parent_phone||placementSms||''));
+    return {_id:s.id,name:s.full_name||'(no name)',index:s.bece_index,schoolId:sRev[s.school_id],schoolUuid:s.school_id,
+      programme:pName[s.programme_id]||'-',status:s.status,reg:(s.created_at||'').slice(0,10),
+      parent_phone:s.parent_phone||'',records:s.records||{},sms:smsRaw||'-',smsRaw:smsRaw||'',submitted:!!s.submitted_at,adm:s.admission_no||'-'};
+  });
   window._todayReg=students.filter(s=>s.reg===new Date().toISOString().slice(0,10)).length;
   payments=(pay.data||[]).map(p=>({date:(p.paid_at||p.created_at||'').slice(0,10),student:(p.students&&p.students.full_name)||p.payer_name||'-',schoolId:sRev[p.school_id],amount:(p.amount_pesewas||0)/100,method:sa_cap(p.channel),status:p.status,txn:p.reference||'-'}));
   smsHistory=(sms.data||[]).map(s=>({date:(s.sent_at||'').slice(0,10),school:sRev[s.school_id],group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status}));
@@ -1147,27 +1207,40 @@ resetAdminPwd=async function(uid){
 };
 saveSchoolEdit=async function(id){
   const s=sById(id); if(!s)return;
-  const name=(sval('e_name')||'').trim(), code=(sval('e_code')||'').trim().toUpperCase();
-  if(!name||!code){toast('School code and name are required');return;}
+  const name=(sval('e_name')||'').trim();
+  const schoolCode=normalizeSchoolCodeInput(sval('e_school_code'));
+  const codeErr=schoolCodeErrorMessage(schoolCode);
+  if(!name){toast('School name is required');return;}
+  if(codeErr){toast(codeErr);return;}
+  if(schoolCodeExists(schoolCode,s._id)){toast('That School Code / SMS Sender ID is already in use.');return;}
   const btn=$('e_btn'); if(btn)btn.textContent='Saving...';
   const {error}=await sb.from('schools').update({
-    name, code, phone:sval('e_phone'), email:sval('e_email'),
+    name, code:schoolCode, school_code:schoolCode, phone:sval('e_phone'), email:sval('e_email'),
     subscription_plan:(sval('e_plan')||'Standard').toLowerCase(), subscription_expiry:sval('e_expiry')||null, status:sval('e_status')
   }).eq('id',s._id);
-  if(error){ if(btn)btn.textContent='Save changes'; toast('Could not save: '+error.message); return; }
+  if(error){
+    if(btn)btn.textContent='Save changes';
+    toast((/school_code|duplicate key/i.test(error.message||'')?'That School Code / SMS Sender ID already exists.':'Could not save: '+error.message));
+    return;
+  }
   await sb.from('school_config').update({ service_charge:parseFloat(sval('e_charge'))||0, admission_status:sval('e_admission') }).eq('school_id',s._id);
+  await sb.from('school_sms_templates').upsert({school_id:s._id},{onConflict:'school_id'});
   await sb.from('activity_log').insert({school_id:s._id,actor:'Super Admin',action:'School information updated'});
   closeModal(); await loadSA(); go('schools'); toast(name+' updated');
 };
 createSchool=async function(){
-  const code=sval('f_code').trim().toUpperCase(), name=sval('f_name').trim();
-  if(!code||!name){toast('School code and name are required');return;}
+  const schoolCode=normalizeSchoolCodeInput(sval('f_code')), name=sval('f_name').trim();
+  const codeErr=schoolCodeErrorMessage(schoolCode);
+  if(!name){toast('School name is required');return;}
+  if(codeErr){toast(codeErr);return;}
+  if(schoolCodeExists(schoolCode)){toast('That School Code / SMS Sender ID is already in use.');return;}
   const {data:school,error}=await sb.from('schools').insert({
-    code,name,phone:sval('f_phone'),email:sval('f_email'),
+    code:schoolCode,school_code:schoolCode,name,phone:sval('f_phone'),email:sval('f_email'),
     subscription_plan:sval('f_plan').toLowerCase(),subscription_expiry:sval('f_expiry')||null,status:'active'
   }).select().single();
-  if(error){toast('Could not create: '+error.message);return;}
+  if(error){toast((/school_code|duplicate key/i.test(error.message||'')?'That School Code / SMS Sender ID already exists.':'Could not create: '+error.message));return;}
   await sb.from('school_config').insert({school_id:school.id,service_charge:parseFloat(sval('f_charge'))||30,admission_status:sval('f_admission')});
+  await sb.from('school_sms_templates').upsert({school_id:school.id},{onConflict:'school_id'});
   await sb.from('activity_log').insert({school_id:school.id,actor:'Super Admin',action:'New school created'});
   closeModal(); await loadSA(); go('schools');
   toast(name+' created - provision its admin login from Supabase Auth');
@@ -1187,15 +1260,59 @@ createAdmin=async function(){
 };
 sendBulkSms=async function(){
   const body=(document.getElementById('smsBody').value||'').trim(); if(!body){toast('Type a message first');return;}
-  const n=recipientCount(); const credits=Math.max(1,Math.ceil(body.length/160))*n;
-  if(credits>smsBalance){toast('Not enough credits for this broadcast');return;}
-  smsBalance-=credits;
+  const targets=smsTargets();
+  const n=targets.length;
+  if(!n){toast('No students with a valid SMS contact match this selection.');return;}
   const t=document.getElementById('smsTarget').value;
   const group=document.getElementById('smsGroup').selectedOptions[0].text.replace(' students','');
-  if(t!=='all'){ const s=sById(parseInt(t)); if(s) await sb.from('sms_log').insert({school_id:s._id,recipient_group:group,recipients:n,message:body,sent_by:'Super Admin',status:'sent'}); }
-  smsHistory.unshift({date:new Date().toISOString().slice(0,10),school:t==='all'?schools[0].id:parseInt(t),group,recip:n,msg:body,status:'sent'});
-  document.getElementById('smsBody').value=''; renderSms(); renderStats();
-  toast('SMS sent to '+fmt(n)+' recipients - '+fmt(credits)+' credits used');
+  const btn=document.querySelector('#view-sms .btn.btn-primary');
+  if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
+  try{
+    const grouped=new Map();
+    targets.forEach(function(student){
+      const school=sById(student.schoolId);
+      if(!school||!school._id) return;
+      const key=String(school._id);
+      if(!grouped.has(key)) grouped.set(key,{school:school,messages:[]});
+      grouped.get(key).messages.push({to:saStudentSms(student),body:body});
+    });
+    let sent=0, failed=0, partial=false;
+    for(const entry of grouped.values()){
+      const school=entry.school;
+      const res=await invokeFn('send-sms',{
+        mode:'bulk',
+        school_id:school._id,
+        group:group,
+        template:body,
+        template_name:'super-admin-broadcast',
+        messages:entry.messages
+      });
+      const data=res&&res.data;
+      const err=res&&res.error;
+      if(err||(data&&data.error)){
+        failed+=entry.messages.length;
+        smsHistory.unshift({date:new Date().toISOString().slice(0,10),school:school.id,group,recip:entry.messages.length,msg:body,status:'failed'});
+        continue;
+      }
+      sent+=Number(data&&data.sent||0);
+      failed+=Number(data&&data.failed||0);
+      if(data&&data.status==='pending') partial=true;
+      smsHistory.unshift({date:new Date().toISOString().slice(0,10),school:school.id,group,recip:entry.messages.length,msg:body,status:(data&&data.status)||'sent'});
+    }
+    document.getElementById('smsBody').value='';
+    renderSms(); renderStats();
+    if(failed&&sent) toast('Broadcast finished: '+sent+' sent, '+failed+' failed.');
+    else if(failed&&!sent) toast('Broadcast could not be delivered. Check sender IDs, SMS settings, or provider response.');
+    else toast((partial?'Broadcast queued / partial for ':'Broadcast sent to ')+sent+' recipient(s).');
+    await loadSA();
+    go('sms');
+  }finally{
+    if(btn){
+      btn.disabled=false;
+      btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send to <span id="smsRecip">-</span> recipients';
+      updateSmsCount();
+    }
+  }
 };
 </script>
 
