@@ -1,0 +1,1584 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickAdmissionGH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<style>
+  :root{
+    --bg:#EEF2F8;--surface:#FFFFFF;--surface-2:#F4F7FB;
+    --ink:#14201C;--ink-soft:#46554F;--muted:#8A9893;--line:#E1E7E4;
+    --primary:#1557B0;--primary-deep:#0E3F86;--primary-soft:#E2ECFB;
+    --accent:#D2941A;--accent-soft:#FBF1DC;--accent-ink:#7a5409;
+    --danger:#B23A3A;--danger-soft:#F6E5E5;--info:#3066A3;--info-soft:#E6EEF6;
+    --sb:#0E2238;--sb-soft:#16304D;--sb-text:#A9B8B2;--sb-active:#173F7A;
+    --r:12px;--r-sm:8px;--shadow:0 1px 2px rgba(20,32,28,.05),0 10px 30px -14px rgba(20,32,28,.2);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',monospace}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  a{color:var(--primary);text-decoration:none;font-weight:600}a:hover{text-decoration:underline}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:var(--r-sm);font-weight:600;font-size:14px;transition:.15s;white-space:nowrap}
+  .btn svg{width:16px;height:16px}
+  .btn-block{width:100%}
+  .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-deep)}
+  .btn-ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}.btn-ghost:hover{background:#eef2f0}
+  .btn-accent{background:var(--accent);color:#3a2906}.btn-accent:hover{filter:brightness(.96)}
+  .btn-danger{background:var(--danger);color:#fff}.btn-sm{padding:8px 13px;font-size:13px}
+  .screen{display:none;min-height:100vh}.screen.active{display:block;animation:fade .3s ease}
+  body.booting .screen{display:none!important}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ===== AUTH ===== */
+  .auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px 16px 56px;background:radial-gradient(120% 80% at 50% -10%,rgba(17,94,74,.10),transparent 60%),linear-gradient(180deg,#e6ebe8,#EEF2F8)}
+  .auth-card{width:100%;max-width:460px}
+  .crest{width:92px;height:92px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;background:#fff;color:var(--primary);font-family:'Space Grotesk';font-weight:700;font-size:26px;box-shadow:var(--shadow),inset 0 0 0 1px rgba(0,0,0,.08)}
+  .auth-head{text-align:center;margin-bottom:12px}
+  .auth-head h1{font-family:'Space Grotesk';font-size:23px;font-weight:600;letter-spacing:-.3px;line-height:1.2}
+  .auth-head .tag{display:inline-block;margin-top:8px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);background:var(--primary-soft);padding:4px 12px;border-radius:20px}
+  .sch-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;letter-spacing:.12em;color:var(--primary);margin-bottom:6px}
+  #schCrest{position:relative;overflow:hidden}
+  #schLogo{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  /* ===== Landing corner links + hero ===== */
+  .corner-nav{position:fixed;top:14px;right:16px;z-index:70;display:flex;gap:8px}
+  .corner-nav a{font-size:12px;font-weight:600;color:var(--primary);background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:8px 15px;text-decoration:none;box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:7px}
+  .corner-nav a:hover{background:var(--primary-soft)}
+  .corner-nav svg{width:15px;height:15px}
+  .super-link{position:fixed;bottom:56px;right:16px;z-index:70;font-size:11px;color:#9aa6a1;text-decoration:none;opacity:.55;display:inline-flex;align-items:center;gap:5px}
+  .super-link:hover{opacity:1;color:var(--primary)}
+  .super-link svg{width:13px;height:13px}
+  .auth-split{width:100%;max-width:1060px;display:grid;grid-template-columns:.72fr 1.28fr;gap:30px;align-items:stretch}
+  .auth-hero{display:flex;flex-direction:column}
+  .auth-hero .auth-head{text-align:left;margin-bottom:10px}
+  .auth-hero .auth-head .crest{margin-left:0}
+  .auth-hero .hero-img{width:100%;flex:1;min-height:0;object-fit:contain;border-radius:16px;box-shadow:var(--shadow);display:block;margin-top:8px}
+  .auth-hero h2{font-family:'Space Grotesk';font-size:26px;line-height:1.05;font-weight:700;margin:0 0 5px;color:var(--ink)}
+  .auth-hero h2 .grn{color:var(--primary)}
+  .auth-hero p.lead{font-size:13px;color:var(--ink-soft);margin:0;font-weight:500}
+  .hero-feats{display:flex;flex-wrap:wrap;gap:10px}
+  .hero-feat{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:10px 14px;box-shadow:var(--shadow)}
+  .hero-feat svg{width:20px;height:20px;color:var(--primary);flex:none}
+  .hero-feat b{font-family:'Space Grotesk';font-size:13px;display:block;line-height:1.1}
+  .hero-feat small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+  .hero-upload{margin-top:14px;font-size:11.5px;color:var(--muted)}
+  .hero-upload label{color:var(--primary);cursor:pointer;text-decoration:underline;font-weight:600}
+  @media(max-width:860px){.auth-split{grid-template-columns:1fr;max-width:460px;gap:18px;align-items:start}.auth-hero h2{font-size:24px}.auth-hero{order:1}.auth-card{order:2}.auth-hero .hero-img{flex:none;height:auto;max-height:32vh;object-fit:contain}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
+  /* ===== Student login redesign ===== */
+  #s-login .auth{
+    align-items:flex-start;
+    padding:clamp(14px,2.4vw,24px) clamp(12px,2.2vw,22px) calc(28px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(125% 110% at 50% -5%,rgba(66,140,255,.18),transparent 58%),
+      radial-gradient(70% 90% at 100% 100%,rgba(21,87,176,.16),transparent 34%),
+      linear-gradient(180deg,#f9fbff 0%,#eff4fd 56%,#e6eefb 100%);
+  }
+  #s-login .portal-login-wrap{width:min(1240px,100%);margin:0 auto}
+  #s-login .portal-login-brand{display:flex;align-items:center;gap:16px;max-width:1180px;margin:0 auto 14px;padding:14px 18px;background:linear-gradient(135deg,#0f53d8 0%,#1557B0 58%,#2f8bff 100%);border:1px solid rgba(108,160,248,.3);border-radius:24px;box-shadow:0 26px 54px -36px rgba(21,87,176,.72)}
+  #s-login .portal-brand-crest{width:82px;height:82px;border-radius:22px;overflow:hidden;flex:none;display:grid;place-items:center;background:rgba(255,255,255,.96);border:1px solid rgba(63,118,214,.18);box-shadow:0 18px 34px -24px rgba(21,87,176,.58)}
+  #s-login .portal-brand-crest img{width:100%;height:100%;object-fit:contain;padding:8px}
+  #s-login .portal-brand-crest span{font-family:'Space Grotesk';font-size:26px;font-weight:700;letter-spacing:.08em;color:var(--primary)}
+  #s-login .portal-brand-copy{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px}
+  #s-login .portal-brand-copy h1{margin:0;font-family:'Space Grotesk';font-size:clamp(24px,2.8vw,38px);line-height:1.04;font-weight:700;color:#fff;white-space:nowrap}
+  #s-login .portal-brand-helpdesk{display:grid;gap:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.24)}
+  #s-login .portal-brand-helpdesk-label{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.94)}
+  #s-login .portal-brand-helpdesk-label svg,#s-login .portal-brand-helpdesk-links svg{width:15px;height:15px;flex:none}
+  #s-login .portal-brand-helpdesk-links{display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
+  #s-login .portal-brand-helpdesk-links a{display:inline-flex;align-items:center;gap:8px;max-width:100%;color:#fff;font-size:13px;font-weight:600;line-height:1.45;text-decoration:none}
+  #s-login .portal-brand-helpdesk-links a:hover{text-decoration:underline}
+  #s-login .portal-brand-helpdesk-links a span{overflow-wrap:anywhere}
+  #s-login .portal-brand-helpdesk-sep{color:rgba(255,255,255,.7);font-weight:700}
+  #s-login .portal-login-shell{display:grid;grid-template-columns:minmax(310px,.92fr) minmax(0,1.08fr);gap:22px;max-width:1180px;margin:0 auto;padding:20px;border-radius:30px;background:linear-gradient(180deg,rgba(255,255,255,.76),rgba(255,255,255,.92));border:1px solid rgba(93,138,214,.2);box-shadow:0 30px 72px -36px rgba(21,87,176,.48);backdrop-filter:blur(14px)}
+  #s-login .portal-login-info,#s-login .portal-login-form{border-radius:24px;border:1px solid rgba(146,180,233,.24);box-shadow:0 18px 36px -28px rgba(21,87,176,.28);padding:32px}
+  #s-login .portal-login-info{background:linear-gradient(180deg,rgba(242,247,255,.98),rgba(236,244,255,.94))}
+  #s-login .portal-login-form{background:rgba(255,255,255,.97)}
+  #s-login .portal-info-head{padding-bottom:16px;border-bottom:1px solid rgba(176,200,235,.5);margin-bottom:22px}
+  #s-login .portal-info-head h2,#s-login .portal-form-head h2{font-family:'Space Grotesk';font-size:clamp(24px,2.15vw,34px);line-height:1.08;color:#122648;font-weight:700}
+  #s-login .portal-info-head p{margin-top:6px;font-size:16px;color:#1557B0;font-weight:700}
+  #s-login .portal-info-copy{font-size:16px;line-height:1.65;color:#425572}
+  #s-login .portal-info-list{display:grid;gap:18px;margin:26px 0}
+  #s-login .portal-info-item{display:grid;grid-template-columns:52px minmax(0,1fr);gap:14px;align-items:flex-start}
+  #s-login .portal-info-icon{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#eef5ff,#dfeeff);border:1px solid rgba(103,149,226,.2);box-shadow:0 12px 24px -18px rgba(21,87,176,.4);color:#1557B0}
+  #s-login .portal-info-icon svg{width:24px;height:24px}
+  #s-login .portal-info-item b{display:block;font-size:15px;line-height:1.25;color:#17315f}
+  #s-login .portal-info-item span{display:block;margin-top:4px;font-size:14px;line-height:1.6;color:#526581}
+  #s-login .portal-charge{color:#1557B0;font-weight:700}
+  #s-login .portal-token-note{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:flex-start;padding:14px 16px;border-radius:16px;border:1px solid rgba(96,152,235,.35);background:rgba(239,246,255,.94);font-size:14px;color:#1557B0}
+  #s-login .portal-token-note svg{width:22px;height:22px;color:#1f6df0;margin-top:2px}
+  #s-login .portal-form-head p{margin-top:8px;font-size:15px;line-height:1.6;color:#6d7f98}
+  #s-login .portal-login-form .field{margin-bottom:16px;gap:8px}
+  #s-login .portal-login-form .field label{font-size:13px;font-weight:700;color:#132f63}
+  #s-login .portal-login-form .hint{font-size:12px;color:#7186a3}
+  #s-login .login-input-shell{display:grid;grid-template-columns:56px minmax(0,1fr);align-items:center;min-height:56px;border:1px solid #d4e1f2;border-radius:16px;background:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.75);transition:border-color .14s,box-shadow .14s}
+  #s-login .login-input-shell:focus-within{border-color:#2f74d0;box-shadow:0 0 0 3px rgba(47,116,208,.12)}
+  #s-login .login-input-icon{display:grid;place-items:center;align-self:stretch;border-right:1px solid #e4ebf7;color:#1557B0;background:linear-gradient(180deg,#fbfdff,#f2f6fd)}
+  #s-login .login-input-icon svg{width:21px;height:21px}
+  #s-login .login-input-shell input,#s-login .login-input-shell select{width:100%;border:0;box-shadow:none;background:transparent;padding:0 16px 0 14px;min-height:54px;font-size:14px;color:#132648}
+  #s-login .login-input-shell input:focus,#s-login .login-input-shell select:focus{outline:none;box-shadow:none}
+  #s-login .login-input-shell select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23667da0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 7 5 6 5-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;background-size:14px 14px;padding-right:42px}
+  #s-login .field.err .login-input-shell{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
+  #s-login .login-token-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:stretch}
+  #s-login #buyTokenBtn{min-width:116px;padding:0 18px;border-radius:16px;border:1.5px solid rgba(21,87,176,.34);background:#fff;color:#1557B0;font-size:14px;font-weight:700;box-shadow:0 12px 24px -24px rgba(21,87,176,.4)}
+  #s-login #buyTokenBtn:hover{background:#eef4ff}
+  #s-login #loginBtn{min-height:58px;margin-top:6px;border-radius:18px;background:linear-gradient(90deg,#2d79ff 0%,#1557B0 54%,#0f46d8 100%);box-shadow:0 22px 36px -24px rgba(21,87,176,.78);font-size:16px}
+  #s-login #loginBtn:hover{filter:brightness(.98)}
+  #s-login #loginBtn svg{width:18px;height:18px}
+  #s-login .portal-form-divider{display:flex;align-items:center;gap:14px;margin:18px 0}
+  #s-login .portal-form-divider::before,#s-login .portal-form-divider::after{content:"";flex:1;height:1px;background:#d9e4f3}
+  #s-login .portal-form-divider span{display:inline-flex;align-items:center;justify-content:center;padding:5px 12px;border-radius:999px;background:#edf4ff;color:#1557B0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+  #s-login .portal-quick-links{display:grid;gap:12px}
+  #s-login .portal-link-btn{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;padding:16px 18px;border:1px solid #d6e3f3;border-radius:16px;background:#fff;color:#1557B0;text-align:left;font-size:14px;font-weight:600;box-shadow:0 16px 28px -30px rgba(21,87,176,.45);transition:border-color .14s,transform .14s,box-shadow .14s}
+  #s-login .portal-link-btn:hover{border-color:#9fc1ff;transform:translateY(-1px);box-shadow:0 18px 30px -28px rgba(21,87,176,.5)}
+  #s-login .portal-link-btn .ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,#eef5ff,#ddeafe);color:#1557B0;flex:none}
+  #s-login .portal-link-btn .ico svg{width:20px;height:20px}
+  #s-login .portal-link-btn .arrow{font-size:22px;line-height:1;color:#2d79ff}
+  #s-login .portal-login-foot{text-align:center;margin-top:14px}
+  #s-login .portal-login-foot a{font-size:11px;color:#8fa0ba;letter-spacing:.08em;text-transform:uppercase}
+  @media(min-width:1024px){
+    #s-login .portal-login-wrap{
+      zoom:.9;
+    }
+  }
+  @media(max-width:1023px){
+    #s-login .portal-login-brand{max-width:980px;padding:12px 16px}
+    #s-login .portal-brand-crest{width:74px;height:74px;border-radius:20px}
+    #s-login .portal-brand-copy h1{font-size:clamp(24px,3vw,34px)}
+    #s-login .portal-brand-helpdesk-links{gap:10px}
+    #s-login .portal-login-shell{grid-template-columns:1fr}
+  }
+  @media(max-width:767px){
+    #s-login .auth{padding-left:12px;padding-right:12px}
+    #s-login .portal-login-brand{flex-direction:column;text-align:center;gap:10px;padding:12px 14px}
+    #s-login .portal-brand-copy{align-items:center;justify-content:center}
+    #s-login .portal-brand-copy h1{white-space:normal;text-align:center;font-size:28px}
+    #s-login .portal-brand-helpdesk{width:100%;justify-items:center}
+    #s-login .portal-brand-helpdesk-links{justify-content:center;flex-direction:column;gap:8px}
+    #s-login .portal-brand-helpdesk-sep{display:none}
+    #s-login .portal-brand-crest{width:68px;height:68px;border-radius:18px}
+    #s-login .portal-login-shell{padding:14px;border-radius:24px}
+    #s-login .portal-login-info,#s-login .portal-login-form{padding:22px}
+    #s-login .portal-info-head h2,#s-login .portal-form-head h2{font-size:32px}
+    #s-login .portal-info-copy{font-size:16px}
+    #s-login .login-token-row{grid-template-columns:1fr}
+    #s-login #buyTokenBtn{width:100%;min-height:52px}
+  }
+  @media(max-width:480px){
+    #s-login .portal-brand-copy h1{font-size:24px}
+    #s-login .portal-brand-helpdesk-label{font-size:11px}
+    #s-login .portal-brand-helpdesk-links a{font-size:13px}
+    #s-login .portal-login-info,#s-login .portal-login-form{padding:18px}
+    #s-login .portal-info-head h2,#s-login .portal-form-head h2{font-size:27px}
+    #s-login .portal-info-head p,#s-login .portal-form-head p{font-size:14px}
+    #s-login .portal-info-item{grid-template-columns:44px minmax(0,1fr);gap:12px}
+    #s-login .portal-info-icon{width:44px;height:44px}
+    #s-login .portal-info-item b{font-size:14px}
+    #s-login .portal-info-item span{font-size:13px}
+    #s-login .portal-link-btn{padding:14px 16px;font-size:14px}
+    #s-login .portal-link-btn .ico{width:36px;height:36px}
+  }
+  .notice{border-radius:var(--r-sm);padding:9px 12px;font-size:11.5px;line-height:1.4;margin-bottom:9px;border:1px solid}
+  .notice b{font-weight:600}
+  .notice.warn{background:var(--accent-soft);border-color:#f0dcae;color:var(--accent-ink)}
+  .notice.info{background:var(--info-soft);border-color:#cfdeed;color:#274d77}
+  .charge{font-family:'JetBrains Mono';font-weight:600}
+  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+  .field label{font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .field .hint{font-size:11.5px;color:var(--muted);font-weight:400}
+  input,select,textarea{font-family:inherit;font-size:14px;padding:11px 13px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);width:100%;transition:.14s}
+  input::placeholder{color:#aab4af}textarea{resize:vertical;min-height:64px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+  .input-mono{font-family:'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase}
+  .field.err input{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
+  .err-msg{color:var(--danger);font-size:12px;font-weight:500;display:none}.field.err .err-msg{display:block}
+  .token-field{display:flex;gap:8px}.token-field input{flex:1}
+  .divider{display:flex;align-items:center;gap:12px;margin:11px 0;color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  .divider::before,.divider::after{content:"";height:1px;background:var(--line);flex:1}
+  .auth-links{margin-top:18px;display:flex;flex-direction:column;gap:9px;text-align:center;font-size:13px}
+  .helpline{text-align:center;margin-top:11px;font-size:12px;color:var(--muted)}.helpline a{font-family:'JetBrains Mono'}
+  .auth-foot{text-align:center;margin-top:24px;font-size:11px;color:var(--muted)}
+  .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;margin-bottom:16px;color:var(--ink-soft)}.back-link svg{width:15px;height:15px}
+  .token-show{text-align:center;padding:22px;background:var(--primary-soft);border-radius:var(--r);margin:6px 0 16px}
+  .token-show small{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);font-weight:600}
+  .token-show .tk{font-family:'Space Grotesk';font-size:30px;font-weight:700;letter-spacing:5px;color:var(--primary-deep);margin-top:6px}
+  .pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+  .pay-opt{display:flex;align-items:center;gap:10px;padding:13px;border:1px solid var(--line);border-radius:var(--r-sm);font-weight:600;font-size:13px;transition:.14s;background:var(--surface)}
+  .pay-opt:hover{border-color:var(--primary);background:var(--primary-soft)}
+  .pay-opt .b{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:#fff;font-family:'Space Grotesk';font-size:13px;flex:none}
+
+  /* ===== PORTAL SHELL ===== */
+  .ptopbar{display:flex;align-items:center;gap:14px;background:#e6ddd1;border-bottom:1px solid #d8cdbb;padding:11px 20px;position:sticky;top:0;z-index:30}
+  .ptopbar .ham{width:38px;height:38px;border-radius:8px;display:none;place-items:center;background:rgba(0,0,0,.05)}
+  .ptopbar .ham svg{width:18px;height:18px}
+  .ptopbar .sch{font-family:'Space Grotesk';font-weight:700;font-size:16px;color:#1b3a30;text-shadow:.04em .04em 0 rgba(120,150,160,.4)}
+  .ptopbar .yr{margin-left:auto;font-weight:700;font-size:12.5px;color:var(--danger);white-space:nowrap}
+  .ptopbar .out{width:38px;height:38px;border-radius:8px;display:grid;place-items:center;background:rgba(0,0,0,.05);color:#1b3a30}
+  .ptopbar .out svg{width:17px;height:17px}
+  .pbody{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 61px)}
+  .psidebar{background:var(--sb);color:var(--sb-text);padding:0 0 20px;position:sticky;top:61px;height:calc(100vh - 61px);overflow-y:auto}
+  .pstud{display:flex;align-items:center;gap:11px;padding:16px 16px;border-bottom:1px solid #22314A}
+  .pstud img,.pstud .ph{width:42px;height:42px;border-radius:50%;flex:none;object-fit:cover;background:var(--accent);color:#3a2906;display:grid;place-items:center;font-weight:700;font-size:15px}
+  .pstud .nm{font-size:12.5px;font-weight:600;color:#fff;line-height:1.2}
+  .pnav{padding:10px}
+  .pnav button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px 11px;border-radius:var(--r-sm);color:var(--sb-text);font-size:13.5px;font-weight:500;transition:.14s}
+  .pnav button svg{width:17px;height:17px;flex:none;opacity:.85}
+  .pnav button:hover{background:var(--sb-soft);color:#e7efec}
+  .pnav button.active{background:var(--sb-active);color:#fff}
+  .pcrest{text-align:center;padding:18px}
+  .pcrest .cb{width:140px;height:140px;margin:0 auto;border:6px double #3a4a44;border-radius:6px;display:grid;place-items:center;background:#16304D;color:#6F86A8;font-family:'Space Grotesk';font-weight:700;font-size:13px;overflow:hidden;padding:0;box-sizing:border-box}
+  .pcrest .cb.has-img{background:#fff;border:1px solid #cfe0f5;padding:0}
+  .pcrest .cb img{display:block;width:100%;height:100%;object-fit:contain}
+  .pmain{padding:22px;max-width:1000px}
+
+  /* welcome */
+  .welcome{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+  .welcome .wh{background:var(--primary);color:#fff;padding:13px 18px;font-size:13.5px;font-weight:600;line-height:1.45}
+  .welcome.pending .wh{background:var(--accent);color:#3a2906}
+
+  /* widget-user */
+  .wu{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+  .wu-head{height:118px;background:linear-gradient(135deg,#2F74D0,var(--primary));position:relative;text-align:center;color:#fff;padding-top:22px}
+  .wu-head h3{font-family:'Space Grotesk';font-size:18px;font-weight:600;padding:0 16px}
+  .wu-head .sno{font-size:12.5px;opacity:.9;margin-top:2px}
+  .wu-avatar{width:88px;height:88px;border-radius:50%;border:3px solid #fff;background:var(--accent);color:#3a2906;font-family:'Space Grotesk';font-weight:700;font-size:30px;display:grid;place-items:center;position:absolute;left:50%;top:74px;transform:translateX(-50%);object-fit:cover}
+  .wu-grid{display:grid;grid-template-columns:repeat(3,1fr);padding-top:54px}
+  .wu-block{padding:16px 12px;text-align:center;border-right:1px solid var(--line);border-top:1px solid var(--line)}
+  .wu-block:nth-child(3n){border-right:none}
+  .wu-block .h{font-family:'Space Grotesk';font-weight:600;font-size:14px;color:var(--ink);min-height:20px;word-break:break-word}
+  .wu-block .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-top:5px}
+  .wu-block .btn{margin-top:4px}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px}
+  .pill.ok{background:var(--primary-soft);color:var(--primary)}
+  .pill.pend{background:var(--accent-soft);color:var(--accent-ink)}
+
+  /* documents */
+  .docs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
+  .docs h3{font-family:'Space Grotesk';font-size:15px;font-weight:600;margin-bottom:4px}
+  .docs .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px}
+  .doc-btns{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+  .doc-btns .btn{flex:1;min-width:200px}
+  .report-box{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px}
+  .report-box .rt{color:var(--danger);font-weight:600;font-size:13px;margin-bottom:10px}
+  .checklist{list-style:none}
+  .checklist li{display:flex;gap:11px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .checklist li:last-child{border-bottom:none}
+  .checklist .n{width:22px;height:22px;border-radius:6px;background:var(--primary-soft);color:var(--primary);font-family:'JetBrains Mono';font-size:11px;font-weight:600;display:grid;place-items:center;flex:none}
+  .report-box .warn{color:var(--danger);font-weight:600;font-size:12.5px;margin-top:12px}
+
+  /* ===== FORM WIZARD ===== */
+  .form-wrap{display:grid;grid-template-columns:230px 1fr;gap:24px;align-items:start}
+  .rail h4{font-family:'Space Grotesk';font-size:13px;font-weight:600;margin-bottom:4px}
+  .rail .pct{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .progress-line{height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:18px}
+  .progress-line i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),#2F74D0);border-radius:4px;transition:width .4s}
+  .steps{list-style:none;position:relative}
+  .steps::before{content:"";position:absolute;left:13px;top:14px;bottom:14px;width:2px;background:var(--line)}
+  .step{display:flex;gap:12px;align-items:flex-start;padding:7px 0;position:relative;cursor:pointer}
+  .step .dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;flex:none;z-index:1;font-size:12px;font-weight:600;color:var(--muted);transition:.2s}
+  .step .dot svg{width:13px;height:13px;color:#fff}
+  .step .lbl{font-size:13px;font-weight:600;color:var(--ink-soft);padding-top:4px}
+  .step.active .dot{border-color:var(--primary);color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+  .step.active .lbl{color:var(--primary)}
+  .step.done .dot{background:var(--primary);border-color:var(--primary)}
+  .step.done .lbl{color:var(--ink)}
+  .stepcard{display:none}.stepcard.active{display:block;animation:fade .25s}
+  .card2{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+  /* ===== 3D depth (broad) ===== */
+  .welcome,.card2{box-shadow:0 1px 2px rgba(18,38,72,.05),0 8px 20px -10px rgba(18,38,72,.16),0 22px 44px -22px rgba(18,38,72,.22);transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s}
+  .welcome:hover,.card2:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(18,38,72,.07),0 16px 32px -12px rgba(18,38,72,.22),0 36px 64px -28px rgba(18,38,72,.3)}
+  .card2-head{padding:20px 24px;border-bottom:1px solid var(--line)}
+  .card2-head h2{font-family:'Space Grotesk';font-size:18px;font-weight:600}
+  .card2-head p{font-size:13px;color:var(--muted);margin-top:3px}
+  .card2-body{padding:24px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px}.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px}
+  .sub-h{font-family:'Space Grotesk';font-weight:600;font-size:14px;margin:20px 0 12px;padding-top:18px;border-top:1px solid var(--line)}
+  .sub-h:first-child{margin-top:0;padding-top:0;border-top:none}
+  .step-nav{display:flex;gap:12px;justify-content:space-between;margin-top:8px}
+  .step-nav .btn{min-width:120px}
+  .prog-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .prog-card{border:1.5px solid var(--line);border-radius:var(--r-sm);padding:15px;cursor:pointer;transition:.15s}
+  .prog-card:hover{border-color:var(--primary)}.prog-card.sel{border-color:var(--primary);background:var(--primary-soft)}
+  .prog-card .pc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .prog-card .pc-code{font-family:'JetBrains Mono';font-size:11px;font-weight:600;color:var(--primary);background:var(--surface);padding:2px 8px;border-radius:20px;border:1px solid var(--primary-soft)}
+  .prog-card.sel .pc-code{background:#fff}
+  .prog-card h4{font-family:'Space Grotesk';font-size:15px;font-weight:600}
+  .prog-card .subs{font-size:12px;color:var(--ink-soft);margin-top:5px}
+  .radio-tick{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none}
+  .prog-card.sel .radio-tick{border-color:var(--primary);background:var(--primary)}
+  .radio-tick svg{width:11px;height:11px;color:#fff;opacity:0}.prog-card.sel .radio-tick svg{opacity:1}
+  .declare{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;font-size:13px;line-height:1.6;color:var(--ink-soft);margin-bottom:16px}
+  .check-row{display:flex;gap:11px;align-items:flex-start;cursor:pointer;font-size:13.5px;font-weight:500;padding:6px 0}
+  .checkbox{width:20px;height:20px;border:2px solid var(--muted);border-radius:6px;display:grid;place-items:center;flex:none;transition:.12s;background:var(--surface);margin-top:1px}
+  .checkbox.on{background:var(--primary);border-color:var(--primary)}.checkbox svg{width:12px;height:12px;color:#fff;opacity:0}.checkbox.on svg{opacity:1}
+  .dropzone{border:2px dashed var(--line);border-radius:var(--r-sm);padding:30px;text-align:center;background:var(--surface-2);transition:.14s;cursor:pointer}
+  .dropzone:hover{border-color:var(--primary);background:var(--primary-soft)}
+  .dropzone svg{width:30px;height:30px;color:var(--muted);margin-bottom:8px}
+  .dropzone b{display:block;font-size:13px;margin-bottom:3px}.dropzone small{color:var(--muted);font-size:11.5px}
+  .file-done{display:flex;align-items:center;gap:11px;border:1px solid var(--primary-soft);background:var(--primary-soft);border-radius:var(--r-sm);padding:13px 15px}
+  .file-done .fi{width:34px;height:34px;border-radius:8px;background:var(--primary);color:#fff;display:grid;place-items:center;flex:none}.file-done .fi svg{width:16px;height:16px}
+  .file-done b{font-size:13px}.file-done small{display:block;color:var(--ink-soft);font-size:11.5px}.file-done .x{margin-left:auto;color:var(--muted);font-weight:600}
+  .rev-block{border:1px solid var(--line);border-radius:var(--r-sm);margin-bottom:13px;overflow:hidden}  .rev-head{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:var(--surface-2)}
+  .rev-head .t{font-weight:600;font-size:13px}
+  .rev-head .st{font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:5px}
+  .rev-head .st.ok{color:var(--primary)}.rev-head .st.miss{color:var(--accent-ink)}
+  .rev-head .st .d{width:7px;height:7px;border-radius:50%}.rev-head .st.ok .d{background:var(--primary)}.rev-head .st.miss .d{background:var(--accent)}
+  .rev-body{padding:13px 15px;font-size:13px;display:grid;grid-template-columns:140px 1fr;gap:7px 14px}
+  .rev-body dt{color:var(--muted)}.rev-body dd{font-weight:500}
+  .rev-head a{color:var(--primary)}
+  .form-note{background:var(--danger-soft);border:1px solid #e6c4c4;border-left:4px solid var(--danger);color:#8a2b2b;font-size:12.5px;font-weight:600;line-height:1.5;padding:13px 15px;border-radius:var(--r-sm);margin-bottom:18px}
+  .rq{color:var(--danger);font-weight:700}
+  .ro-tag{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);padding:2px 8px;border-radius:20px;margin-left:8px}
+  .req-note{font-size:11.5px;font-weight:500;color:var(--danger);text-transform:none;letter-spacing:0;margin-left:8px}
+  .cls-wrap{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;overflow-x:auto}
+  .cls-table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .cls-table th{background:var(--surface-2);text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
+  .cls-table td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  .cls-row{cursor:pointer;transition:.12s}
+  .cls-row:hover{background:var(--surface-2)}
+  .cls-row td:first-child{font-weight:600;color:var(--ink);white-space:nowrap;display:flex;align-items:center;gap:9px}
+  .cls-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex:none}
+  .cls-row.sel{background:var(--primary-soft)}
+  .cls-row.sel .cls-radio{border-color:var(--primary);background:var(--primary);box-shadow:inset 0 0 0 3px var(--primary-soft)}
+  .cls-combo{color:var(--ink-soft);line-height:1.5;min-width:240px}
+  .cls-seats{font-family:'JetBrains Mono';font-weight:600;text-align:center}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:13px 18px;border-radius:10px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 12px 30px -8px rgba(0,0,0,.4);z-index:90;opacity:0;transition:.3s}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}.toast svg{width:17px;height:17px;color:var(--accent)}
+  .footer-gap{height:46px}
+  .portal-footer{position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))}
+  .pbackdrop{display:none}
+  @media(max-width:880px){
+    .pbody{grid-template-columns:1fr}
+    .psidebar{position:fixed;left:0;top:61px;width:250px;transform:translateX(-100%);transition:transform .25s;z-index:35}
+    .psidebar.open{transform:none}
+    .pbackdrop.open{display:block;position:fixed;inset:61px 0 0;background:rgba(0,0,0,.4);z-index:34}
+    .ptopbar .ham{display:grid}
+    .wu-grid{grid-template-columns:repeat(2,1fr)}
+    .wu-block:nth-child(3n){border-right:1px solid var(--line)}
+    .wu-block:nth-child(2n){border-right:none}
+    .form-wrap{grid-template-columns:1fr}
+    .steps{display:flex;gap:14px;overflow-x:auto}.steps::before{display:none}
+    .step{flex-direction:column;align-items:center;min-width:70px;text-align:center}.step .lbl{font-size:11px;padding-top:0}
+    .grid-2,.grid-3,.prog-grid,.pay-methods{grid-template-columns:1fr}
+    .pmain{padding:16px}
+  }
+  @media(max-width:640px){
+    .ptopbar{padding:10px 12px;gap:10px;flex-wrap:wrap}
+    .ptopbar .sch{font-size:14px;line-height:1.25;flex:1 1 calc(100% - 96px)}
+    .ptopbar .yr{margin-left:0;order:3;width:100%;font-size:11px}
+    .wu-grid{grid-template-columns:1fr}
+    .wu-block{border-right:none!important}
+    .doc-btns .btn{min-width:100%}
+    .step-nav{flex-direction:column-reverse}
+    .step-nav .btn{width:100%}
+    .rev-body{grid-template-columns:1fr}
+  }
+  .env-badge{position:fixed;bottom:10px;right:12px;z-index:99999;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;padding:4px 9px;border-radius:20px;background:#0E3F86;color:#AFD3FF;border:1px solid #173F7A;box-shadow:0 4px 14px -6px rgba(0,0,0,.5);pointer-events:none}
+  .env-badge.dev{background:#5b3a08;color:#FBD37A;border-color:#7a5409}
+  /* ===== DISCLAIMER ===== */
+  .disc-overlay{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(12,30,24,.55);backdrop-filter:blur(3px)}
+  .disc-overlay.show{display:flex;animation:fade .2s}
+  .disc-modal{background:var(--surface,#fff);width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;border-radius:16px;box-shadow:0 24px 60px -12px rgba(0,0,0,.4);overflow:hidden}
+  .disc-head{display:flex;align-items:center;gap:12px;padding:20px 22px 14px;border-bottom:1px solid var(--line,#e7ece9)}
+  .disc-head h2{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin:0;color:var(--ink,#14201c)}
+  .disc-ico{flex:none;width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:#fff4e0;color:#c87a08}
+  .disc-ico svg{width:21px;height:21px}
+  .disc-body{padding:16px 22px;overflow-y:auto;font-size:13.5px;line-height:1.6;color:var(--ink-soft,#39504a)}
+  .disc-body p{margin:0 0 12px}
+  .disc-body ul{margin:0 0 12px;padding-left:18px}
+  .disc-body li{margin-bottom:9px}
+  .disc-foot{padding:14px 22px 18px;border-top:1px solid var(--line,#e7ece9);background:var(--surface-2,#f6f9f7)}
+  .disc-check{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;color:var(--ink,#14201c);margin-bottom:14px;cursor:pointer}
+  .disc-check input{width:17px;height:17px;flex:none;accent-color:var(--primary,#1557B0);cursor:pointer}
+  .disc-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+  .disc-actions .btn:disabled{opacity:.5;cursor:not-allowed}
+  @media(max-width:520px){.disc-actions{flex-direction:column-reverse}.disc-actions .btn{width:100%;justify-content:center}}
+  .boot-splash{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  body.booting .boot-splash{display:flex}
+  .boot-card{display:flex;align-items:center;gap:12px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
+  .boot-spinner{width:18px;height:18px;border:2px solid var(--primary-soft);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
+  .boot-copy{font-size:13px;font-weight:600;color:var(--ink-soft)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:520px){
+    .portal-footer{position:static;margin-top:18px}
+    .footer-gap{display:none}
+  }
+</style>
+</head>
+<body class="booting">
+<div class="env-badge" id="envBadge">â— LIVE</div>
+<div class="boot-splash" id="bootSplash"><div class="boot-card"><span class="boot-spinner" aria-hidden="true"></span><span class="boot-copy">Loading your session...</span></div></div>
+
+<!-- ===== LOGIN ===== -->
+<div class="screen active" id="s-login">
+  <div class="auth"><div class="portal-login-wrap">
+    <div class="portal-login-brand">
+      <div class="portal-brand-crest" id="schCrest">
+        <span id="schCrestText" style="display:none">QA</span>
+        <img id="schLogo" src="veloxis-logo.png" alt="School or platform logo" onerror="this.style.display='none';var t=document.getElementById('schCrestText');if(t){t.style.display='';t.textContent='QA';}">
+      </div>
+      <div class="portal-brand-copy">
+        <h1 id="schTitle">QuickAdmissionGH</h1>
+        <div class="portal-brand-helpdesk">
+          <div class="portal-brand-helpdesk-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 13a8 8 0 0 1 16 0"/><path d="M4 13v4a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2Z"/><path d="M20 13v4a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2Z"/><path d="M9 19h6"/></svg>
+            <span>Helpdesk:</span>
+          </div>
+          <div class="portal-brand-helpdesk-links">
+            <a id="blueBannerHelpdeskPhoneLink" href="tel:0256744028" class="mono">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.9l-1.3 1.3a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 1.9-.6l3 .5a2 2 0 0 1 1.7 2Z"/></svg>
+              <span id="blueBannerHelpdeskPhone">0256744028</span>
+            </a>
+            <span class="portal-brand-helpdesk-sep" aria-hidden="true">|</span>
+            <a id="blueBannerHelpdeskEmailLink" href="mailto:admissions@quickadmissiongh.com">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+              <span id="blueBannerHelpdeskEmail">admissions@quickadmissiongh.com</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="portal-login-shell">
+      <section class="portal-login-info" aria-labelledby="loginWelcomeTitle">
+        <div class="portal-info-head">
+          <h2 id="loginWelcomeTitle">Welcome to QuickAdmissionGH</h2>
+          <p id="loginWelcomeSubtitle">Online Admission Portal</p>
+        </div>
+        <div class="portal-info-copy">To complete your application, keep your CSSPS placement form and admission details ready before signing in.</div>
+        <div class="portal-info-list">
+          <div class="portal-info-item">
+            <div class="portal-info-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h6l5 5v13H5V3h3Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></div>
+            <div><b>CSSPS placement form</b><span>Make sure your placement form is available before you continue.</span></div>
+          </div>
+          <div class="portal-info-item">
+            <div class="portal-info-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.8v8.4"/><path d="M15.1 9.9a3.2 3.2 0 0 0-6.2.9c0 1.8 1.4 2.5 3.1 2.9 1.7.4 3.1 1.1 3.1 2.9a3.2 3.2 0 0 1-6.2.9"/></svg></div>
+            <div><b>Service charge</b><span id="loginCharge">A service charge of GHS 30.00 is required.</span></div>
+          </div>
+          <div class="portal-info-item">
+            <div class="portal-info-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.7V20h13V9.7"/><path d="M9 20v-5h6v5"/></svg></div>
+            <div><b>Select your school</b><span>Choose the school you were placed in before entering your login details.</span></div>
+          </div>
+          <div class="portal-info-item">
+            <div class="portal-info-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/><path d="M12 14v2"/></svg></div>
+            <div><b>Enter your credentials</b><span>Provide your BECE index number and 8-character admission token to sign in.</span></div>
+          </div>
+        </div>
+        <div class="portal-token-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3 5 6v5c0 4.3 2.6 8.3 7 10 4.4-1.7 7-5.7 7-10V6l-7-3Z"/><path d="m9.4 11.8 1.9 1.9 3.8-3.8"/></svg>
+          <div><b>Important:</b> Keep your admission token safe and do not share it with anyone.</div>
+        </div>
+      </section>
+
+      <section class="portal-login-form" aria-labelledby="portalLoginFormTitle">
+        <div class="portal-form-head">
+          <h2 id="portalLoginFormTitle">Access Your Admission Portal</h2>
+          <p id="loginFormSub">Select your school and enter your details to continue.</p>
+        </div>
+
+        <div class="field" id="f-school">
+          <label for="login-school">Select your school</label>
+          <div class="login-input-shell">
+            <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.7V20h13V9.7"/><path d="M9 20v-5h6v5"/></svg></div>
+            <select id="login-school" onchange="onLoginSchoolChange()"><option value="">Loading schools...</option></select>
+          </div>
+          <span class="err-msg" id="err-school">Please select your school.</span>
+        </div>
+
+        <div class="notice warn" id="admClosedBanner" style="display:none"><b>Admission closed.</b> This school is not accepting applications at the moment. Please contact the school office for details.</div>
+
+        <div class="field" id="f-index">
+          <label for="login-index">BECE index number</label>
+          <div class="login-input-shell">
+            <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h8"/><path d="M8 14h3"/></svg></div>
+            <input class="input-mono" id="login-index" placeholder="100000000026" value="100000000026" maxlength="14" autocomplete="username">
+          </div>
+          <span class="err-msg" id="err-index">We couldn't find this index number on the placement list.</span>
+        </div>
+
+        <div class="field" id="f-token">
+          <label for="login-token">Admission token <span class="hint">(8 characters)</span></label>
+          <div class="login-token-row">
+            <div class="login-input-shell">
+              <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></svg></div>
+              <input class="input-mono" id="login-token" placeholder="XXXXXXXX" maxlength="8" value="AS7K9X2Q" autocomplete="current-password">
+            </div>
+            <button class="btn btn-accent" id="buyTokenBtn" type="button" onclick="showScreen('s-purchase')">Buy token</button>
+          </div>
+          <span class="err-msg" id="err-token">That token doesn't match this index number. Check it, or retrieve it below.</span>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="loginBtn" type="button" onclick="doLogin()">Log in<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+
+        <div class="portal-form-divider" aria-hidden="true"><span>Need help?</span></div>
+
+        <div class="portal-quick-links">
+          <button class="portal-link-btn" type="button" onclick="showScreen('s-retrieve')">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M15 7h2a4 4 0 0 1 0 8h-2"/><path d="M9 17H7a4 4 0 1 1 0-8h2"/><path d="m8 12 8-8"/></svg></span>
+            <span>Retrieve token using index number or receipt</span>
+            <span class="arrow" aria-hidden="true">›</span>
+          </button>
+          <button class="portal-link-btn" type="button" onclick="showScreen('s-purchase')">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M4 4h2l2.2 10.3a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L21 8H8.4"/></svg></span>
+            <span>Purchase a new admission token</span>
+            <span class="arrow" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div class="auth-foot portal-login-foot"><a onclick="gotoSuper()" style="cursor:pointer">Super Admin</a></div>
+  </div></div>
+</div>
+
+<!-- ===== PURCHASE ===== -->
+<div class="screen" id="s-purchase">
+  <div class="auth"><div class="auth-card">
+    <a class="back-link" onclick="showScreen('s-login')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to login</a>
+    <div class="auth-head"><div class="crest">SHS</div><h1>Purchase admission token</h1><span class="tag">Enter your index to begin</span></div>
+    <div class="card" id="purchase-form">
+      <div class="field"><label>Select your school</label><select id="p-school-sel"><option value="">Loading schoolsâ€¦</option></select></div>
+      <div class="field"><label>JHS index number</label><input class="input-mono" id="p-index" placeholder="100000000026"></div>
+      <div class="notice warn" id="p-pending" style="display:none"></div>
+      <div class="notice info" id="p-school" style="display:none"></div>
+      <div class="field"><label>Full name</label><input id="p-name" placeholder="As shown on placement form"></div>
+      <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:13px"><div class="field"><label>Phone</label><input id="p-phone" placeholder="024â€¦"></div><div class="field"><label>Email <span class="hint">(optional)</span></label><input id="p-email" placeholder="you@email.com"></div></div>
+      <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px">Choose a payment method</label>
+      <div class="pay-methods">
+        <button class="pay-opt" onclick="payToken('Paystack')"><span class="b" style="background:#0ba4db">P</span>Paystack</button>
+        <button class="pay-opt" onclick="payToken('Flutterwave')"><span class="b" style="background:#f5a623">F</span>Flutterwave</button>
+        <button class="pay-opt" onclick="payToken('Hubtel')"><span class="b" style="background:#d8232a">H</span>Hubtel</button>
+        <button class="pay-opt" onclick="payToken('Bank transfer')"><span class="b" style="background:#1557B0">B</span>Bank transfer</button>
+      </div>
+    </div>
+    <div class="card" id="purchase-done" style="display:none">
+      <div style="text-align:center;margin-bottom:4px"><b style="font-family:'Space Grotesk';font-size:16px">Payment successful</b></div>
+      <div class="token-show"><small>Your admission token</small><div class="tk" id="new-token">â€”</div></div>
+      <div class="notice info">Keep this token safe. We've also sent it by SMS. You can log in with it now.</div>
+      <button class="btn btn-primary btn-block" onclick="useNewToken()">Continue to login</button>
+    </div>
+    <div class="helpline">Helpline Â· <a href="tel:0256744028" class="mono">0256744028</a></div>
+  </div></div>
+</div>
+
+<!-- ===== RETRIEVE ===== -->
+<div class="screen" id="s-retrieve">
+  <div class="auth"><div class="auth-card">
+    <a class="back-link" onclick="showScreen('s-login')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to login</a>
+    <div class="auth-head"><div class="crest">AS</div><h1>Retrieve your token</h1><span class="tag">Already paid?</span></div>
+    <div class="card">
+      <div class="field"><label>Select your school</label><select id="r-school"><option value="">Loading schoolsâ€¦</option></select></div>
+      <div class="field"><label>Search by</label><select id="r-by"><option value="index">Index number</option><option value="receipt">Payment receipt number</option></select></div>
+      <div class="field"><label id="r-label">Index number</label><input class="input-mono" id="r-value" placeholder="100000000026"></div>
+      <button class="btn btn-primary btn-block" onclick="retrieveToken()">Find my token</button>
+      <div id="retrieve-result" style="margin-top:16px;display:none">
+        <div class="token-show"><small>Your admission token</small><div class="tk" id="ret-token">â€”</div></div>
+        <button class="btn btn-ghost btn-block" onclick="useRetrieved()">Use this token to log in</button>
+      </div>
+    </div>
+    <div class="helpline">Helpline Â· <a href="tel:0256744028" class="mono">0256744028</a></div>
+  </div></div>
+</div>
+
+<!-- ===== PORTAL (logged in) ===== -->
+<div class="screen" id="s-app">
+  <div class="ptopbar">
+    <button class="ham" onclick="toggleSb()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <span class="sch" id="topSchool">ASUOM SENIOR HIGH SCHOOL</span>
+    <span class="yr" id="topYear">Admission Year: 2025/2026</span>
+    <button class="out" onclick="logout()" title="Log out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </div>
+  <div class="pbody">
+    <aside class="psidebar" id="psidebar">
+      <div class="pstud"><div class="ph" id="sbAvatar">?</div><div class="nm" id="sbName">â€”</div></div>
+      <nav class="pnav">
+        <button id="navDash" class="active" onclick="showPanel('dash')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</button>
+        <button id="navForm" onclick="showPanel('form')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Personal Records Form</button>
+        <button onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Log Out</button>
+      </nav>
+      <div class="pcrest"><div class="cb" id="sbCrest"><img id="sbCrestImg" alt="School crest" style="display:none;max-width:100%;max-height:100%;object-fit:contain"><span id="sbCrestText">CREST</span></div></div>
+    </aside>
+    <div class="pbackdrop" id="pbackdrop" onclick="toggleSb()"></div>
+
+    <main class="pmain">
+      <!-- DASHBOARD PANEL -->
+      <div id="panel-dash">
+        <div class="welcome" id="welcomeCard"><div class="wh" id="welcomeMsg">â€”</div></div>
+        <div class="wu">
+          <div class="wu-head"><h3 id="wuName">â€”</h3><div class="sno" id="wuSchoolNo">â€”</div><div class="wu-avatar" id="wuAvatar">?</div></div>
+          <div class="wu-grid" id="wuGrid"></div>
+        </div>
+        <div class="docs">
+          <h3>Documents for download</h3>
+          <div class="sub">Please download and print all documents.</div>
+          <div class="doc-btns">
+            <button class="btn btn-primary" onclick="docProspectus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Prospectus</button>
+            <button class="btn btn-primary" onclick="docAdmissionLetter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Admission Letter</button>
+            <button class="btn btn-primary" onclick="docRecords()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Personal Records Form</button>
+            <button class="btn btn-primary" onclick="docUndertaking()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Undertaking</button>
+            <button class="btn btn-primary" onclick="docSubjects()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Programme / Subject Combination</button>
+          </div>
+          <div class="report-box">
+            <div class="rt">You are expected to come along with the following on the reporting date:</div>
+            <ul class="checklist" id="dashChecklist"></ul>
+            <div class="warn">Your admission is NOT complete without these documents.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORM PANEL -->
+      <div id="panel-form" style="display:none">
+        <div class="form-wrap">
+          <aside class="rail">
+            <h4>Personal Records Form</h4>
+            <div class="pct"><span id="progPct">0</span>% complete</div>
+            <div class="progress-line"><i id="progFill" style="width:0"></i></div>
+            <ul class="steps" id="stepsList"></ul>
+          </aside>
+          <div>
+            <!-- STEP 0 â€” PLACEMENT -->
+            <section class="stepcard active" data-step="0"><div class="card2"><div class="card2-head"><h2>Placement details</h2><p>Confirm your placement data, then enter your enrolment details.</p></div><div class="card2-body">
+              <div class="form-note">NOTE: The information you provide here MUST be EXACTLY the same as the information on your Placement / Enrolment Form. Any mismatch may result in the CANCELLATION of your admission.</div>
+              <div class="sub-h">Enrolment data â€” Part 1 <span class="ro-tag">read-only</span></div>
+              <div class="grid-2"><div class="field"><label>Index No</label><input id="pf1-index" disabled></div><div class="field"><label>Gender</label><input id="pf1-gender" disabled></div></div>
+              <div class="grid-2"><div class="field"><label>Programme</label><input id="pf1-prog" disabled></div><div class="field"><label>Residential Status</label><input id="pf1-res" disabled></div></div>
+              <div class="grid-2"><div class="field"><label>Surname</label><input id="pf1-surname" disabled></div><div class="field"><label>Other Names</label><input id="pf1-other" disabled></div></div>
+              <div class="field"><label>Aggregate of Best Six</label><input id="pf1-agg" disabled></div>
+
+              <div class="sub-h">Enrolment data â€” Part 2 <span class="req-note">enter exactly as captured on your CSSPS enrolment form</span></div>
+              <div class="grid-2"><div class="field"><label>Raw Score <span class="rq">*</span></label><input type="number" id="pf-raw" placeholder="e.g. 232"></div><div class="field"><label>Enrolment Code <span class="rq">*</span></label><input id="pf-enrol" class="input-mono" placeholder="ENRXXXXXX"></div></div>
+              <div class="field"><label>Enrolment Form upload <span class="hint">(.jpg / .jpeg â€” max 2 MB)</span> <span class="rq">*</span></label>
+                <input type="file" id="enrFileInput" accept="image/jpeg,.jpg,.jpeg" style="display:none" onchange="handleEnrFile(this)">
+                <div id="enrWrap"><div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only Â· up to 2 MB Â· enrolment code must be visible</small></div></div></div>
+              <div class="grid-2"><div class="field"><label>Name of JHS Attended <span class="rq">*</span></label><input id="pf-jhs" placeholder="e.g. KANESHIE KINGSWAY 2 BASIC"></div><div class="field"><label>JHS Type <span class="rq">*</span></label><select id="pf-jhstype"><option value="">Selectâ€¦</option><option>PUBLIC</option><option>PRIVATE</option></select></div></div>
+              <div class="step-nav"><span></span><button class="btn btn-primary" onclick="stepNext(0)">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
+            </div></div></section>
+
+            <!-- STEP 1 â€” PERSONAL -->
+            <section class="stepcard" data-step="1"><div class="card2"><div class="card2-head"><h2>Personal data</h2><p>Some fields are mandatory.</p></div><div class="card2-body">
+              <div class="grid-2"><div class="field"><label>Date of Birth <span class="rq">*</span></label><input type="date" id="pf-dob"></div><div class="field"><label>Place of Birth <span class="rq">*</span></label><input id="pf-pob"></div></div>
+              <div class="grid-2"><div class="field"><label>Nationality <span class="rq">*</span></label><select id="pf-nat" onchange="toggleOther('pf-nat')"></select><input id="pf-nat-other" placeholder="Please specify nationality" style="display:none;margin-top:6px"></div><div class="field"><label>Religion <span class="rq">*</span></label><select id="pf-rel" onchange="toggleOther('pf-rel')"><option value="">Selectâ€¦</option><option>Christianity</option><option>Islam</option><option>Traditional African Religions</option><option>Buddhism</option><option>Hinduism</option><option>Judaism</option><option>Atheism/Agnosticism</option><option>Other</option></select><input id="pf-rel-other" placeholder="Please specify religion" style="display:none;margin-top:6px"></div></div>
+              <div class="grid-2"><div class="field"><label>Religious Denomination <span class="hint">(Christians only)</span></label><select id="pf-den" onchange="toggleOther('pf-den')"><option value="">Selectâ€¦</option><option>Catholic</option><option>Methodist</option><option>Anglican</option><option>Presbyterian</option><option>Pentecostal</option><option>Baptist</option><option>Lutheran</option><option>Seventh-Day Adventist</option><option>Evangelical Charismatic</option><option>Church of Christ</option><option>Other</option></select><input id="pf-den-other" placeholder="Please specify denomination" style="display:none;margin-top:6px"></div><div class="field"><label>Permanent Address <span class="rq">*</span></label><input id="pf-addr" placeholder="House / digital address"></div></div>
+              <div class="grid-3"><div class="field"><label>Town <span class="rq">*</span></label><input id="pf-town"></div><div class="field"><label>Region <span class="rq">*</span></label><select id="pf-region"></select></div><div class="field"><label>District <span class="rq">*</span></label><input id="pf-district" placeholder="Type your district"></div></div>
+              <div class="grid-2"><div class="field"><label>Interest(s) <span class="rq">*</span></label><select id="pf-interest" onchange="toggleOther('pf-interest')"><option value="">Selectâ€¦</option><option>Athletics</option><option>Football</option><option>Debating Club</option><option>Drama</option><option>Music</option><option>Others</option></select><input id="pf-interest-other" placeholder="Please specify your interest" style="display:none;margin-top:6px"></div><div class="field"><label>Ghana Card / NHIS No</label><input id="pf-card" placeholder="NA"></div></div>
+              <div class="sub-h">Class selection <span class="req-note">pick a class based on the available subject combinations â€” you must choose one</span></div>
+              <div class="cls-wrap"><table class="cls-table"><thead><tr><th>Class</th><th>Subject combination</th><th>Seats</th></tr></thead><tbody id="clsRows"></tbody></table></div>
+              <div class="step-nav"><button class="btn btn-ghost" onclick="goStep(0)">Back</button><button class="btn btn-primary" onclick="stepNext(1)">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
+            </div></div></section>
+
+            <!-- STEP 2 â€” PARENT / GUARDIAN -->
+            <section class="stepcard" data-step="2"><div class="card2"><div class="card2-head"><h2>Parent / Guardian</h2><p>Provide active, regular phone numbers and parental details.</p></div><div class="card2-body">
+              <div class="sub-h">Communication</div>
+              <div class="grid-2"><div class="field"><label>Mobile Phone (SMS) <span class="rq">*</span></label><input id="pf-sms" placeholder="024â€¦"></div><div class="field"><label>WhatsApp No</label><input id="pf-wa" placeholder="024â€¦"></div></div>
+              <div class="grid-2"><div class="field"><label>Other Phone <span class="hint">(if any)</span></label><input id="pf-other"></div><div class="field"><label>E-mail</label><input id="pf-email" placeholder="you@email.com"></div></div>
+              <div class="sub-h">Parental data</div>
+              <div class="grid-3"><div class="field"><label>Father's Name <span class="rq">*</span></label><input id="pf-fname"></div><div class="field"><label>Father's Occupation <span class="rq">*</span></label><input id="pf-focc"></div><div class="field"><label>Father's Contact <span class="rq">*</span></label><input id="pf-fphone" inputmode="tel" placeholder="02XXXXXXXX"></div></div>
+              <div class="grid-3"><div class="field"><label>Mother's Name <span class="rq">*</span></label><input id="pf-mname"></div><div class="field"><label>Mother's Occupation <span class="rq">*</span></label><input id="pf-mocc"></div><div class="field"><label>Mother's Contact <span class="rq">*</span></label><input id="pf-mphone" inputmode="tel" placeholder="02XXXXXXXX"></div></div>
+              <div class="grid-3"><div class="field"><label>Name of Guardian</label><input id="pf-guard"></div><div class="field"><label>Residential Telephone</label><input id="pf-gphone"></div><div class="field"><label>Guardian Digital Address</label><input id="pf-digital" placeholder="NA"></div></div>
+              <div class="step-nav"><button class="btn btn-ghost" onclick="goStep(1)">Back</button><button class="btn btn-primary" onclick="stepNext(2)">Review<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
+            </div></div></section>
+
+            <!-- STEP 3 â€” REVIEW -->
+            <section class="stepcard" data-step="3"><div class="card2"><div class="card2-head"><h2>Review &amp; submit</h2><p>Verify that all information is accurate before submitting.</p></div><div class="card2-body">
+              <div id="reviewBlocks"></div>
+              <div class="step-nav" style="margin-top:20px"><button class="btn btn-ghost" onclick="goStep(2)">Back</button><button class="btn btn-primary" id="submitBtn" onclick="submitApp()">âœ… Submit Enrolment</button></div>
+            </div></div></section>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toastMsg"></span></div>
+
+<script>
+const SUPABASE_URL='https://datxaylostmyroleisdl.supabase.co';
+const SUPABASE_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
+const PAYSTACK_PUBLIC_KEY='pk_test_7a6055b78d8771cc5d25617a632db4ad7c17bfab';
+const SCHOOL_CODE=null; // schools are resolved automatically from the index number
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false}});
+(function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SUPABASE_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'â— LIVE':'â— DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
+const stepLabels=['Placement','Personal','Parent / Guardian','Review'];
+const REGIONS=['Ahafo','Ashanti','Bono','Bono East','Central','Eastern','Greater Accra','North East','Northern','Oti','Savannah','Upper East','Upper West','Volta','Western','Western North'];
+const NATIONALITIES=['Ghanaian','Nigerian','Togolese','Ivorian','Burkinabe','Beninese','Liberian','Other'];
+
+let session=null, SCHOOL=null, PROGRAMMES=[], STU=null;
+let app={done:[false,false,false],classId:null,className:'',enrUploaded:false,current:0,fields:{}};
+const $=id=>document.getElementById(id);
+function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));window.scrollTo(0,0);if(id==='s-purchase'){try{showPendingBanner();}catch(e){}}}
+const progById=id=>PROGRAMMES.find(p=>p.id===id);
+const initials=n=>{const w=(n||'').trim().split(' ').filter(Boolean);return ((w[0]&&w[0][0]||'?')+(w[1]&&w[1][0]||'')).toUpperCase();};
+function qagTabScope(){
+  try{ if(window.parent&&window.parent!==window&&window.parent.name) return window.parent.name; }catch(e){}
+  try{ return window.name||'qag_tab_fallback'; }catch(e){ return 'qag_tab_fallback'; }
+}
+function qagTabKey(key){
+  return 'qag_tab_state::'+qagTabScope()+'::'+key;
+}
+function getStudentSession(){
+  try{return JSON.parse(localStorage.getItem(qagTabKey('qag_student'))||'null');}catch(e){return null;}
+}
+function setStudentSession(next){
+  try{localStorage.setItem(qagTabKey('qag_student'),JSON.stringify(next));}catch(e){}
+}
+function clearStudentSession(){
+  try{localStorage.removeItem(qagTabKey('qag_student'));}catch(e){}
+}
+function finishStudentBoot(){
+  try{document.body.classList.remove('booting');}catch(e){}
+}
+function studentName(s){
+  if(!s)return '';
+  return (s.student_name||s.placement_name||s.name||[s.surname,s.other_names].filter(Boolean).join(' ')||s.full_name||'').trim();
+}
+function normalizeStudent(s){
+  if(!s)return s;
+  const nm=studentName(s);
+  if(nm&&!s.full_name)s.full_name=nm;
+  if(!s.surname&&nm)s.surname=nm;
+  return s;
+}
+function nameFromLookup(d){
+  return d&&(d.student_name||d.placement_name||d.applicant_name||d.full_name||d.name_on_placement||d.candidate_name||'');
+}
+function cleanContact(v){ return v==null?'':String(v).trim(); }
+function placementSmsFromLookup(d){
+  if(!d)return '';
+  const x=d.student||d.placement||d;
+  return cleanContact(x.sms_contact||x.placement_sms_contact||x.imported_sms_contact||x.cssps_sms_contact||x.sms);
+}
+function studentContact(s){
+  if(!s)return '';
+  const r=s.records||{};
+  return cleanContact(r.sms_contact||s.parent_phone||s.placement_sms_contact||s.sms_contact||s.imported_sms_contact||s.cssps_sms_contact||s.sms||s.contact);
+}
+async function lookupPlacementName(idx,school){
+  if(!idx)return '';
+  try{
+    if(school){
+      const {data:pl}=await sb.from('placement_list').select('student_name,other_names').eq('school_id',school).eq('index_number',idx).single();
+      if(pl&&pl.student_name)return pl.student_name;
+    }
+  }catch(e){}
+  try{
+    const {data}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:school||null});
+    const nm=nameFromLookup(data);
+    if(nm)return nm;
+  }catch(e){}
+  return '';
+}
+async function lookupPlacementSms(idx,school){
+  if(!idx)return '';
+  try{
+    if(school){
+      const {data:pl,error}=await sb.from('placement_list').select('sms_contact').eq('school_id',school).eq('index_number',idx).maybeSingle();
+      if(!error&&pl&&pl.sms_contact)return cleanContact(pl.sms_contact);
+    }
+  }catch(e){}
+  try{
+    const {data}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:school||null});
+    return placementSmsFromLookup(data);
+  }catch(e){}
+  return '';
+}
+
+async function applySchool(data){
+  // data carries school + config + programmes + classes from login
+  SCHOOL={school:data.school,config:data.config,classes:data.classes||[]};
+  PROGRAMMES=data.programmes||[];
+  try{
+    const sid=(data.school&&data.school.id)||(session&&session.school);
+    if(sid){
+      const {data:cfg}=await sb.from('school_config').select('*').eq('school_id',sid).single();
+      if(cfg) SCHOOL.config=Object.assign({},SCHOOL.config||{},cfg);
+    }
+  }catch(e){}
+  try{
+    normalizeStudent(STU);
+    const sid=(data.school&&data.school.id)||(session&&session.school);
+    if(STU&&sid&&STU.index){
+      const nm=await lookupPlacementName(STU.index,sid);
+      if(nm){STU.student_name=nm;STU.placement_name=nm;normalizeStudent(STU);}
+      const sms=placementSmsFromLookup(data)||await lookupPlacementSms(STU.index,sid);
+      if(sms){STU.sms_contact=sms;STU.placement_sms_contact=sms;STU.contact=sms;}
+    }
+  }catch(e){}
+  if(data.school){
+    $('topSchool').textContent=(data.school.name||'').toUpperCase();
+    document.querySelectorAll('.helpline a').forEach(a=>{if(data.school.helpdesk){a.textContent=data.school.helpdesk;a.href='tel:'+data.school.helpdesk;}});
+  }
+  if(data.config) $('topYear').textContent='Admission Year: '+(data.config.academic_year||'2025/2026');
+}
+
+/* ===== LOGIN ===== */
+async function doLogin(){
+  const idx=$('login-index').value.trim(),tok=$('login-token').value.trim().toUpperCase();
+  const sid=$('login-school').value;
+  $('f-index').classList.remove('err');$('f-token').classList.remove('err');$('f-school').classList.remove('err');
+  if(!sid){$('f-school').classList.add('err');return;}
+  if(admissionClosed(sid)){ const b=$('admClosedBanner'); if(b)b.style.display='block'; toast('Admission is closed for this school'); return; }
+  if(!idx){$('f-index').classList.add('err');return;}
+  const {data,error}=await sb.rpc('student_login',{p_index:idx,p_token:tok,p_school:sid});
+  if(error){toast('Login failed â€” '+error.message);return;}
+  if(!data.ok){
+    if(data.error==='index')$('f-index').classList.add('err');
+    else if(data.error==='token')$('f-token').classList.add('err');
+    else if(data.error==='ambiguous')toast('This index appears under more than one school â€” contact your school office.');
+    else toast('Could not sign in');
+    return;
+  }
+  session={index:idx,token:tok,school:sid}; STU=data.student; await applySchool(data);
+  setStudentSession(session);
+  hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion();
+}
+async function bootStudent(){
+  const s=getStudentSession();
+  if(!s||!s.index||!s.token) return;
+  try{
+    const {data}=await sb.rpc('student_login',{p_index:s.index,p_token:s.token,p_school:s.school||null});
+    if(data&&data.ok){ session=s; STU=data.student; await applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); }
+    else { session=null; STU=null; clearStudentSession(); showScreen('s-login'); }
+  }catch(e){}
+}
+async function refreshStudent(){
+  if(!session||!session.index||!session.token) return;
+  const activeSession={index:session.index,token:session.token,school:session.school||null};
+  const {data}=await sb.rpc('student_login',{p_index:activeSession.index,p_token:activeSession.token,p_school:activeSession.school});
+  if(!session||session.index!==activeSession.index||session.token!==activeSession.token||(session.school||null)!==activeSession.school) return;
+  if(data&&data.ok){STU=data.student;await applySchool(data);hydrate();}
+  else if(data&&!data.ok){ revokeAccess(); }
+}
+// If the student's record has been deleted by the school, drop their access immediately.
+function revokeAccess(){
+  toast('Your record is no longer available â€” please contact your school.');
+  logout();
+}
+async function validateSession(){
+  if(!session||!session.index) return;
+  try{
+    const {data}=await sb.rpc('student_login',{p_index:session.index,p_token:session.token,p_school:session.school||null});
+    if(!data||!data.ok) revokeAccess();
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&session) scheduleStudentRefresh('visible',true); });
+setInterval(function(){ if(session) validateSession(); }, 60000);
+setInterval(function(){ if(session) scheduleStudentRefresh('sync'); }, 30000);
+// Realtime: the school broadcasts when a student is deleted â€” revoke access instantly.
+let stuChannel=null, stuRefreshTimer=null, stuRefreshBusy=false, stuRefreshQueued=false;
+function scheduleStudentRefresh(reason,immediate){
+  if(!session) return;
+  if(stuRefreshTimer){ clearTimeout(stuRefreshTimer); stuRefreshTimer=null; }
+  stuRefreshTimer=setTimeout(function(){ runStudentRefresh(reason); },immediate?0:700);
+}
+async function runStudentRefresh(reason){
+  if(!session) return;
+  if(stuRefreshBusy){ stuRefreshQueued=true; return; }
+  stuRefreshBusy=true;
+  try{ await refreshStudent(); }
+  catch(e){}
+  finally{
+    stuRefreshBusy=false;
+    if(stuRefreshQueued){ stuRefreshQueued=false; scheduleStudentRefresh(reason,true); }
+  }
+}
+function matchesStudentRefreshPayload(payload){
+  if(!session) return false;
+  const myIndex=String(session.index);
+  if(payload&&Array.isArray(payload.indexes)&&payload.indexes.length){
+    return payload.indexes.some(function(idx){ return String(idx)===myIndex; });
+  }
+  if(payload&&payload.index!=null){
+    return String(payload.index)===myIndex;
+  }
+  return !payload||payload.scope!=='none';
+}
+function watchDeletion(){
+  if(!session||!session.school) return;
+  if(stuChannel){ try{sb.removeChannel(stuChannel);}catch(e){} stuChannel=null; }
+  stuChannel=sb.channel('school:'+session.school)
+    .on('broadcast',{event:'student_deleted'},function(msg){
+      const p=(msg&&msg.payload)||{};
+      if(session&&String(p.index)===String(session.index)) revokeAccess();
+    })
+    .on('broadcast',{event:'student_portal_refresh'},function(msg){
+      const p=(msg&&msg.payload)||{};
+      if(matchesStudentRefreshPayload(p)) scheduleStudentRefresh(p.reason||'school-update');
+    })
+    .subscribe();
+}
+function stopWatchDeletion(){
+  if(stuRefreshTimer){ clearTimeout(stuRefreshTimer); stuRefreshTimer=null; }
+  stuRefreshBusy=false; stuRefreshQueued=false;
+  if(stuChannel){ try{sb.removeChannel(stuChannel);}catch(e){} stuChannel=null; }
+}
+function hydrate(){
+  const s=STU;
+  const displayName=studentName(s)||'Applicant';
+  const smsContact=studentContact(s);
+  if(smsContact)s.contact=smsContact;
+  $('sbName').textContent=displayName;
+  $('sbAvatar').textContent=initials(displayName);
+  { const url=schoolCrest(); const im=$('sbCrestImg'), tx=$('sbCrestText'), box=$('sbCrest');
+    if(url){ if(im){im.src=url;im.style.display='block';} if(tx)tx.style.display='none'; if(box)box.classList.add('has-img'); }
+    else { if(im)im.style.display='none'; if(tx)tx.style.display=''; if(box)box.classList.remove('has-img'); } }
+  $('wuName').textContent=displayName;
+  $('wuAvatar').textContent=initials(displayName);
+  $('wuSchoolNo').textContent='School No.: '+(s.school_no||'â€”');
+  app.done=[s.personal_done,s.programme_done,s.undertaking_done,s.documents_done];
+  app.done=s.submitted?[true,true,true]:[false,false,false];
+  app.classId=s.class_id||null;
+  $('pf1-index').value=s.index||''; $('pf1-gender').value=s.gender||''; $('pf1-prog').value=s.programme||'';
+  $('pf1-res').value=s.residential||'â€”'; $('pf1-surname').value=s.surname||displayName||''; $('pf1-other').value=s.other_names||'';
+  $('pf1-agg').value=(s.aggregate!=null?s.aggregate:'â€”');
+  buildPickers(); buildClassTable(); prefillRecords(s.records);
+  if(!$('pf-sms').value&&smsContact)$('pf-sms').value=smsContact;
+  if(!app.fields.sms_contact&&smsContact)app.fields.sms_contact=smsContact;
+  const done=s.submitted;
+  $('welcomeCard').classList.toggle('pending',!done);
+  $('welcomeMsg').textContent=done
+    ? displayName+', WELL DONE! You have completed your Personal Records Form. Kindly download all the necessary documents. Thank you!'
+    : displayName+', please complete your Personal Records Form to proceed with your admission.';
+  const blocks=[
+    {h:s.programme||'â€”',l:'Programme'},
+    {h:s.residential||'â€”',l:'Residential Status'},
+    {h:done?'<span class="pill ok">Completed</span>':'<span class="pill pend">Pending</span>',l:'Personal Records',btn:'<button class="btn btn-primary btn-sm" onclick="showPanel(\'form\')"><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\'/><path d=\'M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z\'/></svg>'+(done?'Edit Your Form':'Fill Your Form')+'</button>'},
+    {h:s.gender||'â€”',l:'Gender'},
+    {h:s.class||'<span style="color:var(--muted)">Not assigned</span>',l:'Class Assigned'},
+    {h:s.house||'<span style="color:var(--muted)">Not assigned</span>',l:'House Assigned'},
+    {h:'<span class="mono">'+(s.index||'â€”')+'</span>',l:'JHS Index No'},
+    {h:'<span class="mono">'+(s.contact||'â€”')+'</span>',l:'Contact Number'},
+    {h:'',l:'Log Out',btn:'<button class="btn btn-danger btn-sm" onclick="logout()"><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9\'/></svg>Log Out</button>'},
+  ];
+  $('wuGrid').innerHTML=blocks.map(b=>`<div class="wu-block"><div class="h">${b.h}</div>${b.btn||''}<div class="l">[${b.l}]</div></div>`).join('');
+  const cfg=(SCHOOL&&SCHOOL.config)||{};
+  const docs=(Array.isArray(cfg.req_docs)?cfg.req_docs:[cfg.req_doc_line1,cfg.req_doc_line2,cfg.req_doc_line3,cfg.req_doc_line4,cfg.req_doc_line5]).filter(Boolean);
+  $('dashChecklist').innerHTML=docs.map((l,i)=>`<li><span class="n">${i+1}</span><span>${l}</span></li>`).join('');
+  buildSteps(); refreshRail();
+}
+
+/* ===== PANELS / SIDEBAR ===== */
+function showPanel(p){
+  $('panel-dash').style.display=p==='dash'?'':'none';
+  $('panel-form').style.display=p==='form'?'':'none';
+  $('navDash').classList.toggle('active',p==='dash');
+  $('navForm').classList.toggle('active',p==='form');
+  if(p==='form'){ goStep(app.current||0); }
+  document.querySelector('.psidebar').classList.remove('open');$('pbackdrop').classList.remove('open');
+  window.scrollTo(0,0);
+}
+function toggleSb(){const s=document.querySelector('.psidebar');s.classList.toggle('open');$('pbackdrop').classList.toggle('open',s.classList.contains('open'));}
+
+/* ===== PURCHASE / RETRIEVE ===== */
+const PENDING_KEY='qa_pending_pay';
+function savePending(o){try{localStorage.setItem(PENDING_KEY,JSON.stringify(o));}catch(e){}}
+function getPending(){try{return JSON.parse(localStorage.getItem(PENDING_KEY)||'null');}catch(e){return null;}}
+function clearPending(){try{localStorage.removeItem(PENDING_KEY);}catch(e){}}
+function showPendingBanner(){
+  const p=getPending(); const el=$('p-pending'); if(!el)return;
+  if(p&&p.reference){ el.style.display='block';
+    el.innerHTML='Payment not yet confirmed (ref <b>'+p.reference+'</b>)'+(p.reason?'<br><span style="font-weight:600">Reason: '+p.reason+'</span>':'')+'.<br><a onclick="retryVerify()">Retry verification</a> \u2014 you will <b>not</b> be charged again. &nbsp;Â·&nbsp; <a onclick="dismissPending()">dismiss</a>'; }
+  else el.style.display='none';
+}
+function dismissPending(){ clearPending(); showPendingBanner(); toast('Cleared. If you completed a payment, it stays valid \u2014 use Retrieve token.'); }
+async function payToken(method){
+  const idx=$('p-index').value.trim(),name=$('p-name').value.trim();
+  const sid=$('p-school-sel').value;
+  if(!sid){toast('Please select your school first');return;}
+  if(admissionClosed(sid)){toast('Admission is closed for this school');return;}
+  if(!idx||!name){toast('Enter your index number and name first');return;}
+  if(method!=='Paystack'){toast(method+' isn\u2019t available yet â€” please use Paystack');return;}
+  // recover an unconfirmed payment instead of charging again
+  const pend=getPending();
+  if(pend&&pend.index===idx&&pend.reference){ toast('Found an unconfirmed payment â€” verifying instead of charging again'); return verifyPayment(pend.reference, idx, name); }
+  // already paid? then don't charge again
+  const {data:has}=await sb.rpc('index_has_token',{p_index:idx,p_school:sid});
+  if(has&&has.ok&&has.paid){ toast('This index has already paid. Use â€œRetrieve tokenâ€ to get your token.'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
+  const {data:sch}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:sid});
+  if(!sch||!sch.ok){toast('This index is not on any participating school\u2019s placement list');return;}
+  const verifiedName=nameFromLookup(sch)||await lookupPlacementName(idx,sid)||name;
+  const amount=Math.round(Number(sch.charge||0)*100);
+  if(!amount){toast('This school has no service charge set');return;}
+  const email=$('p-email').value.trim()||(idx+'@noemail.qadmission');
+  if(!window.PaystackPop){toast('Payment library didn\u2019t load â€” check your connection and reload');return;}
+  toast('Opening secure payment for '+sch.name+'\u2026');
+  const handler=window.PaystackPop.setup({
+    key:PAYSTACK_PUBLIC_KEY, email, amount, currency:'GHS',
+    metadata:{custom_fields:[
+      {display_name:'Index Number',variable_name:'index',value:idx},
+      {display_name:'Applicant',variable_name:'name',value:verifiedName},
+      {display_name:'School',variable_name:'school',value:sch.name}
+    ]},
+    callback:function(resp){ savePending({reference:resp.reference,index:idx,name:verifiedName,school:sid}); verifyPayment(resp.reference, idx, verifiedName, sid); },
+    onClose:function(){ toast('Payment window closed'); }
+  });
+  handler.openIframe();
+}
+function retryVerify(){ const p=getPending(); if(!p||!p.reference){toast('No pending payment found');return;} verifyPayment(p.reference,p.index,p.name||'',p.school||null); }
+async function verifyPayment(reference, idx, name, school){
+  toast('Verifying payment\u2026');
+  if(!school){ const p=getPending(); school=(p&&p.school)||$('p-school-sel').value||null; }
+  name=(await lookupPlacementName(idx,school))||name;
+  let data=null, netErr=null;
+  try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/verify-payment',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
+      body:JSON.stringify({reference,index:idx,name,phone:$('p-phone').value,email:$('p-email').value,school})
+    });
+    data=await r.json().catch(()=>null);
+  }catch(e){ netErr=e; }
+  if(!data||!data.ok){
+    try{console.log('[verify-payment] response:',data,'netErr:',netErr);}catch(e){}
+    let msg, reason;
+    if(netErr){ reason='network error'; msg='Network problem reaching the server. Tap Retry verification.'; }
+    else if(data&&data.error==='not_configured'){ reason='payment system not configured'; msg='Payment system key not set yet. Your payment is safe â€” Retry verification shortly.'; }
+    else if(data&&data.error==='verification_failed'){
+      const gs=data.gateway_status||data.gateway_message||'not found';
+      reason='Paystack status \u201c'+gs+'\u201d'+(data.gateway_message&&data.gateway_status?(' \u2014 '+data.gateway_message):'');
+      msg='Paystack says: '+gs+'. '+(gs==='abandoned'||gs==='failed'?'That payment wasn\u2019t completed â€” finish the card + OTP step.':'Reference not recognised on this account.');
+    }
+    else { reason=(data&&(data.message||data.gateway_message||data.error))||'unknown'; msg='Could not verify yet ('+reason+'). Tap Retry verification.'; }
+    savePending({reference,index:idx,name:name||'',reason}); showPendingBanner();
+    toast(msg); return;
+  }
+  clearPending(); showPendingBanner();
+  window._newToken={idx,tk:data.token};
+  toast('Payment confirmed \u2014 signing you in\u2026');
+  session={index:idx,token:data.token,school:school||null};
+  const {data:login}=await sb.rpc('student_login',{p_index:idx,p_token:data.token,p_school:school||null});
+  if(login&&login.ok){ STU=login.student; await applySchool(login); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome! Save your token: '+data.token); }
+  else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
+}
+function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in â€” tap Log in');}
+$('r-by').addEventListener('change',e=>$('r-label').textContent=e.target.value==='index'?'Index number':'Payment receipt number');
+async function retrieveToken(){
+  const by=$('r-by').value,v=$('r-value').value.trim(); if(!v){toast('Enter a value to search');return;}
+  const rsid=$('r-school').value; if(!rsid){toast('Please select your school first');return;}
+  const {data,error}=await sb.rpc('retrieve_token',{p_by:by,p_value:v,p_school:rsid});
+  if(error||!data.ok){toast(data&&data.error?data.error:'No token found');return;}
+  $('ret-token').textContent=data.token;$('retrieve-result').style.display='block';window._retRec={idx:data.index,tk:data.token};
+}
+function useRetrieved(){$('login-index').value=window._retRec.idx;$('login-token').value=window._retRec.tk;showScreen('s-login');toast('Token filled in â€” tap Log in');}
+
+/* ===== WIZARD ===== */
+function buildSteps(){$('stepsList').innerHTML=stepLabels.map((l,i)=>`<li class="step" data-i="${i}" onclick="goStep(${i})"><span class="dot"><span class="num">${i+1}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></span><span class="lbl">${l}</span></li>`).join('');}
+function refreshRail(){
+  const pct=Math.round(app.done.filter(Boolean).length/3*100);
+  $('progPct').textContent=pct;$('progFill').style.width=pct+'%';
+  document.querySelectorAll('.step').forEach(s=>{const i=+s.dataset.i;s.classList.toggle('active',i===app.current);const d=i<3&&app.done[i];s.classList.toggle('done',d);s.querySelector('.num').style.display=d?'none':'';s.querySelector('svg').style.display=d?'block':'none';});
+}
+function goStep(i){app.current=i;document.querySelectorAll('.stepcard').forEach(c=>c.classList.toggle('active',c.dataset.step==i));if(i===3)buildReview();refreshRail();window.scrollTo(0,0);}
+function val(id){var e=$(id);return e?e.value.trim():'';}
+function need(ids){for(const id of ids){if(!val(id)){const e=$(id);if(e){e.focus();e.style.borderColor='var(--danger)';setTimeout(()=>e.style.borderColor='',1500);}return false;}}return true;}
+
+function buildPickers(){
+  $('pf-region').innerHTML='<option value="">Selectâ€¦</option>'+REGIONS.map(r=>`<option>${r}</option>`).join('');
+  $('pf-nat').innerHTML=NATIONALITIES.map(n=>`<option ${n==='Ghanaian'?'selected':''}>${n}</option>`).join('');
+}
+function fmtCombo(str){ return (str||'').split(',').map(x=>x.trim()).filter(Boolean).join(' Â· '); }
+function buildClassTable(){
+  const progSubs=fmtCombo((progById(STU.programme_id)||{}).subjects||'');
+  let classes=(SCHOOL&&SCHOOL.classes)||[];
+  // Only show classes for this student's programme (classes without a programme are shown to all)
+  const mine=classes.filter(c=>!c.programme_id || String(c.programme_id)===String(STU.programme_id));
+  if(mine.length) classes=mine;
+  $('clsRows').innerHTML=classes.length?classes.map(c=>{
+    const combo=fmtCombo(c.subjects)||progSubs||'Standard combination';
+    return `<tr class="cls-row ${c.id===app.classId?'sel':''}" data-id="${c.id}" onclick="pickClass('${c.id}','${(c.name||'').replace(/'/g,"")}')"><td><span class="cls-radio"></span>${c.name}</td><td class="cls-combo">${combo}</td><td class="cls-seats">${c.seats}</td></tr>`;
+  }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No classes published yet. You can still submit; a class will be assigned by the school.</td></tr>`;
+}
+function pickClass(id,name){app.classId=id;app.className=name;document.querySelectorAll('.cls-row').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));}
+function uploadEnr(){ const inp=$('enrFileInput'); if(inp) inp.click(); }
+async function handleEnrFile(inp){
+  const file=inp.files&&inp.files[0]; inp.value='';
+  if(!file) return;
+  const isJpg = file.type==='image/jpeg' || file.type==='image/jpg' || /\.jpe?g$/i.test(file.name);
+  if(!isJpg){ toast('Please upload a JPG image'); return; }
+  if(file.size > 2*1024*1024){ toast('File too large â€” max 2 MB'); return; }
+  if(!STU||!session){ toast('Please log in again'); return; }
+  $('enrWrap').innerHTML='<div class="dropzone"><b>Uploadingâ€¦</b><small>Please wait</small></div>';
+  const ext = /\.jpe?g$/i.test(file.name) ? file.name.split('.').pop() : 'jpg';
+  const path = (STU.index||'student')+'_'+Date.now()+'.'+ext;
+  const {error}=await sb.storage.from('enrolment-forms').upload(path, file, {contentType:file.type||'image/jpeg', upsert:true});
+  if(error){
+    toast('Upload failed â€” '+error.message);
+    removeEnr();
+    return;
+  }
+  const {data:pub}=sb.storage.from('enrolment-forms').getPublicUrl(path);
+  app.enrUploaded=true;
+  app.fields.enrolment_form_url = pub.publicUrl;
+  app.fields.enrolment_uploaded = true;
+  const kb=Math.max(1,Math.round(file.size/1024));
+  $('enrWrap').innerHTML=`<div class="file-done"><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div><b>${file.name.replace(/[<>"]/g,'')}</b><small>Uploaded Â· ${kb} KB</small></div><button class="x" onclick="removeEnr()">Remove</button></div>`;
+  toast('Enrolment form uploaded');
+}
+function removeEnr(){app.enrUploaded=false;app.fields.enrolment_form_url='';app.fields.enrolment_uploaded=false;$('enrWrap').innerHTML=`<div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only Â· up to 2 MB Â· enrolment code must be visible</small></div>`;}
+
+function toggleOther(selId){ const s=$(selId), o=$(selId+'-other'); if(!s||!o)return; const isOther=/^others?$/i.test((s.value||'').trim()); o.style.display=isOther?'block':'none'; if(!isOther)o.value=''; }
+function otherVal(selId){ const s=$(selId), o=$(selId+'-other'); if(s&&/^others?$/i.test((s.value||'').trim())&&o&&o.value.trim()) return o.value.trim(); return s?s.value:''; }
+function setSelectMaybeOther(selId,v){ const s=$(selId), o=$(selId+'-other'); if(!s)return; if(v==null||v==='')return;
+  const has=[...s.options].some(op=>op.value===v||op.text===v);
+  if(has){ s.value=v; } else { const oo=[...s.options].find(op=>/^others?$/i.test(op.value||op.text)); if(oo){ s.value=oo.value||oo.text; if(o){o.value=v;} } else { s.value=v; } }
+  toggleOther(selId);
+}
+function collect(step){
+  const f=app.fields;
+  if(step===0){Object.assign(f,{raw_score:val('pf-raw'),enrolment_code:val('pf-enrol').toUpperCase(),jhs_attended:val('pf-jhs'),jhs_type:val('pf-jhstype'),enrolment_uploaded:app.enrUploaded});}
+  if(step===1){Object.assign(f,{dob:val('pf-dob'),place_of_birth:val('pf-pob'),nationality:otherVal('pf-nat'),religion:otherVal('pf-rel'),denomination:otherVal('pf-den'),address:val('pf-addr'),town:val('pf-town'),region:val('pf-region'),district:val('pf-district'),interest:otherVal('pf-interest'),ghana_card:val('pf-card'),class_id:app.classId,class_name:app.className});}
+  if(step===2){Object.assign(f,{sms_contact:val('pf-sms'),whatsapp:val('pf-wa'),other_phone:val('pf-other'),email:val('pf-email'),father_name:val('pf-fname'),father_occupation:val('pf-focc'),father_phone:val('pf-fphone'),mother_name:val('pf-mname'),mother_occupation:val('pf-mocc'),mother_phone:val('pf-mphone'),guardian:val('pf-guard'),guardian_phone:val('pf-gphone'),digital_address:val('pf-digital')});}
+}
+function stepNext(step){
+  if(step===0){ if(!need(['pf-raw','pf-enrol','pf-jhs','pf-jhstype'])){toast('Fill all required Part 2 fields');return;} if(!app.enrUploaded){toast('Please upload your enrolment form');return;} }
+  if(step===1){ if(!need(['pf-dob','pf-pob','pf-nat','pf-rel','pf-addr','pf-town','pf-region','pf-district','pf-interest'])){toast('Please complete the required personal fields');return;} if(!app.classId&&(SCHOOL&&SCHOOL.classes&&SCHOOL.classes.length)){toast('Please select a class');return;} }
+  if(step===2){ if(!need(['pf-sms','pf-fname','pf-focc','pf-fphone','pf-mname','pf-mocc','pf-mphone'])){toast('Please complete the required parent fields');return;} }
+  collect(step); app.done[step]=true; goStep(step+1);
+}
+function prefillRecords(r){
+  if(!r)return;
+  const set=(id,v)=>{const e=$(id);if(e&&v!=null)e.value=v;};
+  set('pf-raw',r.raw_score);set('pf-enrol',r.enrolment_code);set('pf-jhs',r.jhs_attended);set('pf-jhstype',r.jhs_type);
+  set('pf-dob',r.dob);set('pf-pob',r.place_of_birth);setSelectMaybeOther('pf-nat',r.nationality);setSelectMaybeOther('pf-rel',r.religion);setSelectMaybeOther('pf-den',r.denomination);
+  set('pf-addr',r.address);set('pf-town',r.town);set('pf-region',r.region);set('pf-district',r.district);setSelectMaybeOther('pf-interest',r.interest);set('pf-card',r.ghana_card);
+  set('pf-sms',r.sms_contact);set('pf-wa',r.whatsapp);set('pf-other',r.other_phone);set('pf-email',r.email);
+  set('pf-fname',r.father_name);set('pf-focc',r.father_occupation);set('pf-fphone',r.father_phone);set('pf-mname',r.mother_name);set('pf-mocc',r.mother_occupation);set('pf-mphone',r.mother_phone);
+  set('pf-guard',r.guardian);set('pf-gphone',r.guardian_phone);set('pf-digital',r.digital_address);
+  if(r.enrolment_uploaded){app.enrUploaded=true;$('enrWrap').innerHTML=`<div class="file-done"><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div><b>enrolment-form.jpg</b><small>Uploaded</small></div><button class="x" onclick="removeEnr()">Remove</button></div>`;}
+  if(r.class_name)app.className=r.class_name;
+  Object.assign(app.fields,r);
+}
+function rev(t,rows,step){return `<div class="rev-block"><div class="rev-head"><span class="t">${t}</span><a onclick="goStep(${step})" style="font-size:11.5px">edit</a></div><dl class="rev-body">${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]||'â€”'}</dd>`).join('')}</dl></div>`;}
+function buildReview(){
+  collect(0);collect(1);collect(2);
+  const f=app.fields,s=STU;
+  let h='';
+  h+=rev('Enrolment data â€” Part 1',[['Index No',s.index],['Gender',s.gender],['Programme',s.programme],['Residential',s.residential],['Surname',s.surname||s.full_name],['Other Names',s.other_names],['Aggregate',s.aggregate]],0);
+  h+=rev('Enrolment data â€” Part 2',[['Raw Score',f.raw_score],['Enrolment Code',f.enrolment_code],['JHS Attended',f.jhs_attended],['JHS Type',f.jhs_type],['Enrolment form',app.enrUploaded?'Uploaded':'Not uploaded']],0);
+  h+=rev('Personal data',[['Date of Birth',f.dob],['Place of Birth',f.place_of_birth],['Nationality',f.nationality],['Religion',f.religion],['Denomination',f.denomination],['Address',f.address],['Town',f.town],['Region',f.region],['District',f.district],['Interest',f.interest],['Ghana Card/NHIS',f.ghana_card]],1);
+  h+=rev('Class selection',[['Class',app.className||'To be assigned']],1);
+  h+=rev('Communication',[['Mobile (SMS)',f.sms_contact],['WhatsApp',f.whatsapp],['Other Phone',f.other_phone],['E-mail',f.email]],2);
+  h+=rev('Parental data',[["Father's Name",f.father_name],["Father's Occupation",f.father_occupation],["Father's Contact",f.father_phone],["Mother's Name",f.mother_name],["Mother's Occupation",f.mother_occupation],["Mother's Contact",f.mother_phone],['Guardian',f.guardian],['Residential Tel.',f.guardian_phone],['Digital Address',f.digital_address]],2);
+  $('reviewBlocks').innerHTML=h;
+}
+async function submitApp(){
+  collect(0);collect(1);collect(2);
+  if(!app.done.every(Boolean)){toast('Please complete all sections first');goStep(app.done.findIndex(d=>!d));return;}
+  const payload=Object.assign({},app.fields,{surname:STU.surname||STU.full_name,other_names:STU.other_names,aggregate:STU.aggregate});
+  $('submitBtn').textContent='Submittingâ€¦';
+  const {data,error}=await sb.rpc('submit_application',{p_index:session.index,p_token:session.token,payload,p_school:session.school||null});
+  $('submitBtn').textContent='âœ… Submit Enrolment';
+  if(error||!data.ok){
+    if(data&&data.error==='closed'){toast('Admission is closed for this school â€” submission not allowed.');return;}
+    toast('Submission failed â€” please try again');return;
+  }
+  await refreshStudent(); app.current=0; showPanel('dash');
+  toast('Enrolment submitted Â· Admission No '+data.admission_no);
+}
+
+/* ===== DOCUMENTS ===== */
+function schoolCrest(){
+  let u=(SCHOOL&&SCHOOL.school&&SCHOOL.school.crest_url)||'';
+  if(!u){ const s=SCHOOL&&SCHOOL.school; const sid=s&&s.id, snm=s&&s.name;
+    const m=(SCHOOLS_LIST||[]).find(x=>(sid&&String(x.id)===String(sid))||(snm&&x.name===snm));
+    if(m)u=m.crest_url||''; }
+  return u;
+}
+function printDoc(title,bodyHTML,bare){
+  const w=window.open('','_blank'); if(!w){toast('Allow pop-ups to open the document');return;}
+  const sch=(SCHOOL&&SCHOOL.school.name)||'Senior High School';
+  const bodyFont=(title==='Personal Records Form')?"'Times New Roman',Times,serif":'Georgia,serif';
+  const isLetter=(title==='Admission Letter');
+  const wantWM=(title==='Admission Letter'||title==='Personal Records Form');
+  const crest=schoolCrest();
+  const onePage=isLetter
+    ? 'html,body{height:auto}body{max-width:680px;margin:0 auto;padding:18px 28px 10px;line-height:1.35}h1{font-size:18px;margin-bottom:1px}.sub{font-size:12px;margin-bottom:12px}h2{font-size:15px;padding-bottom:3px;margin:6px 0}p{margin:6px 0}table{margin:8px 0}td{padding:3px 4px;font-size:13px}@page{size:A4;margin:12.7mm}@media print{body{margin:0;padding:0;max-width:none}p,table,h2,div{page-break-inside:avoid}}'
+    : '';
+  // Compact layout so the full Personal Records Form fits within 2 A4 pages, with Word-default 1in margins.
+  const recPage=(title==='Personal Records Form')
+    ? 'body{max-width:720px;margin:0 auto;padding:16px 26px;line-height:1.3}h1{font-size:18px;margin-bottom:1px}.sub{font-size:12px;margin-bottom:10px}h2{font-size:14px;padding-bottom:3px;margin:6px 0}p{margin:4px 0;font-size:12.5px}table{margin:6px 0}td{padding:3px 6px;font-size:12px}.sec-h{font-size:11px;padding:5px 6px}@page{size:A4;margin:12.7mm}@media print{body{margin:0;padding:0;max-width:none}tr{page-break-inside:avoid}}'
+    : '';
+  const head='<html><head><title>'+title+'</title><style>body{font-family:'+bodyFont+';max-width:740px;margin:30px auto;padding:0 24px;color:#14201c;line-height:1.6}h1{font-size:20px;text-align:center;margin-bottom:2px}.sub{text-align:center;color:#555;font-size:13px;margin-bottom:24px}h2{font-size:16px;border-bottom:2px solid #1557B0;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin:12px 0}td{padding:6px 4px;border-bottom:1px solid #eee;font-size:14px}.lbl{color:#666;width:230px}.rn{color:#999;font-weight:600;margin-right:4px}.sec-h{background:#1557B0;color:#fff;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:7px 8px;border-bottom:none}img{max-width:100%}.qa-wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:62%;max-width:520px;z-index:0;pointer-events:none;opacity:.2;-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm img{width:100%;height:auto;display:block}body>*{position:relative;z-index:1}@media print{body{margin:0}.sec-h{-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm{opacity:.2}}'+onePage+recPage+'</style></head><body>';
+  const wm=(wantWM&&crest)?'<div class="qa-wm"><img src="'+crest+'" alt=""></div>':'';
+  const banner=bare?'':'<h1>'+sch.toUpperCase()+'</h1><div class="sub">Online Admission Â· '+((SCHOOL&&SCHOOL.config.academic_year)||'2025/2026')+'</div>';
+  const copyright='<p style="margin-top:'+(isLetter?'18px':'30px')+';text-align:center;color:#888;font-size:11px;border-top:1px solid #e5e7eb;padding-top:8px">Copyright Â© 2026 VELOXIS TECH HUB. All rights reserved. Â· Version 1.0</p>';
+  const inner=(bare?'<div style="position:relative">'+bodyHTML+'</div>':banner+bodyHTML)+copyright;
+  w.document.write(head+wm+inner+'</body></html>');
+  w.document.close(); setTimeout(()=>w.print(),350);
+}
+function reopening(){const c=SCHOOL&&SCHOOL.config;if(!c||!c.reopening_date)return '18 October 2025';try{return new Date(c.reopening_date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});}catch(e){return c.reopening_date;}}
+function recordsTableHTML(){
+  const s=STU, r=(s.records||{});
+  const row=(l,v)=>'<tr><td class="lbl">'+l+'</td><td>'+(v||'â€”')+'</td></tr>';
+  const RN=['i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii','xiii','xiv','xv','xvi','xvii','xviii','xix','xx'];
+  let n=0;
+  const rowN=(l,v)=>'<tr><td class="lbl"><span class="rn">'+(RN[n++]||(n))+'.</span> '+l+'</td><td>'+((v==null||v==='')?'â€”':v)+'</td></tr>';
+  const section=(letter,title)=>{ n=0; return '<tr><td class="sec-h" colspan="2">'+letter+'. '+title+'</td></tr>'; };
+  return '<table class="records-table">'
+    +section('A','Placement')
+    +rowN('Full name',studentName(s))+rowN('Gender',s.gender)+rowN('JHS Index No.',s.index)
+    +rowN('Programme',s.programme)+rowN('Residential Status',s.residential)+rowN('Class',s.class||r.class_name)+rowN('House',s.house)+rowN('Admission No.',s.school_no)
+    +section('B','Enrolment Data')
+    +rowN('Aggregate of Best Six',(s.aggregate!=null?s.aggregate:''))+rowN('Raw Score',r.raw_score)+rowN('Enrolment Code',r.enrolment_code)
+    +rowN('JHS Attended',r.jhs_attended)+rowN('JHS Type',r.jhs_type)
+    +section('C','Personal Data')
+    +rowN('Date of Birth',r.dob)+rowN('Place of Birth',r.place_of_birth)+rowN('Nationality',r.nationality)+rowN('Religion',r.religion)+rowN('Denomination',r.denomination)
+    +rowN('Home Address',r.address)+rowN('Home Town',r.town)+rowN('Region',r.region)+rowN('District',r.district)+rowN('Interest(s)',r.interest)+rowN('Ghana Card / NHIS',r.ghana_card)
+    +section('D','Parent / Guardian')
+    +rowN('SMS Contact',r.sms_contact||s.contact)+rowN('WhatsApp',r.whatsapp)+rowN('Other Phone',r.other_phone)+rowN('E-mail',r.email)
+    +rowN('Father\u2019s Name',r.father_name)+rowN('Father\u2019s Occupation',r.father_occupation)+rowN('Father\u2019s Contact',r.father_phone)
+    +rowN('Mother\u2019s Name',r.mother_name)+rowN('Mother\u2019s Occupation',r.mother_occupation)+rowN('Mother\u2019s Contact',r.mother_phone)
+    +rowN('Guardian',r.guardian)+rowN('Guardian Phone',r.guardian_phone)+rowN('Guardian Digital Address',r.digital_address)
+    +'</table>';
+}
+function tplVars(){
+  const s=STU, sc=(SCHOOL&&SCHOOL.school)||{}, cf=(SCHOOL&&SCHOOL.config)||{};
+  const cu=schoolCrest();
+  return {
+    CREST: cu?('<img src="'+cu+'" style="width:90px;height:auto;display:block;margin:0 auto 4px" alt="">'):'',
+    SCHOOL_NAME:sc.name||'', SCHOOL_ADDRESS:sc.address||'', SCHOOL_PHONE:sc.phone||sc.helpdesk||'',
+    HEADMASTER:sc.headmaster_name||'', ACADEMIC_YEAR:cf.academic_year||'2025/2026',
+    DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
+    REPORTING_DATE:reopening(), REPORTING_TIME:cf.reopening_time||'',
+    STUDENT_NAME:studentName(s), INDEX:s.index||'', ADMISSION_NO:s.school_no||'',
+    PROGRAMME:s.programme||'', CLASS:s.class||'To be assigned', HOUSE:s.house||'To be assigned',
+    GENDER:s.gender||'', RESIDENTIAL:s.residential||'', AGGREGATE:(s.aggregate!=null?s.aggregate:''), CONTACT:s.contact||''
+  };
+}
+function qrText(){
+  const v=tplVars();
+  return [v.SCHOOL_NAME,'Name: '+v.STUDENT_NAME,'Index: '+v.INDEX,'Adm No: '+v.ADMISSION_NO,
+    'Programme: '+v.PROGRAMME,'House: '+v.HOUSE,'Residential: '+v.RESIDENTIAL,'Year: '+v.ACADEMIC_YEAR]
+    .filter(Boolean).join('\n');
+}
+function buildQR(text,px){
+  try{ if(typeof qrcode==='undefined'||!text) return '';
+    const q=qrcode(0,'M'); q.addData(text); q.make();
+    const cells=q.getModuleCount(); const cell=Math.max(2,Math.round((px||108)/(cells+8)));
+    return q.createDataURL(cell,cell*4);
+  }catch(e){ return ''; }
+}
+const GES_HEAD='<div style="text-align:center;line-height:1.3">{CREST}<div style="font-size:22px;font-weight:700;letter-spacing:.5px">{SCHOOL_NAME}</div><div style="font-size:12px">(GHANA EDUCATION SERVICE)</div><div style="font-size:12px">{SCHOOL_ADDRESS} &middot; Tel: {SCHOOL_PHONE}</div></div><hr style="border:none;border-top:2px solid #000;margin:8px 0">';
+const LETTER_DEFAULT=GES_HEAD
+ +'<table style="width:100%;font-size:12px"><tr><td style="border:none;text-align:left">Our Ref. No: ........................<br>Your Ref. No: ........................</td><td style="border:none;text-align:right">Date: {DATE}</td></tr></table>'
+ +'<h3 style="text-align:center;text-decoration:underline;margin:12px 0">ADMISSION &mdash; {ACADEMIC_YEAR} ACADEMIC YEAR</h3>'
+ +'<p>I am pleased to inform you that on the basis of your ward&rsquo;s performance at the BECE, Master/Miss <b>{STUDENT_NAME}</b> (Index No. {INDEX}) has been offered admission into <b>{SCHOOL_NAME}</b> as a <b>{RESIDENTIAL}</b> student to pursue the Free SHS Programme. Admission No: <b>{ADMISSION_NO}</b>.</p>'
+ +'<ol><li>He/she is allocated to House <b>{HOUSE}</b>.</li>'
+ +'<li>The Programme offered him/her is <b>{PROGRAMME}</b>. Parents are to note that after admission students have only two weeks to change their course/Programme if they wish to do so.</li>'
+ +'<li>Please find enclosed a copy of the prospectus of the school.</li>'
+ +'<li>Fill the enclosed forms and return them without delay to the school&rsquo;s Administration.</li>'
+ +'<li>You are required to attach a copy of your ward&rsquo;s Admission Letter, BECE Result Slip, Birth Certificate, Placement Slip, and completed Enrolment Form for submission to the Headmaster.</li>'
+ +'<li>Your ward should bring to school four (4) passport-size photographs for his/her personal records.</li>'
+ +'<li><b>ALL NEWLY ADMITTED STUDENTS ARE TO REPORT ON {REPORTING_DATE}.</b></li></ol>'
+ +'<p>Yours faithfully,</p><p style="margin-top:34px">_______________________<br><b>{HEADMASTER}</b><br>(HEADMASTER)</p>';
+const RECORDS_DEFAULT=GES_HEAD
+ +'<h3 style="text-align:center;text-decoration:underline;margin:10px 0">PERSONAL RECORDS FORM &mdash; {ACADEMIC_YEAR}</h3>'
+ +'<p>Student: <b>{STUDENT_NAME}</b> &middot; Index: {INDEX} &middot; Programme: {PROGRAMME}</p>'
+ +'{RECORDS_TABLE}'
+ +'<p style="margin-top:18px">Signature: _______________________ &nbsp;&nbsp; Date: _______________</p>';
+function fillTemplate(tpl){
+  const v=tplVars();
+  let out=String(tpl).replace(/\{RECORDS_TABLE\}/g, recordsTableHTML());
+  const qurl=buildQR(qrText(),108);
+  out=out.replace(/\{QR_CODE\}/g, qurl?'<img src="'+qurl+'" style="width:108px;height:108px" alt="QR code">':'');
+  out=out.replace(/\{([A-Z_]+)\}/g,(m,k)=> (k in v)? (v[k]==null?'':String(v[k])) : m);
+  return out;
+}
+function docAdmissionLetter(){
+  const tpl=(SCHOOL&&SCHOOL.config&&SCHOOL.config.letter_template);
+  printDoc('Admission Letter', fillTemplate(tpl&&tpl.trim()?tpl:LETTER_DEFAULT), true);
+}
+function docRecords(){
+  const tpl=(SCHOOL&&SCHOOL.config&&SCHOOL.config.records_template);
+  printDoc('Personal Records Form', fillTemplate(tpl&&tpl.trim()?tpl:RECORDS_DEFAULT), true);
+}
+function schoolDocUrl(k){ const c=(SCHOOL&&SCHOOL.config)||{}; return c[k]||''; }
+function openUploadedDoc(url){ const w=window.open(url,'_blank'); if(!w)toast('Allow pop-ups to open the document'); }
+function docUndertaking(){
+  const u=schoolDocUrl('undertaking_url'); if(u){return openUploadedDoc(u);}
+  printDoc('Undertaking','<h2>Undertaking</h2><p>I, <b>'+(STU.full_name||'')+'</b> (Index No. '+(STU.index||'')+'), hereby undertake to abide by all the rules and regulations of '+((SCHOOL&&SCHOOL.school.name)||'the school')+'. I understand that any breach may lead to disciplinary action.</p><p style="margin-top:30px">Signature of Student: _______________________</p><p>Signature of Parent / Guardian: _______________________</p><p>Date: _______________________</p>');
+}
+function docSubjects(){
+  const u=schoolDocUrl('subjects_url'); if(u){return openUploadedDoc(u);}
+  const p=progById(STU.programme_id);
+  const subs=p?(p.subjects||'').split(',').map(x=>'<li>'+x.trim()+'</li>').join(''):'<li>To be assigned</li>';
+  printDoc('Programme / Subject Combination','<h2>'+(p?p.name:(STU.programme||'Programme'))+'</h2><p>Subject combination for '+(STU.full_name||'')+':</p><ol>'+subs+'</ol>');
+}
+function docProspectus(){
+  const u=schoolDocUrl('prospectus_url'); if(u){return openUploadedDoc(u);}
+  printDoc('Prospectus','<h2>School Prospectus</h2><p>Welcome to '+((SCHOOL&&SCHOOL.school.name)||'our school')+'. This prospectus outlines what you need to know as a fresh student â€” academic programmes, school rules, boarding arrangements and the items to bring on reporting day.</p><p>For the full printed prospectus, please collect a copy at the administration office on reporting day.</p>');
+}
+
+function gotoSuper(){ try{ if(window.parent&&window.parent!==window&&window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin.html'; }
+function logout(){stopWatchDeletion();session=null;STU=null;clearStudentSession(); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
+
+buildSteps();
+// Phone/contact fields: digits only, max 10
+(function(){
+  const PHONE_IDS=['pf-sms','pf-wa','pf-other','pf-fphone','pf-mphone','pf-gphone','p-phone'];
+  document.addEventListener('input',function(e){
+    const el=e.target;
+    if(el&&el.tagName==='INPUT'&&(PHONE_IDS.indexOf(el.id)>-1||el.type==='tel'||el.getAttribute('inputmode')==='tel')){
+      const v=(el.value||'').replace(/\D/g,'').slice(0,10);
+      if(v!==el.value) el.value=v;
+    }
+  });
+})();
+// Populate the school selectors (login / purchase / retrieve)
+let SCHOOLS_LIST=[];
+const LOGIN_DEFAULTS={
+  title:'QuickAdmissionGH',
+  phone:'0256744028',
+  email:'admissions@quickadmissiongh.com',
+  charge:30,
+  code:'QA'
+};
+const SCHOOL_PROFILE_CACHE_KEY='qag_public_school_profile_cache';
+function firstNonEmpty(){
+  for(let i=0;i<arguments.length;i++){
+    const value=arguments[i];
+    if(value!==undefined&&value!==null&&String(value).trim()!=='') return value;
+  }
+  return '';
+}
+function readSchoolProfileCache(){
+  try{
+    const raw=localStorage.getItem(SCHOOL_PROFILE_CACHE_KEY);
+    const parsed=raw?JSON.parse(raw):{};
+    return parsed&&typeof parsed==='object'?parsed:{};
+  }catch(e){
+    return {};
+  }
+}
+function mergeCachedSchoolProfile(s){
+  if(!s) return s;
+  const key=String(s.id||s.school_id||'');
+  if(!key) return s;
+  const cached=readSchoolProfileCache()[key];
+  if(!cached||typeof cached!=='object') return s;
+  return Object.assign({},s,cached,{id:s.id||cached.id||key});
+}
+function schoolField(s,keys,fallback){
+  const value=firstNonEmpty(...keys.map(key=>s&&s[key]));
+  if(value!=='') return value;
+  return fallback;
+}
+function schoolShortLabel(s){
+  const code=String(schoolField(s,['code','school_code'],'')||'').trim();
+  if(code) return code.toUpperCase();
+  const name=String(schoolField(s,['name','school_name'],'')||'').trim();
+  if(!name) return LOGIN_DEFAULTS.code;
+  const initials=name.split(/\s+/).filter(Boolean).map(word=>word.charAt(0)).join('').slice(0,4).toUpperCase();
+  return initials||LOGIN_DEFAULTS.code;
+}
+function getSelectedSchool(){
+  const select=document.getElementById('login-school');
+  const selectedValue=select?select.value:'';
+  if(!selectedValue||!Array.isArray(SCHOOLS_LIST)) return null;
+  const found=SCHOOLS_LIST.find(s=>
+    String(s.id)===String(selectedValue) ||
+    String(s.school_id)===String(selectedValue) ||
+    String(s.code)===String(selectedValue) ||
+    String(s.school_code)===String(selectedValue) ||
+    String(s.name)===String(selectedValue) ||
+    String(s.school_name)===String(selectedValue)
+  )||null;
+  return mergeCachedSchoolProfile(found);
+}
+function setButtonDisabled(el,disabled){
+  if(!el) return;
+  el.disabled=!!disabled;
+  el.style.opacity=disabled?'.55':'';
+  el.style.pointerEvents=disabled?'none':'';
+}
+function selectedSchoolHelpdeskPhone(selectedSchool){
+  if(!selectedSchool) return LOGIN_DEFAULTS.phone;
+  const helpdeskPhone=firstNonEmpty(
+    selectedSchool.helpdesk_line,
+    selectedSchool.helpdeskLine,
+    selectedSchool.helpdesk_phone,
+    selectedSchool.helpdeskPhone,
+    selectedSchool.support_phone,
+    selectedSchool.supportPhone,
+    selectedSchool.helpdesk,
+    selectedSchool.helpline,
+    selectedSchool.help_line
+  );
+  const schoolPhone=firstNonEmpty(
+    selectedSchool.phone,
+    selectedSchool.contact_phone,
+    selectedSchool.school_phone,
+    selectedSchool.admin_phone
+  );
+  return String(helpdeskPhone||schoolPhone||LOGIN_DEFAULTS.phone).trim()||LOGIN_DEFAULTS.phone;
+}
+function selectedSchoolHelpdeskEmail(selectedSchool){
+  if(!selectedSchool) return LOGIN_DEFAULTS.email;
+  const helpdeskEmail=firstNonEmpty(
+    selectedSchool.helpdesk_email,
+    selectedSchool.helpdeskEmail,
+    selectedSchool.support_email,
+    selectedSchool.supportEmail,
+    selectedSchool.help_email
+  );
+  const schoolEmail=firstNonEmpty(
+    selectedSchool.email,
+    selectedSchool.contact_email,
+    selectedSchool.school_email,
+    selectedSchool.admin_email
+  );
+  return String(helpdeskEmail||schoolEmail||LOGIN_DEFAULTS.email).trim()||LOGIN_DEFAULTS.email;
+}
+function updateBlueBannerHelpdesk(){
+  const selectedSchool=getSelectedSchool();
+  const finalPhone=selectedSchoolHelpdeskPhone(selectedSchool);
+  const finalEmail=selectedSchoolHelpdeskEmail(selectedSchool);
+  const phoneText=$('blueBannerHelpdeskPhone');
+  const phoneLink=$('blueBannerHelpdeskPhoneLink');
+  const emailText=$('blueBannerHelpdeskEmail');
+  const emailLink=$('blueBannerHelpdeskEmailLink');
+  if(phoneText) phoneText.textContent=finalPhone;
+  if(phoneLink) phoneLink.href='tel:'+finalPhone.replace(/\s+/g,'');
+  if(emailText) emailText.textContent=finalEmail;
+  if(emailLink) emailLink.href='mailto:'+finalEmail;
+}
+async function loadSchools(){
+  const ids=['login-school','p-school-sel','r-school'];
+  const selected=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)?document.getElementById(id).value:'']));
+  let rpcList=[],schools=[],configs=[];
+  try{ const {data}=await sb.rpc('list_schools'); rpcList=Array.isArray(data)?data:[]; }catch(e){}
+  try{ const {data}=await sb.from('schools').select('*'); schools=Array.isArray(data)?data:[]; }catch(e){}
+  try{ const {data}=await sb.from('school_config').select('*'); configs=Array.isArray(data)?data:[]; }catch(e){}
+  const merged=new Map();
+  [rpcList,schools].forEach(rows=>{
+    rows.forEach(row=>{
+      const id=row&&(row.id||row.school_id);
+      if(!id) return;
+      const key=String(id);
+      const current=merged.get(key)||{};
+      merged.set(key,Object.assign({},current,row,{id:row.id||current.id||row.school_id}));
+    });
+  });
+  configs.forEach(row=>{
+    const id=row&&row.school_id;
+    if(!id) return;
+    const key=String(id);
+    const current=merged.get(key)||{id:id};
+    merged.set(key,Object.assign({},current,row,{id:id}));
+  });
+  SCHOOLS_LIST=Array.from(merged.values()).sort((a,b)=>{
+    const an=String(schoolField(a,['name','school_name'],'')||'');
+    const bn=String(schoolField(b,['name','school_name'],'')||'');
+    return an.localeCompare(bn);
+  }).map(function(s){ return mergeCachedSchoolProfile(s)||s; });
+  const opts='<option value="">-- Select your school --</option>'+SCHOOLS_LIST.map(s=>`<option value="${s.id}">${String(schoolField(s,['name','school_name'],'Unnamed school')).replace(/</g,'&lt;')}</option>`).join('');
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.innerHTML=SCHOOLS_LIST.length?opts:'<option value="">No schools available</option>';
+    if(selected[id]&&SCHOOLS_LIST.some(s=>String(s.id)===String(selected[id]))) el.value=selected[id];
+  });
+  onLoginSchoolChange();
+}
+function schoolStatus(id){
+  const s=SCHOOLS_LIST.find(x=>String(x.id)===String(id));
+  if(!s) return null;
+  if(typeof s.admission_open==='boolean') return s.admission_open?'OPEN':'CLOSED';
+  const raw=schoolField(s,['admission_status'],'');
+  if(!raw) return null;
+  const status=String(raw).trim().toUpperCase();
+  if(['OPEN','OPENED','ACTIVE','TRUE','YES'].includes(status)) return 'OPEN';
+  return 'CLOSED';
+}
+function admissionClosed(id){
+  return !!id&&schoolStatus(id)==='CLOSED';
+}
+function onLoginSchoolChange(){
+  const sid=$('login-school')?$('login-school').value:'';
+  const s=getSelectedSchool();
+  const schoolName=String(schoolField(s,['name','school_name'],LOGIN_DEFAULTS.title));
+  const schoolCharge=Number(schoolField(s,['service_charge'],LOGIN_DEFAULTS.charge));
+  const chargeValue=Number.isFinite(schoolCharge)?schoolCharge:Number(LOGIN_DEFAULTS.charge);
+  const title=$('schTitle');
+  const logo=$('schLogo'), crestText=$('schCrestText');
+  const welcomeTitle=$('loginWelcomeTitle'), welcomeSub=$('loginWelcomeSubtitle');
+  const charge=$('loginCharge'), formSub=$('loginFormSub');
+  const crestLabel=schoolShortLabel(s);
+  const crestUrl=String(schoolField(s,['crest_url','logo_url'],'')||'').trim();
+  if(title) title.textContent=s?schoolName:LOGIN_DEFAULTS.title;
+  if(welcomeTitle) welcomeTitle.textContent='Welcome to '+(s?schoolName:LOGIN_DEFAULTS.title);
+  if(welcomeSub) welcomeSub.textContent='Online Admission Portal';
+  if(formSub) formSub.textContent=s?'Enter your BECE index number and admission token to continue.':'Select your school and enter your details to continue.';
+  if(charge) charge.textContent='A service charge of GHS '+chargeValue.toFixed(2)+' is required.';
+  if(logo){
+    logo.onerror=function(){
+      this.style.display='none';
+      if(crestText){
+        crestText.style.display='';
+        crestText.textContent=crestLabel;
+      }
+    };
+    if(crestUrl){
+      logo.src=crestUrl;
+      logo.style.display='block';
+      if(crestText) crestText.style.display='none';
+    }else if(!s){
+      logo.src='veloxis-logo.png';
+      logo.style.display='block';
+      if(crestText) crestText.style.display='none';
+    }else{
+      logo.style.display='none';
+      logo.removeAttribute('src');
+      if(crestText){
+        crestText.style.display='';
+        crestText.textContent=crestLabel;
+      }
+    }
+  }
+  updateBlueBannerHelpdesk();
+  const closed=admissionClosed(sid);
+  const banner=$('admClosedBanner');
+  if(banner) banner.style.display=closed?'block':'none';
+  setButtonDisabled($('loginBtn'),closed);
+  setButtonDisabled($('buyTokenBtn'),closed);
+}
+async function initStudentPortal(){
+  try{
+    await Promise.allSettled([loadSchools(),bootStudent()]);
+  }finally{
+    finishStudentBoot();
+  }
+}
+initStudentPortal();
+window.addEventListener('storage',function(evt){
+  if(evt&&evt.key===SCHOOL_PROFILE_CACHE_KEY){
+    try{ onLoginSchoolChange(); }catch(e){}
+  }
+});
+// Live school detection on the purchase form
+(function(){
+  var pi=document.getElementById('p-index'); if(!pi)return;
+  var box=document.getElementById('p-school');
+  pi.addEventListener('blur', async function(){
+    var v=pi.value.trim(); if(!box)return;
+    if(!v){box.style.display='none';return;}
+    try{
+      var psid=document.getElementById('p-school-sel'); var sidv=psid?psid.value:null;
+      var {data}=await sb.rpc('find_school_by_index',{p_index:v,p_school:sidv||null});
+      if(data&&data.ok){ box.innerHTML='Applying to <b>'+data.name+'</b> Â· service charge GHS '+Number(data.charge||0).toFixed(2); box.className='notice info'; box.style.display='block'; }
+      else { box.innerHTML='We could not match this index to a participating school. Check the number, or contact your school office.'; box.className='notice warn'; box.style.display='block'; }
+    }catch(e){}
+  });
+})();
+</script>
+<div class="footer-gap" aria-hidden="true"></div>
+<footer class="portal-footer">Copyright Â© 2026 VELOXIS TECH HUB. All rights reserved. Â· Version 1.0</footer>
+</body>
+</html>
+

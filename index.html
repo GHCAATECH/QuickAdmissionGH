@@ -1453,7 +1453,7 @@ function docProspectus(){
   printDoc('Prospectus','<h2>School Prospectus</h2><p>Welcome to '+((SCHOOL&amp;&amp;SCHOOL.school.name)||'our school')+'. This prospectus outlines what you need to know as a fresh student — academic programmes, school rules, boarding arrangements and the items to bring on reporting day.</p><p>For the full printed prospectus, please collect a copy at the administration office on reporting day.</p>');
 }
 
-function gotoSuper(){ try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin_12.html'; }
+function gotoSuper(){ try{ if(window.parent&amp;&amp;window.parent!==window&amp;&amp;window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin.html'; }
 function logout(){stopWatchDeletion();session=null;STU=null;clearStudentSession(); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
 
 buildSteps();
@@ -6200,11 +6200,23 @@ function qaApplyTab(t){
   try{localStorage.setItem(qaStorageKey('qag_active_tab'),t);}catch(e){}
 }
 function qaPrimeFrames(){
+  const student=document.getElementById('frame-student');
+  if(student&&!student.dataset.boundSrc){
+    student.dataset.boundSrc='1';
+    student.removeAttribute('srcdoc');
+    student.src='student-portal.html';
+  }
   const school=document.getElementById('frame-school');
   if(school&&!school.dataset.boundSrc){
     school.dataset.boundSrc='1';
     school.removeAttribute('srcdoc');
-    school.src='school-admin.html?v=20260618-school-login-ui';
+    school.src='school-admin.html';
+  }
+  const superAdmin=document.getElementById('frame-super');
+  if(superAdmin&&!superAdmin.dataset.boundSrc){
+    superAdmin.dataset.boundSrc='1';
+    superAdmin.removeAttribute('srcdoc');
+    superAdmin.src='super-admin.html';
   }
   const manual=document.getElementById('frame-manual');
   if(manual&&!manual.dataset.boundSrc){
