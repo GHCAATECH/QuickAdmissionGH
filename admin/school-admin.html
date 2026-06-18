@@ -1528,17 +1528,18 @@ async function deleteStudent(id){
   const note=s.submitted?'\n\nNote: this student has ALREADY SUBMITTED their admission — deleting removes their submitted records too.':'';
   if(!confirm('Delete student '+s.name+' ('+s.index+')?\n\nThis removes the student record, their placement entry, payments and tokens.'+note+'\n\nThis cannot be undone.'))return;
   if(!confirm('Final confirmation — permanently delete '+s.name+'?'))return;
-  const {data,error}=await sb.rpc('delete_student',{p_school:SB_SCHOOL.id,p_student:s._id});
+  const {data,error}=await invokeFnDetailed('delete-student',{school_id:SB_SCHOOL.id,student_id:s._id});
   if(error){toast('Delete failed: '+error.message);return;}
   if(!data||!data.ok){toast('Delete failed: '+((data&&data.error)||'unknown'));return;}
   // best-effort: remove the uploaded enrolment-form file from storage
   if(data.form_url){ try{ const m=String(data.form_url).match(/enrolment-forms\/(.+)$/); if(m) await sb.storage.from('enrolment-forms').remove([decodeURIComponent(m[1])]); }catch(e){} }
   students=students.filter(x=>x.id!==id);
   placement=placement.filter(x=>x.index!==s.index);
+  payments=payments.filter(function(p){ return String(p.index||'')!==String(s.index); });
   selected.delete(id);
   notifyStudentPortalRefresh('student-delete',{index:s.index});
   closeModal(); renderStudents(); renderStats&&renderStats();
-  toast('Student deleted');
+  toast('Student deleted'+(data.payments?(' - removed '+data.payments+' payment record(s)'):''));
 }
 async function saveStudent(id){
   if(roGuard())return;
@@ -1724,8 +1725,9 @@ function smsTargets(){
   var targets=[], missing=0;
   Object.keys(merged).forEach(function(idx){
     var item=merged[idx], phone=cleanSmsText(item.phone);
+    var student=students.find(function(row){ return String(row.index)===String(idx); })||null;
     if(!validPhone(phone)){ missing++; return; }
-    targets.push({index:idx,name:smsTargetName(item.row),prog:cleanSmsText(item.row.prog),sms:phone});
+    targets.push({index:idx,studentId:(student&&student._id)||null,name:smsTargetName(item.row),prog:cleanSmsText(item.row.prog),sms:phone});
   });
   targets.sort(function(a,b){ return a.name.localeCompare(b.name)||a.index.localeCompare(b.index); });
   targets.total=list.length;
@@ -1793,7 +1795,7 @@ sendSms=async function(){
   const btn=event&&event.target?event.target.closest('button'):null; if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
   try{
     const messages=targets.map(function(target){
-      return {to:target.sms,body:personalize(tpl,target)};
+      return {to:target.sms,body:personalize(tpl,target),student_id:target.studentId||null,student_index:target.index||null};
     }).filter(function(msg){ return !!msg.to&&!!msg.body; });
     const {data,error}=await invokeFnDetailed('send-sms',{
       mode:'bulk',
@@ -1805,11 +1807,19 @@ sendSms=async function(){
     });
     if(error||(data&&data.error)){toast('SMS send failed: '+((data&&data.message)||(error&&error.message)||'error'));return;}
     if(data&&data.balance!=null&&!Number.isNaN(Number(data.balance))) smsBalance=Number(data.balance);
-    smsHistory.unshift({date:new Date().toISOString().slice(0,10),group,recip:n,msg:tpl,status:(data&&data.status)||'sent'});
-    document.getElementById('smsBody').value=''; if($('smsTpl')) $('smsTpl').value=''; renderSms(); renderStats();
-    await loadSchoolData({full_name:SB_ADMIN_NAME,role:(SB_PERMS==null?'super_admin':'school_admin'),permissions:SB_PERMS,school_id:(SB_SCHOOL&&SB_SCHOOL.id)||null});
-    go('sms');
-    if(data&&data.failed){ toast('SMS finished: '+(data.sent||0)+' sent, '+(data.failed||0)+' failed.'); }
+    const sentCount=Number((data&&data.sent)||0);
+    const failedCount=Number((data&&data.failed)||0);
+    const skippedCount=Number((data&&data.skipped)||0);
+    if(sentCount||failedCount){
+      smsHistory.unshift({date:new Date().toISOString().slice(0,10),group,recip:sentCount+failedCount,msg:tpl,status:(data&&data.status)||'sent'});
+      document.getElementById('smsBody').value=''; if($('smsTpl')) $('smsTpl').value=''; renderSms(); renderStats();
+      await loadSchoolData({full_name:SB_ADMIN_NAME,role:(SB_PERMS==null?'super_admin':'school_admin'),permissions:SB_PERMS,school_id:(SB_SCHOOL&&SB_SCHOOL.id)||null});
+      go('sms');
+    }
+    if(skippedCount && !sentCount && !failedCount){ toast((data&&data.message)||('All matching students already received this SMS.')); }
+    else if(failedCount && sentCount){ toast('SMS finished: '+sentCount+' sent, '+failedCount+' failed'+(skippedCount?(', '+skippedCount+' skipped (already sent)'):'')+'.'); }
+    else if(failedCount){ toast('SMS finished: '+failedCount+' failed'+(skippedCount?(', '+skippedCount+' skipped (already sent)'):'')+'.'); }
+    else if(skippedCount){ toast((data&&data.message)||('SMS finished: '+sentCount+' sent, '+skippedCount+' skipped (already sent).')); }
     else { toast((data&&data.message)||('Sent to '+(data&&data.sent!=null?data.sent:n)+' recipient(s).')); }
   }finally{
     if(btn){ btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send SMS to Selected Candidates (<span id="smsRecip">'+n+'</span>)'; }
@@ -2392,7 +2402,7 @@ function fillSchoolProfileForm(){
   if(theme) theme.value=(SB_SCHOOL.theme_color||'#1557B0');
 }
 async function fetchSchoolSmsHistory(schoolId){
-  let res=await sb.from('sms_logs').select('*').eq('school_id',schoolId).order('sent_at',{ascending:false});
+  let res=await sb.from('sms_logs').select('*').eq('school_id',schoolId).is('external_id',null).order('sent_at',{ascending:false});
   if(res&&res.error){
     res=await sb.from('sms_log').select('*').eq('school_id',schoolId).order('sent_at',{ascending:false});
   }

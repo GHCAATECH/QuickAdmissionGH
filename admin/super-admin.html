@@ -1130,7 +1130,7 @@ async function superLogin(){
 async function logout(){ if(!confirm('Log out of the Super Admin portal?'))return; try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 
 async function fetchPlatformSmsHistory(){
-  let res=await sb.from('sms_logs').select('*').order('sent_at',{ascending:false});
+  let res=await sb.from('sms_logs').select('*').is('external_id',null).order('sent_at',{ascending:false});
   if(res&&res.error){
     res=await sb.from('sms_log').select('*').order('sent_at',{ascending:false});
   }
@@ -1303,9 +1303,10 @@ sendBulkSms=async function(){
       if(!school||!school._id) return;
       const key=String(school._id);
       if(!grouped.has(key)) grouped.set(key,{school:school,messages:[]});
-      grouped.get(key).messages.push({to:saStudentSms(student),body:body});
+      grouped.get(key).messages.push({to:saStudentSms(student),body:body,student_id:student._id||null,student_index:student.index||null});
     });
     let sent=0, failed=0, partial=false;
+    let skipped=0;
     for(const entry of grouped.values()){
       const school=entry.school;
       const res=await invokeFnDetailed('send-sms',{
@@ -1325,16 +1326,25 @@ sendBulkSms=async function(){
       }
       sent+=Number(data&&data.sent||0);
       failed+=Number(data&&data.failed||0);
+      skipped+=Number(data&&data.skipped||0);
       if(data&&data.status==='pending') partial=true;
-      smsHistory.unshift({date:new Date().toISOString().slice(0,10),school:school.id,group,recip:entry.messages.length,msg:body,status:(data&&data.status)||'sent'});
+      if(Number(data&&data.sent||0) || Number(data&&data.failed||0)){
+        smsHistory.unshift({date:new Date().toISOString().slice(0,10),school:school.id,group,recip:Number(data&&data.sent||0)+Number(data&&data.failed||0),msg:body,status:(data&&data.status)||'sent'});
+      }
     }
-    document.getElementById('smsBody').value='';
-    renderSms(); renderStats();
-    if(failed&&sent) toast('Broadcast finished: '+sent+' sent, '+failed+' failed.');
-    else if(failed&&!sent) toast('Broadcast could not be delivered. Check sender IDs, SMS settings, or provider response.');
+    if(sent||failed){
+      document.getElementById('smsBody').value='';
+      renderSms(); renderStats();
+    }
+    if(skipped&&!sent&&!failed) toast('All matching students already received this SMS.');
+    else if(failed&&sent) toast('Broadcast finished: '+sent+' sent, '+failed+' failed'+(skipped?(', '+skipped+' skipped (already sent)'):'')+'.');
+    else if(failed&&!sent) toast('Broadcast could not be delivered. Check sender IDs, SMS settings, or provider response.'+(skipped?(' '+skipped+' already-sent student(s) were skipped.'):''));        
+    else if(skipped) toast((partial?'Broadcast queued / partial for ':'Broadcast sent to ')+sent+' recipient(s); '+skipped+' already-sent student(s) skipped.');
     else toast((partial?'Broadcast queued / partial for ':'Broadcast sent to ')+sent+' recipient(s).');
-    await loadSA();
-    go('sms');
+    if(sent||failed){
+      await loadSA();
+      go('sms');
+    }
   }finally{
     if(btn){
       btn.disabled=false;

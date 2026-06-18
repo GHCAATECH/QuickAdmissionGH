@@ -53,6 +53,23 @@ function renderTemplate(template: string, vars: Record<string, string>) {
   return template.replace(/\{([a-z_]+)\}/gi, (_, rawKey) => vars[rawKey.toLowerCase()] ?? "");
 }
 
+type BulkCandidate = {
+  recipient: string;
+  message: string;
+  studentId: string | null;
+  externalId: string | null;
+};
+
+function bulkCandidateIdentifier(candidate: BulkCandidate) {
+  return safeString(candidate.externalId) || safeString(candidate.studentId) || safeString(candidate.recipient);
+}
+
+function bulkCandidateKey(candidate: BulkCandidate) {
+  const identifier = bulkCandidateIdentifier(candidate);
+  if (!identifier) return "";
+  return `${identifier}::${safeString(candidate.message)}`;
+}
+
 function extractBalance(payload: unknown) {
   if (!payload || typeof payload !== "object") return null;
   const record = payload as Record<string, unknown>;
@@ -172,6 +189,29 @@ async function syncSchoolBalance(schoolId: string, balance: number | null) {
   } catch {
     // Balance sync is best-effort only.
   }
+}
+
+async function getExistingBulkDeliveryKeys(schoolId: string) {
+  const { data, error } = await admin
+    .from("sms_logs")
+    .select("student_id, external_id, phone, message, status")
+    .eq("school_id", schoolId)
+    .eq("recipient_group", "bulk-recipient")
+    .in("status", ["sent", "pending"]);
+
+  if (error) throw new Error(error.message);
+
+  const keys = new Set<string>();
+  for (const row of data ?? []) {
+    const record = row as Record<string, unknown>;
+    const identifier =
+      safeString(record.external_id) ||
+      safeString(record.student_id) ||
+      normalizePhone(record.phone);
+    const message = safeString(record.message);
+    if (identifier && message) keys.add(`${identifier}::${message}`);
+  }
+  return keys;
 }
 
 async function handleSubmissionConfirmation(req: Request, body: Record<string, unknown>) {
@@ -424,27 +464,73 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
   if (!senderId) return json({ ok: false, error: "missing_school_code", message: "This school has no sender ID configured." }, 422);
   if (settings?.sms_enabled === false) return json({ ok: false, error: "sms_disabled", message: "SMS is disabled for this school." }, 422);
 
-  const grouped = new Map<string, string[]>();
+  const candidates: BulkCandidate[] = [];
+  const requestKeys = new Set<string>();
   for (const row of messages) {
     if (!row || typeof row !== "object") continue;
     const recipient = normalizePhone((row as Record<string, unknown>).to);
     const message = safeString((row as Record<string, unknown>).body);
+    const studentId = safeString(
+      (row as Record<string, unknown>).student_id ?? (row as Record<string, unknown>).studentId,
+    ) || null;
+    const externalId = safeString(
+      (row as Record<string, unknown>).student_index ??
+      (row as Record<string, unknown>).index ??
+      (row as Record<string, unknown>).external_id ??
+      (row as Record<string, unknown>).externalId,
+    ) || null;
     if (!recipient || !message) continue;
-    const list = grouped.get(message) ?? [];
-    list.push(recipient);
-    grouped.set(message, list);
+    const candidate: BulkCandidate = { recipient, message, studentId, externalId };
+    const candidateKey = bulkCandidateKey(candidate) || `${recipient}::${message}`;
+    if (requestKeys.has(candidateKey)) continue;
+    requestKeys.add(candidateKey);
+    candidates.push(candidate);
   }
 
-  if (!grouped.size) {
+  if (!candidates.length) {
     return json({ ok: false, error: "validation", message: "No valid recipients were supplied." }, 400);
+  }
+
+  const existingKeys = await getExistingBulkDeliveryKeys(schoolId);
+  const sendableCandidates: BulkCandidate[] = [];
+  let skipped = 0;
+  for (const candidate of candidates) {
+    const candidateKey = bulkCandidateKey(candidate);
+    if (candidateKey && existingKeys.has(candidateKey)) {
+      skipped += 1;
+      continue;
+    }
+    sendableCandidates.push(candidate);
+  }
+
+  if (!sendableCandidates.length) {
+    return json({
+      ok: true,
+      status: "duplicate",
+      sent: 0,
+      failed: 0,
+      skipped,
+      balance: null,
+      sender_id: senderId,
+      message: "All matching students already received this SMS.",
+    });
+  }
+
+  const grouped = new Map<string, BulkCandidate[]>();
+  for (const candidate of sendableCandidates) {
+    const list = grouped.get(candidate.message) ?? [];
+    list.push(candidate);
+    grouped.set(candidate.message, list);
   }
 
   let sent = 0;
   let failed = 0;
   let balance: number | null = null;
   const providerResponses: unknown[] = [];
+  const recipientLogs: Record<string, unknown>[] = [];
 
-  for (const [message, recipients] of grouped.entries()) {
+  for (const [message, batchCandidates] of grouped.entries()) {
+    const recipients = batchCandidates.map((candidate) => candidate.recipient);
     const result = await sendArkeselSms({ sender: senderId, message, recipients });
     providerResponses.push({
       message,
@@ -453,8 +539,29 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     });
     const batchBalance = extractBalance(result.payload);
     if (batchBalance != null) balance = batchBalance;
-    if (responseStatus(result) === "sent") sent += recipients.length;
+    const batchStatus = responseStatus(result);
+    if (batchStatus === "sent") sent += recipients.length;
     else failed += recipients.length;
+    for (const candidate of batchCandidates) {
+      recipientLogs.push({
+        school_id: schoolId,
+        student_id: candidate.studentId,
+        recipient_group: "bulk-recipient",
+        recipients: 1,
+        phone: candidate.recipient,
+        sender_id: senderId,
+        message: candidate.message,
+        status: batchStatus,
+        sent_by: safeString(profile?.full_name) || "Admin",
+        template_name: safeString(body.template_name) || null,
+        api_response: result.payload ?? { raw: result.rawText, http_status: result.status },
+        external_id: candidate.externalId,
+      });
+    }
+  }
+
+  if (recipientLogs.length) {
+    await admin.from("sms_logs").insert(recipientLogs);
   }
 
   const status = failed === 0 ? "sent" : sent > 0 ? "pending" : "failed";
@@ -469,7 +576,7 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     status,
     sent_by: safeString(profile?.full_name) || "Admin",
     template_name: safeString(body.template_name) || null,
-    api_response: providerResponses,
+    api_response: { batches: providerResponses, skipped },
   });
 
   await syncSchoolBalance(schoolId, balance);
@@ -479,8 +586,17 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     status,
     sent,
     failed,
+    skipped,
     balance,
     sender_id: senderId,
+    message:
+      failed > 0
+        ? (sent > 0
+          ? `SMS finished: ${sent} sent, ${failed} failed${skipped ? `, ${skipped} skipped` : ""}.`
+          : `SMS failed for ${failed} recipient(s)${skipped ? `, ${skipped} skipped` : ""}.`)
+        : (skipped
+          ? `SMS sent to ${sent} recipient(s); ${skipped} already-sent student(s) skipped.`
+          : `SMS sent to ${sent} recipient(s).`),
   }, failed === 0 ? 200 : 207);
 }
 
