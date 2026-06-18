@@ -1,3 +1,14 @@
+# Allow clean URLs without the .html extension.
+RewriteEngine On
+
+# Keep real files and folders working normally.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# If a matching HTML file exists, serve it.
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+?)/?$ $1.html [L]
+
 # Always serve the latest HTML (prevents returning users seeing a stale cached page)
 <FilesMatch "\.html$">
   Header set Cache-Control "no-cache, no-store, must-revalidate"
