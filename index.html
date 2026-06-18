@@ -1125,7 +1125,7 @@ async function payToken(method){
   const email=$('p-email').value.trim()||(idx+'@noemail.qadmission');
   if(!PAYSTACK_PUBLIC_KEY){toast('Paystack public key is not configured for this portal yet.');return;}
   if(paystackModeMismatch()){toast('Paystack public and secret keys are in different modes - contact the administrator.');return;}
-  if(paystackTestModeOnLive()){toast('Paystack is still in test mode on the live portal - update the live keys before taking payment.');return;}
+  if(paystackTestModeOnLive()){toast('Paystack is running in test mode. Use test payment details only.');}
   if(!window.PaystackPop){toast('Payment library didn\u2019t load - check your connection and reload');return;}
   toast('Opening secure payment for '+sch.name+'\u2026');
   const handler=window.PaystackPop.setup({
