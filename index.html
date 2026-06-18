@@ -788,6 +788,25 @@ async function loadPaystackConfig(){
     PAYSTACK_CONFIG=Object.assign({},PAYSTACK_CONFIG,{loaded:true,error:'config_unreachable'});
   }
 }
+async function studentLoginRequest(payload){
+  const body={p_index:payload.p_index,p_token:payload.p_token,p_school:payload.p_school||null};
+  try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/student-login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
+      body:JSON.stringify(body)
+    });
+    const data=await r.json().catch(()=>null);
+    if(data&&(typeof data.ok==='boolean'||data.student||data.error)) return {data,error:null};
+    if(!r.ok) return {data:null,error:{message:(data&&data.message)||('Login service returned '+r.status)}};
+  }catch(e){}
+  try{
+    const {data,error}=await sb.rpc('student_login',body);
+    return {data,error};
+  }catch(e){
+    return {data:null,error:{message:(e&&e.message)||'Login service unavailable'}};
+  }
+}
 const progById=id=>PROGRAMMES.find(p=>p.id===id);
 const initials=n=>{const w=(n||'').trim().split(' ').filter(Boolean);return ((w[0]&&w[0][0]||'?')+(w[1]&&w[1][0]||'')).toUpperCase();};
 function qagTabScope(){
@@ -919,7 +938,7 @@ async function doLogin(){
   if(!tok){$('f-token').classList.add('err');return;}
   if(btn){btn.disabled=true;btn.style.pointerEvents='none';btn.style.opacity='.8';btn.innerHTML='Signing in...';}
   try{
-    const {data,error}=await sb.rpc('student_login',{p_index:idx,p_token:tok,p_school:sid});
+    const {data,error}=await studentLoginRequest({p_index:idx,p_token:tok,p_school:sid});
     if(error){toast('Login failed - '+error.message);return;}
     if(!data.ok){
       if(data.error==='index')$('f-index').classList.add('err');
@@ -939,7 +958,7 @@ async function bootStudent(){
   const s=getStudentSession();
   if(!s||!s.index||!s.token) return;
   try{
-    const {data}=await sb.rpc('student_login',{p_index:s.index,p_token:s.token,p_school:s.school||null});
+    const {data}=await studentLoginRequest({p_index:s.index,p_token:s.token,p_school:s.school||null});
     if(data&&data.ok){ session=s; STU=data.student; await applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); }
     else { session=null; STU=null; clearStudentSession(); showScreen('s-login'); }
   }catch(e){}
@@ -947,7 +966,7 @@ async function bootStudent(){
 async function refreshStudent(){
   if(!session||!session.index||!session.token) return;
   const activeSession={index:session.index,token:session.token,school:session.school||null};
-  const {data}=await sb.rpc('student_login',{p_index:activeSession.index,p_token:activeSession.token,p_school:activeSession.school});
+  const {data}=await studentLoginRequest({p_index:activeSession.index,p_token:activeSession.token,p_school:activeSession.school});
   if(!session||session.index!==activeSession.index||session.token!==activeSession.token||(session.school||null)!==activeSession.school) return;
   if(data&&data.ok){STU=data.student;await applySchool(data);hydrate();}
   else if(data&&!data.ok){ revokeAccess(); }
@@ -960,7 +979,7 @@ function revokeAccess(){
 async function validateSession(){
   if(!session||!session.index) return;
   try{
-    const {data}=await sb.rpc('student_login',{p_index:session.index,p_token:session.token,p_school:session.school||null});
+    const {data}=await studentLoginRequest({p_index:session.index,p_token:session.token,p_school:session.school||null});
     if(!data||!data.ok) revokeAccess();
   }catch(e){}
 }
@@ -1172,7 +1191,7 @@ async function verifyPayment(reference, idx, name, school){
   window._newToken={idx,tk:data.token};
   toast('Payment confirmed \u2014 signing you in\u2026');
   session={index:idx,token:data.token,school:school||null};
-  const {data:login}=await sb.rpc('student_login',{p_index:idx,p_token:data.token,p_school:school||null});
+  const {data:login}=await studentLoginRequest({p_index:idx,p_token:data.token,p_school:school||null});
   if(login&&login.ok){ STU=login.student; await applySchool(login); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome! Save your token: '+data.token); }
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }
