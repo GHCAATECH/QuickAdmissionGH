@@ -919,7 +919,7 @@ async function applySchool(data){
   }catch(e){}
   if(data.school){
     $('topSchool').textContent=(data.school.name||'').toUpperCase();
-    const helpdesk=firstText(data.school.helpdesk,data.school.phone,LOGIN_DEFAULTS.phone);
+    const helpdesk=firstNonEmpty(data.school.helpdesk,data.school.phone,LOGIN_DEFAULTS.phone);
     document.querySelectorAll('.helpline a').forEach(a=>{a.textContent=helpdesk;a.href='tel:'+helpdesk;});
   }
   if(data.config) $('topYear').textContent='Admission Year: '+(data.config.academic_year||'2025/2026');
