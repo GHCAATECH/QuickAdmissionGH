@@ -1347,15 +1347,25 @@ async function deleteAllStudentRecords(){
   const typed=prompt('This is irreversible. Type DELETE to confirm:');
   if((typed||'').trim().toUpperCase()!=='DELETE'){toast('Cancelled — not deleted');return;}
   toast('Deleting all student records…');
-  const {data,error}=await sb.rpc('delete_all_student_records',{p_school:SB_SCHOOL.id});
+  const {data,error}=await invokeFnDetailed('delete-school-records',{school_id:SB_SCHOOL.id});
   if(error){toast('Delete failed: '+error.message);return;}
   if(!data||!data.ok){
     const e=data&&data.error;
     toast('Delete failed: '+(e==='owner_only'?'only the school owner can do this':(e||'unknown')));return;
   }
-  placement=[]; students=[]; selected&&selected.clear&&selected.clear();
+  if(Array.isArray(data.form_urls) && data.form_urls.length){
+    try{
+      const paths=data.form_urls.map(function(url){
+        const m=String(url||'').match(/enrolment-forms\/(.+)$/);
+        return m?decodeURIComponent(m[1]):'';
+      }).filter(Boolean);
+      if(paths.length) await sb.storage.from('enrolment-forms').remove(paths);
+    }catch(e){}
+  }
+  placement=[]; students=[]; payments=[]; selected&&selected.clear&&selected.clear();
   if(typeof renderPlacement==='function')renderPlacement();
   if(typeof renderStudents==='function')renderStudents();
+  if(typeof renderFinance==='function')renderFinance();
   if(typeof renderStats==='function')renderStats();
   notifyStudentPortalRefresh('student-records-delete-all');
   toast('Done — deleted '+(data.students||0)+' student(s), '+(data.placements||0)+' placement(s), '+(data.payments||0)+' payment(s)');
