@@ -21,10 +21,11 @@
     --shadow:0 1px 2px rgba(20,32,28,.05),0 8px 24px -12px rgba(20,32,28,.12);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{-webkit-text-size-adjust:100%}
+  html{-webkit-text-size-adjust:100%;min-height:100%;overflow-x:hidden}
   body{
     font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);
-    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    font-size:clamp(13px,.82vw,14px);line-height:1.5;-webkit-font-smoothing:antialiased;
+    min-height:100vh;min-height:100dvh;overflow-x:hidden;
   }
   .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
   .display{font-family:'Space Grotesk',sans-serif}
@@ -32,7 +33,7 @@
   a{color:inherit;text-decoration:none}
 
   /* ---------- App shell ---------- */
-  .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+  .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;min-height:100dvh}
   body.auth-booting .app{display:none!important}
 
   /* ---------- Sidebar ---------- */
@@ -79,14 +80,14 @@
   /* ---------- Main ---------- */
   .main{display:flex;flex-direction:column;min-width:0}
   .topbar{
-    display:flex;align-items:center;gap:16px;padding:14px 28px;background:var(--surface);
-    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;
+    display:flex;align-items:center;gap:16px;padding:14px clamp(12px,2.2vw,28px);background:var(--surface);
+    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex-wrap:wrap;
   }
   .hamburger{display:none;width:38px;height:38px;border-radius:8px;background:var(--surface-2);align-items:center;justify-content:center}
   .hamburger svg{width:18px;height:18px}
   .pagetitle{font-family:'Space Grotesk';font-weight:600;font-size:18px}
   .pagetitle small{display:block;font-family:'Inter';font-weight:400;color:var(--muted);font-size:12px;margin-top:1px}
-  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
   .clock{font-size:12.5px;color:var(--ink-soft);background:var(--surface-2);padding:7px 12px;border-radius:8px;border:1px solid var(--line)}
   .icon-btn{width:38px;height:38px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;position:relative;transition:.14s}
   .icon-btn:hover{background:#eef2f0}
@@ -105,13 +106,13 @@
   .btn-danger{background:var(--danger-soft);color:var(--danger)}
   .btn-danger:hover{background:#efd6d6}
 
-  .content{padding:24px 28px 48px;flex:1}
+  .content{padding:clamp(16px,2vw,24px) clamp(12px,2.4vw,28px) calc(48px + env(safe-area-inset-bottom));flex:1;min-width:0}
   .view{display:none;animation:fade .25s ease}
   .view.active{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
   /* ---------- Stat cards ---------- */
-  .stat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:22px}
+  .stat-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:22px}
   .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px;position:relative;overflow:hidden}
   .stat .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
   .stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
@@ -127,7 +128,7 @@
   @keyframes flash{0%{background:var(--accent-soft)}100%{background:var(--surface)}}
 
   /* ---------- Layout cols ---------- */
-  .cols{display:grid;grid-template-columns:1fr 340px;gap:18px;margin-bottom:18px}
+  .cols{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;margin-bottom:18px}
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
   /* ===== 3D depth (broad) ===== */
   .stat,.panel{box-shadow:0 1px 2px rgba(18,38,72,.05),0 8px 20px -10px rgba(18,38,72,.16),0 22px 44px -22px rgba(18,38,72,.22);transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s}
@@ -139,7 +140,8 @@
   .panel-pad{padding:18px}
 
   /* ---------- Table ---------- */
-  .tbl-wrap{overflow-x:auto}
+  .tbl-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tbl-wrap table{min-width:720px}
   table{width:100%;border-collapse:collapse;font-size:13px}
   thead th{
     text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
@@ -183,7 +185,7 @@
   .feed-time{font-size:11px;color:var(--muted);margin-top:1px}
 
   /* ---------- Charts ---------- */
-  .chart-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:18px}
+  .chart-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr);gap:18px}
   .chart-box{height:230px;padding:10px 14px 14px;position:relative}
 
   /* ---------- Forms ---------- */
@@ -229,7 +231,7 @@
   .kv dd{font-weight:500}
 
   .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-  .toolbar .search{position:relative;flex:1;min-width:200px}
+  .toolbar .search{position:relative;flex:1;min-width:min(220px,100%)}
   .toolbar .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted)}
   .toolbar .search input{padding-left:34px}
   .toolbar select{width:auto;min-width:150px}
@@ -251,32 +253,46 @@
   .toast svg{width:17px;height:17px;color:var(--accent)}
 
   .backdrop{display:none}
-  @media(max-width:1100px){
-    .stat-grid{grid-template-columns:repeat(3,1fr)}
-    .cols{grid-template-columns:1fr}
-    .chart-grid{grid-template-columns:1fr}
+  @media(max-width:1200px){
+    .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .cols{grid-template-columns:1fr 300px}
+    .chart-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   }
-  @media(max-width:820px){
+  @media(max-width:1024px){
     .app{grid-template-columns:1fr}
-    .sidebar{position:fixed;left:0;top:0;width:264px;transform:translateX(-100%);transition:transform .25s}
+    .sidebar{position:fixed;left:0;top:0;width:280px;max-width:calc(100vw - 24px);transform:translateX(-100%);transition:transform .25s}
     .sidebar.open{transform:none}
     .backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:35}
     .backdrop.show{display:block}
     .hamburger{display:flex}
-    .stat-grid{grid-template-columns:repeat(2,1fr)}
-    .content{padding:18px 16px 40px}
-    .topbar{padding:12px 16px}
+    .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .cols,.chart-grid,.composer,.grid-2,.grid-3{grid-template-columns:1fr}
+    .content{padding:18px 16px calc(64px + env(safe-area-inset-bottom))}
+    .topbar{padding:12px 16px;align-items:flex-start}
+    .topbar-right{margin-left:0;width:100%;justify-content:flex-start}
     .clock{display:none}
-    .composer{grid-template-columns:1fr}
-    .grid-2,.grid-3{grid-template-columns:1fr}
+    .toolbar .search,.toolbar select{width:100%;min-width:0}
+    .toolbar .spacer{display:none}
   }
-  @media(max-width:560px){
-    .stat-grid{grid-template-columns:1fr!important}
-    .toolbar,.dt-toolbar,.dt-actions,.topbar-right,.panel-head{flex-wrap:wrap;gap:8px}
-    .pagetitle{font-size:15px}
-    .content{padding:14px 12px 56px}
+  @media(max-width:768px){
+    .panel-head,.toolbar,.topbar-right{gap:8px}
+    .content{padding:16px 14px calc(58px + env(safe-area-inset-bottom))}
+    .btn,.icon-btn{min-height:44px}
     .modal{max-width:96vw}
+  }
+  @media(max-width:480px){
+    .stat-grid{grid-template-columns:1fr!important}
+    .toolbar,.dt-toolbar,.dt-actions,.topbar-right,.panel-head,.row-actions{flex-wrap:wrap;gap:8px}
+    .pagetitle{font-size:15px}
+    .pagetitle small{display:none}
+    .content{padding:12px 12px 24px}
+    .toolbar .btn,.toolbar .search,.toolbar select,.panel-head .btn{width:100%}
     table{font-size:12px}
+  }
+  @media(max-width:360px){
+    .brand{padding:18px 14px 14px}
+    .content{padding:10px 10px 20px}
+    .modal-head,.modal-body,.modal-foot{padding-left:14px;padding-right:14px}
   }
   .env-badge{position:fixed;top:8px;right:10px;z-index:99999;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;padding:4px 9px;border-radius:20px;background:#0E3F86;color:#AFD3FF;border:1px solid #173F7A;box-shadow:0 4px 14px -6px rgba(0,0,0,.5);pointer-events:none}
   .env-badge.dev{background:#5b3a08;color:#FBD37A;border-color:#7a5409}
@@ -376,7 +392,7 @@
           </div>
         </div>
         <div class="chart-grid">
-          <div class="panel"><div class="panel-head"><h3>Enrolment â€” last 30 days</h3></div><div class="chart-box"><canvas id="trendChart"></canvas></div></div>
+          <div class="panel"><div class="panel-head"><h3>Enrolment - last 30 days</h3></div><div class="chart-box"><canvas id="trendChart"></canvas></div></div>
           <div class="panel"><div class="panel-head"><h3>Top schools</h3></div><div class="chart-box"><canvas id="topChart"></canvas></div></div>
           <div class="panel"><div class="panel-head"><h3>Revenue split</h3></div><div class="chart-box"><canvas id="revChart"></canvas></div></div>
         </div>
@@ -385,7 +401,7 @@
       <!-- ===== SCHOOLS ===== -->
       <section class="view" id="view-schools">
         <div class="toolbar">
-          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="schoolSearch" placeholder="Search schools by name or codeâ€¦" oninput="renderSchools()"></div>
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="schoolSearch" placeholder="Search schools by name or code..." oninput="renderSchools()"></div>
           <select id="schoolFilter" onchange="renderSchools()">
             <option value="all">All statuses</option><option value="active">Active</option>
             <option value="inactive">Inactive</option><option value="suspended">Suspended</option>
@@ -414,7 +430,7 @@
       <!-- ===== STUDENTS ===== -->
       <section class="view" id="view-students">
         <div class="toolbar">
-          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="studentSearch" placeholder="Search by name or index numberâ€¦" oninput="renderStudents()"></div>
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="studentSearch" placeholder="Search by name or index number..." oninput="renderStudents()"></div>
           <select id="studentSchoolFilter" onchange="renderStudents()"></select>
           <select id="studentStatusFilter" onchange="renderStudents()">
             <option value="all">All statuses</option><option value="pending">Pending</option>
@@ -437,7 +453,7 @@
             <tbody id="finRows"></tbody>
           </table></div>
         </div>
-        <div class="panel"><div class="panel-head"><div><h3>Recent transactions</h3><div class="sub">Cross-school payment feed</div></div><button class="btn btn-ghost btn-sm" onclick="toast('Exporting transactions as CSVâ€¦')">Export CSV</button></div>
+        <div class="panel"><div class="panel-head"><div><h3>Recent transactions</h3><div class="sub">Cross-school payment feed</div></div><button class="btn btn-ghost btn-sm" onclick="toast('Exporting transactions as CSV...')">Export CSV</button></div>
           <div class="tbl-wrap"><table>
             <thead><tr><th>Date</th><th>Student</th><th>School</th><th>Amount</th><th>Method</th><th>Status</th><th>Transaction ID</th></tr></thead>
             <tbody id="payRows"></tbody>
@@ -463,10 +479,10 @@
             </div>
             <div class="field">
               <label>Message</label>
-              <textarea id="smsBody" rows="4" placeholder="Type your messageâ€¦" oninput="updateSmsCount()"></textarea>
-              <div class="char-count"><span id="smsChars">0</span> / 160 chars Â· <span id="smsCredits">1</span> credit each</div>
+              <textarea id="smsBody" rows="4" placeholder="Type your message..." oninput="updateSmsCount()"></textarea>
+              <div class="char-count"><span id="smsChars">0</span> / 160 chars - <span id="smsCredits">1</span> credit each</div>
             </div>
-            <button class="btn btn-primary" onclick="sendBulkSms()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send to <span id="smsRecip">â€”</span> recipients</button>
+            <button class="btn btn-primary" onclick="sendBulkSms()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send to <span id="smsRecip">-</span> recipients</button>
           </div>
           <div>
             <div class="credit-box" style="margin-bottom:16px">
@@ -477,7 +493,7 @@
             <div class="panel panel-pad">
               <label style="font-size:12px;font-weight:600;color:var(--ink-soft)">Templates</label>
               <select style="margin-top:6px" onchange="loadTemplate(this.value)">
-                <option value="">â€” Insert a template â€”</option>
+                <option value="">- Insert a template -</option>
                 <option value="approved">Admission approved</option>
                 <option value="reminder">Reporting reminder</option>
                 <option value="payment">Payment confirmation</option>
@@ -577,11 +593,11 @@ let payments=[];
   }})();
 let activity=[
   {type:'reg',school:1,text:'New student registered',time:'2 min ago'},
-  {type:'pay',school:2,text:'Token payment completed Â· GHS 35',time:'6 min ago'},
+  {type:'pay',school:2,text:'Token payment completed - GHS 35',time:'6 min ago'},
   {type:'sms',school:3,text:'Bulk SMS sent to 48 students',time:'14 min ago'},
   {type:'reg',school:4,text:'New student registered',time:'22 min ago'},
   {type:'sys',school:6,text:'Admission closed by school admin',time:'38 min ago'},
-  {type:'pay',school:1,text:'Token payment completed Â· GHS 30',time:'51 min ago'},
+  {type:'pay',school:1,text:'Token payment completed - GHS 30',time:'51 min ago'},
   {type:'reg',school:2,text:'New student registered',time:'1 hr ago'},
   {type:'sms',school:5,text:'Reporting reminder sent to 12 students',time:'1 hr ago'},
 ];
@@ -594,7 +610,7 @@ let smsBalance=12480;
 
 /* ============ HELPERS ============ */
 const $=id=>document.getElementById(id);
-const sById=id=>schools.find(s=>s.id===id)||{name:'â€”',short:'?',color:0,code:''};
+const sById=id=>schools.find(s=>s.id===id)||{name:'-',short:'?',color:0,code:''};
 const fmt=n=>n.toLocaleString('en-US');
 const money=n=>'GHS '+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 function crest(s){return `<span class="sch-crest" style="background:${crestColors[s.color]}">${s.short}</span>`;}
@@ -652,7 +668,7 @@ function renderFeed(){
     sys:['fi-sys','<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82M4.6 9a1.65 1.65 0 0 0 .33-1.82"/>']};
   $('activityFeed').innerHTML=activity.map(a=>{const s=sById(a.school);const[cl,p]=ic[a.type];
     return `<div class="feed-item"><div class="feed-ico ${cl}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${p}</svg></div>
-    <div><div class="feed-txt">${a.text} Â· <b>${s.name}</b></div><div class="feed-time">${a.time}</div></div></div>`;}).join('');
+    <div><div class="feed-txt">${a.text} - <b>${s.name}</b></div><div class="feed-time">${a.time}</div></div></div>`;}).join('');
 }
 
 /* ============ CHARTS ============ */
@@ -682,13 +698,13 @@ function renderSchools(){
 function aInit(n){return ((n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('')||'?').toUpperCase();}
 function genStr(n){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<(n||10);i++)p+=c[Math.floor(Math.random()*c.length)];return p;}
 function renderAdmins(){
-  if(!admins.length){$('adminRows').innerHTML=emptyRow(7,'No admin accounts yet. Use â€œCreate adminâ€.');return;}
+  if(!admins.length){$('adminRows').innerHTML=emptyRow(7,'No admin accounts yet. Use "Create admin".');return;}
   $('adminRows').innerHTML=admins.map(a=>`<tr>
     <td><div class="sch-cell"><span style="display:inline-flex;width:30px;height:30px;border-radius:8px;background:var(--primary);color:#fff;align-items:center;justify-content:center;font-size:11px;font-weight:700">${aInit(a.name)}</span><span class="sch-name">${a.name}${a.uid===SA_UID?' <span style="font-size:10px;color:var(--muted)">(you)</span>':''}</span></div></td>
     <td>${a.school}</td>
     <td class="mono" style="font-size:12px">${a.email}</td>
     <td>${a.role==='super_admin'?'Super admin':'School admin'}</td>
-    <td class="mono">â€”</td>
+    <td class="mono">-</td>
     <td><span class="pill open">active</span></td>
     <td><div class="row-actions">
       <button class="act" onclick="editAdmin('${a.uid}')">Edit</button>
@@ -700,11 +716,11 @@ function editAdmin(uid){
   const a=admins.find(x=>x.uid===uid); if(!a)return;
   const m=$('modal');m.className='modal';
   m.innerHTML=`
-  <div class="modal-head"><div><h2>Edit admin</h2><p>${a.email} Â· ${a.school}</p></div><button class="modal-x" onclick="closeModal()">Ã—</button></div>
+  <div class="modal-head"><div><h2>Edit admin</h2><p>${a.email} - ${a.school}</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid"><fieldset><legend>Account</legend>
     <div class="field"><label>Full name</label><input id="ea_name" value="${(a.name||'').replace(/"/g,'&quot;')}"></div>
     <div class="field"><label>Email</label><input value="${a.email}" disabled></div>
-    <div class="field"><label>New password <span class="hint">â€” leave blank to keep current</span></label><div style="display:flex;gap:8px"><input id="ea_pass" type="text" placeholder="At least 8 characters" style="flex:1"><button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('ea_pass').value=genStr(10)">Generate</button></div></div>
+    <div class="field"><label>New password <span class="hint">- leave blank to keep current</span></label><div style="display:flex;gap:8px"><input id="ea_pass" type="text" placeholder="At least 8 characters" style="flex:1"><button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('ea_pass').value=genStr(10)">Generate</button></div></div>
   </fieldset></div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="ea_btn" onclick="saveAdminEdit('${uid}')">Save changes</button></div>`;
   $('overlay').classList.add('show');
@@ -767,7 +783,7 @@ function sendBulkSms(){
   const t=$('smsTarget').value;
   smsHistory.unshift({date:new Date().toISOString().slice(0,10),school:t==='all'?schools[0].id:parseInt(t),group:$('smsGroup').selectedOptions[0].text.replace(' students',''),recip:n,msg:body,status:'sent'});
   $('smsBody').value='';renderSms();renderStats();
-  toast(`SMS sent to ${fmt(n)} recipients Â· ${fmt(credits)} credits used`);
+  toast(`SMS sent to ${fmt(n)} recipients - ${fmt(credits)} credits used`);
 }
 
 /* ============ SCHOOL ACTIONS ============ */
@@ -783,8 +799,8 @@ function openSchool(id){
   const m=$('modal');m.className='modal wide';
   m.innerHTML=`
   <div class="modal-head">
-    <div style="display:flex;gap:13px;align-items:center">${crest(s)}<div><h2>${s.name}</h2><p><span class="code">${s.code}</span> Â· ${s.plan} plan Â· expires ${s.expiry}</p></div></div>
-    <button class="modal-x" onclick="closeModal()">Ã—</button>
+    <div style="display:flex;gap:13px;align-items:center">${crest(s)}<div><h2>${s.name}</h2><p><span class="code">${s.code}</span> - ${s.plan} plan - expires ${s.expiry}</p></div></div>
+    <button class="modal-x" onclick="closeModal()">&times;</button>
   </div>
   <div class="tabs" id="schoolTabs">
     ${['Profile','Admin','Students','Payments','Subscription','Danger zone'].map((t,i)=>`<button class="tab ${i===0?'active':''}" onclick="schoolTab(${i})">${t}</button>`).join('')}
@@ -815,7 +831,7 @@ function openSchool(id){
   <div class="tab-panel" data-tab="5">
     <div style="border:1px solid var(--danger-soft);background:var(--danger-soft);border-radius:10px;padding:16px">
       <h3 style="font-family:'Space Grotesk';font-size:14px;color:var(--danger);margin-bottom:6px">Danger zone</h3>
-      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px">Suspending blocks all logins for this school. Deletion removes the school and all its scoped data â€” this cannot be undone.</p>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px">Suspending blocks all logins for this school. Deletion removes the school and all its scoped data - this cannot be undone.</p>
       <div style="display:flex;gap:9px"><button class="btn btn-danger btn-sm" onclick="suspendSchool(${id})">${s.status==='suspended'?'Reactivate':'Suspend'} school</button><button class="btn btn-danger btn-sm" onclick="deleteSchool(${id})">Delete school</button></div>
     </div>
   </div>`;
@@ -834,7 +850,7 @@ function editSchool(id){
   const plan=(s.plan||'Standard'); const opt=(v)=>plan.toLowerCase()===v.toLowerCase()?'selected':'';
   const m=$('modal');m.className='modal';
   m.innerHTML=`
-  <div class="modal-head"><div><h2>Edit school</h2><p>Update ${s.name}\u2019s information</p></div><button class="modal-x" onclick="closeModal()">Ã—</button></div>
+  <div class="modal-head"><div><h2>Edit school</h2><p>Update ${s.name}'s information</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid">
     <fieldset><legend>School information</legend>
       <div class="grid-2"><div class="field"><label>School code</label><input id="e_code" value="${s.code||''}"></div><div class="field"><label>Service charge (GHS)</label><input id="e_charge" type="number" step="0.5" value="${(s.charge!=null?s.charge:30)}"></div></div>
@@ -852,16 +868,16 @@ function editSchool(id){
 function openAddSchool(){
   const m=$('modal');m.className='modal';
   m.innerHTML=`
-  <div class="modal-head"><div><h2>Add new school</h2><p>Creates the tenant and its primary admin account</p></div><button class="modal-x" onclick="closeModal()">Ã—</button></div>
+  <div class="modal-head"><div><h2>Add new school</h2><p>Creates the tenant and its primary admin account</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid">
     <fieldset><legend>School information</legend>
       <div class="grid-2"><div class="field"><label>School code</label><input id="f_code" placeholder="e.g. ASM001"></div><div class="field"><label>Service charge (GHS)</label><input id="f_charge" type="number" value="30" step="0.5"></div></div>
       <div class="field"><label>Full school name</label><input id="f_name" placeholder="e.g. Asuom Senior High School"></div>
-      <div class="grid-2"><div class="field"><label>Phone</label><input id="f_phone" placeholder="0244â€¦"></div><div class="field"><label>Email</label><input id="f_email" type="email" placeholder="school@â€¦"></div></div>
+      <div class="grid-2"><div class="field"><label>Phone</label><input id="f_phone" placeholder="0244..."></div><div class="field"><label>Email</label><input id="f_email" type="email" placeholder="school@..."></div></div>
     </fieldset>
     <fieldset><legend>Primary admin account</legend>
-      <div class="grid-2"><div class="field"><label>Admin full name</label><input id="f_admin" placeholder="e.g. Isaac Addo"></div><div class="field"><label>Admin email</label><input id="f_aemail" type="email" placeholder="admin@â€¦"></div></div>
-      <div class="field"><label>Username <span class="hint">â€” auto-derived from code</span></label><input id="f_uname" placeholder="auto" disabled></div>
+      <div class="grid-2"><div class="field"><label>Admin full name</label><input id="f_admin" placeholder="e.g. Isaac Addo"></div><div class="field"><label>Admin email</label><input id="f_aemail" type="email" placeholder="admin@..."></div></div>
+      <div class="field"><label>Username <span class="hint">- auto-derived from code</span></label><input id="f_uname" placeholder="auto" disabled></div>
     </fieldset>
     <fieldset><legend>Subscription & defaults</legend>
       <div class="grid-2"><div class="field"><label>Plan</label><select id="f_plan"><option>Basic</option><option selected>Standard</option><option>Premium</option></select></div><div class="field"><label>Expiry</label><input id="f_expiry" type="date" value="2026-12-31"></div></div>
@@ -877,17 +893,17 @@ function createSchool(){
   if(!code||!name){toast('School code and name are required');return;}
   const words=name.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean);
   const short=(words[0]?.[0]||'S')+(words[1]?.[0]||words[0]?.[1]||'C');
-  schools.unshift({id:nextSchoolId++,code,name,short:short.toUpperCase(),admin:$('f_admin').value.trim()||'â€”',plan:$('f_plan').value,students:0,admission:$('f_admission').value,status:'active',charge:parseFloat($('f_charge').value)||30,expiry:$('f_expiry').value,email:$('f_email').value,phone:$('f_phone').value,color:Math.floor(Math.random()*crestColors.length)});
+  schools.unshift({id:nextSchoolId++,code,name,short:short.toUpperCase(),admin:$('f_admin').value.trim()||'-',plan:$('f_plan').value,students:0,admission:$('f_admission').value,status:'active',charge:parseFloat($('f_charge').value)||30,expiry:$('f_expiry').value,email:$('f_email').value,phone:$('f_phone').value,color:Math.floor(Math.random()*crestColors.length)});
   activity.unshift({type:'sys',school:schools[0].id,text:'New school created',time:'just now'});
   closeModal();renderAll();go('schools');
-  toast(`${name} created Â· admin password sent to ${$('f_aemail').value||'admin'}`);
+  toast(`${name} created - admin password sent to ${$('f_aemail').value||'admin'}`);
 }
 function openCreateAdmin(){
   const m=$('modal');m.className='modal';
-  m.innerHTML=`<div class="modal-head"><div><h2>Create school admin</h2><p>Creates a real login and links it to the school</p></div><button class="modal-x" onclick="closeModal()">Ã—</button></div>
+  m.innerHTML=`<div class="modal-head"><div><h2>Create school admin</h2><p>Creates a real login and links it to the school</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid"><fieldset><legend>Admin details</legend>
     <div class="field"><label>School</label><select id="a_school">${schools.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
-    <div class="grid-2"><div class="field"><label>Full name</label><input id="a_name" placeholder="Full name"></div><div class="field"><label>Email</label><input id="a_email" type="email" placeholder="admin@â€¦"></div></div>
+    <div class="grid-2"><div class="field"><label>Full name</label><input id="a_name" placeholder="Full name"></div><div class="field"><label>Email</label><input id="a_email" type="email" placeholder="admin@..."></div></div>
     <div class="field"><label>Temporary password</label><div style="display:flex;gap:8px"><input id="a_pass" type="text" placeholder="At least 8 characters" style="flex:1"><button class="btn btn-ghost btn-sm" type="button" onclick="genPass()">Generate</button></div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">Share this with the admin; they can change it after signing in.</div></div>
   </fieldset></div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="a_btn" onclick="createAdmin()">Create admin</button></div>`;
@@ -935,7 +951,7 @@ $('hamburger').addEventListener('click',()=>{$('sidebar').classList.add('open');
 $('backdrop').addEventListener('click',closeSidebar);
 
 /* ============ CLOCK + LIVE ============ */
-function tick(){const d=new Date();$('clock').textContent=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+' Â· '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+function tick(){const d=new Date();$('clock').textContent=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+' - '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 tick();setInterval(tick,1000);
 
 /* ============ INIT ============ */
@@ -977,14 +993,14 @@ async function freshToken(){
 }
 async function invokeFn(name,body){
   const tok=await freshToken();
-  if(!tok) return {data:null,error:{message:'Your session expired â€” please sign in again.'}};
+  if(!tok) return {data:null,error:{message:'Your session expired - please sign in again.'}};
   return await sb.functions.invoke(name,{body,headers:{Authorization:'Bearer '+tok}});
 }
-(function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'â— PRODUCTION':'â— DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
+(function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'PRODUCTION':'DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 const sval=id=>document.getElementById(id).value;
 const sa_init=n=>{const w=(n||'').replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean);return ((w[0]&&w[0][0]||'S')+(w[1]&&w[1][0]||(w[0]&&w[0][1])||'C')).toUpperCase();};
 const sa_cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
-const sa_time=ts=>{ if(!ts)return 'â€”'; const d=new Date(ts),n=new Date(),m=Math.floor((n-d)/60000);
+const sa_time=ts=>{ if(!ts)return '-'; const d=new Date(ts),n=new Date(),m=Math.floor((n-d)/60000);
   return m<1?'just now':m<60?m+' min ago':m<1440?Math.floor(m/60)+' hr ago':Math.floor(m/1440)+'d ago'; };
 
 /* ---- AUTH GATE ---- */
@@ -995,12 +1011,12 @@ const sa_time=ts=>{ if(!ts)return 'â€”'; const d=new Date(ts),n=new Date(),
   ov.innerHTML=`<div style="width:100%;max-width:400px">
     <div style="text-align:center;margin-bottom:18px">
       <div style="width:64px;height:64px;border-radius:16px;margin:0 auto 12px;display:grid;place-items:center;background:linear-gradient(150deg,#1557B0,#2F74D0);color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:22px">C</div>
-      <div style="font-family:'Space Grotesk';font-weight:600;font-size:19px">QuickAdmissionGH Â· Super Admin</div>
+      <div style="font-family:'Space Grotesk';font-weight:600;font-size:19px">QuickAdmissionGH - Super Admin</div>
       <div style="color:#8A9893;font-size:12.5px;margin-top:3px">Sign in for platform oversight</div>
     </div>
     <div class="panel" style="padding:22px">
       <div class="field"><label>Email</label><input id="ag_email" placeholder="you@admin.gh"></div>
-      <div class="field"><label>Password</label><input id="ag_pass" type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"></div>
+      <div class="field"><label>Password</label><input id="ag_pass" type="password" placeholder="Enter your password"></div>
       <div id="ag_err" style="display:none;color:#B23A3A;font-size:12.5px;font-weight:500;margin-bottom:10px"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center" id="ag_btn">Sign in</button>
     </div></div>`;
@@ -1033,7 +1049,7 @@ async function bootSuperSession(){
 }
 async function superLogin(){
   const btn=document.getElementById('ag_btn'),err=document.getElementById('ag_err');
-  btn.textContent='Signing inâ€¦'; err.style.display='none';
+  btn.textContent='Signing in...'; err.style.display='none';
   const {data,error}=await sb.auth.signInWithPassword({email:sval('ag_email').trim(),password:sval('ag_pass')});
   if(error){err.textContent=error.message;err.style.display='block';btn.textContent='Sign in';return;}
   const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',data.user.id).single();
@@ -1056,19 +1072,19 @@ async function loadSA(){
   const cfgBy={}; (cfg.data||[]).forEach(c=>cfgBy[c.school_id]=c);
   const adminBy={}; (prof.data||[]).forEach(p=>{ if(p.role==='school_admin'&&p.school_id) adminBy[p.school_id]=p.full_name; });
   const schNameById={}; (sch.data||[]).forEach(s=>schNameById[s.id]=s.name);
-  admins=(prof.data||[]).map(p=>({uid:p.id,name:p.full_name||'â€”',email:p.email||'â€”',role:p.role,
-    school:p.role==='super_admin'?'All schools':(schNameById[p.school_id]||'â€”')}));
+  admins=(prof.data||[]).map(p=>({uid:p.id,name:p.full_name||'-',email:p.email||'-',role:p.role,
+    school:p.role==='super_admin'?'All schools':(schNameById[p.school_id]||'-')}));
   const pName={}; (progs.data||[]).forEach(p=>pName[p.id]=p.name);
   const sRev={};
   schools=(sch.data||[]).map((s,i)=>{ const id=i+1; sRev[s.id]=id; const c=cfgBy[s.id]||{};
-    return {id,_id:s.id,code:s.code,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'â€”',
+    return {id,_id:s.id,code:s.code,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
       plan:sa_cap(s.subscription_plan||'standard'),students:(stu.data||[]).filter(x=>x.school_id===s.id).length,
       admission:c.admission_status||'CLOSED',status:s.status,charge:Number(c.service_charge||0),
-      expiry:s.subscription_expiry||'â€”',email:s.email||'',phone:s.phone||'',color:i%crestColors.length}; });
+      expiry:s.subscription_expiry||'-',email:s.email||'',phone:s.phone||'',color:i%crestColors.length}; });
   nextSchoolId=schools.length+1;
-  students=(stu.data||[]).map(s=>({name:s.full_name||'(no name)',index:s.bece_index,schoolId:sRev[s.school_id],programme:pName[s.programme_id]||'â€”',status:s.status,reg:(s.created_at||'').slice(0,10)}));
+  students=(stu.data||[]).map(s=>({name:s.full_name||'(no name)',index:s.bece_index,schoolId:sRev[s.school_id],programme:pName[s.programme_id]||'-',status:s.status,reg:(s.created_at||'').slice(0,10)}));
   window._todayReg=students.filter(s=>s.reg===new Date().toISOString().slice(0,10)).length;
-  payments=(pay.data||[]).map(p=>({date:(p.paid_at||p.created_at||'').slice(0,10),student:(p.students&&p.students.full_name)||p.payer_name||'â€”',schoolId:sRev[p.school_id],amount:(p.amount_pesewas||0)/100,method:sa_cap(p.channel),status:p.status,txn:p.reference||'â€”'}));
+  payments=(pay.data||[]).map(p=>({date:(p.paid_at||p.created_at||'').slice(0,10),student:(p.students&&p.students.full_name)||p.payer_name||'-',schoolId:sRev[p.school_id],amount:(p.amount_pesewas||0)/100,method:sa_cap(p.channel),status:p.status,txn:p.reference||'-'}));
   smsHistory=(sms.data||[]).map(s=>({date:(s.sent_at||'').slice(0,10),school:sRev[s.school_id],group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status}));
   activity=(log.data||[]).map(l=>({type:'sys',school:sRev[l.school_id],text:l.action,time:sa_time(l.created_at)}));
   smsBalance=(cfg.data||[]).reduce((a,c)=>a+(c.sms_balance||0),0);
@@ -1099,7 +1115,7 @@ saveAdminEdit=async function(uid){
   const a=admins.find(x=>x.uid===uid); if(!a)return;
   const name=(sval('ea_name')||'').trim(); const pass=sval('ea_pass')||'';
   if(!name){toast('Name is required');return;}
-  const btn=$('ea_btn'); if(btn)btn.textContent='Savingâ€¦';
+  const btn=$('ea_btn'); if(btn)btn.textContent='Saving...';
   const {error}=await sb.from('profiles').update({full_name:name}).eq('id',uid);
   if(error){ if(btn)btn.textContent='Save changes'; toast('Could not save: '+error.message); return; }
   if(pass){
@@ -1131,7 +1147,7 @@ saveSchoolEdit=async function(id){
   const s=sById(id); if(!s)return;
   const name=(sval('e_name')||'').trim(), code=(sval('e_code')||'').trim().toUpperCase();
   if(!name||!code){toast('School code and name are required');return;}
-  const btn=$('e_btn'); if(btn)btn.textContent='Savingâ€¦';
+  const btn=$('e_btn'); if(btn)btn.textContent='Saving...';
   const {error}=await sb.from('schools').update({
     name, code, phone:sval('e_phone'), email:sval('e_email'),
     subscription_plan:(sval('e_plan')||'Standard').toLowerCase(), subscription_expiry:sval('e_expiry')||null, status:sval('e_status')
@@ -1152,7 +1168,7 @@ createSchool=async function(){
   await sb.from('school_config').insert({school_id:school.id,service_charge:parseFloat(sval('f_charge'))||30,admission_status:sval('f_admission')});
   await sb.from('activity_log').insert({school_id:school.id,actor:'Super Admin',action:'New school created'});
   closeModal(); await loadSA(); go('schools');
-  toast(name+' created â€” provision its admin login from Supabase Auth');
+  toast(name+' created - provision its admin login from Supabase Auth');
 };
 createAdmin=async function(){
   const s=sById(parseInt(sval('a_school')));
@@ -1160,7 +1176,7 @@ createAdmin=async function(){
   if(!s){toast('Pick a school first');return;}
   if(!email||!pass){toast('Email and a temporary password are required');return;}
   if(pass.length<8){toast('Password must be at least 8 characters');return;}
-  const btn=$('a_btn'); if(btn)btn.textContent='Creatingâ€¦';
+  const btn=$('a_btn'); if(btn)btn.textContent='Creating...';
   const {data,error}=await invokeFn('create-school-admin',{email,password:pass,full_name:name,school_id:s._id});
   if(btn)btn.textContent='Create admin';
   if(error||(data&&data.error)){toast('Could not create: '+((data&&data.message)||(error&&error.message)||'error'));return;}
@@ -1177,12 +1193,12 @@ sendBulkSms=async function(){
   if(t!=='all'){ const s=sById(parseInt(t)); if(s) await sb.from('sms_log').insert({school_id:s._id,recipient_group:group,recipients:n,message:body,sent_by:'Super Admin',status:'sent'}); }
   smsHistory.unshift({date:new Date().toISOString().slice(0,10),school:t==='all'?schools[0].id:parseInt(t),group,recip:n,msg:body,status:'sent'});
   document.getElementById('smsBody').value=''; renderSms(); renderStats();
-  toast('SMS sent to '+fmt(n)+' recipients Â· '+fmt(credits)+' credits used');
+  toast('SMS sent to '+fmt(n)+' recipients - '+fmt(credits)+' credits used');
 };
 </script>
 
 <div style="height:46px" aria-hidden="true"></div>
-<footer style="position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))">Copyright Â© 2026 VELOXIS TECH HUB. All rights reserved. Â· Version 1.0</footer>
+<footer style="position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))">Copyright &copy; 2026 VELOXIS TECH HUB. All rights reserved. Version 1.0</footer>
 </body>
 </html>
 

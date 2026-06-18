@@ -20,7 +20,8 @@
     --r:12px;--r-sm:8px;--shadow:0 1px 2px rgba(20,32,28,.05),0 10px 30px -14px rgba(20,32,28,.2);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  html,body{min-height:100%;overflow-x:hidden}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:clamp(13px,.82vw,14px);line-height:1.55;-webkit-font-smoothing:antialiased}
   .mono{font-family:'JetBrains Mono',monospace}
   button{font-family:inherit;cursor:pointer;border:none;background:none}
   a{color:var(--primary);text-decoration:none;font-weight:600}a:hover{text-decoration:underline}
@@ -31,12 +32,12 @@
   .btn-ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}.btn-ghost:hover{background:#eef2f0}
   .btn-accent{background:var(--accent);color:#3a2906}.btn-accent:hover{filter:brightness(.96)}
   .btn-danger{background:var(--danger);color:#fff}.btn-sm{padding:8px 13px;font-size:13px}
-  .screen{display:none;min-height:100vh}.screen.active{display:block;animation:fade .3s ease}
+  .screen{display:none;min-height:100vh;min-height:100dvh}.screen.active{display:block;animation:fade .3s ease}
   body.booting .screen{display:none!important}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
   /* ===== AUTH ===== */
-  .auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px 16px 56px;background:radial-gradient(120% 80% at 50% -10%,rgba(17,94,74,.10),transparent 60%),linear-gradient(180deg,#e6ebe8,#EEF2F8)}
+  .auth{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:16px 16px 56px;background:radial-gradient(120% 80% at 50% -10%,rgba(17,94,74,.10),transparent 60%),linear-gradient(180deg,#e6ebe8,#EEF2F8)}
   .auth-card{width:100%;max-width:460px}
   .crest{width:92px;height:92px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;background:#fff;color:var(--primary);font-family:'Space Grotesk';font-weight:700;font-size:26px;box-shadow:var(--shadow),inset 0 0 0 1px rgba(0,0,0,.08)}
   .auth-head{text-align:center;margin-bottom:12px}
@@ -79,7 +80,7 @@
       radial-gradient(70% 90% at 100% 100%,rgba(21,87,176,.16),transparent 34%),
       linear-gradient(180deg,#f9fbff 0%,#eff4fd 56%,#e6eefb 100%);
   }
-  #s-login .portal-login-wrap{width:min(1240px,100%);margin:0 auto}
+  #s-login .portal-login-wrap{width:min(1240px,100%);margin:0 auto;padding-bottom:env(safe-area-inset-bottom)}
   #s-login .portal-login-brand{display:flex;align-items:center;gap:16px;max-width:1180px;margin:0 auto 14px;padding:14px 18px;background:linear-gradient(135deg,#0f53d8 0%,#1557B0 58%,#2f8bff 100%);border:1px solid rgba(108,160,248,.3);border-radius:24px;box-shadow:0 26px 54px -36px rgba(21,87,176,.72)}
   #s-login .portal-brand-crest{width:82px;height:82px;border-radius:22px;overflow:hidden;flex:none;display:grid;place-items:center;background:rgba(255,255,255,.96);border:1px solid rgba(63,118,214,.18);box-shadow:0 18px 34px -24px rgba(21,87,176,.58)}
   #s-login .portal-brand-crest img{width:100%;height:100%;object-fit:contain;padding:8px}
@@ -145,14 +146,18 @@
       zoom:.9;
     }
   }
-  @media(max-width:1023px){
+  @media(max-width:1200px){
+    #s-login .portal-login-shell{grid-template-columns:minmax(280px,.9fr) minmax(0,1.1fr)}
+    .pmain{width:100%}
+  }
+  @media(max-width:1024px){
     #s-login .portal-login-brand{max-width:980px;padding:12px 16px}
     #s-login .portal-brand-crest{width:74px;height:74px;border-radius:20px}
     #s-login .portal-brand-copy h1{font-size:clamp(24px,3vw,34px)}
     #s-login .portal-brand-helpdesk-links{gap:10px}
     #s-login .portal-login-shell{grid-template-columns:1fr}
   }
-  @media(max-width:767px){
+  @media(max-width:768px){
     #s-login .auth{padding-left:12px;padding-right:12px}
     #s-login .portal-login-brand{flex-direction:column;text-align:center;gap:10px;padding:12px 14px}
     #s-login .portal-brand-copy{align-items:center;justify-content:center}
@@ -181,6 +186,11 @@
     #s-login .portal-info-item span{font-size:13px}
     #s-login .portal-link-btn{padding:14px 16px;font-size:14px}
     #s-login .portal-link-btn .ico{width:36px;height:36px}
+  }
+  @media(max-width:360px){
+    #s-login .portal-login-shell{padding:12px;border-radius:22px}
+    #s-login .portal-login-info,#s-login .portal-login-form{padding:16px}
+    #s-login .portal-brand-copy h1{font-size:22px}
   }
   .notice{border-radius:var(--r-sm);padding:9px 12px;font-size:11.5px;line-height:1.4;margin-bottom:9px;border:1px solid}
   .notice b{font-weight:600}
@@ -212,14 +222,14 @@
   .pay-opt .b{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:#fff;font-family:'Space Grotesk';font-size:13px;flex:none}
 
   /* ===== PORTAL SHELL ===== */
-  .ptopbar{display:flex;align-items:center;gap:14px;background:#e6ddd1;border-bottom:1px solid #d8cdbb;padding:11px 20px;position:sticky;top:0;z-index:30}
+  .ptopbar{display:flex;align-items:center;gap:14px;background:#e6ddd1;border-bottom:1px solid #d8cdbb;padding:11px 20px;position:sticky;top:0;z-index:30;flex-wrap:wrap}
   .ptopbar .ham{width:38px;height:38px;border-radius:8px;display:none;place-items:center;background:rgba(0,0,0,.05)}
   .ptopbar .ham svg{width:18px;height:18px}
   .ptopbar .sch{font-family:'Space Grotesk';font-weight:700;font-size:16px;color:#1b3a30;text-shadow:.04em .04em 0 rgba(120,150,160,.4)}
   .ptopbar .yr{margin-left:auto;font-weight:700;font-size:12.5px;color:var(--danger);white-space:nowrap}
   .ptopbar .out{width:38px;height:38px;border-radius:8px;display:grid;place-items:center;background:rgba(0,0,0,.05);color:#1b3a30}
   .ptopbar .out svg{width:17px;height:17px}
-  .pbody{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 61px)}
+  .pbody{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:calc(100vh - 61px);min-height:calc(100dvh - 61px)}
   .psidebar{background:var(--sb);color:var(--sb-text);padding:0 0 20px;position:sticky;top:61px;height:calc(100vh - 61px);overflow-y:auto}
   .pstud{display:flex;align-items:center;gap:11px;padding:16px 16px;border-bottom:1px solid #22314A}
   .pstud img,.pstud .ph{width:42px;height:42px;border-radius:50%;flex:none;object-fit:cover;background:var(--accent);color:#3a2906;display:grid;place-items:center;font-weight:700;font-size:15px}
@@ -233,7 +243,7 @@
   .pcrest .cb{width:140px;height:140px;margin:0 auto;border:6px double #3a4a44;border-radius:6px;display:grid;place-items:center;background:#16304D;color:#6F86A8;font-family:'Space Grotesk';font-weight:700;font-size:13px;overflow:hidden;padding:0;box-sizing:border-box}
   .pcrest .cb.has-img{background:#fff;border:1px solid #cfe0f5;padding:0}
   .pcrest .cb img{display:block;width:100%;height:100%;object-fit:contain}
-  .pmain{padding:22px;max-width:1000px}
+  .pmain{padding:clamp(16px,2vw,22px);width:min(1080px,100%);max-width:none;margin:0 auto}
 
   /* welcome */
   .welcome{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
@@ -246,7 +256,7 @@
   .wu-head h3{font-family:'Space Grotesk';font-size:18px;font-weight:600;padding:0 16px}
   .wu-head .sno{font-size:12.5px;opacity:.9;margin-top:2px}
   .wu-avatar{width:88px;height:88px;border-radius:50%;border:3px solid #fff;background:var(--accent);color:#3a2906;font-family:'Space Grotesk';font-weight:700;font-size:30px;display:grid;place-items:center;position:absolute;left:50%;top:74px;transform:translateX(-50%);object-fit:cover}
-  .wu-grid{display:grid;grid-template-columns:repeat(3,1fr);padding-top:54px}
+  .wu-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding-top:54px}
   .wu-block{padding:16px 12px;text-align:center;border-right:1px solid var(--line);border-top:1px solid var(--line)}
   .wu-block:nth-child(3n){border-right:none}
   .wu-block .h{font-family:'Space Grotesk';font-weight:600;font-size:14px;color:var(--ink);min-height:20px;word-break:break-word}
@@ -271,7 +281,7 @@
   .report-box .warn{color:var(--danger);font-weight:600;font-size:12.5px;margin-top:12px}
 
   /* ===== FORM WIZARD ===== */
-  .form-wrap{display:grid;grid-template-columns:230px 1fr;gap:24px;align-items:start}
+  .form-wrap{display:grid;grid-template-columns:minmax(220px,230px) minmax(0,1fr);gap:24px;align-items:start}
   .rail h4{font-family:'Space Grotesk';font-size:13px;font-weight:600;margin-bottom:4px}
   .rail .pct{font-size:12px;color:var(--muted);margin-bottom:14px}
   .progress-line{height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:18px}
@@ -295,12 +305,12 @@
   .card2-head h2{font-family:'Space Grotesk';font-size:18px;font-weight:600}
   .card2-head p{font-size:13px;color:var(--muted);margin-top:3px}
   .card2-body{padding:24px}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px}.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px}
+  .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
   .sub-h{font-family:'Space Grotesk';font-weight:600;font-size:14px;margin:20px 0 12px;padding-top:18px;border-top:1px solid var(--line)}
   .sub-h:first-child{margin-top:0;padding-top:0;border-top:none}
   .step-nav{display:flex;gap:12px;justify-content:space-between;margin-top:8px}
   .step-nav .btn{min-width:120px}
-  .prog-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .prog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .prog-card{border:1.5px solid var(--line);border-radius:var(--r-sm);padding:15px;cursor:pointer;transition:.15s}
   .prog-card:hover{border-color:var(--primary)}.prog-card.sel{border-color:var(--primary);background:var(--primary-soft)}
   .prog-card .pc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
@@ -334,7 +344,7 @@
   .rq{color:var(--danger);font-weight:700}
   .ro-tag{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);padding:2px 8px;border-radius:20px;margin-left:8px}
   .req-note{font-size:11.5px;font-weight:500;color:var(--danger);text-transform:none;letter-spacing:0;margin-left:8px}
-  .cls-wrap{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;overflow-x:auto}
+  .cls-wrap{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .cls-table{width:100%;border-collapse:collapse;font-size:12.5px}
   .cls-table th{background:var(--surface-2);text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
   .cls-table td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -352,7 +362,7 @@
   .footer-gap{height:46px}
   .portal-footer{position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))}
   .pbackdrop{display:none}
-  @media(max-width:880px){
+  @media(max-width:1024px){
     .pbody{grid-template-columns:1fr}
     .psidebar{position:fixed;left:0;top:61px;width:250px;transform:translateX(-100%);transition:transform .25s;z-index:35}
     .psidebar.open{transform:none}
@@ -365,9 +375,9 @@
     .steps{display:flex;gap:14px;overflow-x:auto}.steps::before{display:none}
     .step{flex-direction:column;align-items:center;min-width:70px;text-align:center}.step .lbl{font-size:11px;padding-top:0}
     .grid-2,.grid-3,.prog-grid,.pay-methods{grid-template-columns:1fr}
-    .pmain{padding:16px}
+    .pmain{padding:18px 16px calc(72px + env(safe-area-inset-bottom))}
   }
-  @media(max-width:640px){
+  @media(max-width:768px){
     .ptopbar{padding:10px 12px;gap:10px;flex-wrap:wrap}
     .ptopbar .sch{font-size:14px;line-height:1.25;flex:1 1 calc(100% - 96px)}
     .ptopbar .yr{margin-left:0;order:3;width:100%;font-size:11px}
@@ -377,6 +387,16 @@
     .step-nav{flex-direction:column-reverse}
     .step-nav .btn{width:100%}
     .rev-body{grid-template-columns:1fr}
+  }
+  @media(max-width:480px){
+    .pmain{padding:14px 12px 24px}
+    .ptopbar{padding:10px 10px 12px}
+    .welcome .wh,.doc-card,.sidecard,.stepcard{padding-left:14px;padding-right:14px}
+    .steps{gap:10px}
+  }
+  @media(max-width:360px){
+    .pmain{padding:12px 10px 20px}
+    .ptopbar .sch{font-size:13px}
   }
   .env-badge{position:fixed;bottom:10px;right:12px;z-index:99999;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;padding:4px 9px;border-radius:20px;background:#0E3F86;color:#AFD3FF;border:1px solid #173F7A;box-shadow:0 4px 14px -6px rgba(0,0,0,.5);pointer-events:none}
   .env-badge.dev{background:#5b3a08;color:#FBD37A;border-color:#7a5409}
@@ -411,7 +431,7 @@
 </style>
 </head>
 <body class="booting">
-<div class="env-badge" id="envBadge">â— LIVE</div>
+<div class="env-badge" id="envBadge">LIVE</div>
 <div class="boot-splash" id="bootSplash"><div class="boot-card"><span class="boot-spinner" aria-hidden="true"></span><span class="boot-copy">Loading your session...</span></div></div>
 
 <!-- ===== LOGIN ===== -->
@@ -542,12 +562,12 @@
     <a class="back-link" onclick="showScreen('s-login')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to login</a>
     <div class="auth-head"><div class="crest">SHS</div><h1>Purchase admission token</h1><span class="tag">Enter your index to begin</span></div>
     <div class="card" id="purchase-form">
-      <div class="field"><label>Select your school</label><select id="p-school-sel"><option value="">Loading schoolsâ€¦</option></select></div>
+      <div class="field"><label>Select your school</label><select id="p-school-sel"><option value="">Loading schools...</option></select></div>
       <div class="field"><label>JHS index number</label><input class="input-mono" id="p-index" placeholder="100000000026"></div>
       <div class="notice warn" id="p-pending" style="display:none"></div>
       <div class="notice info" id="p-school" style="display:none"></div>
       <div class="field"><label>Full name</label><input id="p-name" placeholder="As shown on placement form"></div>
-      <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:13px"><div class="field"><label>Phone</label><input id="p-phone" placeholder="024â€¦"></div><div class="field"><label>Email <span class="hint">(optional)</span></label><input id="p-email" placeholder="you@email.com"></div></div>
+      <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:13px"><div class="field"><label>Phone</label><input id="p-phone" placeholder="024..."></div><div class="field"><label>Email <span class="hint">(optional)</span></label><input id="p-email" placeholder="you@email.com"></div></div>
       <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px">Choose a payment method</label>
       <div class="pay-methods">
         <button class="pay-opt" onclick="payToken('Paystack')"><span class="b" style="background:#0ba4db">P</span>Paystack</button>
@@ -558,11 +578,11 @@
     </div>
     <div class="card" id="purchase-done" style="display:none">
       <div style="text-align:center;margin-bottom:4px"><b style="font-family:'Space Grotesk';font-size:16px">Payment successful</b></div>
-      <div class="token-show"><small>Your admission token</small><div class="tk" id="new-token">â€”</div></div>
+      <div class="token-show"><small>Your admission token</small><div class="tk" id="new-token">-</div></div>
       <div class="notice info">Keep this token safe. We've also sent it by SMS. You can log in with it now.</div>
       <button class="btn btn-primary btn-block" onclick="useNewToken()">Continue to login</button>
     </div>
-    <div class="helpline">Helpline Â· <a href="tel:0256744028" class="mono">0256744028</a></div>
+    <div class="helpline">Helpline - <a href="tel:0256744028" class="mono">0256744028</a></div>
   </div></div>
 </div>
 
@@ -572,16 +592,16 @@
     <a class="back-link" onclick="showScreen('s-login')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to login</a>
     <div class="auth-head"><div class="crest">AS</div><h1>Retrieve your token</h1><span class="tag">Already paid?</span></div>
     <div class="card">
-      <div class="field"><label>Select your school</label><select id="r-school"><option value="">Loading schoolsâ€¦</option></select></div>
+      <div class="field"><label>Select your school</label><select id="r-school"><option value="">Loading schools...</option></select></div>
       <div class="field"><label>Search by</label><select id="r-by"><option value="index">Index number</option><option value="receipt">Payment receipt number</option></select></div>
       <div class="field"><label id="r-label">Index number</label><input class="input-mono" id="r-value" placeholder="100000000026"></div>
       <button class="btn btn-primary btn-block" onclick="retrieveToken()">Find my token</button>
       <div id="retrieve-result" style="margin-top:16px;display:none">
-        <div class="token-show"><small>Your admission token</small><div class="tk" id="ret-token">â€”</div></div>
+        <div class="token-show"><small>Your admission token</small><div class="tk" id="ret-token">-</div></div>
         <button class="btn btn-ghost btn-block" onclick="useRetrieved()">Use this token to log in</button>
       </div>
     </div>
-    <div class="helpline">Helpline Â· <a href="tel:0256744028" class="mono">0256744028</a></div>
+    <div class="helpline">Helpline - <a href="tel:0256744028" class="mono">0256744028</a></div>
   </div></div>
 </div>
 
@@ -595,7 +615,7 @@
   </div>
   <div class="pbody">
     <aside class="psidebar" id="psidebar">
-      <div class="pstud"><div class="ph" id="sbAvatar">?</div><div class="nm" id="sbName">â€”</div></div>
+      <div class="pstud"><div class="ph" id="sbAvatar">?</div><div class="nm" id="sbName">-</div></div>
       <nav class="pnav">
         <button id="navDash" class="active" onclick="showPanel('dash')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</button>
         <button id="navForm" onclick="showPanel('form')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Personal Records Form</button>
@@ -608,9 +628,9 @@
     <main class="pmain">
       <!-- DASHBOARD PANEL -->
       <div id="panel-dash">
-        <div class="welcome" id="welcomeCard"><div class="wh" id="welcomeMsg">â€”</div></div>
+        <div class="welcome" id="welcomeCard"><div class="wh" id="welcomeMsg">-</div></div>
         <div class="wu">
-          <div class="wu-head"><h3 id="wuName">â€”</h3><div class="sno" id="wuSchoolNo">â€”</div><div class="wu-avatar" id="wuAvatar">?</div></div>
+          <div class="wu-head"><h3 id="wuName">-</h3><div class="sno" id="wuSchoolNo">-</div><div class="wu-avatar" id="wuAvatar">?</div></div>
           <div class="wu-grid" id="wuGrid"></div>
         </div>
         <div class="docs">
@@ -641,40 +661,40 @@
             <ul class="steps" id="stepsList"></ul>
           </aside>
           <div>
-            <!-- STEP 0 â€” PLACEMENT -->
+            <!-- STEP 0 - PLACEMENT -->
             <section class="stepcard active" data-step="0"><div class="card2"><div class="card2-head"><h2>Placement details</h2><p>Confirm your placement data, then enter your enrolment details.</p></div><div class="card2-body">
               <div class="form-note">NOTE: The information you provide here MUST be EXACTLY the same as the information on your Placement / Enrolment Form. Any mismatch may result in the CANCELLATION of your admission.</div>
-              <div class="sub-h">Enrolment data â€” Part 1 <span class="ro-tag">read-only</span></div>
+              <div class="sub-h">Enrolment data - Part 1 <span class="ro-tag">read-only</span></div>
               <div class="grid-2"><div class="field"><label>Index No</label><input id="pf1-index" disabled></div><div class="field"><label>Gender</label><input id="pf1-gender" disabled></div></div>
               <div class="grid-2"><div class="field"><label>Programme</label><input id="pf1-prog" disabled></div><div class="field"><label>Residential Status</label><input id="pf1-res" disabled></div></div>
               <div class="grid-2"><div class="field"><label>Surname</label><input id="pf1-surname" disabled></div><div class="field"><label>Other Names</label><input id="pf1-other" disabled></div></div>
               <div class="field"><label>Aggregate of Best Six</label><input id="pf1-agg" disabled></div>
 
-              <div class="sub-h">Enrolment data â€” Part 2 <span class="req-note">enter exactly as captured on your CSSPS enrolment form</span></div>
+              <div class="sub-h">Enrolment data - Part 2 <span class="req-note">enter exactly as captured on your CSSPS enrolment form</span></div>
               <div class="grid-2"><div class="field"><label>Raw Score <span class="rq">*</span></label><input type="number" id="pf-raw" placeholder="e.g. 232"></div><div class="field"><label>Enrolment Code <span class="rq">*</span></label><input id="pf-enrol" class="input-mono" placeholder="ENRXXXXXX"></div></div>
-              <div class="field"><label>Enrolment Form upload <span class="hint">(.jpg / .jpeg â€” max 2 MB)</span> <span class="rq">*</span></label>
+              <div class="field"><label>Enrolment Form upload <span class="hint">(.jpg / .jpeg - max 2 MB)</span> <span class="rq">*</span></label>
                 <input type="file" id="enrFileInput" accept="image/jpeg,.jpg,.jpeg" style="display:none" onchange="handleEnrFile(this)">
-                <div id="enrWrap"><div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only Â· up to 2 MB Â· enrolment code must be visible</small></div></div></div>
-              <div class="grid-2"><div class="field"><label>Name of JHS Attended <span class="rq">*</span></label><input id="pf-jhs" placeholder="e.g. KANESHIE KINGSWAY 2 BASIC"></div><div class="field"><label>JHS Type <span class="rq">*</span></label><select id="pf-jhstype"><option value="">Selectâ€¦</option><option>PUBLIC</option><option>PRIVATE</option></select></div></div>
+                <div id="enrWrap"><div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only - up to 2 MB - enrolment code must be visible</small></div></div></div>
+              <div class="grid-2"><div class="field"><label>Name of JHS Attended <span class="rq">*</span></label><input id="pf-jhs" placeholder="e.g. KANESHIE KINGSWAY 2 BASIC"></div><div class="field"><label>JHS Type <span class="rq">*</span></label><select id="pf-jhstype"><option value="">Select...</option><option>PUBLIC</option><option>PRIVATE</option></select></div></div>
               <div class="step-nav"><span></span><button class="btn btn-primary" onclick="stepNext(0)">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
             </div></div></section>
 
-            <!-- STEP 1 â€” PERSONAL -->
+            <!-- STEP 1 - PERSONAL -->
             <section class="stepcard" data-step="1"><div class="card2"><div class="card2-head"><h2>Personal data</h2><p>Some fields are mandatory.</p></div><div class="card2-body">
               <div class="grid-2"><div class="field"><label>Date of Birth <span class="rq">*</span></label><input type="date" id="pf-dob"></div><div class="field"><label>Place of Birth <span class="rq">*</span></label><input id="pf-pob"></div></div>
-              <div class="grid-2"><div class="field"><label>Nationality <span class="rq">*</span></label><select id="pf-nat" onchange="toggleOther('pf-nat')"></select><input id="pf-nat-other" placeholder="Please specify nationality" style="display:none;margin-top:6px"></div><div class="field"><label>Religion <span class="rq">*</span></label><select id="pf-rel" onchange="toggleOther('pf-rel')"><option value="">Selectâ€¦</option><option>Christianity</option><option>Islam</option><option>Traditional African Religions</option><option>Buddhism</option><option>Hinduism</option><option>Judaism</option><option>Atheism/Agnosticism</option><option>Other</option></select><input id="pf-rel-other" placeholder="Please specify religion" style="display:none;margin-top:6px"></div></div>
-              <div class="grid-2"><div class="field"><label>Religious Denomination <span class="hint">(Christians only)</span></label><select id="pf-den" onchange="toggleOther('pf-den')"><option value="">Selectâ€¦</option><option>Catholic</option><option>Methodist</option><option>Anglican</option><option>Presbyterian</option><option>Pentecostal</option><option>Baptist</option><option>Lutheran</option><option>Seventh-Day Adventist</option><option>Evangelical Charismatic</option><option>Church of Christ</option><option>Other</option></select><input id="pf-den-other" placeholder="Please specify denomination" style="display:none;margin-top:6px"></div><div class="field"><label>Permanent Address <span class="rq">*</span></label><input id="pf-addr" placeholder="House / digital address"></div></div>
+              <div class="grid-2"><div class="field"><label>Nationality <span class="rq">*</span></label><select id="pf-nat" onchange="toggleOther('pf-nat')"></select><input id="pf-nat-other" placeholder="Please specify nationality" style="display:none;margin-top:6px"></div><div class="field"><label>Religion <span class="rq">*</span></label><select id="pf-rel" onchange="toggleOther('pf-rel')"><option value="">Select...</option><option>Christianity</option><option>Islam</option><option>Traditional African Religions</option><option>Buddhism</option><option>Hinduism</option><option>Judaism</option><option>Atheism/Agnosticism</option><option>Other</option></select><input id="pf-rel-other" placeholder="Please specify religion" style="display:none;margin-top:6px"></div></div>
+              <div class="grid-2"><div class="field"><label>Religious Denomination <span class="hint">(Christians only)</span></label><select id="pf-den" onchange="toggleOther('pf-den')"><option value="">Select...</option><option>Catholic</option><option>Methodist</option><option>Anglican</option><option>Presbyterian</option><option>Pentecostal</option><option>Baptist</option><option>Lutheran</option><option>Seventh-Day Adventist</option><option>Evangelical Charismatic</option><option>Church of Christ</option><option>Other</option></select><input id="pf-den-other" placeholder="Please specify denomination" style="display:none;margin-top:6px"></div><div class="field"><label>Permanent Address <span class="rq">*</span></label><input id="pf-addr" placeholder="House / digital address"></div></div>
               <div class="grid-3"><div class="field"><label>Town <span class="rq">*</span></label><input id="pf-town"></div><div class="field"><label>Region <span class="rq">*</span></label><select id="pf-region"></select></div><div class="field"><label>District <span class="rq">*</span></label><input id="pf-district" placeholder="Type your district"></div></div>
-              <div class="grid-2"><div class="field"><label>Interest(s) <span class="rq">*</span></label><select id="pf-interest" onchange="toggleOther('pf-interest')"><option value="">Selectâ€¦</option><option>Athletics</option><option>Football</option><option>Debating Club</option><option>Drama</option><option>Music</option><option>Others</option></select><input id="pf-interest-other" placeholder="Please specify your interest" style="display:none;margin-top:6px"></div><div class="field"><label>Ghana Card / NHIS No</label><input id="pf-card" placeholder="NA"></div></div>
-              <div class="sub-h">Class selection <span class="req-note">pick a class based on the available subject combinations â€” you must choose one</span></div>
+              <div class="grid-2"><div class="field"><label>Interest(s) <span class="rq">*</span></label><select id="pf-interest" onchange="toggleOther('pf-interest')"><option value="">Select...</option><option>Athletics</option><option>Football</option><option>Debating Club</option><option>Drama</option><option>Music</option><option>Others</option></select><input id="pf-interest-other" placeholder="Please specify your interest" style="display:none;margin-top:6px"></div><div class="field"><label>Ghana Card / NHIS No</label><input id="pf-card" placeholder="NA"></div></div>
+              <div class="sub-h">Class selection <span class="req-note">pick a class based on the available subject combinations - you must choose one</span></div>
               <div class="cls-wrap"><table class="cls-table"><thead><tr><th>Class</th><th>Subject combination</th><th>Seats</th></tr></thead><tbody id="clsRows"></tbody></table></div>
               <div class="step-nav"><button class="btn btn-ghost" onclick="goStep(0)">Back</button><button class="btn btn-primary" onclick="stepNext(1)">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
             </div></div></section>
 
-            <!-- STEP 2 â€” PARENT / GUARDIAN -->
+            <!-- STEP 2 - PARENT / GUARDIAN -->
             <section class="stepcard" data-step="2"><div class="card2"><div class="card2-head"><h2>Parent / Guardian</h2><p>Provide active, regular phone numbers and parental details.</p></div><div class="card2-body">
               <div class="sub-h">Communication</div>
-              <div class="grid-2"><div class="field"><label>Mobile Phone (SMS) <span class="rq">*</span></label><input id="pf-sms" placeholder="024â€¦"></div><div class="field"><label>WhatsApp No</label><input id="pf-wa" placeholder="024â€¦"></div></div>
+              <div class="grid-2"><div class="field"><label>Mobile Phone (SMS) <span class="rq">*</span></label><input id="pf-sms" placeholder="024..."></div><div class="field"><label>WhatsApp No</label><input id="pf-wa" placeholder="024..."></div></div>
               <div class="grid-2"><div class="field"><label>Other Phone <span class="hint">(if any)</span></label><input id="pf-other"></div><div class="field"><label>E-mail</label><input id="pf-email" placeholder="you@email.com"></div></div>
               <div class="sub-h">Parental data</div>
               <div class="grid-3"><div class="field"><label>Father's Name <span class="rq">*</span></label><input id="pf-fname"></div><div class="field"><label>Father's Occupation <span class="rq">*</span></label><input id="pf-focc"></div><div class="field"><label>Father's Contact <span class="rq">*</span></label><input id="pf-fphone" inputmode="tel" placeholder="02XXXXXXXX"></div></div>
@@ -683,10 +703,10 @@
               <div class="step-nav"><button class="btn btn-ghost" onclick="goStep(1)">Back</button><button class="btn btn-primary" onclick="stepNext(2)">Review<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
             </div></div></section>
 
-            <!-- STEP 3 â€” REVIEW -->
+            <!-- STEP 3 - REVIEW -->
             <section class="stepcard" data-step="3"><div class="card2"><div class="card2-head"><h2>Review &amp; submit</h2><p>Verify that all information is accurate before submitting.</p></div><div class="card2-body">
               <div id="reviewBlocks"></div>
-              <div class="step-nav" style="margin-top:20px"><button class="btn btn-ghost" onclick="goStep(2)">Back</button><button class="btn btn-primary" id="submitBtn" onclick="submitApp()">âœ… Submit Enrolment</button></div>
+              <div class="step-nav" style="margin-top:20px"><button class="btn btn-ghost" onclick="goStep(2)">Back</button><button class="btn btn-primary" id="submitBtn" onclick="submitApp()">Submit Enrolment</button></div>
             </div></div></section>
           </div>
         </div>
@@ -703,7 +723,7 @@ const SUPABASE_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
 const PAYSTACK_PUBLIC_KEY='pk_test_7a6055b78d8771cc5d25617a632db4ad7c17bfab';
 const SCHOOL_CODE=null; // schools are resolved automatically from the index number
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false}});
-(function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SUPABASE_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'â— LIVE':'â— DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
+(function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SUPABASE_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'LIVE':'DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 const stepLabels=['Placement','Personal','Parent / Guardian','Review'];
 const REGIONS=['Ahafo','Ashanti','Bono','Bono East','Central','Eastern','Greater Accra','North East','Northern','Oti','Savannah','Upper East','Upper West','Volta','Western','Western North'];
 const NATIONALITIES=['Ghanaian','Nigerian','Togolese','Ivorian','Burkinabe','Beninese','Liberian','Other'];
@@ -826,11 +846,11 @@ async function doLogin(){
   if(admissionClosed(sid)){ const b=$('admClosedBanner'); if(b)b.style.display='block'; toast('Admission is closed for this school'); return; }
   if(!idx){$('f-index').classList.add('err');return;}
   const {data,error}=await sb.rpc('student_login',{p_index:idx,p_token:tok,p_school:sid});
-  if(error){toast('Login failed â€” '+error.message);return;}
+  if(error){toast('Login failed - '+error.message);return;}
   if(!data.ok){
     if(data.error==='index')$('f-index').classList.add('err');
     else if(data.error==='token')$('f-token').classList.add('err');
-    else if(data.error==='ambiguous')toast('This index appears under more than one school â€” contact your school office.');
+    else if(data.error==='ambiguous')toast('This index appears under more than one school - contact your school office.');
     else toast('Could not sign in');
     return;
   }
@@ -857,7 +877,7 @@ async function refreshStudent(){
 }
 // If the student's record has been deleted by the school, drop their access immediately.
 function revokeAccess(){
-  toast('Your record is no longer available â€” please contact your school.');
+  toast('Your record is no longer available - please contact your school.');
   logout();
 }
 async function validateSession(){
@@ -870,7 +890,7 @@ async function validateSession(){
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&session) scheduleStudentRefresh('visible',true); });
 setInterval(function(){ if(session) validateSession(); }, 60000);
 setInterval(function(){ if(session) scheduleStudentRefresh('sync'); }, 30000);
-// Realtime: the school broadcasts when a student is deleted â€” revoke access instantly.
+// Realtime: the school broadcasts when a student is deleted - revoke access instantly.
 let stuChannel=null, stuRefreshTimer=null, stuRefreshBusy=false, stuRefreshQueued=false;
 function scheduleStudentRefresh(reason,immediate){
   if(!session) return;
@@ -930,13 +950,13 @@ function hydrate(){
     else { if(im)im.style.display='none'; if(tx)tx.style.display=''; if(box)box.classList.remove('has-img'); } }
   $('wuName').textContent=displayName;
   $('wuAvatar').textContent=initials(displayName);
-  $('wuSchoolNo').textContent='School No.: '+(s.school_no||'â€”');
+  $('wuSchoolNo').textContent='School No.: '+(s.school_no||'-');
   app.done=[s.personal_done,s.programme_done,s.undertaking_done,s.documents_done];
   app.done=s.submitted?[true,true,true]:[false,false,false];
   app.classId=s.class_id||null;
   $('pf1-index').value=s.index||''; $('pf1-gender').value=s.gender||''; $('pf1-prog').value=s.programme||'';
-  $('pf1-res').value=s.residential||'â€”'; $('pf1-surname').value=s.surname||displayName||''; $('pf1-other').value=s.other_names||'';
-  $('pf1-agg').value=(s.aggregate!=null?s.aggregate:'â€”');
+  $('pf1-res').value=s.residential||'-'; $('pf1-surname').value=s.surname||displayName||''; $('pf1-other').value=s.other_names||'';
+  $('pf1-agg').value=(s.aggregate!=null?s.aggregate:'-');
   buildPickers(); buildClassTable(); prefillRecords(s.records);
   if(!$('pf-sms').value&&smsContact)$('pf-sms').value=smsContact;
   if(!app.fields.sms_contact&&smsContact)app.fields.sms_contact=smsContact;
@@ -946,14 +966,14 @@ function hydrate(){
     ? displayName+', WELL DONE! You have completed your Personal Records Form. Kindly download all the necessary documents. Thank you!'
     : displayName+', please complete your Personal Records Form to proceed with your admission.';
   const blocks=[
-    {h:s.programme||'â€”',l:'Programme'},
-    {h:s.residential||'â€”',l:'Residential Status'},
+    {h:s.programme||'-',l:'Programme'},
+    {h:s.residential||'-',l:'Residential Status'},
     {h:done?'<span class="pill ok">Completed</span>':'<span class="pill pend">Pending</span>',l:'Personal Records',btn:'<button class="btn btn-primary btn-sm" onclick="showPanel(\'form\')"><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\'/><path d=\'M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z\'/></svg>'+(done?'Edit Your Form':'Fill Your Form')+'</button>'},
-    {h:s.gender||'â€”',l:'Gender'},
+    {h:s.gender||'-',l:'Gender'},
     {h:s.class||'<span style="color:var(--muted)">Not assigned</span>',l:'Class Assigned'},
     {h:s.house||'<span style="color:var(--muted)">Not assigned</span>',l:'House Assigned'},
-    {h:'<span class="mono">'+(s.index||'â€”')+'</span>',l:'JHS Index No'},
-    {h:'<span class="mono">'+(s.contact||'â€”')+'</span>',l:'Contact Number'},
+    {h:'<span class="mono">'+(s.index||'-')+'</span>',l:'JHS Index No'},
+    {h:'<span class="mono">'+(s.contact||'-')+'</span>',l:'Contact Number'},
     {h:'',l:'Log Out',btn:'<button class="btn btn-danger btn-sm" onclick="logout()"><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9\'/></svg>Log Out</button>'},
   ];
   $('wuGrid').innerHTML=blocks.map(b=>`<div class="wu-block"><div class="h">${b.h}</div>${b.btn||''}<div class="l">[${b.l}]</div></div>`).join('');
@@ -983,7 +1003,7 @@ function clearPending(){try{localStorage.removeItem(PENDING_KEY);}catch(e){}}
 function showPendingBanner(){
   const p=getPending(); const el=$('p-pending'); if(!el)return;
   if(p&&p.reference){ el.style.display='block';
-    el.innerHTML='Payment not yet confirmed (ref <b>'+p.reference+'</b>)'+(p.reason?'<br><span style="font-weight:600">Reason: '+p.reason+'</span>':'')+'.<br><a onclick="retryVerify()">Retry verification</a> \u2014 you will <b>not</b> be charged again. &nbsp;Â·&nbsp; <a onclick="dismissPending()">dismiss</a>'; }
+    el.innerHTML='Payment not yet confirmed (ref <b>'+p.reference+'</b>)'+(p.reason?'<br><span style="font-weight:600">Reason: '+p.reason+'</span>':'')+'.<br><a onclick="retryVerify()">Retry verification</a> \u2014 you will <b>not</b> be charged again. &nbsp; - &nbsp; <a onclick="dismissPending()">dismiss</a>'; }
   else el.style.display='none';
 }
 function dismissPending(){ clearPending(); showPendingBanner(); toast('Cleared. If you completed a payment, it stays valid \u2014 use Retrieve token.'); }
@@ -993,20 +1013,20 @@ async function payToken(method){
   if(!sid){toast('Please select your school first');return;}
   if(admissionClosed(sid)){toast('Admission is closed for this school');return;}
   if(!idx||!name){toast('Enter your index number and name first');return;}
-  if(method!=='Paystack'){toast(method+' isn\u2019t available yet â€” please use Paystack');return;}
+  if(method!=='Paystack'){toast(method+' isn\u2019t available yet - please use Paystack');return;}
   // recover an unconfirmed payment instead of charging again
   const pend=getPending();
-  if(pend&&pend.index===idx&&pend.reference){ toast('Found an unconfirmed payment â€” verifying instead of charging again'); return verifyPayment(pend.reference, idx, name); }
+  if(pend&&pend.index===idx&&pend.reference){ toast('Found an unconfirmed payment - verifying instead of charging again'); return verifyPayment(pend.reference, idx, name); }
   // already paid? then don't charge again
   const {data:has}=await sb.rpc('index_has_token',{p_index:idx,p_school:sid});
-  if(has&&has.ok&&has.paid){ toast('This index has already paid. Use â€œRetrieve tokenâ€ to get your token.'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
+  if(has&&has.ok&&has.paid){ toast('This index has already paid. Use "Retrieve token" to get your token.'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
   const {data:sch}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:sid});
   if(!sch||!sch.ok){toast('This index is not on any participating school\u2019s placement list');return;}
   const verifiedName=nameFromLookup(sch)||await lookupPlacementName(idx,sid)||name;
   const amount=Math.round(Number(sch.charge||0)*100);
   if(!amount){toast('This school has no service charge set');return;}
   const email=$('p-email').value.trim()||(idx+'@noemail.qadmission');
-  if(!window.PaystackPop){toast('Payment library didn\u2019t load â€” check your connection and reload');return;}
+  if(!window.PaystackPop){toast('Payment library didn\u2019t load - check your connection and reload');return;}
   toast('Opening secure payment for '+sch.name+'\u2026');
   const handler=window.PaystackPop.setup({
     key:PAYSTACK_PUBLIC_KEY, email, amount, currency:'GHS',
@@ -1038,11 +1058,11 @@ async function verifyPayment(reference, idx, name, school){
     try{console.log('[verify-payment] response:',data,'netErr:',netErr);}catch(e){}
     let msg, reason;
     if(netErr){ reason='network error'; msg='Network problem reaching the server. Tap Retry verification.'; }
-    else if(data&&data.error==='not_configured'){ reason='payment system not configured'; msg='Payment system key not set yet. Your payment is safe â€” Retry verification shortly.'; }
+    else if(data&&data.error==='not_configured'){ reason='payment system not configured'; msg='Payment system key not set yet. Your payment is safe - Retry verification shortly.'; }
     else if(data&&data.error==='verification_failed'){
       const gs=data.gateway_status||data.gateway_message||'not found';
       reason='Paystack status \u201c'+gs+'\u201d'+(data.gateway_message&&data.gateway_status?(' \u2014 '+data.gateway_message):'');
-      msg='Paystack says: '+gs+'. '+(gs==='abandoned'||gs==='failed'?'That payment wasn\u2019t completed â€” finish the card + OTP step.':'Reference not recognised on this account.');
+      msg='Paystack says: '+gs+'. '+(gs==='abandoned'||gs==='failed'?'That payment wasn\u2019t completed - finish the card + OTP step.':'Reference not recognised on this account.');
     }
     else { reason=(data&&(data.message||data.gateway_message||data.error))||'unknown'; msg='Could not verify yet ('+reason+'). Tap Retry verification.'; }
     savePending({reference,index:idx,name:name||'',reason}); showPendingBanner();
@@ -1056,7 +1076,7 @@ async function verifyPayment(reference, idx, name, school){
   if(login&&login.ok){ STU=login.student; await applySchool(login); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome! Save your token: '+data.token); }
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }
-function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in â€” tap Log in');}
+function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in - tap Log in');}
 $('r-by').addEventListener('change',e=>$('r-label').textContent=e.target.value==='index'?'Index number':'Payment receipt number');
 async function retrieveToken(){
   const by=$('r-by').value,v=$('r-value').value.trim(); if(!v){toast('Enter a value to search');return;}
@@ -1065,7 +1085,7 @@ async function retrieveToken(){
   if(error||!data.ok){toast(data&&data.error?data.error:'No token found');return;}
   $('ret-token').textContent=data.token;$('retrieve-result').style.display='block';window._retRec={idx:data.index,tk:data.token};
 }
-function useRetrieved(){$('login-index').value=window._retRec.idx;$('login-token').value=window._retRec.tk;showScreen('s-login');toast('Token filled in â€” tap Log in');}
+function useRetrieved(){$('login-index').value=window._retRec.idx;$('login-token').value=window._retRec.tk;showScreen('s-login');toast('Token filled in - tap Log in');}
 
 /* ===== WIZARD ===== */
 function buildSteps(){$('stepsList').innerHTML=stepLabels.map((l,i)=>`<li class="step" data-i="${i}" onclick="goStep(${i})"><span class="dot"><span class="num">${i+1}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></span><span class="lbl">${l}</span></li>`).join('');}
@@ -1079,10 +1099,10 @@ function val(id){var e=$(id);return e?e.value.trim():'';}
 function need(ids){for(const id of ids){if(!val(id)){const e=$(id);if(e){e.focus();e.style.borderColor='var(--danger)';setTimeout(()=>e.style.borderColor='',1500);}return false;}}return true;}
 
 function buildPickers(){
-  $('pf-region').innerHTML='<option value="">Selectâ€¦</option>'+REGIONS.map(r=>`<option>${r}</option>`).join('');
+  $('pf-region').innerHTML='<option value="">Select...</option>'+REGIONS.map(r=>`<option>${r}</option>`).join('');
   $('pf-nat').innerHTML=NATIONALITIES.map(n=>`<option ${n==='Ghanaian'?'selected':''}>${n}</option>`).join('');
 }
-function fmtCombo(str){ return (str||'').split(',').map(x=>x.trim()).filter(Boolean).join(' Â· '); }
+function fmtCombo(str){ return (str||'').split(',').map(x=>x.trim()).filter(Boolean).join(' - '); }
 function buildClassTable(){
   const progSubs=fmtCombo((progById(STU.programme_id)||{}).subjects||'');
   let classes=(SCHOOL&&SCHOOL.classes)||[];
@@ -1101,14 +1121,14 @@ async function handleEnrFile(inp){
   if(!file) return;
   const isJpg = file.type==='image/jpeg' || file.type==='image/jpg' || /\.jpe?g$/i.test(file.name);
   if(!isJpg){ toast('Please upload a JPG image'); return; }
-  if(file.size > 2*1024*1024){ toast('File too large â€” max 2 MB'); return; }
+  if(file.size > 2*1024*1024){ toast('File too large - max 2 MB'); return; }
   if(!STU||!session){ toast('Please log in again'); return; }
-  $('enrWrap').innerHTML='<div class="dropzone"><b>Uploadingâ€¦</b><small>Please wait</small></div>';
+  $('enrWrap').innerHTML='<div class="dropzone"><b>Uploading...</b><small>Please wait</small></div>';
   const ext = /\.jpe?g$/i.test(file.name) ? file.name.split('.').pop() : 'jpg';
   const path = (STU.index||'student')+'_'+Date.now()+'.'+ext;
   const {error}=await sb.storage.from('enrolment-forms').upload(path, file, {contentType:file.type||'image/jpeg', upsert:true});
   if(error){
-    toast('Upload failed â€” '+error.message);
+    toast('Upload failed - '+error.message);
     removeEnr();
     return;
   }
@@ -1117,10 +1137,10 @@ async function handleEnrFile(inp){
   app.fields.enrolment_form_url = pub.publicUrl;
   app.fields.enrolment_uploaded = true;
   const kb=Math.max(1,Math.round(file.size/1024));
-  $('enrWrap').innerHTML=`<div class="file-done"><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div><b>${file.name.replace(/[<>"]/g,'')}</b><small>Uploaded Â· ${kb} KB</small></div><button class="x" onclick="removeEnr()">Remove</button></div>`;
+  $('enrWrap').innerHTML=`<div class="file-done"><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div><b>${file.name.replace(/[<>"]/g,'')}</b><small>Uploaded - ${kb} KB</small></div><button class="x" onclick="removeEnr()">Remove</button></div>`;
   toast('Enrolment form uploaded');
 }
-function removeEnr(){app.enrUploaded=false;app.fields.enrolment_form_url='';app.fields.enrolment_uploaded=false;$('enrWrap').innerHTML=`<div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only Â· up to 2 MB Â· enrolment code must be visible</small></div>`;}
+function removeEnr(){app.enrUploaded=false;app.fields.enrolment_form_url='';app.fields.enrolment_uploaded=false;$('enrWrap').innerHTML=`<div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only - up to 2 MB - enrolment code must be visible</small></div>`;}
 
 function toggleOther(selId){ const s=$(selId), o=$(selId+'-other'); if(!s||!o)return; const isOther=/^others?$/i.test((s.value||'').trim()); o.style.display=isOther?'block':'none'; if(!isOther)o.value=''; }
 function otherVal(selId){ const s=$(selId), o=$(selId+'-other'); if(s&&/^others?$/i.test((s.value||'').trim())&&o&&o.value.trim()) return o.value.trim(); return s?s.value:''; }
@@ -1154,13 +1174,13 @@ function prefillRecords(r){
   if(r.class_name)app.className=r.class_name;
   Object.assign(app.fields,r);
 }
-function rev(t,rows,step){return `<div class="rev-block"><div class="rev-head"><span class="t">${t}</span><a onclick="goStep(${step})" style="font-size:11.5px">edit</a></div><dl class="rev-body">${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]||'â€”'}</dd>`).join('')}</dl></div>`;}
+function rev(t,rows,step){return `<div class="rev-block"><div class="rev-head"><span class="t">${t}</span><a onclick="goStep(${step})" style="font-size:11.5px">edit</a></div><dl class="rev-body">${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]||'-'}</dd>`).join('')}</dl></div>`;}
 function buildReview(){
   collect(0);collect(1);collect(2);
   const f=app.fields,s=STU;
   let h='';
-  h+=rev('Enrolment data â€” Part 1',[['Index No',s.index],['Gender',s.gender],['Programme',s.programme],['Residential',s.residential],['Surname',s.surname||s.full_name],['Other Names',s.other_names],['Aggregate',s.aggregate]],0);
-  h+=rev('Enrolment data â€” Part 2',[['Raw Score',f.raw_score],['Enrolment Code',f.enrolment_code],['JHS Attended',f.jhs_attended],['JHS Type',f.jhs_type],['Enrolment form',app.enrUploaded?'Uploaded':'Not uploaded']],0);
+  h+=rev('Enrolment data - Part 1',[['Index No',s.index],['Gender',s.gender],['Programme',s.programme],['Residential',s.residential],['Surname',s.surname||s.full_name],['Other Names',s.other_names],['Aggregate',s.aggregate]],0);
+  h+=rev('Enrolment data - Part 2',[['Raw Score',f.raw_score],['Enrolment Code',f.enrolment_code],['JHS Attended',f.jhs_attended],['JHS Type',f.jhs_type],['Enrolment form',app.enrUploaded?'Uploaded':'Not uploaded']],0);
   h+=rev('Personal data',[['Date of Birth',f.dob],['Place of Birth',f.place_of_birth],['Nationality',f.nationality],['Religion',f.religion],['Denomination',f.denomination],['Address',f.address],['Town',f.town],['Region',f.region],['District',f.district],['Interest',f.interest],['Ghana Card/NHIS',f.ghana_card]],1);
   h+=rev('Class selection',[['Class',app.className||'To be assigned']],1);
   h+=rev('Communication',[['Mobile (SMS)',f.sms_contact],['WhatsApp',f.whatsapp],['Other Phone',f.other_phone],['E-mail',f.email]],2);
@@ -1171,15 +1191,15 @@ async function submitApp(){
   collect(0);collect(1);collect(2);
   if(!app.done.every(Boolean)){toast('Please complete all sections first');goStep(app.done.findIndex(d=>!d));return;}
   const payload=Object.assign({},app.fields,{surname:STU.surname||STU.full_name,other_names:STU.other_names,aggregate:STU.aggregate});
-  $('submitBtn').textContent='Submittingâ€¦';
+  $('submitBtn').textContent='Submitting...';
   const {data,error}=await sb.rpc('submit_application',{p_index:session.index,p_token:session.token,payload,p_school:session.school||null});
-  $('submitBtn').textContent='âœ… Submit Enrolment';
+  $('submitBtn').textContent='Submit Enrolment';
   if(error||!data.ok){
-    if(data&&data.error==='closed'){toast('Admission is closed for this school â€” submission not allowed.');return;}
-    toast('Submission failed â€” please try again');return;
+    if(data&&data.error==='closed'){toast('Admission is closed for this school - submission not allowed.');return;}
+    toast('Submission failed - please try again');return;
   }
   await refreshStudent(); app.current=0; showPanel('dash');
-  toast('Enrolment submitted Â· Admission No '+data.admission_no);
+  toast('Enrolment submitted - Admission No '+data.admission_no);
 }
 
 /* ===== DOCUMENTS ===== */
@@ -1206,8 +1226,8 @@ function printDoc(title,bodyHTML,bare){
     : '';
   const head='<html><head><title>'+title+'</title><style>body{font-family:'+bodyFont+';max-width:740px;margin:30px auto;padding:0 24px;color:#14201c;line-height:1.6}h1{font-size:20px;text-align:center;margin-bottom:2px}.sub{text-align:center;color:#555;font-size:13px;margin-bottom:24px}h2{font-size:16px;border-bottom:2px solid #1557B0;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin:12px 0}td{padding:6px 4px;border-bottom:1px solid #eee;font-size:14px}.lbl{color:#666;width:230px}.rn{color:#999;font-weight:600;margin-right:4px}.sec-h{background:#1557B0;color:#fff;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:7px 8px;border-bottom:none}img{max-width:100%}.qa-wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:62%;max-width:520px;z-index:0;pointer-events:none;opacity:.2;-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm img{width:100%;height:auto;display:block}body>*{position:relative;z-index:1}@media print{body{margin:0}.sec-h{-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm{opacity:.2}}'+onePage+recPage+'</style></head><body>';
   const wm=(wantWM&&crest)?'<div class="qa-wm"><img src="'+crest+'" alt=""></div>':'';
-  const banner=bare?'':'<h1>'+sch.toUpperCase()+'</h1><div class="sub">Online Admission Â· '+((SCHOOL&&SCHOOL.config.academic_year)||'2025/2026')+'</div>';
-  const copyright='<p style="margin-top:'+(isLetter?'18px':'30px')+';text-align:center;color:#888;font-size:11px;border-top:1px solid #e5e7eb;padding-top:8px">Copyright Â© 2026 VELOXIS TECH HUB. All rights reserved. Â· Version 1.0</p>';
+  const banner=bare?'':'<h1>'+sch.toUpperCase()+'</h1><div class="sub">Online Admission - '+((SCHOOL&&SCHOOL.config.academic_year)||'2025/2026')+'</div>';
+  const copyright='<p style="margin-top:'+(isLetter?'18px':'30px')+';text-align:center;color:#888;font-size:11px;border-top:1px solid #e5e7eb;padding-top:8px">Copyright &copy; 2026 VELOXIS TECH HUB. All rights reserved. - Version 1.0</p>';
   const inner=(bare?'<div style="position:relative">'+bodyHTML+'</div>':banner+bodyHTML)+copyright;
   w.document.write(head+wm+inner+'</body></html>');
   w.document.close(); setTimeout(()=>w.print(),350);
@@ -1215,10 +1235,10 @@ function printDoc(title,bodyHTML,bare){
 function reopening(){const c=SCHOOL&&SCHOOL.config;if(!c||!c.reopening_date)return '18 October 2025';try{return new Date(c.reopening_date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});}catch(e){return c.reopening_date;}}
 function recordsTableHTML(){
   const s=STU, r=(s.records||{});
-  const row=(l,v)=>'<tr><td class="lbl">'+l+'</td><td>'+(v||'â€”')+'</td></tr>';
+  const row=(l,v)=>'<tr><td class="lbl">'+l+'</td><td>'+(v||'-')+'</td></tr>';
   const RN=['i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii','xiii','xiv','xv','xvi','xvii','xviii','xix','xx'];
   let n=0;
-  const rowN=(l,v)=>'<tr><td class="lbl"><span class="rn">'+(RN[n++]||(n))+'.</span> '+l+'</td><td>'+((v==null||v==='')?'â€”':v)+'</td></tr>';
+  const rowN=(l,v)=>'<tr><td class="lbl"><span class="rn">'+(RN[n++]||(n))+'.</span> '+l+'</td><td>'+((v==null||v==='')?'-':v)+'</td></tr>';
   const section=(letter,title)=>{ n=0; return '<tr><td class="sec-h" colspan="2">'+letter+'. '+title+'</td></tr>'; };
   return '<table class="records-table">'
     +section('A','Placement')
@@ -1312,7 +1332,7 @@ function docSubjects(){
 }
 function docProspectus(){
   const u=schoolDocUrl('prospectus_url'); if(u){return openUploadedDoc(u);}
-  printDoc('Prospectus','<h2>School Prospectus</h2><p>Welcome to '+((SCHOOL&&SCHOOL.school.name)||'our school')+'. This prospectus outlines what you need to know as a fresh student â€” academic programmes, school rules, boarding arrangements and the items to bring on reporting day.</p><p>For the full printed prospectus, please collect a copy at the administration office on reporting day.</p>');
+  printDoc('Prospectus','<h2>School Prospectus</h2><p>Welcome to '+((SCHOOL&&SCHOOL.school.name)||'our school')+'. This prospectus outlines what you need to know as a fresh student - academic programmes, school rules, boarding arrangements and the items to bring on reporting day.</p><p>For the full printed prospectus, please collect a copy at the administration office on reporting day.</p>');
 }
 
 function gotoSuper(){ try{ if(window.parent&&window.parent!==window&&window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin.html'; }
@@ -1571,14 +1591,16 @@ window.addEventListener('storage',function(evt){
     try{
       var psid=document.getElementById('p-school-sel'); var sidv=psid?psid.value:null;
       var {data}=await sb.rpc('find_school_by_index',{p_index:v,p_school:sidv||null});
-      if(data&&data.ok){ box.innerHTML='Applying to <b>'+data.name+'</b> Â· service charge GHS '+Number(data.charge||0).toFixed(2); box.className='notice info'; box.style.display='block'; }
+      if(data&&data.ok){ box.innerHTML='Applying to <b>'+data.name+'</b> - service charge GHS '+Number(data.charge||0).toFixed(2); box.className='notice info'; box.style.display='block'; }
       else { box.innerHTML='We could not match this index to a participating school. Check the number, or contact your school office.'; box.className='notice warn'; box.style.display='block'; }
     }catch(e){}
   });
 })();
 </script>
 <div class="footer-gap" aria-hidden="true"></div>
-<footer class="portal-footer">Copyright Â© 2026 VELOXIS TECH HUB. All rights reserved. Â· Version 1.0</footer>
+<footer class="portal-footer">Copyright &copy; 2026 VELOXIS TECH HUB. All rights reserved. - Version 1.0</footer>
 </body>
 </html>
+
+
 
