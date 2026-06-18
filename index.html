@@ -1746,38 +1746,69 @@ window.addEventListener('storage',function(evt){
   html,body{height:100%;overflow:hidden}
   .app{display:grid;grid-template-columns:248px 1fr;height:100vh;overflow:hidden}
   body.auth-booting .app{display:none!important}
-  #authGate.gate-screen{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;background:radial-gradient(120% 90% at 12% 10%,rgba(21,87,176,.28),transparent 46%),radial-gradient(90% 80% at 100% 0%,rgba(210,148,26,.18),transparent 38%),linear-gradient(180deg,#dfe8f6,#edf2f8)}
-  .gate-shell{width:min(1080px,100%);max-height:calc(100vh - 48px);display:grid;grid-template-columns:minmax(300px,1.05fr) minmax(360px,.95fr);background:rgba(255,255,255,.34);border:1px solid rgba(255,255,255,.42);border-radius:28px;overflow:hidden;box-shadow:0 28px 80px -30px rgba(8,20,40,.45);backdrop-filter:blur(10px)}
-  .gate-panel{padding:36px;background:linear-gradient(160deg,#10254f 0%,#1557B0 58%,#0E3F86 100%);color:#fff;display:flex;flex-direction:column;gap:22px;min-height:520px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-ms-overflow-style:none}
-  .gate-panel::-webkit-scrollbar{width:0;height:0;display:none}
-  .gate-mark{width:74px;height:74px;border-radius:22px;display:grid;place-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
-  .gate-mark span{font:700 26px/1 'Space Grotesk',system-ui,sans-serif;letter-spacing:.04em}
-  .gate-kicker{display:inline-flex;align-items:center;gap:8px;width:max-content;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
-  .gate-panel h1{margin:0;font:700 34px/1.02 'Space Grotesk',system-ui,sans-serif}
-  .gate-panel p{margin:0;font-size:14px;line-height:1.65;color:rgba(255,255,255,.82);max-width:42ch}
-  .gate-points{display:grid;gap:12px;margin-top:auto}
-  .gate-point{display:flex;gap:12px;align-items:flex-start;padding:14px 15px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14)}
-  .gate-point svg{width:18px;height:18px;flex:none;margin-top:2px;color:#d7e8ff}
-  .gate-point b{display:block;font-size:13px;line-height:1.2;margin-bottom:4px}
-  .gate-point span{display:block;font-size:12px;line-height:1.55;color:rgba(255,255,255,.72)}
-  .gate-card-wrap{padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.9),#f4f7fc);display:flex;align-items:center}
-  .gate-card{width:min(430px,100%);max-width:430px;margin:auto;background:#fff;border:1px solid #e4ecf7;border-radius:24px;padding:28px;box-shadow:0 18px 40px -22px rgba(8,20,40,.35)}
-  .gate-card h2{margin:0;font:700 28px/1.06 'Space Grotesk',system-ui,sans-serif;color:#122648}
-  .gate-card p{margin:10px 0 0;font-size:13px;line-height:1.6;color:#607087}
-  .gate-status{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:13px;background:#f5f8fd;border:1px solid #dfe8f6;color:#607087;font-size:12px;font-weight:600;margin:18px 0 14px}
-  .gate-spinner{width:15px;height:15px;border-radius:50%;border:2px solid rgba(21,87,176,.16);border-top-color:#1557B0;animation:gateSpin .8s linear infinite;flex:none}
+  #authGate.gate-screen{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:clamp(24px,3vw,34px);padding-top:calc(clamp(24px,3vw,34px) + env(safe-area-inset-top));padding-right:calc(clamp(24px,3vw,34px) + env(safe-area-inset-right));padding-bottom:calc(clamp(24px,3vw,34px) + env(safe-area-inset-bottom));padding-left:calc(clamp(24px,3vw,34px) + env(safe-area-inset-left));overflow-y:auto;overflow-x:hidden;background:radial-gradient(85% 85% at 50% 0%,rgba(133,223,255,.28),transparent 58%),radial-gradient(80% 90% at 0% 100%,rgba(31,101,255,.32),transparent 55%),radial-gradient(90% 90% at 100% 100%,rgba(14,63,134,.42),transparent 50%),linear-gradient(180deg,#27a5f7 0%,#157ae0 44%,#0f55c6 100%)}
+  .gate-shell.school-admin-login-wrapper{width:100%;max-width:1200px;min-height:calc(100vh - 2 * clamp(24px,3vw,34px));min-height:calc(100dvh - 2 * clamp(24px,3vw,34px));display:flex;align-items:center;justify-content:center;padding:0;background:transparent;border:none;box-shadow:none;backdrop-filter:none;overflow:visible}
+  .school-admin-login-card{position:relative;width:100%;max-width:500px;padding:44px 38px 40px;border-radius:34px;border:1px solid rgba(255,255,255,.28);background:linear-gradient(180deg,rgba(132,230,255,.3) 0%,rgba(59,162,255,.24) 46%,rgba(15,85,198,.28) 100%),rgba(42,146,238,.24);box-shadow:0 34px 80px -32px rgba(4,25,96,.72),0 20px 40px -24px rgba(6,38,132,.56),inset 0 1px 0 rgba(255,255,255,.24);backdrop-filter:blur(22px);overflow:hidden;isolation:isolate}
+  .school-admin-login-card::before,.school-admin-login-card::after{content:"";position:absolute;border-radius:50%;pointer-events:none;z-index:-1}
+  .school-admin-login-card::before{width:220px;height:220px;top:-110px;left:-80px;background:radial-gradient(circle,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 72%)}
+  .school-admin-login-card::after{width:250px;height:250px;right:-120px;bottom:-140px;background:radial-gradient(circle,rgba(10,43,121,.45) 0%,rgba(10,43,121,0) 72%)}
+  .admin-login-icon{width:110px;height:110px;border-radius:50%;margin:0 auto 24px;display:grid;place-items:center;background:linear-gradient(180deg,#1c347b 0%,#102451 100%);border:1px solid rgba(255,255,255,.18);box-shadow:0 22px 36px -18px rgba(6,28,98,.74),inset 0 1px 0 rgba(255,255,255,.12)}
+  .admin-login-icon svg{width:44px;height:44px;stroke:#fff;stroke-width:1.8;fill:none}
+  .admin-login-title{margin:0;font:700 clamp(1.6rem,2.4vw,2.1rem)/1.18 'Space Grotesk',system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;text-align:center;color:#fff}
+  .admin-login-copy{margin:12px auto 0;max-width:30ch;font-size:clamp(13px,1.05vw,14px);line-height:1.7;text-align:center;color:rgba(255,255,255,.84)}
+  .gate-status{display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:18px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);color:#edf6ff;font-size:12px;font-weight:600;margin:24px 0 18px}
+  .gate-spinner{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.22);border-top-color:#fff;animation:gateSpin .8s linear infinite;flex:none}
   .gate-form{transition:opacity .16s ease}
   #authGate.is-checking .gate-form{opacity:.94}
   #authGate.is-ready .gate-status{display:none}
-  .gate-error{display:none;border-radius:12px;background:#fff3f3;border:1px solid #f0d1d1;color:#a73c3c;padding:10px 12px;font-size:12.5px;font-weight:600;margin:0 0 12px}
-  .gate-help{margin-top:14px;font-size:12px;line-height:1.55;color:#718096}
-  .gate-help b{color:#122648}
-  .gate-card .field{margin-bottom:12px}
-  .gate-card input{background:#fff}
+  .admin-login-form{display:grid;gap:16px}
+  .admin-login-field{margin:0;gap:0}
+  .admin-login-field label{display:block;margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.84)}
+  .admin-login-input-shell{display:flex;align-items:center;gap:14px;width:100%;min-height:58px;padding:0 20px;border-radius:999px;border:2px solid rgba(255,255,255,.84);background:rgba(72,193,255,.14);box-shadow:0 16px 30px -20px rgba(4,25,96,.7),inset 0 1px 0 rgba(255,255,255,.12);transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+  .admin-login-input-shell:focus-within{border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.14),0 18px 34px -20px rgba(4,25,96,.7),inset 0 1px 0 rgba(255,255,255,.16);transform:translateY(-1px)}
+  .admin-login-input-icon{width:24px;height:24px;display:grid;place-items:center;color:#fff;flex:none;opacity:.96}
+  .admin-login-input-icon svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.9;fill:none}
+  .admin-login-input{flex:1;width:100%;min-height:54px;padding:16px 0;border:none;background:transparent;color:#fff;font-size:15px;outline:none;box-shadow:none}
+  .admin-login-input::placeholder{color:rgba(255,255,255,.7)}
+  .admin-login-input:-webkit-autofill,.admin-login-input:-webkit-autofill:hover,.admin-login-input:-webkit-autofill:focus{-webkit-text-fill-color:#fff;transition:background-color 9999s ease-out 0s}
+  .gate-error{display:none;border-radius:16px;background:rgba(143,23,44,.25);border:1px solid rgba(255,187,201,.34);color:#fff6f8;padding:12px 14px;font-size:12.5px;font-weight:600}
+  .admin-login-button.btn,.admin-login-button.btn-block{width:100%;min-height:54px;justify-content:center;border-radius:999px;padding:14px 22px;background:linear-gradient(180deg,#1a3174 0%,#102451 100%);color:#fff;box-shadow:0 20px 36px -20px rgba(4,25,96,.92);font-size:15px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
+  .admin-login-button.btn:hover{transform:translateY(-1px);box-shadow:0 22px 40px -20px rgba(4,25,96,.98);filter:brightness(1.03)}
+  .admin-login-button.btn:disabled{transform:none;filter:none;opacity:.7;cursor:wait}
+  .admin-login-options{display:flex;justify-content:center;align-items:center;gap:16px}
+  .gate-help{margin-top:4px;font-size:12px;line-height:1.65;text-align:center;color:rgba(255,255,255,.78)}
+  .gate-help b{color:#fff}
   @keyframes gateSpin{to{transform:rotate(360deg)}}
-  @media(max-width:920px){.gate-shell{grid-template-columns:1fr;max-height:none}.gate-panel{min-height:unset;padding:28px}.gate-card-wrap{padding:20px}.gate-panel h1{font-size:30px}}
-  @media(max-width:560px){#authGate.gate-screen{padding:14px}.gate-panel,.gate-card{padding:22px}.gate-panel h1{font-size:27px}.gate-card h2{font-size:24px}}
-  @media(max-height:760px){.gate-panel{min-height:0}}
+  @media (min-width: 1440px){
+    .school-admin-login-card{max-width:500px}
+  }
+  @media (max-width: 1200px){
+    .school-admin-login-card{max-width:480px}
+  }
+  @media (max-width: 1024px){
+    .school-admin-login-card{max-width:440px;padding:40px 32px}
+    .admin-login-icon{width:100px;height:100px}
+  }
+  @media (max-width: 768px){
+    #authGate.gate-screen{padding:0;padding-top:env(safe-area-inset-top);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left)}
+    .school-admin-login-wrapper{min-height:100vh;padding:24px 16px}
+    .school-admin-login-card{width:100%;max-width:none;padding:36px 24px;border-radius:28px}
+    .admin-login-title{font-size:clamp(1.3rem,5vw,1.8rem);text-align:center}
+    .admin-login-input,.admin-login-button{width:100%;min-height:48px}
+    .admin-login-options{flex-direction:column;gap:12px;align-items:center}
+  }
+  @media (max-width: 480px){
+    .school-admin-login-wrapper{padding:18px 12px}
+    .school-admin-login-card{padding:30px 18px;border-radius:24px}
+    .admin-login-icon{width:82px;height:82px}
+    .admin-login-input{font-size:14px;padding:14px 0}
+    .admin-login-button{font-size:14px;min-height:46px}
+  }
+  @media (max-width: 360px){
+    .school-admin-login-card{padding:24px 14px}
+    .admin-login-icon{width:72px;height:72px}
+    .admin-login-title{letter-spacing:3px}
+  }
 
   /* sidebar */
   .sidebar{background:var(--sb);color:var(--sb-text);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40}
@@ -2180,32 +2211,36 @@ window.addEventListener('storage',function(evt){
 </head>
 <body class=&quot;auth-booting&quot;>
 <div id=&quot;authGate&quot; class=&quot;gate-screen is-checking&quot;>
-  <div class=&quot;gate-shell&quot;>
-    <div class=&quot;gate-panel&quot;>
-      <div class=&quot;gate-mark&quot;><span>QA</span></div>
-      <div class=&quot;gate-kicker&quot;>Secure school access</div>
-      <div>
-        <h1>School Admin Portal</h1>
-        <p>Manage placements, submitted students, SMS communication, document templates, and admission settings from one secure workspace.</p>
+  <div class=&quot;gate-shell school-admin-login-wrapper&quot;>
+    <div class=&quot;school-admin-login-card&quot;>
+      <div class=&quot;admin-login-icon&quot; aria-hidden=&quot;true&quot;>
+        <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M20 21a8 8 0 0 0-16 0&quot;/><circle cx=&quot;12&quot; cy=&quot;8&quot; r=&quot;4&quot;/></svg>
       </div>
-      <div class=&quot;gate-points&quot;>
-        <div class=&quot;gate-point&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M20 6 9 17l-5-5&quot;/></svg><div><b>Submitted-student workflow</b><span>Review records that students have actually submitted, not just raw imported placements.</span></div></div>
-        <div class=&quot;gate-point&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M12 1v22&quot;/><path d=&quot;M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6&quot;/></svg><div><b>Payments, SMS and portal setup</b><span>Control service charge, student-facing content, and programme-based communication from the same portal.</span></div></div>
-        <div class=&quot;gate-point&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;><path d=&quot;M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z&quot;/></svg><div><b>Verified access only</b><span>Only linked school-admin accounts can continue past this gate and open confidential student records.</span></div></div>
-      </div>
-    </div>
-    <div class=&quot;gate-card-wrap&quot;>
-      <div class=&quot;gate-card&quot;>
-        <h2>Sign in</h2>
-        <p>Use the email and password assigned to your school-admin account.</p>
-        <div class=&quot;gate-status&quot;><span class=&quot;gate-spinner&quot;></span>Checking for an existing secure session...</div>
-        <div class=&quot;gate-form&quot;>
-          <div class=&quot;field&quot;><label>Email</label><input id=&quot;ag_email&quot; placeholder=&quot;you@school.gh&quot; autocomplete=&quot;username&quot;></div>
-          <div class=&quot;field&quot;><label>Password</label><input id=&quot;ag_pass&quot; type=&quot;password&quot; placeholder=&quot;Enter your password&quot; autocomplete=&quot;current-password&quot;></div>
-          <div id=&quot;ag_err&quot; class=&quot;gate-error&quot;></div>
-          <button class=&quot;btn btn-primary btn-block&quot; type=&quot;button&quot; id=&quot;ag_btn&quot; onclick=&quot;adminLogin()&quot;>Sign in</button>
-          <div class=&quot;gate-help&quot;><b>Need access?</b> Contact the platform owner or the school account owner to create or reconnect your school-admin login.</div>
+      <h2 class=&quot;admin-login-title&quot;>School Admin Login</h2>
+      <p class=&quot;admin-login-copy&quot;>Use the email and password assigned to your school-admin account.</p>
+      <div class=&quot;gate-status&quot;><span class=&quot;gate-spinner&quot;></span>Checking for an existing secure session...</div>
+      <div class=&quot;gate-form admin-login-form&quot;>
+        <div class=&quot;field admin-login-field&quot;>
+          <label for=&quot;ag_email&quot;>Email</label>
+          <div class=&quot;admin-login-input-shell&quot;>
+            <span class=&quot;admin-login-input-icon&quot; aria-hidden=&quot;true&quot;>
+              <svg viewBox=&quot;0 0 24 24&quot;><path d=&quot;M4 6h16v12H4z&quot;/><path d=&quot;m4 9 4 3 8-6&quot;/></svg>
+            </span>
+            <input class=&quot;admin-login-input&quot; id=&quot;ag_email&quot; placeholder=&quot;you@school.gh&quot; autocomplete=&quot;username&quot;>
+          </div>
         </div>
+        <div class=&quot;field admin-login-field&quot;>
+          <label for=&quot;ag_pass&quot;>Password</label>
+          <div class=&quot;admin-login-input-shell&quot;>
+            <span class=&quot;admin-login-input-icon&quot; aria-hidden=&quot;true&quot;>
+              <svg viewBox=&quot;0 0 24 24&quot;><rect x=&quot;5&quot; y=&quot;11&quot; width=&quot;14&quot; height=&quot;10&quot; rx=&quot;2&quot;/><path d=&quot;M8 11V8a4 4 0 0 1 8 0v3&quot;/></svg>
+            </span>
+            <input class=&quot;admin-login-input&quot; id=&quot;ag_pass&quot; type=&quot;password&quot; placeholder=&quot;Enter your password&quot; autocomplete=&quot;current-password&quot;>
+          </div>
+        </div>
+        <div id=&quot;ag_err&quot; class=&quot;gate-error&quot;></div>
+        <button class=&quot;btn btn-primary btn-block admin-login-button&quot; type=&quot;button&quot; id=&quot;ag_btn&quot; onclick=&quot;adminLogin()&quot;>LOGIN</button>
+        <div class=&quot;gate-help&quot;><b>Need access?</b> Contact the platform owner or the school account owner to create or reconnect your school-admin login.</div>
       </div>
     </div>
   </div>
@@ -3992,7 +4027,7 @@ async function adminLogin(){
     return;
   }
   if(gate){ gate.classList.add('is-checking'); gate.classList.remove('is-ready'); }
-  btn.textContent='Signing in...';
+  btn.textContent='LOGGING IN...';
   btn.disabled=true;
   err.style.display='none';
   try{
@@ -4032,7 +4067,7 @@ async function adminLogin(){
       gate.classList.add('is-ready');
     }
     if(document.getElementById('ag_btn')){
-      btn.textContent='Sign in';
+      btn.textContent='LOGIN';
       btn.disabled=false;
     }
   }
@@ -6164,7 +6199,7 @@ function qaPrimeFrames(){
   if(school&&!school.dataset.boundSrc){
     school.dataset.boundSrc='1';
     school.removeAttribute('srcdoc');
-    school.src='school-admin.html';
+    school.src='school-admin.html?v=20260618-school-login-ui';
   }
   const manual=document.getElementById('frame-manual');
   if(manual&&!manual.dataset.boundSrc){
