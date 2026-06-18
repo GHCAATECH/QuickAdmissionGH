@@ -809,7 +809,7 @@ function openSchool(id){
     <div style="margin-top:16px;display:flex;gap:9px"><button class="btn btn-ghost btn-sm" onclick="editSchool(${id})">Edit profile</button><button class="btn btn-ghost btn-sm" onclick="toggleAdmission(${id});closeModal()">${s.admission==='OPENED'?'Close':'Open'} admission</button></div>
   </div>
   <div class="tab-panel" data-tab="1">
-    <dl class="kv"><dt>Primary admin</dt><dd>${s.admin}</dd><dt>Username</dt><dd><span class="code">${senderCode.toLowerCase()}_admin</span></dd><dt>Email</dt><dd>${s.email}</dd></dl>
+    <dl class="kv"><dt>Primary admin</dt><dd>${s.admin}</dd><dt>Username</dt><dd><span class="code">${schoolAdminCodeHandle(senderCode)}_admin</span></dd><dt>Email</dt><dd>${s.email}</dd></dl>
     <p style="font-size:12px;color:var(--muted);margin:14px 0 10px">Admins manage their own school's config. You can reset their password or add a sub-admin.</p>
     <div style="display:flex;gap:9px"><button class="btn btn-ghost btn-sm" onclick="toast('Reset link sent to ${s.admin}')">Reset password</button><button class="btn btn-ghost btn-sm" onclick="toast('Add sub-admin (prototype)')">Add sub-admin</button></div>
   </div>
@@ -1022,8 +1022,10 @@ const sa_init=n=>{const w=(n||'').replace(/[^A-Za-z ]/g,'').split(' ').filter(Bo
 const sa_cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
 const sa_time=ts=>{ if(!ts)return '-'; const d=new Date(ts),n=new Date(),m=Math.floor((n-d)/60000);
   return m<1?'just now':m<60?m+' min ago':m<1440?Math.floor(m/60)+' hr ago':Math.floor(m/1440)+'d ago'; };
-const normalizeSchoolCodeInput=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim().slice(0,11);
+const normalizeSchoolCodeDraft=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').replace(/^\s+/,'').slice(0,11);
+const normalizeSchoolCodeInput=v=>normalizeSchoolCodeDraft(v).trim();
 const schoolSenderCode=s=>normalizeSchoolCodeInput((s&&((s.schoolCode||s.school_code||s.code)))||'');
+const schoolAdminCodeHandle=code=>normalizeSchoolCodeInput(code).replace(/\s+/g,'_').toLowerCase();
 function schoolCodeExists(code,excludeId){
   const normalized=normalizeSchoolCodeInput(code);
   if(!normalized) return false;
@@ -1032,14 +1034,18 @@ function schoolCodeExists(code,excludeId){
 function bindSchoolCodeInput(inputId,usernameId){
   const input=document.getElementById(inputId);
   if(!input) return;
-  const sync=function(){
-    const next=normalizeSchoolCodeInput(input.value);
+  const sync=function(finalize){
+    const next=finalize?normalizeSchoolCodeInput(input.value):normalizeSchoolCodeDraft(input.value);
     if(input.value!==next) input.value=next;
     const un=usernameId?document.getElementById(usernameId):null;
-    if(un) un.value=next?next.toLowerCase()+'_admin':'';
+    if(un){
+      const handle=schoolAdminCodeHandle(next);
+      un.value=handle?handle+'_admin':'';
+    }
   };
-  input.addEventListener('input',sync);
-  sync();
+  input.addEventListener('input',()=>sync(false));
+  input.addEventListener('blur',()=>sync(true));
+  sync(true);
 }
 function schoolCodeErrorMessage(code){
   const normalized=normalizeSchoolCodeInput(code);
