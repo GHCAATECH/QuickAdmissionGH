@@ -993,6 +993,29 @@ async function invokeFn(name,body){
   if(!tok) return {data:null,error:{message:'Your session expired - please sign in again.'}};
   return await sb.functions.invoke(name,{body,headers:{Authorization:'Bearer '+tok}});
 }
+async function invokeFnDetailed(name,body){
+  const tok=await freshToken();
+  if(!tok) return {data:null,error:{message:'Your session expired - please sign in again.'}};
+  try{
+    const res=await fetch(SB_URL+'/functions/v1/'+name,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SB_KEY,
+        'Authorization':'Bearer '+tok
+      },
+      body:JSON.stringify(body||{})
+    });
+    const raw=await res.text();
+    let data=null;
+    try{ data=raw?JSON.parse(raw):null; }catch(e){ data=raw?{message:raw}:null; }
+    if(res.ok) return {data,error:null};
+    const msg=(data&&((typeof data.message==='string'&&data.message)||(typeof data.error==='string'&&data.error)))||('Edge Function returned HTTP '+res.status);
+    return {data,error:{message:msg,status:res.status}};
+  }catch(e){
+    return {data:null,error:{message:(e&&e.message)||'Could not reach the Edge Function.'}};
+  }
+}
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'PRODUCTION':'DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 const sval=id=>document.getElementById(id).value;
 const sa_init=n=>{const w=(n||'').replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean);return ((w[0]&&w[0][0]||'S')+(w[1]&&w[1][0]||(w[0]&&w[0][1])||'C')).toUpperCase();};
@@ -1279,7 +1302,7 @@ sendBulkSms=async function(){
     let sent=0, failed=0, partial=false;
     for(const entry of grouped.values()){
       const school=entry.school;
-      const res=await invokeFn('send-sms',{
+      const res=await invokeFnDetailed('send-sms',{
         mode:'bulk',
         school_id:school._id,
         group:group,

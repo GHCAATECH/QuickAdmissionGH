@@ -1795,7 +1795,7 @@ sendSms=async function(){
     const messages=targets.map(function(target){
       return {to:target.sms,body:personalize(tpl,target)};
     }).filter(function(msg){ return !!msg.to&&!!msg.body; });
-    const {data,error}=await invokeFn('send-sms',{
+    const {data,error}=await invokeFnDetailed('send-sms',{
       mode:'bulk',
       school_id:SB_SCHOOL.id,
       group:group,
@@ -1894,7 +1894,7 @@ async function sendTestSms(){
   const btn=event&&event.target?event.target.closest('button'):null;
   if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
   try{
-    const {data,error}=await invokeFn('send-sms',{mode:'test',school_id:SB_SCHOOL.id,phone:phone});
+    const {data,error}=await invokeFnDetailed('send-sms',{mode:'test',school_id:SB_SCHOOL.id,phone:phone});
     if(error||(data&&data.error)){toast('Test SMS failed: '+((data&&data.message)||(error&&error.message)||'error'));return;}
     if(data&&data.balance!=null&&!Number.isNaN(Number(data.balance))) smsBalance=Number(data.balance);
     await loadSchoolData({full_name:SB_ADMIN_NAME,role:(SB_PERMS==null?'super_admin':'school_admin'),permissions:SB_PERMS,school_id:(SB_SCHOOL&&SB_SCHOOL.id)||null});
@@ -2238,6 +2238,29 @@ async function invokeFn(name,body){
   const tok=await freshToken();
   if(!tok) return {data:null,error:{message:'Your session expired — please sign in again.'}};
   return await sb.functions.invoke(name,{body,headers:{Authorization:'Bearer '+tok}});
+}
+async function invokeFnDetailed(name,body){
+  const tok=await freshToken();
+  if(!tok) return {data:null,error:{message:'Your session expired - please sign in again.'}};
+  try{
+    const res=await fetch(SB_URL+'/functions/v1/'+name,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SB_KEY,
+        'Authorization':'Bearer '+tok
+      },
+      body:JSON.stringify(body||{})
+    });
+    const raw=await res.text();
+    let data=null;
+    try{ data=raw?JSON.parse(raw):null; }catch(e){ data=raw?{message:raw}:null; }
+    if(res.ok) return {data,error:null};
+    const msg=(data&&((typeof data.message==='string'&&data.message)||(typeof data.error==='string'&&data.error)))||('Edge Function returned HTTP '+res.status);
+    return {data,error:{message:msg,status:res.status}};
+  }catch(e){
+    return {data:null,error:{message:(e&&e.message)||'Could not reach the Edge Function.'}};
+  }
 }
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'PRODUCTION':'DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 var SB_SCHOOL=null, SB_CFG=null, SB_ADMIN_NAME='Admin', SB_PERMS=null, SB_UID=null, SB_HOUSE=null, READONLY=false;
