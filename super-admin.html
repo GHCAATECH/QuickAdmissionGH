@@ -299,6 +299,7 @@
   .demo-faint{font-size:11.5px;color:#9aa6a1;margin-top:14px;text-align:center;cursor:pointer;user-select:none}
   .demo-faint code{font-family:'JetBrains Mono',monospace;font-size:11px;color:#8A9893;background:transparent}
   .demo-faint:hover{color:var(--primary)}.demo-faint:hover code{color:var(--primary)}
+  .gate-powered{margin-top:14px;font-size:11px;line-height:1.5;letter-spacing:.08em;text-transform:uppercase;text-align:center;color:var(--muted)}
 </style>
 </head>
 <body class="auth-booting">
@@ -1019,6 +1020,7 @@ const sa_time=ts=>{ if(!ts)return '-'; const d=new Date(ts),n=new Date(),m=Math.
       <div class="field"><label>Password</label><input id="ag_pass" type="password" placeholder="Enter your password"></div>
       <div id="ag_err" style="display:none;color:#B23A3A;font-size:12.5px;font-weight:500;margin-bottom:10px"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center" id="ag_btn">Sign in</button>
+      <div class="gate-powered">Powered by VELOXIS TECH HUB</div>
     </div></div>`;
   document.body.appendChild(ov);
   document.getElementById('ag_btn').addEventListener('click',superLogin);
