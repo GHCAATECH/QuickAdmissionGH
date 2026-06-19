@@ -492,6 +492,8 @@
   .perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:4px}
   .perm-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);padding:5px 0;cursor:pointer}
   .perm-row input{width:16px;height:16px;accent-color:var(--primary);cursor:pointer}
+  .perm-subgroup{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .perm-subtitle{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
   @media(max-width:560px){.perm-grid{grid-template-columns:1fr}}
   /* Read-only mode: hide all write controls, keep navigation, export, print, preview, cancel */
   body.ro .btn-primary{display:none!important}
@@ -845,7 +847,7 @@
         </div>
         <div id="bulkHost"></div>
         <div class="panel"><div class="tbl-wrap"><table>
-          <thead><tr><th style="width:36px"><span class="checkbox" id="selAll" onclick="toggleAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></th><th>Admission No</th><th>Index No</th><th>Student</th><th>Programme</th><th>Class</th><th>House</th><th></th></tr></thead>
+          <thead><tr><th style="width:36px"><span class="checkbox" id="selAll" onclick="toggleAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></th><th>Admission No</th><th>Index No</th><th>Student</th><th>Programme</th><th>Class</th><th id="stuHouseHead">House</th><th></th></tr></thead>
           <tbody id="stuRows"></tbody>
         </table></div></div>
       </section>
@@ -1010,7 +1012,7 @@
             <h3>School user accounts</h3>
             <button class="btn btn-primary btn-sm" onclick="openCreateUser()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add user</button>
           </div>
-          <div class="panel-pad" style="padding-top:0"><p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">People who can sign in to manage <b id="usersSchoolName">this school</b>. New users get the school-admin role for this school only.</p></div>
+          <div class="panel-pad" style="padding-top:0"><p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">People who can sign in to manage <b id="usersSchoolName">this school</b>. New users get the school-admin role for this school only, and every granted privilege stays read-only unless it belongs to the owner account.</p></div>
           <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Access</th><th>Added</th><th></th></tr></thead><tbody id="userRows"></tbody></table></div>
         </div>
       </section>
@@ -1590,14 +1592,15 @@ function filteredStudents(){
 }
 function renderStudents(){
   const rows=filteredStudents();
+  const showHouse=canViewStudentHouse();
   $('stuRows').innerHTML=rows.length?rows.map(s=>{
     const h=houseById(s.houseId),c=classById(s.classId);
     return `<tr><td><span class="checkbox ${selected.has(s.id)?'on':''}" onclick="toggleSel(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td>
     <td class="mono" style="font-size:12px">${s.adm}</td><td class="mono">${s.index}</td><td class="nm">${s.name}</td>
     <td>${studentProgrammeName(s)}</td><td>${c?c.name:'<span style="color:var(--muted)">—</span>'}</td>
-    <td>${h?`<span class="dot-color" style="background:${h.color}"></span>${h.name}`:'<span style="color:var(--muted)">—</span>'}</td>
+    ${showHouse?`<td>${h?`<span class="dot-color" style="background:${h.color}"></span>${h.name}`:'<span style="color:var(--muted)">—</span>'}</td>`:''}
     <td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">Edit</button></div></td></tr>`;
-  }).join(''):emptyRow(8,'No students match your filters.');
+  }).join(''):emptyRow(showHouse?8:7,'No students match your filters.');
   updateBulk();updateSelAll();
 }
 function toggleSel(id){selected.has(id)?selected.delete(id):selected.add(id);renderStudents();}
@@ -2149,6 +2152,7 @@ function formCell(s){ return s.form?`<img class="enrol-thumb" src="${s.form}" al
 function regCell(k,s){ if(k==='form')return formCell(s); if(k==='name')return `<span class="nm">${s.name}</span>`; if(['index','adm','enrol','time'].indexOf(k)>-1)return `<span class="mono">${s[k]}</span>`; return s[k]||'—'; }
 function renderRegistered(){
   var rows=regFiltered();
+  var showHouse=canViewStudentHouse();
   var cnt=document.getElementById('regCount'); if(cnt)cnt.textContent=rows.length+' student'+(rows.length===1?'':'s');
   document.querySelectorAll('#regTable thead th[data-k]').forEach(th=>{th.classList.remove('sorted-asc','sorted-desc'); if(th.dataset.k===regSort.key)th.classList.add(regSort.dir==='asc'?'sorted-asc':'sorted-desc');});
   var visible=1+regCols.filter(k=>!regHidden.has(k)).length;
@@ -2163,7 +2167,7 @@ function renderRegistered(){
       html+=`<tr class="reg-detail"><td colspan="${visible}"><div class="reg-detail-in">
         <div class="kv"><b>Programme</b>${studentProgrammeName(s)}</div>
         <div class="kv"><b>Class</b>${c?c.name:'Not allocated'}</div>
-        <div class="kv"><b>House</b>${h?h.name:'Not allocated'}</div>
+        ${showHouse?`<div class="kv"><b>House</b>${h?h.name:'Not allocated'}</div>`:''}
         <div class="kv"><b>Gender</b>${s.gender==='M'?'Male':(s.gender==='F'?'Female':'—')}</div>
         <div class="kv"><b>Residential</b>${s.res||'—'}</div>
         <div class="kv"><b>Parent / Guardian</b>${s.parent||'—'}</div>
@@ -2427,7 +2431,11 @@ const CAPS=[
   ['utilities','Utilities'],
   ['users','Manage users & privileges']
 ];
-const CAP_LABEL=Object.fromEntries(CAPS);
+const STUDENT_SUBCAPS=[
+  ['students_house_view','Admissions -> View student house']
+];
+const ALL_CAPS=CAPS.concat(STUDENT_SUBCAPS);
+const CAP_LABEL=Object.fromEntries(ALL_CAPS);
 // nav data-view -> required capability (null/undefined => always allowed, e.g. dashboard)
 const VIEW_CAP={dashboard:null, setup:'setup', portal:'portal',
   programmes:'structure', houses:'structure', classes:'structure',
@@ -2435,6 +2443,7 @@ const VIEW_CAP={dashboard:null, setup:'setup', portal:'portal',
   finance:'finance', sms:'sms','sms-settings':'sms', reports:'reports', templates:'templates', users:'users', utilities:'utilities'};
 function isOwner(){ return SB_PERMS==null; }                 // NULL permissions = full access
 function can(cap){ if(!cap) return true; if(isOwner()) return true; return !!(SB_PERMS&&SB_PERMS[cap]); }
+function canViewStudentHouse(){ return isOwner() || !!(SB_PERMS&&(SB_PERMS.students_house_view||SB_PERMS.student_house_view)); }
 function roGuard(){ if(READONLY){ toast('Your access is read-only'); return true; } return false; }
 function firstAllowedView(){ if(can('students'))return 'dashboard'; const order=['dashboard','students','placement','programmes','finance','sms','sms-settings','reports','templates','setup','portal','utilities','users']; for(const v of order){ if(can(VIEW_CAP[v])) return v; } return 'dashboard'; }
 function buildNavSelect(){
@@ -2459,6 +2468,7 @@ function buildNavSelect(){
 function applyPermissions(){
   document.querySelectorAll('.nav-item[data-view],.nav-sub[data-view]').forEach(n=>{ const cap=VIEW_CAP[n.dataset.view]; n.style.display=can(cap)?'':'none'; });
   const ap=document.getElementById('admParent'); if(ap) ap.style.display=can('students')?'':'none';
+  const stuHouseHead=document.getElementById('stuHouseHead'); if(stuHouseHead) stuHouseHead.style.display=canViewStudentHouse()?'':'none';
   buildNavSelect();
   // Granted privileges are READ-ONLY for staff. Only the owner (NULL permissions) can write.
   READONLY=!isOwner();
@@ -3244,8 +3254,8 @@ function houseName(uid){ const h=(houses||[]).find(x=>x._id===uid); return h?h.n
 function houseSelectHTML(cur){ return `<select id="u_house"><option value="">All houses (no restriction)</option>`+(houses||[]).map(h=>`<option value="${h._id}" ${cur===h._id?'selected':''}>${h.name}</option>`).join('')+`</select>`; }
 function permSummary(p){
   if(p==null) return '<span class="pill open">Full access (owner)</span>';
-  const on=CAPS.filter(([k])=>p[k]).map(([k,l])=>l);
-  let out=on.length?(on.length>=CAPS.length?'<span class="pill open">All privileges</span>':on.map(l=>`<span class="pill" style="background:var(--surface-2);color:var(--ink-soft);margin:1px 2px">${l}</span>`).join('')):'<span style="color:var(--muted)">No access yet</span>';
+  const on=ALL_CAPS.filter(([k])=>p[k]).map(([k,l])=>l);
+  let out=on.length?(on.length>=ALL_CAPS.length?'<span class="pill open">All privileges</span>':on.map(l=>`<span class="pill" style="background:var(--surface-2);color:var(--ink-soft);margin:1px 2px">${l}</span>`).join('')):'<span style="color:var(--muted)">No access yet</span>';
   if(p.house) out+=` <span class="pill" style="background:var(--primary-soft);color:var(--primary);margin:1px 2px">🏠 ${houseName(p.house)} only</span>`;
   return out;
 }
@@ -3264,7 +3274,11 @@ async function renderUsers(){
     return `<tr><td class="nm">${u.full_name||'—'}${me?' <span class="pill" style="background:var(--surface-2);color:var(--ink-soft)">me</span>':''}</td><td class="mono">${u.email||'—'}</td><td>${permSummary(u.permissions)}</td><td class="mono">${(u.created_at||'').slice(0,10)}</td><td>${acts}</td></tr>`;
   }).join(''):emptyRow(5,'No users yet. Add one to let staff sign in.');
 }
-function permChecks(p){ return `<div class="perm-grid">`+CAPS.map(([k,l])=>`<label class="perm-row"><input type="checkbox" data-perm="${k}" ${p&&p[k]?'checked':''}><span>${l}</span></label>`).join('')+`</div>`; }
+function permChecks(p){
+  const main=`<div class="perm-grid">`+CAPS.map(([k,l])=>`<label class="perm-row"><input type="checkbox" data-perm="${k}" ${p&&p[k]?'checked':''}><span>${l}</span></label>`).join('')+`</div>`;
+  const studentExtras=`<div class="perm-subgroup"><div class="perm-subtitle">Admissions -> View Students</div><div class="perm-grid">`+STUDENT_SUBCAPS.map(([k,l])=>`<label class="perm-row"><input type="checkbox" data-perm="${k}" ${p&&p[k]?'checked':''}><span>${l}</span></label>`).join('')+`</div></div>`;
+  return main+studentExtras;
+}
 function collectPerms(scopeId){ const o={}; document.querySelectorAll('#'+scopeId+' input[data-perm]').forEach(c=>{o[c.dataset.perm]=c.checked;}); return o; }
 function permToggleAll(on){ document.querySelectorAll('#u_perms input[data-perm]').forEach(c=>c.checked=on); }
 function genPass2(){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)];const el=$('u_pass');if(el)el.value=p;}
@@ -3274,7 +3288,7 @@ function openCreateUser(){
   <div class="modal-body">
     <div class="grid-2"><div class="field"><label>Full name</label><input id="u_name" placeholder="Full name"></div><div class="field"><label>Email</label><input id="u_email" type="email" placeholder="name@email"></div></div>
     <div class="field"><label>Temporary password</label><div style="display:flex;gap:8px"><input id="u_pass" type="text" placeholder="At least 8 characters" style="flex:1"><button class="btn btn-ghost btn-sm" type="button" onclick="genPass2()">Generate</button></div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">Share it with the user; they can change it after signing in.</div></div>
-    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Privileges <span><button type="button" class="act" onclick="permToggleAll(true)">All</button> <button type="button" class="act" onclick="permToggleAll(false)">None</button></span></label><div id="u_perms">${permChecks({})}</div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">Only the areas you tick will be visible to this user.</div></div>
+    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Privileges <span><button type="button" class="act" onclick="permToggleAll(true)">All</button> <button type="button" class="act" onclick="permToggleAll(false)">None</button></span></label><div id="u_perms">${permChecks({})}</div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">Only the areas you tick will be visible to this user. Every granted area remains read-only for staff accounts.</div></div>
     <div class="field"><label>Restrict to one house (optional)</label>${houseSelectHTML('')}<div style="font-size:11.5px;color:var(--muted);margin-top:5px">For a house master: they will only see this house and its students.</div></div>
   </div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="u_btn" onclick="createUser()">Create user</button></div>`;
@@ -3299,7 +3313,7 @@ function openUserPerms(id){
   const m=$('modal');
   m.innerHTML=`<div class="modal-head"><div><h2>Privileges</h2><p>${u.full_name||u.email}</p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body">
-    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Allowed areas <span><button type="button" class="act" onclick="document.querySelectorAll('#u_eperms input[data-perm]').forEach(c=>c.checked=true)">All</button> <button type="button" class="act" onclick="document.querySelectorAll('#u_eperms input[data-perm]').forEach(c=>c.checked=false)">None</button></span></label><div id="u_eperms">${permChecks(u.permissions||{})}</div></div>
+    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Allowed areas <span><button type="button" class="act" onclick="document.querySelectorAll('#u_eperms input[data-perm]').forEach(c=>c.checked=true)">All</button> <button type="button" class="act" onclick="document.querySelectorAll('#u_eperms input[data-perm]').forEach(c=>c.checked=false)">None</button></span></label><div id="u_eperms">${permChecks(u.permissions||{})}</div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">These permissions stay read-only for this staff account.</div></div>
     <div class="field"><label>Restrict to one house (optional)</label>${houseSelectHTML(u.permissions&&u.permissions.house||'')}<div style="font-size:11.5px;color:var(--muted);margin-top:5px">House master: they will only see this house and its students.</div></div>
   </div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="up_btn" onclick="saveUserPerms('${id}')">Save privileges</button></div>`;
