@@ -1211,7 +1211,7 @@ saveAdminEdit=async function(uid){
   if(error){ if(btn)btn.textContent='Save changes'; toast('Could not save: '+error.message); return; }
   if(pass){
     if(pass.length<8){ if(btn)btn.textContent='Save changes'; toast('Password must be at least 8 characters'); return; }
-    const {data,error:pe}=await invokeFn('manage-user',{action:'password',user_id:uid,password:pass});
+    const {data,error:pe}=await invokeFnDetailed('manage-user',{action:'password',user_id:uid,password:pass});
     if(pe||(data&&data.error)){ if(btn)btn.textContent='Save changes'; toast('Name saved, but password change failed: '+((data&&data.message)||(pe&&pe.message)||'error')); await loadSA(); go('admins'); return; }
   }
   closeModal(); await loadSA(); go('admins'); toast(name+' updated');
@@ -1220,7 +1220,7 @@ deleteAdmin=async function(uid){
   const a=admins.find(x=>x.uid===uid); if(!a)return;
   if(uid===SA_UID){toast('You cannot delete your own account.');return;}
   if(!confirm('Delete admin '+a.name+' ('+a.email+')? They lose access immediately. This cannot be undone.'))return;
-  const {data,error}=await invokeFn('manage-user',{action:'delete',user_id:uid});
+  const {data,error}=await invokeFnDetailed('manage-user',{action:'delete',user_id:uid});
   if(error||(data&&data.error)){toast('Could not delete: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   await loadSA(); go('admins'); toast(a.name+' removed');
 };
@@ -1229,7 +1229,7 @@ resetAdminPwd=async function(uid){
   if(uid===SA_UID){toast('Reset your own password from Supabase, not here.');return;}
   const pass=genStr(10);
   if(!confirm('Reset password for '+a.name+'?\n\nNew temporary password:\n'+pass+'\n\nClick OK to set it.'))return;
-  const {data,error}=await invokeFn('manage-user',{action:'password',user_id:uid,password:pass});
+  const {data,error}=await invokeFnDetailed('manage-user',{action:'password',user_id:uid,password:pass});
   if(error||(data&&data.error)){toast('Could not reset: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   alert('New password for '+a.email+':\n\n'+pass+'\n\nShare it with them; they can change it after signing in.');
   toast('Password reset for '+a.name);
@@ -1281,7 +1281,7 @@ createAdmin=async function(){
   if(!email||!pass){toast('Email and a temporary password are required');return;}
   if(pass.length<8){toast('Password must be at least 8 characters');return;}
   const btn=$('a_btn'); if(btn)btn.textContent='Creating...';
-  const {data,error}=await invokeFn('create-school-admin',{email,password:pass,full_name:name,school_id:s._id});
+  const {data,error}=await invokeFnDetailed('create-school-admin',{email,password:pass,full_name:name,school_id:s._id});
   if(btn)btn.textContent='Create admin';
   if(error||(data&&data.error)){toast('Could not create: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   closeModal(); await loadSA(); go('admins');

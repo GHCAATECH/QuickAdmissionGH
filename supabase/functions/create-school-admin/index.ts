@@ -95,6 +95,43 @@ async function logActivity(admin: ReturnType<typeof createClient>, schoolId: str
   }
 }
 
+async function persistProfileForUser(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+  email: string,
+  fullName: string,
+  schoolId: string,
+  permissions: Record<string, unknown> | null,
+) {
+  return await admin
+    .from("profiles")
+    .upsert({
+      id: userId,
+      email,
+      full_name: fullName,
+      school_id: schoolId,
+      role: "school_admin",
+      permissions,
+    }, { onConflict: "id" });
+}
+
+async function findAuthUserByEmail(admin: ReturnType<typeof createClient>, email: string) {
+  let page = 1;
+  const perPage = 1000;
+
+  while (page <= 20) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) return { user: null, error };
+    const users = data?.users ?? [];
+    const match = users.find((candidate) => normalizeEmail(candidate.email) === email);
+    if (match) return { user: match, error: null };
+    if (users.length < perPage) break;
+    page += 1;
+  }
+
+  return { user: null, error: null };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
@@ -181,39 +218,53 @@ Deno.serve(async (req: Request) => {
     },
   });
 
-  if (createError || !createdUser.user) {
+  let authUser = createdUser?.user ?? null;
+
+  if (createError || !authUser) {
     const message = createError?.message || "Could not create the login.";
     const duplicate = /already|exists|registered|duplicate/i.test(message);
-    return json(
-      {
-        ok: false,
-        error: duplicate ? "duplicate_email" : "create_failed",
-        message: duplicate ? "That email already has a login." : message,
-      },
-      duplicate ? 409 : 500,
-    );
+    if (duplicate) {
+      const existing = await findAuthUserByEmail(admin, email);
+      if (existing.error) {
+        return json({ ok: false, error: "lookup_failed", message: existing.error.message }, 500);
+      }
+      if (existing.user) {
+        authUser = existing.user;
+      }
+    }
+    if (!authUser) {
+      return json(
+        {
+          ok: false,
+          error: duplicate ? "duplicate_email" : "create_failed",
+          message: duplicate ? "That email already has a login." : message,
+        },
+        duplicate ? 409 : 500,
+      );
+    }
   }
 
-  const profilePayload: JsonRecord = {
-    id: createdUser.user.id,
+  const { error: profileError } = await persistProfileForUser(
+    admin,
+    authUser.id,
     email,
-    full_name: fullName,
-    school_id: schoolId,
-    role: "school_admin",
+    fullName,
+    schoolId,
     permissions,
-  };
-
-  const { error: profileError } = await admin
-    .from("profiles")
-    .upsert(profilePayload, { onConflict: "id" });
+  );
 
   if (profileError) {
-    try {
-      await admin.auth.admin.deleteUser(createdUser.user.id);
-    } catch {
-      // Cleanup is best-effort.
+    if (createdUser?.user?.id && createdUser.user.id === authUser.id) {
+      try {
+        await admin.auth.admin.deleteUser(authUser.id);
+      } catch {
+        // Cleanup is best-effort.
+      }
     }
-    return json({ ok: false, error: "profile_create_failed", message: profileError.message }, 500);
+    return json(
+      { ok: false, error: "profile_create_failed", message: profileError.message },
+      500,
+    );
   }
 
   await logActivity(
@@ -225,7 +276,7 @@ Deno.serve(async (req: Request) => {
 
   return json({
     ok: true,
-    user_id: createdUser.user.id,
+    user_id: authUser.id,
     school_id: schoolId,
     email,
     full_name: fullName,

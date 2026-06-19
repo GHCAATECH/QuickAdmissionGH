@@ -3301,7 +3301,7 @@ async function createUser(){
   if(pass.length<8){toast('Password must be at least 8 characters');return;}
   const permissions=collectPerms('u_perms'); const hv=(val('u_house')||''); if(hv) permissions.house=hv;
   const btn=$('u_btn'); if(btn)btn.textContent='Creating…';
-  const {data,error}=await invokeFn('create-school-admin',{email,password:pass,full_name:name,permissions});
+  const {data,error}=await invokeFnDetailed('create-school-admin',{email,password:pass,full_name:name,permissions});
   if(btn)btn.textContent='Create user';
   if(error||(data&&data.error)){toast('Could not create: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   closeModal(); renderUsers();
@@ -3323,7 +3323,7 @@ async function saveUserPerms(id){
   if(roGuard())return;
   const permissions=collectPerms('u_eperms'); const hv=(val('u_house')||''); if(hv) permissions.house=hv;
   const btn=$('up_btn'); if(btn)btn.textContent='Saving…';
-  const {data,error}=await invokeFn('manage-user',{action:'permissions',user_id:id,permissions});
+  const {data,error}=await invokeFnDetailed('manage-user',{action:'permissions',user_id:id,permissions});
   if(btn)btn.textContent='Save privileges';
   if(error||(data&&data.error)){toast('Could not save: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   closeModal(); renderUsers(); toast('Privileges updated');
@@ -3333,7 +3333,7 @@ async function resetUserPwd(id){
   const u=schoolUsers.find(x=>x.id===id); if(!u)return;
   const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)];
   if(!confirm('Reset password for '+(u.full_name||u.email)+'?\nNew password: '+p+'\n\nCopy it now — share it with the user.'))return;
-  const {data,error}=await invokeFn('manage-user',{action:'password',user_id:id,password:p});
+  const {data,error}=await invokeFnDetailed('manage-user',{action:'password',user_id:id,password:p});
   if(error||(data&&data.error)){toast('Could not reset: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   toast('Password reset to: '+p);
 }
@@ -3341,7 +3341,7 @@ async function deleteUser(id){
   if(roGuard())return;
   const u=schoolUsers.find(x=>x.id===id); if(!u)return;
   if(!confirm('Delete '+(u.full_name||u.email)+'? This removes their login permanently.'))return;
-  const {data,error}=await invokeFn('manage-user',{action:'delete',user_id:id});
+  const {data,error}=await invokeFnDetailed('manage-user',{action:'delete',user_id:id});
   if(error||(data&&data.error)){toast('Could not delete: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   renderUsers(); toast('User deleted');
 }
