@@ -1128,6 +1128,114 @@ function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add
 const pendingCount=()=>students.filter(s=>s.status==='pending').length;
 const totalRevenue=()=>payments.filter(p=>p.status==='completed').reduce((a,p)=>a+p.amount,0);
 function cleanSmsText(v){ return v==null?'':String(v).trim(); }
+function studentProgrammeName(s){
+  const byId=cleanSmsText((progById(s&&s.progId)||{}).name);
+  if(byId&&/[A-Za-z0-9]/.test(byId)&&byId!=='-') return byId;
+  return cleanSmsText((s&&s.prog)||(s&&s.programme)||(s&&s.programme_name)||((s&&s.rec)||{}).programme)||'-';
+}
+function studentProgrammeIdByName(name){
+  const needle=cleanSmsText(name).toLowerCase();
+  if(!needle) return null;
+  const hit=programmes.find(function(p){
+    return cleanSmsText(p.name).toLowerCase()===needle || cleanSmsText(p.code).toLowerCase()===needle;
+  });
+  return hit?hit.id:null;
+}
+function sanitizeExcelExtension(value){
+  const ext=String(value||'').trim().toLowerCase();
+  return ext==='xls'?'xls':'xlsx';
+}
+function excelPreferenceKey(){
+  const schoolId=(typeof SB_SCHOOL!=='undefined'&&SB_SCHOOL&&SB_SCHOOL.id)||'global';
+  return 'qag_excel_ext::'+schoolId;
+}
+function preferredExcelExtension(){
+  try{
+    return sanitizeExcelExtension(window.localStorage.getItem(excelPreferenceKey())||'');
+  }catch(e){
+    return 'xlsx';
+  }
+}
+function rememberExcelExtension(fileName){
+  const match=String(fileName||'').toLowerCase().match(/\.([^.]+)$/);
+  if(!match) return preferredExcelExtension();
+  const ext=sanitizeExcelExtension(match[1]);
+  try{ window.localStorage.setItem(excelPreferenceKey(),ext); }catch(e){}
+  return ext;
+}
+function excelFileName(baseName){
+  return String(baseName||'download').replace(/\.[^.]+$/,'')+'.'+preferredExcelExtension();
+}
+function sanitizeSheetName(name){
+  const clean=String(name||'Sheet').replace(/[:\\/?*\[\]]/g,' ').trim();
+  return (clean||'Sheet').slice(0,31);
+}
+function downloadExcelRows(baseName,sheetName,headers,rows,contextTitle){
+  const ext=preferredExcelExtension();
+  if(typeof XLSX!=='undefined'){
+    try{
+      const ws=XLSX.utils.aoa_to_sheet([headers].concat(rows));
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,sanitizeSheetName(sheetName||baseName));
+      XLSX.writeFile(wb,excelFileName(baseName),{bookType:ext==='xls'?'xls':'xlsx'});
+      if(contextTitle) toast('Downloaded '+rows.length+' rows ('+ext.toUpperCase()+')');
+      return true;
+    }catch(e){
+      console.warn('Excel download fallback',e);
+    }
+  }
+  return false;
+}
+const PLACEMENT_HEADER_ALIASES={
+  indexnumber:'index_number',
+  becenumber:'index_number',
+  beceindex:'index_number',
+  indexno:'index_number',
+  studentname:'student_name',
+  fullname:'student_name',
+  names:'student_name',
+  othernames:'other_names',
+  gender:'gender',
+  residentialstatus:'residential_status',
+  residential:'residential_status',
+  boardingstatus:'residential_status',
+  programme:'programme',
+  program:'programme',
+  aggregate:'aggregate',
+  dob:'dob',
+  dateofbirth:'dob',
+  smscontact:'sms_contact',
+  smsnumber:'sms_contact',
+  phonenumber:'sms_contact',
+  contactnumber:'sms_contact',
+  phone:'sms_contact',
+  contact:'sms_contact',
+  jhsattended:'jhs_attended',
+  jhstype:'jhs_type',
+  enrolmentcode:'enrolment_code'
+};
+function canonicalPlacementHeader(value){
+  const compact=String(value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  return PLACEMENT_HEADER_ALIASES[compact]||normHdr(value);
+}
+function normalizePlacementFieldValue(key,value){
+  const text=cleanSmsText(value);
+  if(!text) return '';
+  if(key==='gender'){
+    const up=text.toUpperCase();
+    if(up==='M'||up==='MALE') return 'Male';
+    if(up==='F'||up==='FEMALE') return 'Female';
+    return up;
+  }
+  if(key==='residential_status'){
+    const up=text.toUpperCase();
+    if(up==='D'||up==='DAY') return 'Day';
+    if(up==='B'||up==='BOARDING') return 'Boarding';
+    return up;
+  }
+  if(['student_name','other_names','programme','jhs_attended','jhs_type','enrolment_code'].includes(key)) return text.toUpperCase();
+  return text;
+}
 function preferredStudentSms(rawStudent,placementRow){
   const rec=(rawStudent&&rawStudent.records)||{};
   return cleanSmsText(rec.sms_contact||rawStudent.parent_phone||rawStudent.sms_contact||(placementRow&&placementRow.sms_contact)||'');
@@ -1200,7 +1308,7 @@ function renderStats(){
 }
 function renderRecent(){
   const rows=[...students].sort((a,b)=>b.reg.localeCompare(a.reg)).slice(0,8);
-  $('recentRows').innerHTML=rows.map(s=>`<tr><td class="mono">${s.reg}</td><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${progById(s.progId).name}</td><td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">View</button></div></td></tr>`).join('');
+  $('recentRows').innerHTML=rows.map(s=>`<tr><td class="mono">${s.reg}</td><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${studentProgrammeName(s)}</td><td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">View</button></div></td></tr>`).join('');
 }
 
 /* ===== PROGRAMMES / HOUSES / CLASSES ===== */
@@ -1398,7 +1506,13 @@ function downloadPlacementTemplate(){
     if(!ws['!ref']||XLSX.utils.decode_range(ws['!ref']).e.r<199){ ws['!ref']='A1:H200'; }
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Placement');
-    XLSX.writeFile(wb,'placement_template.xlsx');
+    try{
+      XLSX.writeFile(wb,excelFileName('placement_template'),{bookType:preferredExcelExtension()==='xls'?'xls':'xlsx'});
+    }catch(e){
+      console.warn('Placement template fallback',e);
+      const csv=headers.join(',')+'\n'+example.join(',')+'\n';
+      const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='placement_template.csv';a.click();
+    }
   } else {
     // fallback if the spreadsheet library hasn't loaded
     const csv=headers.join(',')+'\n'+example.join(',')+'\n';
@@ -1422,6 +1536,7 @@ async function handlePlacementFile(inp){
   if(!SB_SCHOOL){toast('School not loaded yet');return;}
   let rows=[];
   const isExcel=/\.(xlsx|xls)$/i.test(file.name);
+  if(isExcel) rememberExcelExtension(file.name);
   if(isExcel){
     if(typeof XLSX==='undefined'){toast('Spreadsheet reader still loading — try again in a moment');return;}
     try{
@@ -1431,19 +1546,19 @@ async function handlePlacementFile(inp){
       const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
       const nonEmpty=aoa.filter(r=>r.some(c=>String(c).trim()!==''));
       if(nonEmpty.length<2){toast('Spreadsheet has no data rows');return;}
-      const hdrs=nonEmpty[0].map(normHdr);
-      rows=nonEmpty.slice(1).map(r=>{const o={};hdrs.forEach((h,i)=>{const v=(r[i]!==undefined&&r[i]!==null)?String(r[i]).trim():'';if(v!=='')o[h]=v;});return o;}).filter(r=>r.index_number);
+      const hdrs=nonEmpty[0].map(canonicalPlacementHeader);
+      rows=nonEmpty.slice(1).map(r=>{const o={};hdrs.forEach((h,i)=>{const v=(r[i]!==undefined&&r[i]!==null)?normalizePlacementFieldValue(h,r[i]):'';if(v!=='')o[h]=v;});return o;}).filter(r=>r.index_number);
     }catch(e){toast('Could not read spreadsheet: '+e.message);return;}
   } else {
     const text=await file.text();
     // handle Windows (\r\n), Unix (\n) and old-Mac (\r) line endings
     const lines=text.split(/\r\n|\r|\n/).filter(l=>l.trim());
     if(lines.length<2){toast('CSV file appears empty');return;}
-    const hdrs=lines[0].split(',').map(normHdr);
+    const hdrs=lines[0].split(',').map(canonicalPlacementHeader);
     rows=lines.slice(1).map(line=>{
       const cols=line.split(',').map(c=>c.trim().replace(/^"|"$/g,''));
       const obj={};
-      hdrs.forEach((h,i)=>{if(cols[i]!==undefined&&cols[i]!=='')obj[h]=cols[i];});
+      hdrs.forEach((h,i)=>{if(cols[i]!==undefined&&cols[i]!=='')obj[h]=normalizePlacementFieldValue(h,cols[i]);});
       return obj;
     }).filter(r=>r.index_number);
   }
@@ -1479,7 +1594,7 @@ function renderStudents(){
     const h=houseById(s.houseId),c=classById(s.classId);
     return `<tr><td><span class="checkbox ${selected.has(s.id)?'on':''}" onclick="toggleSel(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td>
     <td class="mono" style="font-size:12px">${s.adm}</td><td class="mono">${s.index}</td><td class="nm">${s.name}</td>
-    <td>${progById(s.progId).name}</td><td>${c?c.name:'<span style="color:var(--muted)">—</span>'}</td>
+    <td>${studentProgrammeName(s)}</td><td>${c?c.name:'<span style="color:var(--muted)">—</span>'}</td>
     <td>${h?`<span class="dot-color" style="background:${h.color}"></span>${h.name}`:'<span style="color:var(--muted)">—</span>'}</td>
     <td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">Edit</button></div></td></tr>`;
   }).join(''):emptyRow(8,'No students match your filters.');
@@ -1509,8 +1624,7 @@ function applyBulk(){
 function bulkSms(){
   var chosen=students.filter(function(s){ return selected.has(s.id); });
   var programmeNames=[...new Set(chosen.map(function(s){
-    var prog=progById(s.progId)||{};
-    return cleanSmsText(prog.name);
+    return cleanSmsText(studentProgrammeName(s)).replace(/^-$/,'');
   }).filter(Boolean))];
   smsPrefillProgramme=(programmeNames.length===1?programmeNames[0]:'all');
   go('sms');
@@ -1521,7 +1635,8 @@ function clearSel(){selected.clear();renderStudents();}
 function viewStudent(id){
   const s=students.find(x=>x.id===id);
   const m=$('modal');
-  const progOpts=programmes.map(p=>`<option value="${p.id}" ${s.progId==p.id?'selected':''}>${p.name}</option>`).join('');
+  const selectedProgId=s.progId||studentProgrammeIdByName(s.prog);
+  const progOpts=programmes.map(p=>`<option value="${p.id}" ${selectedProgId==p.id?'selected':''}>${p.name}</option>`).join('');
   const classOpts='<option value="">— Not allocated —</option>'+classes.map(c=>`<option value="${c.id}" ${s.classId==c.id?'selected':''}>${c.name}</option>`).join('');
   const houseOpts='<option value="">— Not allocated —</option>'+houses.map(h=>`<option value="${h.id}" ${s.houseId==h.id?'selected':''}>${h.name}</option>`).join('');
   m.innerHTML=`<div class="modal-head"><div><h2>${s.name}</h2><p><span class="code">${s.index}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
@@ -1575,7 +1690,7 @@ async function saveStudent(id){
   const {error}=await sb.from('students').update(update).eq('id',s._id);
   if(error){toast('Save failed: '+error.message);return;}
   s.name=newName;s.gender=newGender;s.adm=newAdm||'—';s.sms=newSms||'—';
-  s.progId=newProgId;s.classId=newClassId;s.houseId=newHouseId;
+  s.progId=newProgId;s.prog=cleanSmsText((progById(newProgId)||{}).name)||s.prog||'';s.classId=newClassId;s.houseId=newHouseId;
   notifyStudentPortalRefresh('student-update',{index:s.index});
   closeModal();renderStudents();toast('Student record saved');
 }
@@ -1644,8 +1759,8 @@ function renderClassAlloc(){
   $('caCount').textContent=members.length;
   $('caCap').textContent=c?('capacity '+(c.cap||'—')):'—';
   $('caUnCount').textContent=pool.length;
-  $('caMembers').innerHTML=members.length?members.map(s=>`<tr><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${(progById(s.progId)||{}).name||'—'}</td><td><div class="row-actions"><button class="act" onclick="caRemove(${s.id})">Remove</button></div></td></tr>`).join(''):emptyRow(4,'No students in this class yet.');
-  $('caPool').innerHTML=pool.length?pool.map(s=>`<tr><td><span class="checkbox ${caSel.has(s.id)?'on':''}" onclick="caToggle(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${(progById(s.progId)||{}).name||'—'}</td></tr>`).join(''):emptyRow(4,'No matching unassigned students.');
+  $('caMembers').innerHTML=members.length?members.map(s=>`<tr><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${studentProgrammeName(s)}</td><td><div class="row-actions"><button class="act" onclick="caRemove(${s.id})">Remove</button></div></td></tr>`).join(''):emptyRow(4,'No students in this class yet.');
+  $('caPool').innerHTML=pool.length?pool.map(s=>`<tr><td><span class="checkbox ${caSel.has(s.id)?'on':''}" onclick="caToggle(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${studentProgrammeName(s)}</td></tr>`).join(''):emptyRow(4,'No matching unassigned students.');
 }
 function caToggle(id){caSel.has(id)?caSel.delete(id):caSel.add(id);renderClassAlloc();}
 async function caAssignSelected(){
@@ -1765,7 +1880,7 @@ function personalize(tpl,s){
     .replace(/\{NAME\}/g, s.name||'')
     .replace(/\{INDEX\}/g, s.index||'')
     .replace(/\{SCHOOL\}/g, (SB_SCHOOL&&SB_SCHOOL.name)|| (typeof SCHOOL_NAME!=='undefined'?SCHOOL_NAME:'') || 'the school')
-    .replace(/\{PROGRAMME\}/g, s.prog||((progById(s.progId)||{}).name||''))
+    .replace(/\{PROGRAMME\}/g, studentProgrammeName(s).replace(/^-$/,''))
     .replace(/\{REPORTING\}/g, smsReportingText())
     .replace(/\{HELPDESK\}/g, smsHelpdeskText());
 }
@@ -2044,9 +2159,9 @@ function renderRegistered(){
     regCols.forEach(k=>{ if(!regHidden.has(k)) html+=`<td>${regCell(k,s)}</td>`; });
     html+='</tr>';
     if(open){
-      var prog=progById(s.progId),h=houseById(s.houseId),c=classById(s.classId);
+      var h=houseById(s.houseId),c=classById(s.classId);
       html+=`<tr class="reg-detail"><td colspan="${visible}"><div class="reg-detail-in">
-        <div class="kv"><b>Programme</b>${prog?prog.name:'—'}</div>
+        <div class="kv"><b>Programme</b>${studentProgrammeName(s)}</div>
         <div class="kv"><b>Class</b>${c?c.name:'Not allocated'}</div>
         <div class="kv"><b>House</b>${h?h.name:'Not allocated'}</div>
         <div class="kv"><b>Gender</b>${s.gender==='M'?'Male':(s.gender==='F'?'Female':'—')}</div>
@@ -2062,11 +2177,18 @@ function renderRegistered(){
 function toggleRegExpand(id){ regExpanded.has(id)?regExpanded.delete(id):regExpanded.add(id); renderRegistered(); }
 function exportCSV(kind){
   var cols=regCols.filter(k=>!regHidden.has(k));
+  var rows=regFiltered();
+  if(kind==='excel'){
+    var headers=cols.map(k=>regColLabels[k]);
+    var excelRows=rows.map(s=>cols.map(k=>k==='form'?(s.form?'yes':'no'):(s[k]||'')));
+    downloadExcelRows('registered-students','Registered Students',headers,excelRows,'Registered Students');
+    return;
+  }
   var head=cols.map(k=>regColLabels[k]).join(',');
-  var lines=regFiltered().map(s=>cols.map(k=>k==='form'?(s.form?'yes':'no'):('"'+(s[k]||'').toString().replace(/"/g,'""')+'"')).join(',')).join('\n');
+  var lines=rows.map(s=>cols.map(k=>k==='form'?(s.form?'yes':'no'):('"'+(s[k]||'').toString().replace(/"/g,'""')+'"')).join(',')).join('\n');
   var blob=new Blob([head+'\n'+lines],{type:'text/csv'}),a=document.createElement('a');
   a.href=URL.createObjectURL(blob); a.download='registered-students.csv'; a.click();
-  toast('Exported '+regFiltered().length+' rows');
+  toast('Exported '+rows.length+' rows');
 }
 function downloadAdmissionList(){ openReportsModal(); }
 
@@ -2114,7 +2236,7 @@ function repTab(i){
 function repVal(id){var e=document.getElementById(id);return e?e.value:'';}
 function repMode(){var r=document.querySelector('input[name="rep_mode"]:checked');return r?r.value:'full';}
 function inRange(s){var f=repVal('rep_from'),t=repVal('rep_to');if(f&&s.reg<f)return false;if(t&&s.reg>t)return false;return true;}
-function pN(s){return (progById(s.progId)||{}).name||'—';}
+function pN(s){return studentProgrammeName(s);}
 function cN(s){return (classById(s.classId)||{}).name||'—';}
 function hN(s){return (houseById(s.houseId)||{}).name||'—';}
 function runReport(type,fmt){
@@ -2150,6 +2272,7 @@ function runReport(type,fmt){
   if(fmt==='pdf') repPrint(title,headers,rows); else repExcel(title,headers,rows);
 }
 function repExcel(title,headers,rows){
+  if(downloadExcelRows(title.replace(/[^a-z0-9]+/gi,'_'),title,headers,rows,title)) return;
   var html='<table border="1"><thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>`<td>${c==null?'':c}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
   var blob=new Blob(['\ufeff<html><head><meta charset="utf-8"></head><body><h3>Asuom SHS — '+title+'</h3>'+html+'</body></html>'],{type:'application/vnd.ms-excel'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=title.replace(/[^a-z0-9]+/gi,'_')+'.xls';a.click();
@@ -2583,8 +2706,8 @@ async function loadSchoolData(prof){
   // House-scoped user: only see that house and its students
   if(SB_HOUSE){ stu.data=(stu.data||[]).filter(s=>s.house_id===SB_HOUSE); hs.data=(hs.data||[]).filter(h=>h.id===SB_HOUSE); }
 
-  const pRev={},hRev={},cRev={}; pMap={};hMap={};cMap={};
-  programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:(stu.data||[]).filter(s=>s.programme_id===p.id).length};});
+  const pRev={},hRev={},cRev={},progNameByUuid={}; pMap={};hMap={};cMap={};
+  programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;progNameByUuid[p.id]=p.name||'';return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:(stu.data||[]).filter(s=>s.programme_id===p.id).length};});
   houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,gender:h.gender||'',rtype:h.residential_type||'',occ:(stu.data||[]).filter(s=>s.house_id===h.id).length};});
   classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:(stu.data||[]).filter(s=>s.class_id===c.id).length};});
   const plcByIdx={}; (plc.data||[]).forEach(p=>plcByIdx[p.index_number]=p);
@@ -2594,6 +2717,7 @@ async function loadSchoolData(prof){
       status:s.status,adm:s.admission_no||'-',reg:(regAt||'').slice(0,10),
       time: dt?dt.toTimeString().slice(0,8):'-',
       sms: sms||'-',
+      prog: cleanSmsText(progNameByUuid[s.programme_id])||cleanSmsText(pl.programme)||cleanSmsText(rec.programme)||'',
       enrol: pl.enrolment_code||'-',
       form: s.enrolment_form_url||null,
       other: pl.other_names||'', dob: pl.dob||'', parent: rec.guardian||rec.father_name||rec.mother_name||s.parent_name||'-',
@@ -2612,6 +2736,7 @@ async function loadSchoolData(prof){
     row.time=dt?dt.toTimeString().slice(0,8):'-';
     row.sms=sms||'-';
     row.smsRaw=sms||'';
+    row.prog=cleanSmsText(progNameByUuid[raw.programme_id])||row.prog||cleanSmsText(pl.programme)||cleanSmsText(rec.programme)||'';
     row.parent=rec.guardian||rec.father_name||rec.mother_name||row.parent||'-';
     row.rec=rec;
     return row;

@@ -61,13 +61,13 @@ type BulkCandidate = {
 };
 
 function bulkCandidateIdentifier(candidate: BulkCandidate) {
-  return safeString(candidate.externalId) || safeString(candidate.studentId) || safeString(candidate.recipient);
+  return safeString(candidate.externalId) || safeString(candidate.studentId);
 }
 
 function bulkCandidateKey(candidate: BulkCandidate) {
   const identifier = bulkCandidateIdentifier(candidate);
   if (!identifier) return "";
-  return `${identifier}::${safeString(candidate.message)}`;
+  return identifier;
 }
 
 function extractBalance(payload: unknown) {
@@ -194,7 +194,7 @@ async function syncSchoolBalance(schoolId: string, balance: number | null) {
 async function getExistingBulkDeliveryKeys(schoolId: string) {
   const { data, error } = await admin
     .from("sms_logs")
-    .select("student_id, external_id, phone, message, status")
+    .select("student_id, external_id, status")
     .eq("school_id", schoolId)
     .eq("recipient_group", "bulk-recipient")
     .in("status", ["sent", "pending"]);
@@ -204,12 +204,8 @@ async function getExistingBulkDeliveryKeys(schoolId: string) {
   const keys = new Set<string>();
   for (const row of data ?? []) {
     const record = row as Record<string, unknown>;
-    const identifier =
-      safeString(record.external_id) ||
-      safeString(record.student_id) ||
-      normalizePhone(record.phone);
-    const message = safeString(record.message);
-    if (identifier && message) keys.add(`${identifier}::${message}`);
+    const identifier = safeString(record.external_id) || safeString(record.student_id);
+    if (identifier) keys.add(identifier);
   }
   return keys;
 }
@@ -481,9 +477,9 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     ) || null;
     if (!recipient || !message) continue;
     const candidate: BulkCandidate = { recipient, message, studentId, externalId };
-    const candidateKey = bulkCandidateKey(candidate) || `${recipient}::${message}`;
+    const candidateKey = bulkCandidateKey(candidate);
     if (requestKeys.has(candidateKey)) continue;
-    requestKeys.add(candidateKey);
+    if (candidateKey) requestKeys.add(candidateKey);
     candidates.push(candidate);
   }
 

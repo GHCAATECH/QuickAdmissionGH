@@ -708,7 +708,7 @@
               <div class="grid-2"><div class="field"><label>Date of Birth <span class="rq">*</span></label><input type="date" id="pf-dob"></div><div class="field"><label>Place of Birth <span class="rq">*</span></label><input id="pf-pob"></div></div>
               <div class="grid-2"><div class="field"><label>Nationality <span class="rq">*</span></label><select id="pf-nat" onchange="toggleOther('pf-nat')"></select><input id="pf-nat-other" placeholder="Please specify nationality" style="display:none;margin-top:6px"></div><div class="field"><label>Religion <span class="rq">*</span></label><select id="pf-rel" onchange="toggleOther('pf-rel')"><option value="">Select...</option><option>Christianity</option><option>Islam</option><option>Traditional African Religions</option><option>Buddhism</option><option>Hinduism</option><option>Judaism</option><option>Atheism/Agnosticism</option><option>Other</option></select><input id="pf-rel-other" placeholder="Please specify religion" style="display:none;margin-top:6px"></div></div>
               <div class="grid-2"><div class="field"><label>Religious Denomination <span class="hint">(Christians only)</span></label><select id="pf-den" onchange="toggleOther('pf-den')"><option value="">Select...</option><option>Catholic</option><option>Methodist</option><option>Anglican</option><option>Presbyterian</option><option>Pentecostal</option><option>Baptist</option><option>Lutheran</option><option>Seventh-Day Adventist</option><option>Evangelical Charismatic</option><option>Church of Christ</option><option>Other</option></select><input id="pf-den-other" placeholder="Please specify denomination" style="display:none;margin-top:6px"></div><div class="field"><label>Permanent Address <span class="rq">*</span></label><input id="pf-addr" placeholder="House / digital address"></div></div>
-              <div class="grid-3"><div class="field"><label>Town <span class="rq">*</span></label><input id="pf-town"></div><div class="field"><label>Region <span class="rq">*</span></label><select id="pf-region"></select></div><div class="field"><label>District <span class="rq">*</span></label><input id="pf-district" placeholder="Type your district"></div></div>
+              <div class="grid-3"><div class="field"><label>Town <span class="rq">*</span></label><input id="pf-town"></div><div class="field"><label>Region <span class="rq">*</span></label><select id="pf-region"></select></div><div class="field"><label>District <span class="rq">*</span></label><input id="pf-district" list="pf-district-list" placeholder="Start typing your district"><datalist id="pf-district-list"></datalist></div></div>
               <div class="grid-2"><div class="field"><label>Interest(s) <span class="rq">*</span></label><select id="pf-interest" onchange="toggleOther('pf-interest')"><option value="">Select...</option><option>Athletics</option><option>Football</option><option>Debating Club</option><option>Drama</option><option>Music</option><option>Others</option></select><input id="pf-interest-other" placeholder="Please specify your interest" style="display:none;margin-top:6px"></div><div class="field"><label>Ghana Card / NHIS No</label><input id="pf-card" placeholder="NA"></div></div>
               <div class="sub-h">Class selection <span class="req-note">pick a class based on the available subject combinations - you must choose one</span></div>
               <div class="cls-wrap"><table class="cls-table"><thead><tr><th>Class</th><th>Subject combination</th><th>Seats</th></tr></thead><tbody id="clsRows"></tbody></table></div>
@@ -741,6 +741,7 @@
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toastMsg"></span></div>
 
+<script src="district-list.js"></script>
 <script>
 const SUPABASE_URL='https://datxaylostmyroleisdl.supabase.co';
 const SUPABASE_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
@@ -752,12 +753,34 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSe
 const stepLabels=['Placement','Personal','Parent / Guardian','Review'];
 const REGIONS=['Ahafo','Ashanti','Bono','Bono East','Central','Eastern','Greater Accra','North East','Northern','Oti','Savannah','Upper East','Upper West','Volta','Western','Western North'];
 const NATIONALITIES=['Ghanaian','Nigerian','Togolese','Ivorian','Burkinabe','Beninese','Liberian','Other'];
+const DISTRICTS=Array.isArray(window.QAG_DISTRICTS)?window.QAG_DISTRICTS:[];
 
 let session=null, SCHOOL=null, PROGRAMMES=[], STU=null;
 let app={done:[false,false,false],classId:null,className:'',enrUploaded:false,current:0,fields:{}};
+let activeStudentSessionKey='';
 const $=id=>document.getElementById(id);
 function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));window.scrollTo(0,0);if(id==='s-purchase'){try{showPendingBanner();}catch(e){}}}
+function studentSessionKey(){
+  return [session&&session.school||'',session&&session.index||'',session&&session.token||''].join('::');
+}
+function resetStudentWizardState(){
+  app={done:[false,false,false],classId:null,className:'',enrUploaded:false,current:0,fields:{}};
+  ['pf-raw','pf-enrol','pf-jhs','pf-jhstype','pf-dob','pf-pob','pf-nat','pf-rel','pf-den','pf-addr','pf-town','pf-region','pf-district','pf-interest','pf-card','pf-sms','pf-wa','pf-other','pf-email','pf-fname','pf-focc','pf-fphone','pf-mname','pf-mocc','pf-mphone','pf-guard','pf-gphone','pf-digital','pf-nat-other','pf-rel-other','pf-den-other','pf-interest-other'].forEach(function(id){
+    const el=$(id);
+    if(!el) return;
+    if(el.tagName==='SELECT') el.selectedIndex=0;
+    else el.value='';
+    el.style.borderColor='';
+  });
+  ['pf-nat-other','pf-rel-other','pf-den-other','pf-interest-other'].forEach(function(id){
+    const el=$(id);
+    if(el) el.style.display='none';
+  });
+  const review=$('reviewBlocks');
+  if(review) review.innerHTML='';
+  removeEnr();
+}
 function isHostedPortal(){
   const host=String((window.location&&window.location.hostname)||'').toLowerCase();
   if(!host) return false;
@@ -1054,6 +1077,11 @@ function renderSubmissionSuccess(){
 }
 function hydrate(){
   const s=STU;
+  const nextSessionKey=studentSessionKey();
+  if(activeStudentSessionKey!==nextSessionKey){
+    resetStudentWizardState();
+    activeStudentSessionKey=nextSessionKey;
+  }
   const displayName=studentName(s)||'Applicant';
   const smsContact=studentContact(s);
   if(smsContact)s.contact=smsContact;
@@ -1065,8 +1093,7 @@ function hydrate(){
   $('wuName').textContent=displayName;
   $('wuAvatar').textContent=initials(displayName);
   $('wuSchoolNo').textContent='School No.: '+(s.school_no||'-');
-  app.done=[s.personal_done,s.programme_done,s.undertaking_done,s.documents_done];
-  app.done=s.submitted?[true,true,true]:[false,false,false];
+  app.done=s.submitted?[true,true,true]:[!!s.personal_done,!!s.programme_done,!!s.undertaking_done];
   app.classId=s.class_id||null;
   $('pf1-index').value=s.index||''; $('pf1-gender').value=s.gender||''; $('pf1-prog').value=s.programme||'';
   $('pf1-res').value=s.residential||'-'; $('pf1-surname').value=s.surname||displayName||''; $('pf1-other').value=s.other_names||'';
@@ -1074,6 +1101,7 @@ function hydrate(){
   buildPickers(); buildClassTable(); prefillRecords(s.records);
   if(!$('pf-sms').value&&smsContact)$('pf-sms').value=smsContact;
   if(!app.fields.sms_contact&&smsContact)app.fields.sms_contact=smsContact;
+  if(!s.submitted) syncStepCompletion();
   const done=s.submitted;
   $('welcomeCard').classList.toggle('pending',!done);
   $('welcomeMsg').textContent=done
@@ -1216,10 +1244,55 @@ function refreshRail(){
 function goStep(i){app.current=i;document.querySelectorAll('.stepcard').forEach(c=>c.classList.toggle('active',c.dataset.step==i));if(i===3)buildReview();refreshRail();window.scrollTo(0,0);}
 function val(id){var e=$(id);return e?e.value.trim():'';}
 function need(ids){for(const id of ids){if(!val(id)){const e=$(id);if(e){e.focus();e.style.borderColor='var(--danger)';setTimeout(()=>e.style.borderColor='',1500);}return false;}}return true;}
+function firstMissing(ids){
+  for(const id of ids){ if(!val(id)) return id; }
+  return '';
+}
+function flagField(id,silent){
+  if(!id) return;
+  const e=$(id);
+  if(!e) return;
+  e.style.borderColor='var(--danger)';
+  setTimeout(()=>e.style.borderColor='',1500);
+  if(!silent){
+    try{ e.focus(); }catch(err){}
+    try{ e.scrollIntoView({behavior:'smooth',block:'center'}); }catch(err){}
+  }
+}
+function failStep(step,message,id,silent){
+  if(id) flagField(id,silent);
+  if(!silent&&message) toast(message);
+  return {ok:false,step,field:id,message};
+}
+function validateStep(step,opts){
+  const silent=!!(opts&&opts.silent);
+  if(step===0){
+    const missing=firstMissing(['pf-raw','pf-enrol','pf-jhs','pf-jhstype']);
+    if(missing) return failStep(step,'Fill all required Part 2 fields',missing,silent);
+    if(!app.enrUploaded) return failStep(step,'Please upload your enrolment form','',silent);
+  }
+  if(step===1){
+    const missing=firstMissing(['pf-dob','pf-pob','pf-nat','pf-rel','pf-addr','pf-town','pf-region','pf-district','pf-interest']);
+    if(missing) return failStep(step,'Please complete the required personal fields',missing,silent);
+    if(!app.classId&&(SCHOOL&&SCHOOL.classes&&SCHOOL.classes.length)) return failStep(step,'Please select a class','',silent);
+  }
+  if(step===2){
+    const missing=firstMissing(['pf-sms','pf-fname','pf-focc','pf-fphone','pf-mname','pf-mocc','pf-mphone']);
+    if(missing) return failStep(step,'Please complete the required parent fields',missing,silent);
+  }
+  collect(step);
+  return {ok:true,step};
+}
+function syncStepCompletion(){
+  app.done=[0,1,2].map(function(step){ return validateStep(step,{silent:true}).ok; });
+  return app.done;
+}
 
 function buildPickers(){
   $('pf-region').innerHTML='<option value="">Select...</option>'+REGIONS.map(r=>`<option>${r}</option>`).join('');
   $('pf-nat').innerHTML=NATIONALITIES.map(n=>`<option ${n==='Ghanaian'?'selected':''}>${n}</option>`).join('');
+  var districtList=$('pf-district-list');
+  if(districtList) districtList.innerHTML=DISTRICTS.map(function(d){ return `<option value="${d}"></option>`; }).join('');
 }
 function fmtCombo(str){ return (str||'').split(',').map(x=>x.trim()).filter(Boolean).join(' - '); }
 function buildClassTable(){
@@ -1275,10 +1348,10 @@ function collect(step){
   if(step===2){Object.assign(f,{sms_contact:val('pf-sms'),whatsapp:val('pf-wa'),other_phone:val('pf-other'),email:val('pf-email'),father_name:val('pf-fname'),father_occupation:val('pf-focc'),father_phone:val('pf-fphone'),mother_name:val('pf-mname'),mother_occupation:val('pf-mocc'),mother_phone:val('pf-mphone'),guardian:val('pf-guard'),guardian_phone:val('pf-gphone'),digital_address:val('pf-digital')});}
 }
 function stepNext(step){
-  if(step===0){ if(!need(['pf-raw','pf-enrol','pf-jhs','pf-jhstype'])){toast('Fill all required Part 2 fields');return;} if(!app.enrUploaded){toast('Please upload your enrolment form');return;} }
-  if(step===1){ if(!need(['pf-dob','pf-pob','pf-nat','pf-rel','pf-addr','pf-town','pf-region','pf-district','pf-interest'])){toast('Please complete the required personal fields');return;} if(!app.classId&&(SCHOOL&&SCHOOL.classes&&SCHOOL.classes.length)){toast('Please select a class');return;} }
-  if(step===2){ if(!need(['pf-sms','pf-fname','pf-focc','pf-fphone','pf-mname','pf-mocc','pf-mphone'])){toast('Please complete the required parent fields');return;} }
-  collect(step); app.done[step]=true; goStep(step+1);
+  const check=validateStep(step);
+  if(!check.ok) return;
+  app.done[step]=true;
+  goStep(step+1);
 }
 function prefillRecords(r){
   if(!r)return;
@@ -1321,33 +1394,62 @@ async function sendSubmissionConfirmation(applicationNo){
     return {ok:false,status:'pending',message:'SMS confirmation is pending.'};
   }
 }
-async function submitApp(){
-  collect(0);collect(1);collect(2);
-  if(!app.done.every(Boolean)){toast('Please complete all sections first');goStep(app.done.findIndex(d=>!d));return;}
-  const payload=Object.assign({},app.fields,{surname:STU.surname||STU.full_name,other_names:STU.other_names,aggregate:STU.aggregate});
-  $('submitBtn').textContent='Submitting...';
-  const {data,error}=await sb.rpc('submit_application',{p_index:session.index,p_token:session.token,payload,p_school:session.school||null});
-  $('submitBtn').textContent='Submit Enrolment';
-  if(error||!data.ok){
-    if(data&&data.error==='closed'){toast('Admission is closed for this school - submission not allowed.');return;}
-    toast('Submission failed - please try again');return;
+async function assignStudentHouse(){
+  if(!session||!session.index||!session.token) return {ok:false,status:'skipped',message:'No active session.'};
+  try{
+    const res=await fetch(SUPABASE_URL+'/functions/v1/assign-house',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
+      body:JSON.stringify({index:session.index,token:session.token,school:session.school||null})
+    });
+    const data=await res.json().catch(()=>null);
+    if(data&&(typeof data.ok==='boolean'||data.status||data.error)) return data;
+    return {ok:false,status:'pending',message:'House assignment is pending.'};
+  }catch(e){
+    return {ok:false,status:'pending',message:'House assignment is pending.'};
   }
-  const smsResult=await sendSubmissionConfirmation(data.admission_no);
-  await refreshStudent(); app.current=0; showPanel('dash');
-  const smsStatus=(smsResult&&smsResult.status)||'pending';
-  const smsStatusLabel=smsStatus==='sent'||smsStatus==='duplicate'?'Sent':(smsStatus==='skipped'?'Skipped':'Pending');
-  const smsNote=smsStatusLabel==='Sent'
-    ? 'A confirmation SMS has been sent to your phone number.'
-    : ((smsResult&&smsResult.message)||'SMS confirmation is pending. Your submission has still been received.');
-  writeSubmissionSuccess({
-    school_name:(SCHOOL&&SCHOOL.school&&SCHOOL.school.name)||'Your school',
-    application_no:data.admission_no||'',
-    sms_status:smsStatus,
-    sms_status_label:smsStatusLabel,
-    sms_note:smsNote
-  });
-  renderSubmissionSuccess();
-  toast('Enrolment submitted - Admission No '+data.admission_no);
+}
+async function submitApp(){
+  syncStepCompletion();
+  const firstInvalid=app.done.findIndex(d=>!d);
+  if(firstInvalid>-1){ goStep(firstInvalid); validateStep(firstInvalid); return; }
+  const payload=Object.assign({},app.fields,{surname:STU.surname||STU.full_name,other_names:STU.other_names,aggregate:STU.aggregate});
+  const submitBtn=$('submitBtn');
+  const previousLabel=submitBtn.textContent;
+  submitBtn.textContent='Submitting...';
+  submitBtn.disabled=true;
+  try{
+    const {data,error}=await sb.rpc('submit_application',{p_index:session.index,p_token:session.token,payload,p_school:session.school||null});
+    if(error||!data.ok){
+      if(data&&data.error==='closed'){toast('Admission is closed for this school - submission not allowed.');return;}
+      toast('Submission failed - please try again');return;
+    }
+    const smsResult=await sendSubmissionConfirmation(data.admission_no);
+    const houseResult=await assignStudentHouse();
+    const smsStatus=(smsResult&&smsResult.status)||'pending';
+    const smsStatusLabel=smsStatus==='sent'||smsStatus==='duplicate'?'Sent':(smsStatus==='skipped'?'Skipped':'Pending');
+    const smsNote=smsStatusLabel==='Sent'
+      ? 'A confirmation SMS has been sent to your phone number.'
+      : ((smsResult&&smsResult.message)||'SMS confirmation is pending. Your submission has still been received.');
+    writeSubmissionSuccess({
+      school_name:(SCHOOL&&SCHOOL.school&&SCHOOL.school.name)||'Your school',
+      application_no:data.admission_no||'',
+      sms_status:smsStatus,
+      sms_status_label:smsStatusLabel,
+      sms_note:smsNote
+    });
+    await refreshStudent();
+    app.current=0;
+    showPanel('dash');
+    renderSubmissionSuccess();
+    const houseNote=houseResult&&houseResult.ok&&houseResult.status==='assigned'&&houseResult.house_name
+      ? ' House assigned: '+houseResult.house_name+'.'
+      : '';
+    toast('Forms submitted successfully - Admission No '+data.admission_no+'.'+houseNote);
+  } finally {
+    submitBtn.textContent=previousLabel;
+    submitBtn.disabled=false;
+  }
 }
 
 /* ===== DOCUMENTS ===== */
@@ -1484,7 +1586,7 @@ function docProspectus(){
 }
 
 function gotoSuper(){ try{ if(window.parent&&window.parent!==window&&window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin.html'; }
-function logout(){stopWatchDeletion();session=null;STU=null;clearStudentSession();writeSubmissionSuccess(null); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
+function logout(){stopWatchDeletion();session=null;STU=null;activeStudentSessionKey='';clearStudentSession();writeSubmissionSuccess(null); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
 
 buildSteps();
 // Phone/contact fields: digits only, max 10
