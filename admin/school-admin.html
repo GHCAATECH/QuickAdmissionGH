@@ -29,6 +29,11 @@
   html,body{height:100%;min-height:100%;overflow:hidden;overflow-x:hidden}
   .app{display:grid;grid-template-columns:248px minmax(0,1fr);height:100vh;min-height:100dvh;overflow:hidden}
   body.auth-booting .app{display:none!important}
+  body.auth-booting #authGate{opacity:0;visibility:hidden;pointer-events:none}
+  #bootSplash{position:fixed;inset:0;z-index:221;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(85% 85% at 50% 0%,rgba(133,223,255,.28),transparent 58%),radial-gradient(80% 90% at 0% 100%,rgba(31,101,255,.32),transparent 55%),radial-gradient(90% 90% at 100% 100%,rgba(14,63,134,.42),transparent 50%),linear-gradient(180deg,#27a5f7 0%,#157ae0 44%,#0f55c6 100%)}
+  body.auth-booting #bootSplash{display:flex}
+  .boot-splash-card{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:18px;background:rgba(8,32,77,.24);border:1px solid rgba(255,255,255,.2);box-shadow:0 24px 55px -28px rgba(8,19,46,.55),inset 0 1px 0 rgba(255,255,255,.12);color:#f7fbff;font-size:13px;font-weight:600;backdrop-filter:blur(12px)}
+  .boot-splash-spinner{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.28);border-top-color:#fff;animation:gateSpin .8s linear infinite;flex:none}
   #authGate.gate-screen{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:clamp(14px,2.2vh,28px);padding-top:calc(clamp(14px,2.2vh,28px) + env(safe-area-inset-top));padding-right:calc(clamp(14px,2.2vh,28px) + env(safe-area-inset-right));padding-bottom:calc(clamp(14px,2.2vh,28px) + env(safe-area-inset-bottom));padding-left:calc(clamp(14px,2.2vh,28px) + env(safe-area-inset-left));overflow-y:auto;overflow-x:hidden;background:radial-gradient(85% 85% at 50% 0%,rgba(133,223,255,.28),transparent 58%),radial-gradient(80% 90% at 0% 100%,rgba(31,101,255,.32),transparent 55%),radial-gradient(90% 90% at 100% 100%,rgba(14,63,134,.42),transparent 50%),linear-gradient(180deg,#27a5f7 0%,#157ae0 44%,#0f55c6 100%)}
   .gate-shell.school-admin-login-wrapper{width:100%;max-width:1400px;min-height:calc(100vh - 2 * clamp(14px,2.2vh,28px));min-height:calc(100dvh - 2 * clamp(14px,2.2vh,28px));display:flex;align-items:center;justify-content:center;padding:0;background:transparent;border:none;box-shadow:none;backdrop-filter:none;overflow:visible}
   .school-admin-login-card{position:relative;width:100%;max-width:620px;max-height:calc(100dvh - 2 * clamp(14px,2.2vh,28px));padding:clamp(30px,5vh,52px) clamp(30px,3.6vw,48px) clamp(28px,4.6vh,48px);border-radius:38px;border:1px solid rgba(255,255,255,.28);background:linear-gradient(180deg,rgba(132,230,255,.3) 0%,rgba(59,162,255,.24) 46%,rgba(15,85,198,.28) 100%),rgba(42,146,238,.24);box-shadow:0 34px 80px -32px rgba(4,25,96,.72),0 20px 40px -24px rgba(6,38,132,.56),inset 0 1px 0 rgba(255,255,255,.24);backdrop-filter:blur(22px);overflow:hidden;isolation:isolate;display:flex;flex-direction:column;justify-content:center}
@@ -518,6 +523,7 @@
 </style>
 </head>
 <body class="auth-booting">
+<div id="bootSplash"><div class="boot-splash-card"><span class="boot-splash-spinner"></span><span>Restoring your secure school session...</span></div></div>
 <div id="authGate" class="gate-screen is-checking">
   <div class="gate-shell school-admin-login-wrapper">
     <div class="school-admin-login-card">
@@ -2453,16 +2459,14 @@ function loadDefaultSmsTemplate(){
   if(!ov) return;
   const setGateReady=function(){
     const gate=document.getElementById('authGate');
-    if(gate&&document.querySelector('.app').style.display==='none'){
-      gate.classList.remove('is-checking');
-      gate.classList.add('is-ready');
-    }
+    if(!gate) return;
+    document.body.classList.remove('auth-booting');
+    gate.classList.remove('is-checking');
+    gate.classList.add('is-ready');
   };
   document.getElementById('ag_btn').addEventListener('click',adminLogin);
   document.getElementById('ag_pass').addEventListener('keydown',e=>{if(e.key==='Enter')adminLogin();});
-  const gateFallback=setTimeout(setGateReady,1500);
   bootSession().finally(function(){
-    clearTimeout(gateFallback);
     setGateReady();
   });
 })();
