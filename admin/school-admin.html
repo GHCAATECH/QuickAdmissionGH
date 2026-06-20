@@ -2357,6 +2357,18 @@ function schoolAuthScope(){
 function schoolAuthKey(k){
   return 'qag_auth_scope::'+schoolAuthScope()+'::'+k;
 }
+function schoolAdminTabKey(k){
+  return 'qag_school_admin_tab::'+schoolAuthScope()+'::'+k;
+}
+function schoolAdminTabSessionActive(){
+  try{ return window.sessionStorage.getItem(schoolAdminTabKey('active'))==='1'; }catch(e){ return false; }
+}
+function setSchoolAdminTabSessionActive(on){
+  try{
+    if(on) window.sessionStorage.setItem(schoolAdminTabKey('active'),'1');
+    else window.sessionStorage.removeItem(schoolAdminTabKey('active'));
+  }catch(e){}
+}
 const schoolAuthStorage={
   getItem:function(k){ try{ return window.localStorage.getItem(schoolAuthKey(k)); }catch(e){ return null; } },
   setItem:function(k,v){ try{ window.localStorage.setItem(schoolAuthKey(k),v); }catch(e){} },
@@ -2594,6 +2606,7 @@ function loadDefaultSmsTemplate(){
 })();
 
 async function enterAdmin(prof,uid){
+  setSchoolAdminTabSessionActive(true);
   SB_UID=uid; SB_PERMS=(prof.permissions===undefined?null:prof.permissions); SB_HOUSE=(SB_PERMS&&SB_PERMS.house)||null;
   await loadSchoolData(prof);
   const g=document.getElementById('authGate'); if(g)g.remove();
@@ -2604,11 +2617,12 @@ async function enterAdmin(prof,uid){
 }
 async function bootSession(){
   try{
+    if(!schoolAdminTabSessionActive()) return;
     const {data}=await sb.auth.getSession();
     const session=data&&data.session;
-    if(!session||!session.user) return;
+    if(!session||!session.user){ setSchoolAdminTabSessionActive(false); return; }
     const {data:prof}=await sb.from('profiles').select('full_name,role,school_id,permissions').eq('id',session.user.id).single();
-    if(!prof||(prof.role!=='school_admin'&&prof.role!=='super_admin')) return;
+    if(!prof||(prof.role!=='school_admin'&&prof.role!=='super_admin')){ setSchoolAdminTabSessionActive(false); return; }
     await enterAdmin(prof,session.user.id);
   }catch(e){}
 }
@@ -3462,7 +3476,7 @@ addPlacement=async function(){
   toast(existed?('Student '+i+' updated — information replaced'):'Placement record added');
 };
 
-async function logout(){ if(!confirm('Log out of the admin portal?'))return; try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
+async function logout(){ if(!confirm('Log out of the admin portal?'))return; setSchoolAdminTabSessionActive(false); try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 </script>
 
 <footer style="position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:10px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))">Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
