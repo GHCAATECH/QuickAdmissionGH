@@ -746,7 +746,7 @@
 const SUPABASE_URL='https://datxaylostmyroleisdl.supabase.co';
 const SUPABASE_KEY='sb_publishable_c9WlfiojT_wz4uesb3lYaw_91QoIErh';
 let PAYSTACK_PUBLIC_KEY='';
-let PAYSTACK_CONFIG={loaded:false,secret_mode:'unknown',public_mode:'unknown',public_key_present:false,secret_present:false};
+let PAYSTACK_CONFIG={loaded:false,public_mode:'unknown',public_key_present:false,secret_present:false,mode_mismatch:false};
 const SCHOOL_CODE=null; // schools are resolved automatically from the index number
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false}});
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SUPABASE_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'LIVE':'DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
@@ -787,10 +787,10 @@ function isHostedPortal(){
   return !['localhost','127.0.0.1'].includes(host) && !host.endsWith('.local');
 }
 function paystackModeMismatch(){
-  return PAYSTACK_CONFIG.public_mode&&PAYSTACK_CONFIG.secret_mode&&PAYSTACK_CONFIG.public_mode!=='unknown'&&PAYSTACK_CONFIG.secret_mode!=='unknown'&&PAYSTACK_CONFIG.public_mode!==PAYSTACK_CONFIG.secret_mode;
+  return !!PAYSTACK_CONFIG.mode_mismatch;
 }
 function paystackTestModeOnLive(){
-  return isHostedPortal()&&(PAYSTACK_CONFIG.public_mode==='test'||PAYSTACK_CONFIG.secret_mode==='test'||String(PAYSTACK_PUBLIC_KEY||'').startsWith('pk_test_'));
+  return isHostedPortal()&&(PAYSTACK_CONFIG.public_mode==='test'||String(PAYSTACK_PUBLIC_KEY||'').startsWith('pk_test_'));
 }
 async function loadPaystackConfig(){
   try{

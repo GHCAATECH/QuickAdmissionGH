@@ -41,7 +41,12 @@ async function resolveProfile(admin: ReturnType<typeof createClient>, req: Reque
 function canAccessSchool(profile: Record<string, unknown> | null, schoolId: string) {
   if (!profile) return false;
   if (profile.role === "super_admin") return true;
-  return profile.role === "school_admin" && safeString(profile.school_id) === safeString(schoolId);
+  if (profile.role !== "school_admin" || safeString(profile.school_id) !== safeString(schoolId)) return false;
+  const permissions = profile.permissions && typeof profile.permissions === "object" && !Array.isArray(profile.permissions)
+    ? profile.permissions as Record<string, unknown>
+    : null;
+  if (permissions == null) return true;
+  return permissions.co_admin === true || permissions.co_admin === "true" || permissions.co_admin === 1 || permissions.co_admin === "1";
 }
 
 Deno.serve(async (req: Request) => {

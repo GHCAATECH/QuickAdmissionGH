@@ -49,6 +49,17 @@ function safeString(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function hasSchoolWriteAccess(profile: Record<string, unknown> | null, schoolId: string) {
+  if (!profile) return false;
+  if (profile.role === "super_admin") return true;
+  if (profile.role !== "school_admin" || safeString(profile.school_id) !== safeString(schoolId)) return false;
+  const permissions = profile.permissions && typeof profile.permissions === "object" && !Array.isArray(profile.permissions)
+    ? profile.permissions as Record<string, unknown>
+    : null;
+  if (permissions == null) return true;
+  return permissions.co_admin === true || permissions.co_admin === "true" || permissions.co_admin === 1 || permissions.co_admin === "1";
+}
+
 function renderTemplate(template: string, vars: Record<string, string>) {
   return template.replace(/\{([a-z_]+)\}/gi, (_, rawKey) => vars[rawKey.toLowerCase()] ?? "");
 }
@@ -423,8 +434,7 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
 
 async function assertSchoolAccess(profile: Record<string, unknown> | null, schoolId: string) {
   if (!profile) return { ok: false, status: 401, message: "Authentication is required." };
-  if (profile.role === "super_admin") return { ok: true, status: 200 };
-  if (profile.role === "school_admin" && safeString(profile.school_id) === safeString(schoolId)) {
+  if (hasSchoolWriteAccess(profile, schoolId)) {
     return { ok: true, status: 200 };
   }
   return { ok: false, status: 403, message: "You cannot send SMS for this school." };

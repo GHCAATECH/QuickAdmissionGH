@@ -1120,6 +1120,10 @@ function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add
 const pendingCount=()=>students.filter(s=>s.status==='pending').length;
 const totalRevenue=()=>payments.filter(p=>p.status==='completed').reduce((a,p)=>a+p.amount,0);
 function cleanSmsText(v){ return v==null?'':String(v).trim(); }
+const HTML_ESCAPE_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'};
+function escapeHtml(v){ return String(v==null?'':v).replace(/[&<>"'`]/g,function(ch){ return HTML_ESCAPE_MAP[ch]; }); }
+function escapeAttr(v){ return escapeHtml(v).replace(/\r?\n/g,'&#10;'); }
+function safeHtml(v,fallback){ const text=cleanSmsText(v); return text?escapeHtml(text):(fallback||'&mdash;'); }
 function studentProgrammeName(s){
   const byId=cleanSmsText((progById(s&&s.progId)||{}).name);
   if(byId&&/[A-Za-z0-9]/.test(byId)&&byId!=='-') return byId;
@@ -1300,18 +1304,18 @@ function renderStats(){
 }
 function renderRecent(){
   const rows=[...students].sort((a,b)=>b.reg.localeCompare(a.reg)).slice(0,8);
-  $('recentRows').innerHTML=rows.map(s=>`<tr><td class="mono">${s.reg}</td><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${studentProgrammeName(s)}</td><td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">View</button></div></td></tr>`).join('');
+  $('recentRows').innerHTML=rows.map(s=>`<tr><td class="mono">${safeHtml(s.reg)}</td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(studentProgrammeName(s),'-')}</td><td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">View</button></div></td></tr>`).join('');
 }
 
 /* ===== PROGRAMMES / HOUSES / CLASSES ===== */
 function renderProg(){
-  $('progRows').innerHTML=programmes.map(p=>{const pct=Math.round(p.enr/p.cap*100);return `<tr><td><span class="code">${p.code}</span></td><td class="nm">${p.name}</td><td style="max-width:260px;color:var(--ink-soft);font-size:12.5px">${p.subjects}</td><td class="mono">${p.cap}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${p.enr}</span></td><td><div class="row-actions"><button class="act" onclick="openProg(${p.id})">Edit</button><button class="act danger" onclick="delItem('prog',${p.id})">Delete</button></div></td></tr>`;}).join('');
+  $('progRows').innerHTML=programmes.map(p=>{const pct=Math.round(p.enr/p.cap*100);return `<tr><td><span class="code">${safeHtml(p.code)}</span></td><td class="nm">${safeHtml(p.name)}</td><td style="max-width:260px;color:var(--ink-soft);font-size:12.5px">${safeHtml(p.subjects)}</td><td class="mono">${safeHtml(p.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(p.enr)}</span></td><td><div class="row-actions"><button class="act" onclick="openProg(${p.id})">Edit</button><button class="act danger" onclick="delItem('prog',${p.id})">Delete</button></div></td></tr>`;}).join('');
 }
 function renderHouses(){
-  $('houseRows').innerHTML=houses.map(h=>{const pct=Math.round(h.occ/h.cap*100);const cat=[h.rtype,h.gender].filter(Boolean).join(' · ')||'Any';return `<tr><td class="nm"><span class="dot-color" style="background:${h.color}"></span>${h.name}</td><td><span class="pill ${h.rtype==='Boarding'?'open':(h.rtype==='Day'?'closed':'')}">${cat}</span></td><td style="color:var(--ink-soft)">${h.motto||'—'}</td><td class="mono">${h.cap}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${h.occ}</span></td><td><div class="row-actions"><button class="act" onclick="openHouse(${h.id})">Edit</button><button class="act danger" onclick="delItem('house',${h.id})">Delete</button></div></td></tr>`;}).join('');
+  $('houseRows').innerHTML=houses.map(h=>{const pct=Math.round(h.occ/h.cap*100);const cat=[h.rtype,h.gender].filter(Boolean).join(' · ')||'Any';return `<tr><td class="nm"><span class="dot-color" style="background:${h.color}"></span>${safeHtml(h.name)}</td><td><span class="pill ${h.rtype==='Boarding'?'open':(h.rtype==='Day'?'closed':'')}">${safeHtml(cat)}</span></td><td style="color:var(--ink-soft)">${safeHtml(h.motto,'&mdash;')}</td><td class="mono">${safeHtml(h.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(h.occ)}</span></td><td><div class="row-actions"><button class="act" onclick="openHouse(${h.id})">Edit</button><button class="act danger" onclick="delItem('house',${h.id})">Delete</button></div></td></tr>`;}).join('');
 }
 function renderClasses(){
-  $('classRows').innerHTML=classes.map(c=>{const pct=Math.round(c.occ/c.cap*100);const pr=c.progId?(programmes.find(p=>p.id===c.progId)||{}).name:'';const combo=(c.subjects||'').split(',').map(x=>x.trim()).filter(Boolean).join(' · ');return `<tr><td class="nm">${c.name}</td><td>${pr?`<span class="pill open">${pr}</span>`:'<span style="color:var(--muted)">—</span>'}</td><td style="font-size:12px;max-width:280px">${combo||'<span style="color:var(--muted)">—</span>'}</td><td><span class="code">${c.code||'—'}</span></td><td class="mono">${c.cap}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${c.occ}</span></td><td><div class="row-actions"><button class="act" onclick="openClass(${c.id})">Edit</button><button class="act danger" onclick="delItem('class',${c.id})">Delete</button></div></td></tr>`;}).join('');
+  $('classRows').innerHTML=classes.map(c=>{const pct=Math.round(c.occ/c.cap*100);const pr=c.progId?(programmes.find(p=>p.id===c.progId)||{}).name:'';const combo=(c.subjects||'').split(',').map(x=>x.trim()).filter(Boolean).join(' · ');return `<tr><td class="nm">${safeHtml(c.name)}</td><td>${pr?`<span class="pill open">${escapeHtml(pr)}</span>`:'<span style="color:var(--muted)">&mdash;</span>'}</td><td style="font-size:12px;max-width:280px">${combo?escapeHtml(combo):'<span style="color:var(--muted)">&mdash;</span>'}</td><td><span class="code">${safeHtml(c.code,'&mdash;')}</span></td><td class="mono">${safeHtml(c.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(c.occ)}</span></td><td><div class="row-actions"><button class="act" onclick="openClass(${c.id})">Edit</button><button class="act danger" onclick="delItem('class',${c.id})">Delete</button></div></td></tr>`;}).join('');
 }
 function delItem(type,id){
   const map={prog:[programmes,'programme'],house:[houses,'house'],class:[classes,'class']};
@@ -1333,9 +1337,9 @@ function crudModal(title,fields,onSave){
 function openProg(id){
   const p=id?programmes.find(x=>x.id===id):{code:'',name:'',subjects:'',cap:100};
   crudModal(id?'Edit programme':'Add programme',
-    `<div class="grid-2"><div class="field"><label>Code</label><input id="c_code" value="${p.code}" placeholder="e.g. SCI"></div><div class="field"><label>Capacity</label><input id="c_cap" type="number" value="${p.cap}"></div></div>
-     <div class="field"><label>Programme name</label><input id="c_name" value="${p.name}" placeholder="e.g. General Science"></div>
-     <div class="field"><label>Subjects <span class="hint">— comma separated</span></label><textarea id="c_sub">${p.subjects}</textarea></div>`,
+    `<div class="grid-2"><div class="field"><label>Code</label><input id="c_code" value="${escapeAttr(p.code)}" placeholder="e.g. SCI"></div><div class="field"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(p.cap)}"></div></div>
+     <div class="field"><label>Programme name</label><input id="c_name" value="${escapeAttr(p.name)}" placeholder="e.g. General Science"></div>
+     <div class="field"><label>Subjects <span class="hint">— comma separated</span></label><textarea id="c_sub">${escapeHtml(p.subjects)}</textarea></div>`,
     ()=>{const code=$('c_code').value.trim().toUpperCase(),name=$('c_name').value.trim();if(!code||!name){toast('Code and name required');return;}
       if(id){p.code=code;p.name=name;p.subjects=$('c_sub').value;p.cap=+$('c_cap').value||100;}
       else programmes.push({id:Date.now(),code,name,subjects:$('c_sub').value,cap:+$('c_cap').value||100,enr:0});
@@ -1344,9 +1348,9 @@ function openProg(id){
 function openHouse(id){
   const h=id?houses.find(x=>x.id===id):{name:'',color:'#1557B0',motto:'',cap:100};
   crudModal(id?'Edit house':'Add house',
-    `<div class="grid-2"><div class="field"><label>House name</label><input id="c_name" value="${h.name}"></div><div class="field"><label>Colour</label><input id="c_color" type="color" value="${h.color}"></div></div>
-     <div class="field"><label>Motto</label><input id="c_motto" value="${h.motto}"></div>
-     <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${h.cap}"></div>`,
+    `<div class="grid-2"><div class="field"><label>House name</label><input id="c_name" value="${escapeAttr(h.name)}"></div><div class="field"><label>Colour</label><input id="c_color" type="color" value="${escapeAttr(h.color)}"></div></div>
+     <div class="field"><label>Motto</label><input id="c_motto" value="${escapeAttr(h.motto)}"></div>
+     <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(h.cap)}"></div>`,
     ()=>{const name=$('c_name').value.trim();if(!name){toast('House name required');return;}
       if(id){h.name=name;h.color=$('c_color').value;h.motto=$('c_motto').value;h.cap=+$('c_cap').value||100;}
       else houses.push({id:Date.now(),name,color:$('c_color').value,motto:$('c_motto').value,cap:+$('c_cap').value||100,occ:0});
@@ -1355,8 +1359,8 @@ function openHouse(id){
 function openClass(id){
   const c=id?classes.find(x=>x.id===id):{name:'',code:'',cap:50};
   crudModal(id?'Edit class':'Add class',
-    `<div class="grid-2"><div class="field"><label>Class name</label><input id="c_name" value="${c.name}" placeholder="Form 1A"></div><div class="field"><label>Code</label><input id="c_code" value="${c.code}" placeholder="1A"></div></div>
-     <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${c.cap}"></div>`,
+    `<div class="grid-2"><div class="field"><label>Class name</label><input id="c_name" value="${escapeAttr(c.name)}" placeholder="Form 1A"></div><div class="field"><label>Code</label><input id="c_code" value="${escapeAttr(c.code)}" placeholder="1A"></div></div>
+     <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(c.cap)}"></div>`,
     ()=>{const name=$('c_name').value.trim();if(!name){toast('Class name required');return;}
       if(id){c.name=name;c.code=$('c_code').value;c.cap=+$('c_cap').value||50;}
       else classes.push({id:Date.now(),name,code:$('c_code').value,cap:+$('c_cap').value||50,occ:0});
@@ -1368,24 +1372,24 @@ function renderPlacement(){
   const qEl=$('placeSearch'); const q=(qEl&&qEl.value||'').trim().toLowerCase();
   const list=q?placement.filter(p=>((p.name||'').toLowerCase().includes(q)||String(p.index||'').toLowerCase().includes(q))):placement;
   $('placeCount').textContent=q?(list.length+' of '+placement.length):placement.length;
-  $('placeRows').innerHTML=list.length?list.slice(0,200).map(p=>`<tr><td class="mono">${p.index}</td><td class="nm">${p.name}</td><td>${p.gender||'—'}</td><td>${p.res||'—'}</td><td>${p.prog||'—'}</td><td class="mono">${p.agg||'—'}</td><td class="mono">${p.sms||'—'}</td><td>${p.loggedIn?'<span class="pill open">Yes</span>':'<span class="pill closed">No</span>'}</td><td><div class="row-actions"><button class="act" onclick="editPlacement('${encodeURIComponent(p.index)}')">Edit</button><button class="act" onclick="deletePlacement('${encodeURIComponent(p.index)}')">Delete</button></div></td></tr>`).join(''):emptyRow(9,q?'No records match your search.':'No placement records yet.');
+  $('placeRows').innerHTML=list.length?list.slice(0,200).map(p=>`<tr><td class="mono">${safeHtml(p.index)}</td><td class="nm">${safeHtml(p.name)}</td><td>${safeHtml(p.gender,'&mdash;')}</td><td>${safeHtml(p.res,'&mdash;')}</td><td>${safeHtml(p.prog,'&mdash;')}</td><td class="mono">${safeHtml(p.agg,'&mdash;')}</td><td class="mono">${safeHtml(p.sms,'&mdash;')}</td><td>${p.loggedIn?'<span class="pill open">Yes</span>':'<span class="pill closed">No</span>'}</td><td><div class="row-actions"><button class="act" onclick="editPlacement('${encodeURIComponent(p.index)}')">Edit</button><button class="act" onclick="deletePlacement('${encodeURIComponent(p.index)}')">Delete</button></div></td></tr>`).join(''):emptyRow(9,q?'No records match your search.':'No placement records yet.');
 }
 function editPlacement(encIdx){
   const idx=decodeURIComponent(encIdx);
   const p=placement.find(x=>x.index===idx);if(!p)return;
   const m=$('modal');m.className='modal';
-  const progOpts='<option value="">— Select —</option>'+programmes.map(pr=>`<option value="${pr.name}" ${p.prog===pr.name?'selected':''}>${pr.name}</option>`).join('');
-  m.innerHTML=`<div class="modal-head"><div><h2>Edit placement record</h2><p><span class="code">${p.index}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
+  const progOpts='<option value="">— Select —</option>'+programmes.map(pr=>`<option value="${escapeAttr(pr.name)}" ${p.prog===pr.name?'selected':''}>${escapeHtml(pr.name)}</option>`).join('');
+  m.innerHTML=`<div class="modal-head"><div><h2>Edit placement record</h2><p><span class="code">${safeHtml(p.index)}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body"><div class="grid-2">
-    <div class="field"><label>Full name</label><input id="ep_name" value="${(p.name||'').replace(/"/g,'&quot;')}"></div>
+    <div class="field"><label>Full name</label><input id="ep_name" value="${escapeAttr(p.name)}"></div>
     <div class="field"><label>Gender</label><select id="ep_gender"><option value="">Select…</option><option ${p.gender==='Male'?'selected':''}>Male</option><option ${p.gender==='Female'?'selected':''}>Female</option></select></div>
     <div class="field"><label>Residential status</label><select id="ep_res"><option value="">Select…</option><option ${p.res==='Boarding'?'selected':''}>Boarding</option><option ${p.res==='Day'?'selected':''}>Day</option></select></div>
     <div class="field"><label>Programme</label><select id="ep_prog">${progOpts}</select></div>
-    <div class="field"><label>Aggregate</label><input id="ep_agg" type="number" min="6" max="54" value="${p.agg||''}"></div>
-    <div class="field"><label>JHS attended</label><input id="ep_jhs" value="${(p.jhs||'').replace(/"/g,'&quot;')}"></div>
-    <div class="field"><label>Date of birth</label><input id="ep_dob" type="date" value="${p.dob||''}"></div>
-    <div class="field"><label>SMS contact</label><input id="ep_sms" value="${(p.sms||'').replace(/"/g,'&quot;')}"></div>
-    <div class="field"><label>Enrolment code</label><input id="ep_code" value="${(p.code||'').replace(/"/g,'&quot;')}"></div>
+    <div class="field"><label>Aggregate</label><input id="ep_agg" type="number" min="6" max="54" value="${escapeAttr(p.agg||'')}"></div>
+    <div class="field"><label>JHS attended</label><input id="ep_jhs" value="${escapeAttr(p.jhs)}"></div>
+    <div class="field"><label>Date of birth</label><input id="ep_dob" type="date" value="${escapeAttr(p.dob||'')}"></div>
+    <div class="field"><label>SMS contact</label><input id="ep_sms" value="${escapeAttr(p.sms)}"></div>
+    <div class="field"><label>Enrolment code</label><input id="ep_code" value="${escapeAttr(p.code)}"></div>
   </div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="savePlacement('${encodeURIComponent(idx)}')">Save changes</button></div>`;
   $('overlay').classList.add('show');
@@ -1584,9 +1588,9 @@ function renderStudents(){
   $('stuRows').innerHTML=rows.length?rows.map(s=>{
     const h=houseById(s.houseId),c=classById(s.classId);
     return `<tr><td><span class="checkbox ${selected.has(s.id)?'on':''}" onclick="toggleSel(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td>
-    <td class="mono" style="font-size:12px">${s.adm}</td><td class="mono">${s.index}</td><td class="nm">${s.name}</td>
-    <td>${studentProgrammeName(s)}</td><td>${c?c.name:'<span style="color:var(--muted)">—</span>'}</td>
-    ${showHouse?`<td>${h?`<span class="dot-color" style="background:${h.color}"></span>${h.name}`:'<span style="color:var(--muted)">—</span>'}</td>`:''}
+    <td class="mono" style="font-size:12px">${safeHtml(s.adm)}</td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td>
+    <td>${safeHtml(studentProgrammeName(s),'-')}</td><td>${c?escapeHtml(c.name):'<span style="color:var(--muted)">&mdash;</span>'}</td>
+    ${showHouse?`<td>${h?`<span class="dot-color" style="background:${h.color}"></span>${escapeHtml(h.name)}`:'<span style="color:var(--muted)">&mdash;</span>'}</td>`:''}
     <td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">Edit</button></div></td></tr>`;
   }).join(''):emptyRow(showHouse?8:7,'No students match your filters.');
   updateBulk();updateSelAll();
@@ -1598,8 +1602,8 @@ function updateBulk(){
   if(selected.size===0){$('bulkHost').innerHTML='';return;}
   $('bulkHost').innerHTML=`<div class="bulkbar">
     <span class="cnt">${selected.size} selected</span>
-    <select id="bulkClass"><option value="">Assign class…</option>${classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select>
-    <select id="bulkHouse"><option value="">Assign house…</option>${houses.map(h=>`<option value="${h.id}">${h.name}</option>`).join('')}</select>
+    <select id="bulkClass"><option value="">Assign class…</option>${classes.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}</select>
+    <select id="bulkHouse"><option value="">Assign house…</option>${houses.map(h=>`<option value="${h.id}">${escapeHtml(h.name)}</option>`).join('')}</select>
     <button class="btn btn-sm" onclick="applyBulk()">Apply</button>
     <button class="btn btn-sm" onclick="bulkSms()">Send SMS</button>
     <button class="btn btn-sm" onclick="clearSel()" style="margin-left:auto">Clear</button>
@@ -1627,19 +1631,19 @@ function viewStudent(id){
   const s=students.find(x=>x.id===id);
   const m=$('modal');
   const selectedProgId=s.progId||studentProgrammeIdByName(s.prog);
-  const progOpts=programmes.map(p=>`<option value="${p.id}" ${selectedProgId==p.id?'selected':''}>${p.name}</option>`).join('');
-  const classOpts='<option value="">— Not allocated —</option>'+classes.map(c=>`<option value="${c.id}" ${s.classId==c.id?'selected':''}>${c.name}</option>`).join('');
-  const houseOpts='<option value="">— Not allocated —</option>'+houses.map(h=>`<option value="${h.id}" ${s.houseId==h.id?'selected':''}>${h.name}</option>`).join('');
-  m.innerHTML=`<div class="modal-head"><div><h2>${s.name}</h2><p><span class="code">${s.index}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
+  const progOpts=programmes.map(p=>`<option value="${p.id}" ${selectedProgId==p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  const classOpts='<option value="">— Not allocated —</option>'+classes.map(c=>`<option value="${c.id}" ${s.classId==c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('');
+  const houseOpts='<option value="">— Not allocated —</option>'+houses.map(h=>`<option value="${h.id}" ${s.houseId==h.id?'selected':''}>${escapeHtml(h.name)}</option>`).join('');
+  m.innerHTML=`<div class="modal-head"><div><h2>${safeHtml(s.name)}</h2><p><span class="code">${safeHtml(s.index)}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body"><div class="grid-2">
-    <div class="field"><label>Full name</label><input id="es_name" value="${s.name}"></div>
+    <div class="field"><label>Full name</label><input id="es_name" value="${escapeAttr(s.name)}"></div>
     <div class="field"><label>Gender</label><select id="es_gender"><option value="M" ${s.gender==='M'?'selected':''}>Male</option><option value="F" ${s.gender==='F'?'selected':''}>Female</option></select></div>
-    <div class="field"><label>Admission No</label><input id="es_adm" value="${s.adm}"></div>
-    <div class="field"><label>SMS Contact</label><input id="es_sms" value="${s.sms}"></div>
+    <div class="field"><label>Admission No</label><input id="es_adm" value="${escapeAttr(s.adm)}"></div>
+    <div class="field"><label>SMS Contact</label><input id="es_sms" value="${escapeAttr(s.sms)}"></div>
     <div class="field"><label>Programme</label><select id="es_prog">${progOpts}</select></div>
     <div class="field"><label>Class</label><select id="es_class">${classOpts}</select></div>
     <div class="field"><label>House</label><select id="es_house">${houseOpts}</select></div>
-    <div class="field"><label>Registered</label><input value="${s.reg}" disabled style="opacity:.6"></div>
+    <div class="field"><label>Registered</label><input value="${escapeAttr(s.reg)}" disabled style="opacity:.6"></div>
   </div></div>
   <div class="modal-foot"><button class="btn btn-danger" onclick="deleteStudent(${id})" style="margin-right:auto">Delete student</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveStudent(${id})">Save changes</button></div>`;
   $('overlay').classList.add('show');
@@ -1694,15 +1698,15 @@ function fillSelKeep(sel,html){ if(!sel)return; const cur=sel.value; sel.innerHT
 
 function renderHouseAlloc(){
   const sel=$('haHouse'); if(!sel)return;
-  fillSelKeep(sel, houses.length?houses.map(h=>`<option value="${h.id}">${h.name}${h.gender?' · '+h.gender:''}${h.rtype?' · '+h.rtype:''}</option>`).join(''):'<option value="">No houses</option>');
+  fillSelKeep(sel, houses.length?houses.map(h=>`<option value="${h.id}">${escapeHtml(h.name)}${h.gender?' · '+escapeHtml(h.gender):''}${h.rtype?' · '+escapeHtml(h.rtype):''}</option>`).join(''):'<option value="">No houses</option>');
   const hid=+sel.value||0, h=houseById(hid), gf=val('haGender');
   const members=students.filter(s=>s.houseId===hid);
   const pool=students.filter(s=>!s.houseId && (!gf||s.gender===gf) && houseMatchesGender(h,s));
   $('haCount').textContent=members.length;
   $('haCap').textContent=h?('capacity '+(h.cap||'—')):'—';
   $('haUnCount').textContent=pool.length;
-  $('haMembers').innerHTML=members.length?members.map(s=>`<tr><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${genderLabel(s.gender)}</td><td><div class="row-actions"><button class="act" onclick="haRemove(${s.id})">Remove</button></div></td></tr>`).join(''):emptyRow(4,'No students in this house yet.');
-  $('haPool').innerHTML=pool.length?pool.map(s=>`<tr><td><span class="checkbox ${haSel.has(s.id)?'on':''}" onclick="haToggle(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${genderLabel(s.gender)}</td></tr>`).join(''):emptyRow(4,'All students have a house.');
+  $('haMembers').innerHTML=members.length?members.map(s=>`<tr><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(genderLabel(s.gender),'&mdash;')}</td><td><div class="row-actions"><button class="act" onclick="haRemove(${s.id})">Remove</button></div></td></tr>`).join(''):emptyRow(4,'No students in this house yet.');
+  $('haPool').innerHTML=pool.length?pool.map(s=>`<tr><td><span class="checkbox ${haSel.has(s.id)?'on':''}" onclick="haToggle(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(genderLabel(s.gender),'&mdash;')}</td></tr>`).join(''):emptyRow(4,'All students have a house.');
 }
 function haToggle(id){haSel.has(id)?haSel.delete(id):haSel.add(id);renderHouseAlloc();}
 async function haAssignSelected(){
@@ -1743,15 +1747,15 @@ async function haAutoFill(){
 
 function renderClassAlloc(){
   const sel=$('caClass'); if(!sel)return;
-  fillSelKeep(sel, classes.length?classes.map(c=>`<option value="${c.id}">${c.name}${c.progId?' · '+((progById(c.progId)||{}).name||''):''}</option>`).join(''):'<option value="">No classes</option>');
+  fillSelKeep(sel, classes.length?classes.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}${c.progId?' · '+escapeHtml(((progById(c.progId)||{}).name||'')):''}</option>`).join(''):'<option value="">No classes</option>');
   const cid=+sel.value||0, c=classById(cid);
   const members=students.filter(s=>s.classId===cid);
   const pool=students.filter(s=>!s.classId && (!c||!c.progId||s.progId===c.progId));
   $('caCount').textContent=members.length;
   $('caCap').textContent=c?('capacity '+(c.cap||'—')):'—';
   $('caUnCount').textContent=pool.length;
-  $('caMembers').innerHTML=members.length?members.map(s=>`<tr><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${studentProgrammeName(s)}</td><td><div class="row-actions"><button class="act" onclick="caRemove(${s.id})">Remove</button></div></td></tr>`).join(''):emptyRow(4,'No students in this class yet.');
-  $('caPool').innerHTML=pool.length?pool.map(s=>`<tr><td><span class="checkbox ${caSel.has(s.id)?'on':''}" onclick="caToggle(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td><td class="mono">${s.index}</td><td class="nm">${s.name}</td><td>${studentProgrammeName(s)}</td></tr>`).join(''):emptyRow(4,'No matching unassigned students.');
+  $('caMembers').innerHTML=members.length?members.map(s=>`<tr><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(studentProgrammeName(s),'-')}</td><td><div class="row-actions"><button class="act" onclick="caRemove(${s.id})">Remove</button></div></td></tr>`).join(''):emptyRow(4,'No students in this class yet.');
+  $('caPool').innerHTML=pool.length?pool.map(s=>`<tr><td><span class="checkbox ${caSel.has(s.id)?'on':''}" onclick="caToggle(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(studentProgrammeName(s),'-')}</td></tr>`).join(''):emptyRow(4,'No matching unassigned students.');
 }
 function caToggle(id){caSel.has(id)?caSel.delete(id):caSel.add(id);renderClassAlloc();}
 async function caAssignSelected(){
@@ -1800,7 +1804,7 @@ function renderFinance(){
     {l:'Failed',v:payments.filter(p=>p.status==='failed').length,d:'needs review'},
   ];
   $('finStats').innerHTML=stats.map(c=>`<div class="stat"><div class="top"><span class="lbl">${c.l}</span><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span></div><div class="val">${c.cur?'<span class="cur">GHS</span>'+fmt(c.v):c.v}</div><div class="delta">${c.d}</div></div>`).join('');
-  $('payRows').innerHTML=payments.slice(0,16).map(p=>`<tr><td class="mono">${p.date}</td><td class="nm">${p.name}</td><td class="mono">${p.index}</td><td class="mono">${money(p.amount)}</td><td>${p.method}</td><td><span class="pill ${p.status}">${p.status}</span></td><td class="mono" style="font-size:12px">${p.txn}</td></tr>`).join('');
+  $('payRows').innerHTML=payments.slice(0,16).map(p=>`<tr><td class="mono">${safeHtml(p.date)}</td><td class="nm">${safeHtml(p.name)}</td><td class="mono">${safeHtml(p.index)}</td><td class="mono">${safeHtml(money(p.amount))}</td><td>${safeHtml(p.method)}</td><td><span class="pill ${p.status}">${safeHtml(p.status)}</span></td><td class="mono" style="font-size:12px">${safeHtml(p.txn)}</td></tr>`).join('');
 }
 
 /* ===== SMS ===== */
@@ -1950,7 +1954,7 @@ sendSms=async function(){
 function renderSms(){
   buildSmsProgrammes();
   if($('smsSender')) $('smsSender').value=schoolSenderId()||'';
-  $('smsRows').innerHTML=smsHistory.length?smsHistory.map(h=>`<tr><td class="mono">${h.date}</td><td>${h.group}</td><td class="mono">${h.recip}</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.msg}</td><td><span class="pill ${h.status==='sent'?'open':(h.status==='failed'?'closed':'pending')}">${h.status}</span></td></tr>`).join(''):emptyRow(5,'No messages logged yet.');
+  $('smsRows').innerHTML=smsHistory.length?smsHistory.map(h=>`<tr><td class="mono">${safeHtml(h.date)}</td><td>${safeHtml(h.group)}</td><td class="mono">${safeHtml(h.recip)}</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeHtml(h.msg)}</td><td><span class="pill ${h.status==='sent'?'open':(h.status==='failed'?'closed':'pending')}">${safeHtml(h.status)}</span></td></tr>`).join(''):emptyRow(5,'No messages logged yet.');
   if($('smsBody') && !$('smsBody').value) loadTpl('welcome');
   fillSmsSettingsForm();
   updateSms();
@@ -1969,7 +1973,7 @@ function buildCharts(){
 }
 
 /* ===== DOC LINES + LOG ===== */
-function renderDocLines(){$('docLines').innerHTML=docLines.map((l,i)=>`<div class="doc-line"><span class="num">${i+1}</span><textarea oninput="docLines[${i}]=this.value" rows="2">${l}</textarea></div>`).join('');}
+function renderDocLines(){$('docLines').innerHTML=docLines.map((l,i)=>`<div class="doc-line"><span class="num">${i+1}</span><textarea oninput="docLines[${i}]=this.value" rows="2">${escapeHtml(l)}</textarea></div>`).join('');}
 async function savePortalSetup(){
   if(roGuard())return;
   if(!SB_SCHOOL){toast('School not loaded');return;}
@@ -2036,7 +2040,7 @@ async function sendTestSms(){
     if(btn){ btn.disabled=false; btn.textContent='Send Test SMS'; }
   }
 }
-function renderLog(){$('logRows').innerHTML=activityLog.map(l=>`<tr><td class="mono" style="font-size:12px">${l.time}</td><td>${l.action}</td><td>${l.by}</td></tr>`).join('');renderArchives();}
+function renderLog(){$('logRows').innerHTML=activityLog.map(l=>`<tr><td class="mono" style="font-size:12px">${safeHtml(l.time)}</td><td>${safeHtml(l.action)}</td><td>${safeHtml(l.by)}</td></tr>`).join('');renderArchives();}
 const DOC_COL={prospectus:'prospectus_url',undertaking:'undertaking_url',subjects:'subjects_url'};
 function showSchoolDocLink(kind,url){
   const a=document.getElementById('doc_'+kind+'_link'); if(!a)return;
@@ -2105,9 +2109,9 @@ function setupTab(i){document.querySelectorAll('#setupTabs .tab').forEach((t,x)=
 
 /* ===== SELECTS ===== */
 function fillSelects(){
-  const opts='<option value="all">All programmes</option>'+programmes.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const opts='<option value="all">All programmes</option>'+programmes.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
   $('stuProg').innerHTML=opts;
-  $('pl_prog').innerHTML=programmes.map(p=>`<option>${p.name}</option>`).join('');
+  $('pl_prog').innerHTML=programmes.map(p=>`<option>${escapeHtml(p.name)}</option>`).join('');
 }
 
 /* ===== NAV ===== */
@@ -2136,8 +2140,8 @@ function regFiltered(){
   rows=rows.slice().sort((a,b)=>((a[k]||'').toString()).localeCompare((b[k]||'').toString(),undefined,{numeric:true})*dir);
   return rows;
 }
-function formCell(s){ return s.form?`<img class="enrol-thumb" src="${s.form}" alt="">`:`<span class="enrol-none">?</span>`; }
-function regCell(k,s){ if(k==='form')return formCell(s); if(k==='name')return `<span class="nm">${s.name}</span>`; if(['index','adm','enrol','time'].indexOf(k)>-1)return `<span class="mono">${s[k]}</span>`; return s[k]||'—'; }
+function formCell(s){ return s.form?`<img class="enrol-thumb" src="${escapeAttr(s.form)}" alt="">`:`<span class="enrol-none">?</span>`; }
+function regCell(k,s){ if(k==='form')return formCell(s); if(k==='name')return `<span class="nm">${safeHtml(s.name)}</span>`; if(['index','adm','enrol','time'].indexOf(k)>-1)return `<span class="mono">${safeHtml(s[k])}</span>`; return safeHtml(s[k],'&mdash;'); }
 function renderRegistered(){
   var rows=regFiltered();
   var showHouse=canViewStudentHouse();
@@ -2153,13 +2157,13 @@ function renderRegistered(){
     if(open){
       var h=houseById(s.houseId),c=classById(s.classId);
       html+=`<tr class="reg-detail"><td colspan="${visible}"><div class="reg-detail-in">
-        <div class="kv"><b>Programme</b>${studentProgrammeName(s)}</div>
-        <div class="kv"><b>Class</b>${c?c.name:'Not allocated'}</div>
-        ${showHouse?`<div class="kv"><b>House</b>${h?h.name:'Not allocated'}</div>`:''}
-        <div class="kv"><b>Gender</b>${s.gender==='M'?'Male':(s.gender==='F'?'Female':'—')}</div>
-        <div class="kv"><b>Residential</b>${s.res||'—'}</div>
-        <div class="kv"><b>Parent / Guardian</b>${s.parent||'—'}</div>
-        <div class="kv"><b>Date of birth</b>${s.dob||'—'}</div>
+        <div class="kv"><b>Programme</b>${safeHtml(studentProgrammeName(s),'-')}</div>
+        <div class="kv"><b>Class</b>${c?escapeHtml(c.name):'Not allocated'}</div>
+        ${showHouse?`<div class="kv"><b>House</b>${h?escapeHtml(h.name):'Not allocated'}</div>`:''}
+        <div class="kv"><b>Gender</b>${s.gender==='M'?'Male':(s.gender==='F'?'Female':'&mdash;')}</div>
+        <div class="kv"><b>Residential</b>${safeHtml(s.res,'&mdash;')}</div>
+        <div class="kv"><b>Parent / Guardian</b>${safeHtml(s.parent,'&mdash;')}</div>
+        <div class="kv"><b>Date of birth</b>${safeHtml(s.dob,'&mdash;')}</div>
       </div></td></tr>`;
     }
   });
@@ -2360,6 +2364,17 @@ function schoolAuthKey(k){
 function schoolAdminTabKey(k){
   return 'qag_school_admin_tab::'+schoolAuthScope()+'::'+k;
 }
+function clearLegacySchoolAuthStorage(){
+  try{
+    const prefix='qag_auth_scope::'+schoolAuthScope()+'::';
+    for(let i=window.localStorage.length-1;i>=0;i--){
+      const k=window.localStorage.key(i);
+      if(k&&k.indexOf(prefix)===0&&k.indexOf('qag-school-auth')>-1){
+        window.localStorage.removeItem(k);
+      }
+    }
+  }catch(e){}
+}
 function schoolAdminTabSessionActive(){
   try{ return window.sessionStorage.getItem(schoolAdminTabKey('active'))==='1'; }catch(e){ return false; }
 }
@@ -2370,10 +2385,11 @@ function setSchoolAdminTabSessionActive(on){
   }catch(e){}
 }
 const schoolAuthStorage={
-  getItem:function(k){ try{ return window.localStorage.getItem(schoolAuthKey(k)); }catch(e){ return null; } },
-  setItem:function(k,v){ try{ window.localStorage.setItem(schoolAuthKey(k),v); }catch(e){} },
-  removeItem:function(k){ try{ window.localStorage.removeItem(schoolAuthKey(k)); }catch(e){} }
+  getItem:function(k){ try{ return window.sessionStorage.getItem(schoolAuthKey(k)); }catch(e){ return null; } },
+  setItem:function(k,v){ try{ window.sessionStorage.setItem(schoolAuthKey(k),v); }catch(e){} },
+  removeItem:function(k){ try{ window.sessionStorage.removeItem(schoolAuthKey(k)); }catch(e){} }
 };
+clearLegacySchoolAuthStorage();
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-school-auth',storage:schoolAuthStorage}});
 // Always attach a FRESH user token to privileged Edge Function calls, otherwise an
 // expired session makes the client send the publishable key and the function 401s.
@@ -3283,14 +3299,14 @@ tplPreview=function(){
 }
 let schoolUsers=[];
 function houseName(uid){ const h=(houses||[]).find(x=>x._id===uid); return h?h.name:'a house'; }
-function houseSelectHTML(cur){ return `<select id="u_house"><option value="">All houses (no restriction)</option>`+(houses||[]).map(h=>`<option value="${h._id}" ${cur===h._id?'selected':''}>${h.name}</option>`).join('')+`</select>`; }
+function houseSelectHTML(cur){ return `<select id="u_house"><option value="">All houses (no restriction)</option>`+(houses||[]).map(h=>`<option value="${h._id}" ${cur===h._id?'selected':''}>${escapeHtml(h.name)}</option>`).join('')+`</select>`; }
 function isPermCoAdmin(p){ return !!(p&&p.co_admin); }
 function permSummary(p){
   if(p==null) return '<span class="pill open">Full access (owner)</span>';
   if(isPermCoAdmin(p)) return '<span class="pill open">Co-admin</span>';
   const on=ALL_CAPS.filter(([k])=>p[k]).map(([k,l])=>l);
   let out=on.length?(on.length>=ALL_CAPS.length?'<span class="pill open">All privileges</span>':on.map(l=>`<span class="pill" style="background:var(--surface-2);color:var(--ink-soft);margin:1px 2px">${l}</span>`).join('')):'<span style="color:var(--muted)">No access yet</span>';
-  if(p.house) out+=` <span class="pill" style="background:var(--primary-soft);color:var(--primary);margin:1px 2px">🏠 ${houseName(p.house)} only</span>`;
+  if(p.house) out+=` <span class="pill" style="background:var(--primary-soft);color:var(--primary);margin:1px 2px">🏠 ${escapeHtml(houseName(p.house))} only</span>`;
   return out;
 }
 async function renderUsers(){
@@ -3305,7 +3321,7 @@ async function renderUsers(){
     const me=u.id===SB_UID; const owner=u.permissions==null; const coAdmin=isPermCoAdmin(u.permissions); const locked=owner||coAdmin;
     const acts=me?'<span style="color:var(--muted);font-size:12px">You</span>':
       `<div class="row-actions"><button class="act" onclick="openUserPerms('${u.id}')" ${locked?'disabled title="'+(owner?'Owner has full access':'Co-admin access is managed from the owner account')+'"':''}>Privileges</button><button class="act" onclick="resetUserPwd('${u.id}')">Reset</button><button class="act danger" onclick="deleteUser('${u.id}')">Delete</button></div>`;
-    return `<tr><td class="nm">${u.full_name||'—'}${me?' <span class="pill" style="background:var(--surface-2);color:var(--ink-soft)">me</span>':''}</td><td class="mono">${u.email||'—'}</td><td>${permSummary(u.permissions)}</td><td class="mono">${(u.created_at||'').slice(0,10)}</td><td>${acts}</td></tr>`;
+    return `<tr><td class="nm">${safeHtml(u.full_name,'&mdash;')}${me?' <span class="pill" style="background:var(--surface-2);color:var(--ink-soft)">me</span>':''}</td><td class="mono">${safeHtml(u.email,'&mdash;')}</td><td>${permSummary(u.permissions)}</td><td class="mono">${safeHtml((u.created_at||'').slice(0,10))}</td><td>${acts}</td></tr>`;
   }).join(''):emptyRow(5,'No users yet. Add one to let staff sign in.');
 }
 function toggleUserCreateMode(){
@@ -3328,7 +3344,7 @@ function permToggleAll(on){ document.querySelectorAll('#u_perms input[data-perm]
 function genPass2(){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)];const el=$('u_pass');if(el)el.value=p;}
 function openCreateUser(){
   const m=$('modal');
-  m.innerHTML=`<div class="modal-head"><div><h2>Add school user</h2><p>Creates a login for ${SB_SCHOOL?SB_SCHOOL.name:'this school'}</p></div><button class="modal-x" onclick="closeModal()">×</button></div>
+  m.innerHTML=`<div class="modal-head"><div><h2>Add school user</h2><p>Creates a login for ${safeHtml(SB_SCHOOL?SB_SCHOOL.name:'this school')}</p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body">
     <div class="grid-2"><div class="field"><label>Full name</label><input id="u_name" placeholder="Full name"></div><div class="field"><label>Email</label><input id="u_email" type="email" placeholder="name@email"></div></div>
     <div class="field"><label>Temporary password</label><div style="display:flex;gap:8px"><input id="u_pass" type="text" placeholder="At least 8 characters" style="flex:1"><button class="btn btn-ghost btn-sm" type="button" onclick="genPass2()">Generate</button></div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">Share it with the user; they can change it after signing in.</div></div>
@@ -3361,7 +3377,7 @@ function openUserPerms(id){
   if(u.permissions==null){toast('This is the owner account — it has full access.');return;}
   if(isPermCoAdmin(u.permissions)){toast('This co-admin already has full school access.');return;}
   const m=$('modal');
-  m.innerHTML=`<div class="modal-head"><div><h2>Privileges</h2><p>${u.full_name||u.email}</p></div><button class="modal-x" onclick="closeModal()">×</button></div>
+  m.innerHTML=`<div class="modal-head"><div><h2>Privileges</h2><p>${safeHtml(u.full_name||u.email)}</p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body">
     <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Allowed areas <span><button type="button" class="act" onclick="document.querySelectorAll('#u_eperms input[data-perm]').forEach(c=>c.checked=true)">All</button> <button type="button" class="act" onclick="document.querySelectorAll('#u_eperms input[data-perm]').forEach(c=>c.checked=false)">None</button></span></label><div id="u_eperms">${permChecks(u.permissions||{})}</div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">These permissions stay read-only for this staff account.</div></div>
     <div class="field"><label>Restrict to one house (optional)</label>${houseSelectHTML(u.permissions&&u.permissions.house||'')}<div style="font-size:11.5px;color:var(--muted);margin-top:5px">House master: they will only see this house and its students.</div></div>
@@ -3434,6 +3450,51 @@ openClass=function(id){
      <div class="field"><label>Programme</label><select id="c_prog">${pOpts}</select></div>
      <div class="field"><label>Subject combination <span class="hint">— comma separated; shown to students when picking this class</span></label><textarea id="c_sub" rows="3" placeholder="e.g. Core Maths, English, Integrated Science, Physics, Chemistry, Biology, Elective Maths">${(c.subjects||'').replace(/</g,'<')}</textarea></div>
      <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${c.cap}"></div>`,
+    async ()=>{ const name=val('c_name'); if(!name){toast('Class name required');return;}
+      const progNum=val('c_prog'); const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
+      if(id){ await sb.from('classrooms').update({name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).eq('id',c._id); c.name=name;c.code=val('c_code');c.cap=+val('c_cap')||50;c.progId=progNum?+progNum:'';c.subjects=subj||''; }
+      else { const {data}=await sb.from('classrooms').insert({school_id:SB_SCHOOL.id,name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).select().single(); const nid=Math.max(0,...classes.map(x=>x.id))+1; cMap[nid]=data.id; classes.push({id:nid,_id:data.id,name,code:val('c_code'),cap:+val('c_cap')||50,occ:0,progId:progNum?+progNum:'',subjects:subj||''}); }
+      notifyStudentPortalRefresh('class-save');
+      closeModal(); renderClasses(); fillSelects&&fillSelects(); toast('Class saved'); });
+};
+openProg=function(id){
+  if(roGuard())return;
+  const p=id?programmes.find(x=>x.id===id):{code:'',name:'',subjects:'',cap:100};
+  crudModal(id?'Edit programme':'Add programme',
+    `<div class="grid-2"><div class="field"><label>Code</label><input id="c_code" value="${escapeAttr(p.code)}"></div><div class="field"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(p.cap)}"></div></div>
+     <div class="field"><label>Programme name</label><input id="c_name" value="${escapeAttr(p.name)}"></div>
+     <div class="field"><label>Subjects <span class="hint">â€” comma separated</span></label><textarea id="c_sub">${escapeHtml(p.subjects)}</textarea></div>`,
+    async ()=>{ const code=val('c_code').toUpperCase(),name=val('c_name'); if(!code||!name){toast('Code and name required');return;}
+      if(id){ await sb.from('programmes').update({code,name,subjects:val('c_sub'),capacity:+val('c_cap')||100}).eq('id',p._id); p.code=code;p.name=name;p.subjects=val('c_sub');p.cap=+val('c_cap')||100; }
+      else { const {data}=await sb.from('programmes').insert({school_id:SB_SCHOOL.id,code,name,subjects:val('c_sub'),capacity:+val('c_cap')||100}).select().single(); const nid=Math.max(0,...programmes.map(x=>x.id))+1; pMap[nid]=data.id; programmes.push({id:nid,_id:data.id,code,name,subjects:val('c_sub'),cap:+val('c_cap')||100,enr:0}); }
+      notifyStudentPortalRefresh('programme-save');
+      closeModal(); renderProg(); fillSelects(); toast('Programme saved'); });
+};
+openHouse=function(id){
+  if(roGuard())return;
+  const h=id?houses.find(x=>x.id===id):{name:'',color:'#1557B0',motto:'',cap:100,gender:'',rtype:''};
+  const gOpt=v=>((h.gender||'')===v?'selected':''); const rOpt=v=>((h.rtype||'')===v?'selected':'');
+  crudModal(id?'Edit house':'Add house',
+    `<div class="grid-2"><div class="field"><label>House name</label><input id="c_name" value="${escapeAttr(h.name)}"></div><div class="field"><label>Colour</label><input id="c_color" type="color" value="${escapeAttr(h.color)}"></div></div>
+     <div class="grid-2"><div class="field"><label>Gender</label><select id="c_gender"><option value="" ${gOpt('')}>Any</option><option value="Male" ${gOpt('Male')}>Male</option><option value="Female" ${gOpt('Female')}>Female</option></select></div><div class="field"><label>Residential type</label><select id="c_rtype"><option value="" ${rOpt('')}>Any</option><option value="Boarding" ${rOpt('Boarding')}>Boarding</option><option value="Day" ${rOpt('Day')}>Day</option></select></div></div>
+     <div class="field"><label>Motto</label><input id="c_motto" value="${escapeAttr(h.motto||'')}"></div>
+     <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(h.cap)}"></div>`,
+    async ()=>{ const name=val('c_name'); if(!name){toast('House name required');return;}
+      const gender=val('c_gender'), rtype=val('c_rtype');
+      if(id){ await sb.from('houses').update({name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,gender,residential_type:rtype}).eq('id',h._id); h.name=name;h.color=val('c_color');h.motto=val('c_motto');h.cap=+val('c_cap')||100;h.gender=gender;h.rtype=rtype; }
+      else { const {data}=await sb.from('houses').insert({school_id:SB_SCHOOL.id,name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,gender,residential_type:rtype}).select().single(); const nid=Math.max(0,...houses.map(x=>x.id))+1; hMap[nid]=data.id; houses.push({id:nid,_id:data.id,name,color:val('c_color'),motto:val('c_motto'),cap:+val('c_cap')||100,occ:0,gender,rtype}); }
+      notifyStudentPortalRefresh('house-save');
+      closeModal(); renderHouses(); fillSelects&&fillSelects(); toast('House saved'); });
+};
+openClass=function(id){
+  if(roGuard())return;
+  const c=id?classes.find(x=>x.id===id):{name:'',code:'',cap:50,progId:'',subjects:''};
+  const pOpts='<option value="">â€” None â€”</option>'+programmes.map(p=>`<option value="${p.id}" ${String(c.progId)===String(p.id)?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  crudModal(id?'Edit class':'Add class',
+    `<div class="grid-2"><div class="field"><label>Class name</label><input id="c_name" value="${escapeAttr(c.name)}"></div><div class="field"><label>Code</label><input id="c_code" value="${escapeAttr(c.code||'')}"></div></div>
+     <div class="field"><label>Programme</label><select id="c_prog">${pOpts}</select></div>
+     <div class="field"><label>Subject combination <span class="hint">â€” comma separated; shown to students when picking this class</span></label><textarea id="c_sub" rows="3" placeholder="e.g. Core Maths, English, Integrated Science, Physics, Chemistry, Biology, Elective Maths">${escapeHtml(c.subjects||'')}</textarea></div>
+     <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(c.cap)}"></div>`,
     async ()=>{ const name=val('c_name'); if(!name){toast('Class name required');return;}
       const progNum=val('c_prog'); const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
       if(id){ await sb.from('classrooms').update({name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).eq('id',c._id); c.name=name;c.code=val('c_code');c.cap=+val('c_cap')||50;c.progId=progNum?+progNum:'';c.subjects=subj||''; }

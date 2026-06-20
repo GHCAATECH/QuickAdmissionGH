@@ -19,6 +19,9 @@ function getSecret(): string {
 function getPublicKey(): string {
   return (Deno.env.get("PAYSTACK_PUBLIC_KEY") || Deno.env.get("PAYSTACK_PUBLIC") || Deno.env.get("PAYSTACK_PK") || "").trim();
 }
+function safeString(value: unknown): string {
+  return String(value ?? "").trim();
+}
 function paystackMode(key: string): "live" | "test" | "unknown" {
   if (!key) return "unknown";
   if (key.startsWith("sk_live_") || key.startsWith("pk_live_")) return "live";
@@ -39,13 +42,14 @@ Deno.serve(async (req: Request) => {
   const secret = getSecret();
   const publicKey = getPublicKey();
   if (body.ping) {
+    const publicMode = paystackMode(publicKey);
+    const secretMode = paystackMode(secret);
     return json({
       ok: true,
       secret_present: secret.length > 0,
-      secret_prefix: secret ? secret.slice(0, 8) : null,
-      secret_mode: paystackMode(secret),
       public_key_present: publicKey.length > 0,
-      public_mode: paystackMode(publicKey),
+      public_mode: publicMode,
+      mode_mismatch: publicMode !== "unknown" && secretMode !== "unknown" && publicMode !== secretMode,
       public_key: publicKey || null,
     });
   }
@@ -59,8 +63,21 @@ Deno.serve(async (req: Request) => {
   const admin = createClient(url, service);
   const { data: existingPay } = await admin.from("payments").select("id, student_id").eq("reference", reference).maybeSingle();
   if (existingPay?.student_id) {
-    const { data: st } = await admin.from("students").select("admission_token").eq("id", existingPay.student_id).single();
-    if (st?.admission_token) return json({ ok: true, token: st.admission_token, reused: true });
+    const { data: st } = await admin
+      .from("students")
+      .select("admission_token, bece_index, school_id")
+      .eq("id", existingPay.student_id)
+      .maybeSingle();
+    const sameIndex = safeString(st?.bece_index) === index;
+    const sameSchool = !school || safeString(st?.school_id) === school;
+    if (!sameIndex || !sameSchool) {
+      return json({
+        ok: false,
+        error: "reference_mismatch",
+        message: "This payment reference belongs to a different student record.",
+      }, 409);
+    }
+    if (st?.admission_token) return json({ ok: true, token: st.admission_token, reused: true, reference });
   }
 
   let pres: Response;
@@ -95,6 +112,34 @@ Deno.serve(async (req: Request) => {
     sid = (s2 as string) || null;
   }
   if (!sid) return json({ ok: false, error: "not_placed", message: "Index not on any placement list." }, 400);
+
+  const { data: cfg, error: cfgError } = await admin
+    .from("school_config")
+    .select("service_charge")
+    .eq("school_id", sid)
+    .maybeSingle();
+  if (cfgError) {
+    return json({ ok: false, error: "config_lookup_failed", message: cfgError.message }, 500);
+  }
+  const expectedCharge = Number(cfg?.service_charge);
+  if (!Number.isFinite(expectedCharge) || expectedCharge < 0) {
+    return json({
+      ok: false,
+      error: "pricing_not_configured",
+      message: "The school's service charge is not configured.",
+    }, 500);
+  }
+  const expectedAmountPesewas = Math.round(expectedCharge * 100);
+  if (amount !== expectedAmountPesewas) {
+    return json({
+      ok: false,
+      error: "amount_mismatch",
+      message: "Paid amount does not match the configured service charge.",
+      expected_amount: expectedCharge,
+      expected_amount_pesewas: expectedAmountPesewas,
+      gateway_amount: amount,
+    }, 402);
+  }
 
   const { data: prior } = await admin.from("students")
     .select("id, admission_token").eq("school_id", sid).eq("bece_index", index).maybeSingle();

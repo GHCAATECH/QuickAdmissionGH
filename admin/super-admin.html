@@ -618,7 +618,11 @@ const $=id=>document.getElementById(id);
 const sById=id=>schools.find(s=>s.id===id)||{name:'-',short:'?',color:0,code:''};
 const fmt=n=>n.toLocaleString('en-US');
 const money=n=>'GHS '+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-function crest(s){return `<span class="sch-crest" style="background:${crestColors[s.color]}">${s.short}</span>`;}
+const HTML_ESCAPE_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'};
+function escapeHtml(v){ return String(v==null?'':v).replace(/[&<>"'`]/g,function(ch){ return HTML_ESCAPE_MAP[ch]; }); }
+function escapeAttr(v){ return escapeHtml(v).replace(/\r?\n/g,'&#10;'); }
+function safeHtml(v,fallback){ const text=String(v==null?'':v).trim(); return text?escapeHtml(text):(fallback||'&mdash;'); }
+function crest(s){return `<span class="sch-crest" style="background:${crestColors[s.color]}">${escapeHtml(s.short)}</span>`;}
 function toast(msg){$('toastMsg').textContent=msg;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 
 /* ============ STATS ============ */
@@ -654,15 +658,15 @@ function schoolRow(s,mode){
        <button class="act" style="color:#b42318;border-color:#f3c9c4" onclick="deleteSchool(${s.id})">Delete</button>`;
   const adm=`<span class="pill ${s.admission==='OPENED'?'open':'closed'}">${s.admission}</span>`;
   if(mode==='dash'){
-    return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${s.name}</span></div></td>
-      <td><span class="code">${schoolSenderCode(s)||s.code}</span></td><td>${s.admin}</td>
-      <td class="mono">${fmt(s.students)}</td><td>${adm}</td><td class="mono">${s.charge}</td>
+    return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${safeHtml(s.name)}</span></div></td>
+      <td><span class="code">${safeHtml(schoolSenderCode(s)||s.code)}</span></td><td>${safeHtml(s.admin)}</td>
+      <td class="mono">${safeHtml(fmt(s.students))}</td><td>${adm}</td><td class="mono">${safeHtml(s.charge)}</td>
       <td><div class="row-actions">${acts}</div></td></tr>`;
   }
-  return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${s.name}</span></div></td>
-    <td><span class="code">${schoolSenderCode(s)||'—'}</span></td>
-    <td class="mono" style="font-size:12px">${s.email||'—'}</td>
-    <td class="mono">${s.phone||'—'}</td>
+  return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${safeHtml(s.name)}</span></div></td>
+    <td><span class="code">${safeHtml(schoolSenderCode(s)||'—')}</span></td>
+    <td class="mono" style="font-size:12px">${safeHtml(s.email,'&mdash;')}</td>
+    <td class="mono">${safeHtml(s.phone,'&mdash;')}</td>
     <td><span class="pill ${s.status}">${s.status}</span></td>
     <td><div class="row-actions">${acts}</div></td></tr>`;
 }
@@ -674,7 +678,7 @@ function renderFeed(){
     sys:['fi-sys','<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82M4.6 9a1.65 1.65 0 0 0 .33-1.82"/>']};
   $('activityFeed').innerHTML=activity.map(a=>{const s=sById(a.school);const[cl,p]=ic[a.type];
     return `<div class="feed-item"><div class="feed-ico ${cl}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${p}</svg></div>
-    <div><div class="feed-txt">${a.text} - <b>${s.name}</b></div><div class="feed-time">${a.time}</div></div></div>`;}).join('');
+    <div><div class="feed-txt">${safeHtml(a.text)} - <b>${safeHtml(s.name)}</b></div><div class="feed-time">${safeHtml(a.time)}</div></div></div>`;}).join('');
 }
 
 /* ============ CHARTS ============ */
@@ -706,9 +710,9 @@ function genStr(n){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz2345
 function renderAdmins(){
   if(!admins.length){$('adminRows').innerHTML=emptyRow(7,'No admin accounts yet. Use "Create admin".');return;}
   $('adminRows').innerHTML=admins.map(a=>`<tr>
-    <td><div class="sch-cell"><span style="display:inline-flex;width:30px;height:30px;border-radius:8px;background:var(--primary);color:#fff;align-items:center;justify-content:center;font-size:11px;font-weight:700">${aInit(a.name)}</span><span class="sch-name">${a.name}${a.uid===SA_UID?' <span style="font-size:10px;color:var(--muted)">(you)</span>':''}</span></div></td>
-    <td>${a.school}</td>
-    <td class="mono" style="font-size:12px">${a.email}</td>
+    <td><div class="sch-cell"><span style="display:inline-flex;width:30px;height:30px;border-radius:8px;background:var(--primary);color:#fff;align-items:center;justify-content:center;font-size:11px;font-weight:700">${escapeHtml(aInit(a.name))}</span><span class="sch-name">${safeHtml(a.name)}${a.uid===SA_UID?' <span style="font-size:10px;color:var(--muted)">(you)</span>':''}</span></div></td>
+    <td>${safeHtml(a.school)}</td>
+    <td class="mono" style="font-size:12px">${safeHtml(a.email)}</td>
     <td>${a.role==='super_admin'?'Super admin':(a.coAdmin?'School co-admin':'School admin')}</td>
     <td class="mono">-</td>
     <td><span class="pill open">active</span></td>
@@ -722,10 +726,10 @@ function editAdmin(uid){
   const a=admins.find(x=>x.uid===uid); if(!a)return;
   const m=$('modal');m.className='modal';
   m.innerHTML=`
-  <div class="modal-head"><div><h2>Edit admin</h2><p>${a.email} - ${a.school}</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
+  <div class="modal-head"><div><h2>Edit admin</h2><p>${safeHtml(a.email)} - ${safeHtml(a.school)}</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid"><fieldset><legend>Account</legend>
-    <div class="field"><label>Full name</label><input id="ea_name" value="${(a.name||'').replace(/"/g,'&quot;')}"></div>
-    <div class="field"><label>Email</label><input value="${a.email}" disabled></div>
+    <div class="field"><label>Full name</label><input id="ea_name" value="${escapeAttr(a.name)}"></div>
+    <div class="field"><label>Email</label><input value="${escapeAttr(a.email)}" disabled></div>
     <div class="field"><label>New password <span class="hint">- leave blank to keep current</span></label><div style="display:flex;gap:8px"><input id="ea_pass" type="text" placeholder="At least 8 characters" style="flex:1"><button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('ea_pass').value=genStr(10)">Generate</button></div></div>
   </fieldset></div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="ea_btn" onclick="saveAdminEdit('${uid}')">Save changes</button></div>`;
@@ -738,9 +742,9 @@ function renderStudents(){
   const sf=$('studentSchoolFilter').value;const st=$('studentStatusFilter').value;
   const rows=students.filter(s=>(s.name.toLowerCase().includes(q)||s.index.includes(q))&&(sf==='all'||s.schoolId==sf)&&(st==='all'||s.status===st)).slice(0,60);
   $('studentRows').innerHTML=rows.length?rows.map(s=>{const sc=sById(s.schoolId);return `<tr>
-    <td><span class="sch-name">${s.name}</span></td><td class="mono">${s.index}</td>
-    <td><div class="sch-cell" style="gap:8px"><span class="code">${sc.code}</span> ${sc.name}</div></td>
-    <td>${s.programme}</td><td><span class="pill ${s.status}">${s.status}</span></td><td class="mono">${s.reg}</td></tr>`;}).join(''):emptyRow(6,'No students match your filters.');
+    <td><span class="sch-name">${safeHtml(s.name)}</span></td><td class="mono">${safeHtml(s.index)}</td>
+    <td><div class="sch-cell" style="gap:8px"><span class="code">${safeHtml(sc.code)}</span> ${safeHtml(sc.name)}</div></td>
+    <td>${safeHtml(s.programme)}</td><td><span class="pill ${s.status}">${safeHtml(s.status)}</span></td><td class="mono">${safeHtml(s.reg)}</td></tr>`;}).join(''):emptyRow(6,'No students match your filters.');
 }
 function renderFinance(){
   const completed=payments.filter(p=>p.status==='completed');
@@ -753,12 +757,12 @@ function renderFinance(){
   $('finStats').innerHTML=stats.map(c=>`<div class="stat"><div class="top"><span class="lbl">${c.lbl}</span><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span></div><div class="val">${c.cur?'<span class="cur">GHS</span>'+fmt(c.val):c.val}</div><div class="delta flat">${c.delta}</div></div>`).join('');
   const totalCol=totalRevenue()||1;
   $('finRows').innerHTML=schools.map(s=>{const col=payments.filter(p=>p.schoolId===s.id&&p.status==='completed').reduce((a,p)=>a+p.amount,0);const cnt=payments.filter(p=>p.schoolId===s.id).length;const share=((col/totalCol)*100).toFixed(1);
-    return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${s.name}</span></div></td><td class="mono">${cnt}</td><td class="mono">${money(s.charge)}</td><td class="mono">${money(col)}</td>
+    return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${safeHtml(s.name)}</span></div></td><td class="mono">${safeHtml(cnt)}</td><td class="mono">${safeHtml(money(s.charge))}</td><td class="mono">${safeHtml(money(col))}</td>
     <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;border-radius:4px;background:var(--line);max-width:90px"><div style="width:${share}%;height:100%;border-radius:4px;background:var(--primary)"></div></div><span class="mono" style="font-size:12px">${share}%</span></div></td></tr>`;}).join('');
-  $('payRows').innerHTML=payments.slice(0,14).map(p=>{const s=sById(p.schoolId);return `<tr><td class="mono">${p.date}</td><td>${p.student}</td><td><span class="code">${s.code}</span></td><td class="mono">${money(p.amount)}</td><td>${p.method}</td><td><span class="pill ${p.status}">${p.status}</span></td><td class="mono" style="font-size:12px">${p.txn}</td></tr>`;}).join('');
+  $('payRows').innerHTML=payments.slice(0,14).map(p=>{const s=sById(p.schoolId);return `<tr><td class="mono">${safeHtml(p.date)}</td><td>${safeHtml(p.student)}</td><td><span class="code">${safeHtml(s.code)}</span></td><td class="mono">${safeHtml(money(p.amount))}</td><td>${safeHtml(p.method)}</td><td><span class="pill ${p.status}">${safeHtml(p.status)}</span></td><td class="mono" style="font-size:12px">${safeHtml(p.txn)}</td></tr>`;}).join('');
 }
 function renderSms(){
-  $('smsRows').innerHTML=smsHistory.map(h=>{const s=sById(h.school)||{name:'Unknown school'};return `<tr><td class="mono">${h.date}</td><td>${s.name}</td><td>${h.group}</td><td class="mono">${h.recip}</td><td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.msg}</td><td><span class="pill ${h.status==='sent'?'open':(h.status==='failed'?'closed':'pending')}">${h.status}</span></td></tr>`;}).join('');
+  $('smsRows').innerHTML=smsHistory.map(h=>{const s=sById(h.school)||{name:'Unknown school'};return `<tr><td class="mono">${safeHtml(h.date)}</td><td>${safeHtml(s.name)}</td><td>${safeHtml(h.group)}</td><td class="mono">${safeHtml(h.recip)}</td><td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeHtml(h.msg)}</td><td><span class="pill ${h.status==='sent'?'open':(h.status==='failed'?'closed':'pending')}">${safeHtml(h.status)}</span></td></tr>`;}).join('');
   $('smsBalance').textContent=fmt(smsBalance);
   updateSmsCount();
 }
@@ -795,33 +799,33 @@ function openSchool(id){
   const m=$('modal');m.className='modal wide';
   m.innerHTML=`
   <div class="modal-head">
-    <div style="display:flex;gap:13px;align-items:center">${crest(s)}<div><h2>${s.name}</h2><p><span class="code">${senderCode}</span> - ${s.plan} plan - expires ${s.expiry}</p></div></div>
+    <div style="display:flex;gap:13px;align-items:center">${crest(s)}<div><h2>${safeHtml(s.name)}</h2><p><span class="code">${safeHtml(senderCode)}</span> - ${safeHtml(s.plan)} plan - expires ${safeHtml(s.expiry)}</p></div></div>
     <button class="modal-x" onclick="closeModal()">&times;</button>
   </div>
   <div class="tabs" id="schoolTabs">
     ${['Profile','Admin','Students','Payments','Subscription','Danger zone'].map((t,i)=>`<button class="tab ${i===0?'active':''}" onclick="schoolTab(${i})">${t}</button>`).join('')}
   </div>
   <div class="tab-panel active" data-tab="0">
-    <dl class="kv"><dt>Full name</dt><dd>${s.name}</dd><dt>School code / Sender ID</dt><dd><span class="code">${senderCode}</span></dd>
-    <dt>Email</dt><dd>${s.email}</dd><dt>Phone</dt><dd class="mono">${s.phone}</dd>
-    <dt>Admission</dt><dd><span class="pill ${s.admission==='OPENED'?'open':'closed'}">${s.admission}</span></dd>
-    <dt>Service charge</dt><dd class="mono">GHS ${s.charge.toFixed(2)}</dd><dt>Status</dt><dd><span class="pill ${s.status}">${s.status}</span></dd></dl>
+    <dl class="kv"><dt>Full name</dt><dd>${safeHtml(s.name)}</dd><dt>School code / Sender ID</dt><dd><span class="code">${safeHtml(senderCode)}</span></dd>
+    <dt>Email</dt><dd>${safeHtml(s.email)}</dd><dt>Phone</dt><dd class="mono">${safeHtml(s.phone)}</dd>
+    <dt>Admission</dt><dd><span class="pill ${s.admission==='OPENED'?'open':'closed'}">${safeHtml(s.admission)}</span></dd>
+    <dt>Service charge</dt><dd class="mono">GHS ${safeHtml(s.charge.toFixed(2))}</dd><dt>Status</dt><dd><span class="pill ${s.status}">${safeHtml(s.status)}</span></dd></dl>
     <div style="margin-top:16px;display:flex;gap:9px"><button class="btn btn-ghost btn-sm" onclick="editSchool(${id})">Edit profile</button><button class="btn btn-ghost btn-sm" onclick="toggleAdmission(${id});closeModal()">${s.admission==='OPENED'?'Close':'Open'} admission</button></div>
   </div>
   <div class="tab-panel" data-tab="1">
-    <dl class="kv"><dt>Primary admin</dt><dd>${s.admin}</dd><dt>Username</dt><dd><span class="code">${schoolAdminCodeHandle(senderCode)}_admin</span></dd><dt>Email</dt><dd>${s.email}</dd></dl>
+    <dl class="kv"><dt>Primary admin</dt><dd>${safeHtml(s.admin)}</dd><dt>Username</dt><dd><span class="code">${safeHtml(schoolAdminCodeHandle(senderCode))}_admin</span></dd><dt>Email</dt><dd>${safeHtml(s.email)}</dd></dl>
     <p style="font-size:12px;color:var(--muted);margin:14px 0 10px">Admins manage their own school's config. You can reset their password or add a sub-admin.</p>
-    <div style="display:flex;gap:9px"><button class="btn btn-ghost btn-sm" onclick="toast('Reset link sent to ${s.admin}')">Reset password</button><button class="btn btn-ghost btn-sm" onclick="toast('Add sub-admin (prototype)')">Add sub-admin</button></div>
+    <div style="display:flex;gap:9px"><button class="btn btn-ghost btn-sm" onclick="toast('Reset link sent')">Reset password</button><button class="btn btn-ghost btn-sm" onclick="toast('Add sub-admin (prototype)')">Add sub-admin</button></div>
   </div>
   <div class="tab-panel" data-tab="2"><div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Index</th><th>Programme</th><th>Status</th></tr></thead><tbody>
-    ${schoolStudents.map(st=>`<tr><td>${st.name}</td><td class="mono">${st.index}</td><td>${st.programme}</td><td><span class="pill ${st.status}">${st.status}</span></td></tr>`).join('')}
+    ${schoolStudents.map(st=>`<tr><td>${safeHtml(st.name)}</td><td class="mono">${safeHtml(st.index)}</td><td>${safeHtml(st.programme)}</td><td><span class="pill ${st.status}">${safeHtml(st.status)}</span></td></tr>`).join('')}
   </tbody></table></div><p style="font-size:12px;color:var(--muted);margin-top:10px">Showing 8 of ${fmt(s.students)} students.</p></div>
   <div class="tab-panel" data-tab="3"><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Student</th><th>Amount</th><th>Status</th></tr></thead><tbody>
-    ${schoolPays.map(p=>`<tr><td class="mono">${p.date}</td><td>${p.student}</td><td class="mono">${money(p.amount)}</td><td><span class="pill ${p.status}">${p.status}</span></td></tr>`).join('')||emptyRow(4,'No payments yet.')}
+    ${schoolPays.map(p=>`<tr><td class="mono">${safeHtml(p.date)}</td><td>${safeHtml(p.student)}</td><td class="mono">${safeHtml(money(p.amount))}</td><td><span class="pill ${p.status}">${safeHtml(p.status)}</span></td></tr>`).join('')||emptyRow(4,'No payments yet.')}
   </tbody></table></div></div>
   <div class="tab-panel" data-tab="4">
-    <dl class="kv"><dt>Current plan</dt><dd>${s.plan}</dd><dt>Expires</dt><dd>${s.expiry}</dd></dl>
-    <div class="grid-2" style="margin-top:16px"><div class="field"><label>Change plan</label><select><option ${s.plan==='Basic'?'selected':''}>Basic</option><option ${s.plan==='Standard'?'selected':''}>Standard</option><option ${s.plan==='Premium'?'selected':''}>Premium</option></select></div><div class="field"><label>Extend expiry</label><input type="date" value="${s.expiry}"></div></div>
+    <dl class="kv"><dt>Current plan</dt><dd>${safeHtml(s.plan)}</dd><dt>Expires</dt><dd>${safeHtml(s.expiry)}</dd></dl>
+    <div class="grid-2" style="margin-top:16px"><div class="field"><label>Change plan</label><select><option ${s.plan==='Basic'?'selected':''}>Basic</option><option ${s.plan==='Standard'?'selected':''}>Standard</option><option ${s.plan==='Premium'?'selected':''}>Premium</option></select></div><div class="field"><label>Extend expiry</label><input type="date" value="${escapeAttr(s.expiry)}"></div></div>
     <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="toast('Subscription updated')">Update subscription</button>
   </div>
   <div class="tab-panel" data-tab="5">
@@ -846,12 +850,12 @@ function editSchool(id){
   const plan=(s.plan||'Standard'); const opt=(v)=>plan.toLowerCase()===v.toLowerCase()?'selected':'';
   const m=$('modal');m.className='modal';
   m.innerHTML=`
-  <div class="modal-head"><div><h2>Edit school</h2><p>Update ${s.name}'s information</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
+  <div class="modal-head"><div><h2>Edit school</h2><p>Update ${safeHtml(s.name)}'s information</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid">
     <fieldset><legend>School information</legend>
-      <div class="grid-2"><div class="field"><label>School Code / SMS Sender ID</label><input id="e_school_code" value="${schoolSenderCode(s)||''}" maxlength="11" placeholder="e.g. ASEC"></div><div class="field"><label>Service charge (GHS)</label><input id="e_charge" type="number" step="0.5" value="${(s.charge!=null?s.charge:30)}"></div></div>
-      <div class="field"><label>Full school name</label><input id="e_name" value="${(s.name||'').replace(/"/g,'&quot;')}"></div>
-      <div class="grid-2"><div class="field"><label>Phone</label><input id="e_phone" value="${s.phone||''}"></div><div class="field"><label>Email</label><input id="e_email" type="email" value="${s.email||''}"></div></div>
+      <div class="grid-2"><div class="field"><label>School Code / SMS Sender ID</label><input id="e_school_code" value="${escapeAttr(schoolSenderCode(s)||'')}" maxlength="11" placeholder="e.g. ASEC"></div><div class="field"><label>Service charge (GHS)</label><input id="e_charge" type="number" step="0.5" value="${escapeAttr((s.charge!=null?s.charge:30))}"></div></div>
+      <div class="field"><label>Full school name</label><input id="e_name" value="${escapeAttr(s.name||'')}"></div>
+      <div class="grid-2"><div class="field"><label>Phone</label><input id="e_phone" value="${escapeAttr(s.phone||'')}"></div><div class="field"><label>Email</label><input id="e_email" type="email" value="${escapeAttr(s.email||'')}"></div></div>
     </fieldset>
     <fieldset><legend>Subscription & status</legend>
       <div class="grid-2"><div class="field"><label>Plan</label><select id="e_plan"><option ${opt('Basic')}>Basic</option><option ${opt('Standard')}>Standard</option><option ${opt('Premium')}>Premium</option></select></div><div class="field"><label>Expiry</label><input id="e_expiry" type="date" value="${s.expiry||''}"></div></div>
@@ -899,7 +903,7 @@ function openCreateAdmin(){
   const m=$('modal');m.className='modal';
   m.innerHTML=`<div class="modal-head"><div><h2>Create school admin</h2><p>Creates a real login and links it to the school</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid"><fieldset><legend>Admin details</legend>
-    <div class="field"><label>School</label><select id="a_school">${schools.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+    <div class="field"><label>School</label><select id="a_school">${schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></div>
     <div class="grid-2"><div class="field"><label>Full name</label><input id="a_name" placeholder="Full name"></div><div class="field"><label>Email</label><input id="a_email" type="email" placeholder="admin@..."></div></div>
     <div class="field"><label>Temporary password</label><div style="display:flex;gap:8px"><input id="a_pass" type="text" placeholder="At least 8 characters" style="flex:1"><button class="btn btn-ghost btn-sm" type="button" onclick="genPass()">Generate</button></div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">Share this with the admin; they can change it after signing in.</div></div>
   </fieldset></div></div>
@@ -953,8 +957,8 @@ tick();setInterval(tick,1000);
 
 /* ============ INIT ============ */
 function fillSchoolSelects(){
-  $('studentSchoolFilter').innerHTML='<option value="all">All schools</option>'+schools.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  $('smsTarget').innerHTML='<option value="all">All schools (platform-wide)</option>'+schools.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  $('studentSchoolFilter').innerHTML='<option value="all">All schools</option>'+schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+  $('smsTarget').innerHTML='<option value="all">All schools (platform-wide)</option>'+schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
 }
 function renderAll(){renderStats();renderDashTable();renderFeed();renderSchools();fillSchoolSelects();}
 renderAll();buildCharts();
@@ -971,11 +975,23 @@ function superAuthScope(){
 function superAuthKey(k){
   return 'qag_auth_scope::'+superAuthScope()+'::'+k;
 }
+function clearLegacySuperAuthStorage(){
+  try{
+    const prefix='qag_auth_scope::'+superAuthScope()+'::';
+    for(let i=window.localStorage.length-1;i>=0;i--){
+      const k=window.localStorage.key(i);
+      if(k&&k.indexOf(prefix)===0&&k.indexOf('qag-super-auth')>-1){
+        window.localStorage.removeItem(k);
+      }
+    }
+  }catch(e){}
+}
 const superAuthStorage={
-  getItem:function(k){ try{ return window.localStorage.getItem(superAuthKey(k)); }catch(e){ return null; } },
-  setItem:function(k,v){ try{ window.localStorage.setItem(superAuthKey(k),v); }catch(e){} },
-  removeItem:function(k){ try{ window.localStorage.removeItem(superAuthKey(k)); }catch(e){} }
+  getItem:function(k){ try{ return window.sessionStorage.getItem(superAuthKey(k)); }catch(e){ return null; } },
+  setItem:function(k,v){ try{ window.sessionStorage.setItem(superAuthKey(k),v); }catch(e){} },
+  removeItem:function(k){ try{ window.sessionStorage.removeItem(superAuthKey(k)); }catch(e){} }
 };
+clearLegacySuperAuthStorage();
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-super-auth',storage:superAuthStorage}});
 // Always attach a FRESH user token to privileged Edge Function calls, otherwise an
 // expired session makes the client send the publishable key and the function 401s.
