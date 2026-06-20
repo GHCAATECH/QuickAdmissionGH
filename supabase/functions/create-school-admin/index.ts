@@ -25,6 +25,7 @@ const ALLOWED_PERMISSION_KEYS = new Set([
   "users",
   "students_house_view",
   "student_house_view",
+  "co_admin",
 ]);
 
 type JsonRecord = Record<string, unknown>;
@@ -154,6 +155,7 @@ Deno.serve(async (req: Request) => {
   const password = safeString(body.password);
   const requestedSchoolId = safeString(body.school_id ?? body.school);
   const requestedName = safeString(body.full_name);
+  const accountType = safeString(body.account_type || body.access_level).toLowerCase();
 
   if (!email || !password) {
     return json({ ok: false, error: "validation", message: "Email and password are required." }, 400);
@@ -176,7 +178,9 @@ Deno.serve(async (req: Request) => {
     if (!schoolId) {
       return json({ ok: false, error: "validation", message: "school_id is required for this action." }, 400);
     }
-    permissions = Object.prototype.hasOwnProperty.call(body, "permissions")
+    permissions = accountType === "co_admin"
+      ? { co_admin: true }
+      : Object.prototype.hasOwnProperty.call(body, "permissions")
       ? sanitizePermissions(body.permissions)
       : null;
   } else if (actorRole === "school_admin") {
@@ -187,7 +191,7 @@ Deno.serve(async (req: Request) => {
     if (!schoolId) {
       return json({ ok: false, error: "validation", message: "Your school could not be resolved." }, 400);
     }
-    permissions = sanitizePermissions(body.permissions);
+    permissions = accountType === "co_admin" ? { co_admin: true } : sanitizePermissions(body.permissions);
   } else {
     return json({ ok: false, error: "forbidden", message: "You do not have permission to create users." }, 403);
   }
@@ -271,7 +275,7 @@ Deno.serve(async (req: Request) => {
     admin,
     schoolId,
     actorLabel(profile as Record<string, unknown> | null),
-    `Created school admin login for ${email}`,
+    `Created ${accountType === "co_admin" ? "co-admin" : "school user"} login for ${email}`,
   );
 
   return json({

@@ -709,7 +709,7 @@ function renderAdmins(){
     <td><div class="sch-cell"><span style="display:inline-flex;width:30px;height:30px;border-radius:8px;background:var(--primary);color:#fff;align-items:center;justify-content:center;font-size:11px;font-weight:700">${aInit(a.name)}</span><span class="sch-name">${a.name}${a.uid===SA_UID?' <span style="font-size:10px;color:var(--muted)">(you)</span>':''}</span></div></td>
     <td>${a.school}</td>
     <td class="mono" style="font-size:12px">${a.email}</td>
-    <td>${a.role==='super_admin'?'Super admin':'School admin'}</td>
+    <td>${a.role==='super_admin'?'Super admin':(a.coAdmin?'School co-admin':'School admin')}</td>
     <td class="mono">-</td>
     <td><span class="pill open">active</span></td>
     <td><div class="row-actions">
@@ -1141,7 +1141,7 @@ async function loadSA(){
   const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl]=await Promise.all([
     sb.from('schools').select('*').order('created_at'),
     sb.from('school_config').select('school_id,admission_status,service_charge,sms_balance'),
-    sb.from('profiles').select('id,full_name,email,school_id,role'),
+    sb.from('profiles').select('id,full_name,email,school_id,role,permissions'),
     sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,admission_no'),
     sb.from('payments').select('amount_pesewas,channel,status,reference,school_id,paid_at,created_at,payer_name, students(full_name)'),
     fetchPlatformSmsHistory(),
@@ -1155,7 +1155,7 @@ async function loadSA(){
   const plcSmsBy={}; (plc.data||[]).forEach(function(row){ plcSmsBy[String(row.school_id)+'::'+String(row.index_number)]=row.sms_contact||''; });
   const adminBy={}; (prof.data||[]).forEach(p=>{ if(p.role==='school_admin'&&p.school_id) adminBy[p.school_id]=p.full_name; });
   const schNameById={}; (sch.data||[]).forEach(s=>schNameById[s.id]=s.name);
-  admins=(prof.data||[]).map(p=>({uid:p.id,name:p.full_name||'-',email:p.email||'-',role:p.role,
+  admins=(prof.data||[]).map(p=>({uid:p.id,name:p.full_name||'-',email:p.email||'-',role:p.role,coAdmin:!!(p.permissions&&p.permissions.co_admin),
     school:p.role==='super_admin'?'All schools':(schNameById[p.school_id]||'-')}));
   const pName={}; (progs.data||[]).forEach(p=>pName[p.id]=p.name);
   const sRev={};

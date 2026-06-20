@@ -894,16 +894,6 @@
       <!-- FINANCE -->
       <section class="view" id="view-finance">
         <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)" id="finStats"></div>
-        <div class="panel panel-pad">
-          <h3 class="section-title">Payment gateway</h3>
-          <div class="grid-2" style="max-width:640px">
-            <div class="field"><label>Gateway</label><select><option>Paystack</option><option>Flutterwave</option><option>Hubtel</option><option>Manual (bank transfer)</option></select></div>
-            <div class="field"><label>Merchant ID</label><input placeholder="Merchant ID"></div>
-            <div class="field"><label>Public key</label><input placeholder="pk_live_…"></div>
-            <div class="field"><label>Secret key</label><input type="password" placeholder="sk_live_…"></div>
-          </div>
-          <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="toast('Gateway settings saved')">Save gateway</button>
-        </div>
         <div class="panel"><div class="panel-head"><div><h3>Transactions</h3><div class="sub">Token purchases</div></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="toast('Exporting as CSV…')">CSV</button><button class="btn btn-ghost btn-sm" onclick="toast('Exporting as PDF…')">PDF</button></div></div>
           <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Student</th><th>Index No</th><th>Amount</th><th>Method</th><th>Status</th><th>Txn ID</th></tr></thead><tbody id="payRows"></tbody></table></div>
         </div>
@@ -1012,7 +1002,7 @@
             <h3>School user accounts</h3>
             <button class="btn btn-primary btn-sm" onclick="openCreateUser()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add user</button>
           </div>
-          <div class="panel-pad" style="padding-top:0"><p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">People who can sign in to manage <b id="usersSchoolName">this school</b>. New users get the school-admin role for this school only, and every granted privilege stays read-only unless it belongs to the owner account.</p></div>
+          <div class="panel-pad" style="padding-top:0"><p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">People who can sign in to manage <b id="usersSchoolName">this school</b>. Create either a read-only school user with selected privileges or a co-admin with full school access.</p></div>
           <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Access</th><th>Added</th><th></th></tr></thead><tbody id="userRows"></tbody></table></div>
         </div>
       </section>
@@ -1376,9 +1366,9 @@ function openClass(id){
 /* ===== PLACEMENT ===== */
 function renderPlacement(){
   const qEl=$('placeSearch'); const q=(qEl&&qEl.value||'').trim().toLowerCase();
-  const list=q?placement.filter(p=>((p.name||'').toLowerCase().includes(q)||(p.other||'').toLowerCase().includes(q)||String(p.index||'').toLowerCase().includes(q))):placement;
+  const list=q?placement.filter(p=>((p.name||'').toLowerCase().includes(q)||String(p.index||'').toLowerCase().includes(q))):placement;
   $('placeCount').textContent=q?(list.length+' of '+placement.length):placement.length;
-  $('placeRows').innerHTML=list.length?list.slice(0,200).map(p=>`<tr><td class="mono">${p.index}</td><td class="nm">${p.name}${p.other?' '+p.other:''}</td><td>${p.gender||'—'}</td><td>${p.res||'—'}</td><td>${p.prog||'—'}</td><td class="mono">${p.agg||'—'}</td><td class="mono">${p.sms||'—'}</td><td>${p.loggedIn?'<span class="pill open">Yes</span>':'<span class="pill closed">No</span>'}</td><td><div class="row-actions"><button class="act" onclick="editPlacement('${encodeURIComponent(p.index)}')">Edit</button><button class="act" onclick="deletePlacement('${encodeURIComponent(p.index)}')">Delete</button></div></td></tr>`).join(''):emptyRow(9,q?'No records match your search.':'No placement records yet.');
+  $('placeRows').innerHTML=list.length?list.slice(0,200).map(p=>`<tr><td class="mono">${p.index}</td><td class="nm">${p.name}</td><td>${p.gender||'—'}</td><td>${p.res||'—'}</td><td>${p.prog||'—'}</td><td class="mono">${p.agg||'—'}</td><td class="mono">${p.sms||'—'}</td><td>${p.loggedIn?'<span class="pill open">Yes</span>':'<span class="pill closed">No</span>'}</td><td><div class="row-actions"><button class="act" onclick="editPlacement('${encodeURIComponent(p.index)}')">Edit</button><button class="act" onclick="deletePlacement('${encodeURIComponent(p.index)}')">Delete</button></div></td></tr>`).join(''):emptyRow(9,q?'No records match your search.':'No placement records yet.');
 }
 function editPlacement(encIdx){
   const idx=decodeURIComponent(encIdx);
@@ -1388,7 +1378,6 @@ function editPlacement(encIdx){
   m.innerHTML=`<div class="modal-head"><div><h2>Edit placement record</h2><p><span class="code">${p.index}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body"><div class="grid-2">
     <div class="field"><label>Full name</label><input id="ep_name" value="${(p.name||'').replace(/"/g,'&quot;')}"></div>
-    <div class="field"><label>Other name(s)</label><input id="ep_other" value="${(p.other||'').replace(/"/g,'&quot;')}"></div>
     <div class="field"><label>Gender</label><select id="ep_gender"><option value="">Select…</option><option ${p.gender==='Male'?'selected':''}>Male</option><option ${p.gender==='Female'?'selected':''}>Female</option></select></div>
     <div class="field"><label>Residential status</label><select id="ep_res"><option value="">Select…</option><option ${p.res==='Boarding'?'selected':''}>Boarding</option><option ${p.res==='Day'?'selected':''}>Day</option></select></div>
     <div class="field"><label>Programme</label><select id="ep_prog">${progOpts}</select></div>
@@ -1408,7 +1397,6 @@ async function savePlacement(encIdx){
   const name=val('ep_name').trim();if(!name){toast('Name is required');return;}
   const upd={
     student_name:name,
-    other_names:val('ep_other')||null,
     gender:val('ep_gender')||null,
     residential_status:val('ep_res')||null,
     programme:val('ep_prog')||null,
@@ -1420,7 +1408,7 @@ async function savePlacement(encIdx){
   };
   const {error}=await sb.from('placement_list').update(upd).eq('school_id',SB_SCHOOL.id).eq('index_number',idx);
   if(error){toast('Save failed: '+error.message);return;}
-  p.name=name;p.other=upd.other_names||'';p.gender=upd.gender||'';p.res=upd.residential_status||'';
+  p.name=name;p.gender=upd.gender||'';p.res=upd.residential_status||'';
   p.prog=upd.programme||'';p.agg=upd.aggregate;p.jhs=upd.jhs_attended||'';p.dob=upd.dob||'';
   p.sms=upd.sms_contact||'';p.code=upd.enrolment_code||null;
   notifyStudentPortalRefresh('placement-update',{index:idx});
@@ -1451,7 +1439,7 @@ async function deletePlacementBatch(scope){
   if(error){toast('Delete failed: '+error.message);return;}
   if(!data||!data.ok){toast('Delete failed: '+((data&&data.error)||'unknown'));return;}
   const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
-  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   notifyStudentPortalRefresh('placement-batch-delete');
   renderPlacement();
   toast('Deleted '+data.deleted+' record(s)'+(data.skipped_submitted?' · '+data.skipped_submitted+' kept (submitted)':''));
@@ -1579,7 +1567,7 @@ async function handlePlacementFile(inp){
   toast('Done — added: '+(res.inserted||0)+(res.updated?' · '+res.updated+' updated':'')+((res.invalid||0)?' · '+res.invalid+' invalid':''));
   closePop('importPop');
   const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
-  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   notifyStudentPortalRefresh('placement-import');
   renderPlacement();
 }
@@ -1841,7 +1829,7 @@ function smsGroupLabel(){
   return prog==='all' ? 'All placed students' : 'Programme: '+prog;
 }
 function smsTargetName(row){
-  return studentDisplayNameByIndex(row.index,[row.name,row.other].filter(Boolean).join(' ').trim()||row.name||'Student');
+  return studentDisplayNameByIndex(row.index,row.name||'Student');
 }
 function smsTargets(){
   var prog=($('smsProgramme')&&$('smsProgramme').value)||'all';
@@ -2172,7 +2160,6 @@ function renderRegistered(){
         <div class="kv"><b>Residential</b>${s.res||'—'}</div>
         <div class="kv"><b>Parent / Guardian</b>${s.parent||'—'}</div>
         <div class="kv"><b>Date of birth</b>${s.dob||'—'}</div>
-        <div class="kv"><b>Other names</b>${s.other||'—'}</div>
       </div></td></tr>`;
     }
   });
@@ -2260,9 +2247,9 @@ function runReport(type,fmt){
     var b2=repVal('rep_board'); if(b2)data=data.filter(s=>s.res===b2);
     headers=['JHS Index No','Student Name','Gender','Boarding','Programme','Class','House']; rows=data.map(s=>[s.index,s.name,s.gender,s.res,pN(s),cN(s),hN(s)]); title='Boarding Status Report';
   } else if(type==='saprosoft'){
-    headers=['INDEX','ADMISSION NO','SURNAME','OTHER NAMES','GENDER','DATE OF BIRTH','PLACE OF BIRTH','NATIONALITY','RELIGION','DENOMINATION','AGGREGATE','RAW SCORE','ENROLMENT CODE','JHS ATTENDED','JHS TYPE','PROGRAMME','CLASS','HOUSE','RESIDENTIAL','PERMANENT ADDRESS','TOWN','REGION','DISTRICT','INTEREST','GHANA CARD/NHIS','SMS CONTACT','WHATSAPP','OTHER PHONE','EMAIL','FATHER NAME','FATHER OCCUPATION','MOTHER NAME','MOTHER OCCUPATION','GUARDIAN','GUARDIAN PHONE','DIGITAL ADDRESS','DATE REGISTERED','RECORDS SUBMITTED'];
+    headers=['INDEX','ADMISSION NO','SURNAME','FULL NAME','GENDER','DATE OF BIRTH','PLACE OF BIRTH','NATIONALITY','RELIGION','DENOMINATION','AGGREGATE','RAW SCORE','ENROLMENT CODE','JHS ATTENDED','JHS TYPE','PROGRAMME','CLASS','HOUSE','RESIDENTIAL','PERMANENT ADDRESS','TOWN','REGION','DISTRICT','INTEREST','GHANA CARD/NHIS','SMS CONTACT','WHATSAPP','OTHER PHONE','EMAIL','FATHER NAME','FATHER OCCUPATION','MOTHER NAME','MOTHER OCCUPATION','GUARDIAN','GUARDIAN PHONE','DIGITAL ADDRESS','DATE REGISTERED','RECORDS SUBMITTED'];
     rows=data.map(s=>{ var r=s.rec||{}; var done=!!(r.father_name||r.dob||r.enrolment_code);
-      return [s.index, s.adm, (r.surname||s.name||''), (r.other_names||s.other||''), s.gender,
+      return [s.index, s.adm, (r.surname||s.name||''), (s.name||''), s.gender,
         (r.dob||s.dob||''), r.place_of_birth||'', r.nationality||'', r.religion||'', r.denomination||'',
         (r.aggregate!=null?r.aggregate:''), r.raw_score||'', (r.enrolment_code||s.enrol||'').toUpperCase(), r.jhs_attended||'', r.jhs_type||'',
         pN(s), (r.class_name||cN(s)), hN(s), s.res||'',
@@ -2288,7 +2275,7 @@ function repPrint(title,headers,rows){
   w.document.close(); setTimeout(function(){w.print();},300);
 }
 
-const titles={dashboard:['Dashboard','Admission overview for 2025/2026'],setup:['School Setup','Profile, calendar and admission configuration'],portal:['Student Portal Setup','Control what students see and fill in'],programmes:['Programmes','Define programmes and subject combinations'],houses:['Houses','Manage houses and allocation'],classes:['Classrooms','Manage classes and capacity'],placement:['Placement List','Import and manage CSSPS placements'],students:['View Students','Browse submitted student records'],'manage-students':['Manage Students','Edit submitted student records'],'house-alloc':['Manage House Allocation','Assign students to houses'],'class-alloc':['Manage Class Allocation','Assign students to classes'],finance:['Financials','Payments and gateway configuration'],sms:['SMS','Programme-based bulk notifications'],'sms-settings':['SMS Settings','Sender ID, submission template and test delivery'],reports:['Reports','Enrolment analytics'],templates:['Document templates','Design your admission letter & records printout'],users:['Users','Manage who can sign in to this school'],utilities:['Utilities','Account and document tools']};
+const titles={dashboard:['Dashboard','Admission overview for 2025/2026'],setup:['School Setup','Profile, calendar and admission configuration'],portal:['Student Portal Setup','Control what students see and fill in'],programmes:['Programmes','Define programmes and subject combinations'],houses:['Houses','Manage houses and allocation'],classes:['Classrooms','Manage classes and capacity'],placement:['Placement List','Import and manage CSSPS placements'],students:['View Students','Browse submitted student records'],'manage-students':['Manage Students','Edit submitted student records'],'house-alloc':['Manage House Allocation','Assign students to houses'],'class-alloc':['Manage Class Allocation','Assign students to classes'],finance:['Financials','Payments overview and transaction history'],sms:['SMS','Programme-based bulk notifications'],'sms-settings':['SMS Settings','Sender ID, submission template and test delivery'],reports:['Reports','Enrolment analytics'],templates:['Document templates','Design your admission letter & records printout'],users:['Users','Manage who can sign in to this school'],utilities:['Utilities','Account and document tools']};
 function go(view){
   if(!can(VIEW_CAP[view])){ view=firstAllowedView(); }
   const actualView=view==='sms-settings'?'setup':view;
@@ -2442,8 +2429,10 @@ const VIEW_CAP={dashboard:null, setup:'setup', portal:'portal',
   placement:'placement', students:'students','manage-students':'students','house-alloc':'students','class-alloc':'students',
   finance:'finance', sms:'sms','sms-settings':'sms', reports:'reports', templates:'templates', users:'users', utilities:'utilities'};
 function isOwner(){ return SB_PERMS==null; }                 // NULL permissions = full access
-function can(cap){ if(!cap) return true; if(isOwner()) return true; return !!(SB_PERMS&&SB_PERMS[cap]); }
-function canViewStudentHouse(){ return isOwner() || !!(SB_PERMS&&(SB_PERMS.students_house_view||SB_PERMS.student_house_view)); }
+function isCoAdmin(){ return !!(SB_PERMS&&SB_PERMS.co_admin); }
+function hasWriteAccess(){ return isOwner() || isCoAdmin(); }
+function can(cap){ if(!cap) return true; if(isOwner()) return true; if(isCoAdmin()) return cap!=='users'; return !!(SB_PERMS&&SB_PERMS[cap]); }
+function canViewStudentHouse(){ return hasWriteAccess() || !!(SB_PERMS&&(SB_PERMS.students_house_view||SB_PERMS.student_house_view)); }
 function roGuard(){ if(READONLY){ toast('Your access is read-only'); return true; } return false; }
 function firstAllowedView(){ if(can('students'))return 'dashboard'; const order=['dashboard','students','placement','programmes','finance','sms','sms-settings','reports','templates','setup','portal','utilities','users']; for(const v of order){ if(can(VIEW_CAP[v])) return v; } return 'dashboard'; }
 function buildNavSelect(){
@@ -2470,8 +2459,8 @@ function applyPermissions(){
   const ap=document.getElementById('admParent'); if(ap) ap.style.display=can('students')?'':'none';
   const stuHouseHead=document.getElementById('stuHouseHead'); if(stuHouseHead) stuHouseHead.style.display=canViewStudentHouse()?'':'none';
   buildNavSelect();
-  // Granted privileges are READ-ONLY for staff. Only the owner (NULL permissions) can write.
-  READONLY=!isOwner();
+  // School users are read-only. Owner and co-admin accounts can write.
+  READONLY=!hasWriteAccess();
   if(READONLY){
     document.body.classList.add('ro');
     const ab=$('admBadge'); if(ab){ab.style.pointerEvents='none';ab.style.cursor='default';}
@@ -2730,7 +2719,7 @@ async function loadSchoolData(prof){
       prog: cleanSmsText(progNameByUuid[s.programme_id])||cleanSmsText(pl.programme)||cleanSmsText(rec.programme)||'',
       enrol: pl.enrolment_code||'-',
       form: s.enrolment_form_url||null,
-      other: pl.other_names||'', dob: pl.dob||'', parent: rec.guardian||rec.father_name||rec.mother_name||s.parent_name||'-',
+      dob: pl.dob||'', parent: rec.guardian||rec.father_name||rec.mother_name||s.parent_name||'-',
       res: pl.residential_status||'-', rec: rec,
       pay: s.payment_status||'unpaid', submitted: !!s.submitted_at, loggedIn: !!pl.logged_in};
   });
@@ -2751,7 +2740,7 @@ async function loadSchoolData(prof){
     row.rec=rec;
     return row;
   });
-  placement=(plc.data||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  placement=(plc.data||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   payments=(pay.data||[]).map(p=>({date:(p.paid_at||p.created_at||'').slice(0,10),name:(p.students&&p.students.full_name)||p.payer_name||'—',index:(p.students&&p.students.bece_index)||'—',amount:(p.amount_pesewas||0)/100,method:p.channel,status:p.status,txn:p.reference}));
   smsHistory=(sms.data||[]).map(s=>({date:(s.sent_at||'').slice(0,10),group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status}));
   activityLog=(log.data||[]).map(l=>({time:fmtT(l.created_at),action:l.action,by:l.actor||'—'}));
@@ -2772,7 +2761,7 @@ async function loadSchoolData(prof){
   if(prof){
     SB_ADMIN_NAME=prof.full_name||SB_ADMIN_NAME||'Admin';
     const nm=$('sbName'); if(nm) nm.textContent=SB_ADMIN_NAME;
-    const rl=$('sbRole'); if(rl) rl.textContent=(prof.role==='super_admin'?'Super Admin':'School Admin');
+    const rl=$('sbRole'); if(rl) rl.textContent=(prof.role==='super_admin'?'Super Admin':((prof.permissions&&prof.permissions.co_admin)?'School Co-admin':'School Admin'));
     const av=$('sbAvatar'); if(av){ const parts=String(SB_ADMIN_NAME).trim().split(/\s+/); const ini=((parts[0]||'')[0]||'')+((parts[parts.length-1]||'')[0]||''); av.textContent=(ini||'AD').toUpperCase(); }
   }
   fillSelects();
@@ -3252,8 +3241,10 @@ tplPreview=function(){
 let schoolUsers=[];
 function houseName(uid){ const h=(houses||[]).find(x=>x._id===uid); return h?h.name:'a house'; }
 function houseSelectHTML(cur){ return `<select id="u_house"><option value="">All houses (no restriction)</option>`+(houses||[]).map(h=>`<option value="${h._id}" ${cur===h._id?'selected':''}>${h.name}</option>`).join('')+`</select>`; }
+function isPermCoAdmin(p){ return !!(p&&p.co_admin); }
 function permSummary(p){
   if(p==null) return '<span class="pill open">Full access (owner)</span>';
+  if(isPermCoAdmin(p)) return '<span class="pill open">Co-admin</span>';
   const on=ALL_CAPS.filter(([k])=>p[k]).map(([k,l])=>l);
   let out=on.length?(on.length>=ALL_CAPS.length?'<span class="pill open">All privileges</span>':on.map(l=>`<span class="pill" style="background:var(--surface-2);color:var(--ink-soft);margin:1px 2px">${l}</span>`).join('')):'<span style="color:var(--muted)">No access yet</span>';
   if(p.house) out+=` <span class="pill" style="background:var(--primary-soft);color:var(--primary);margin:1px 2px">🏠 ${houseName(p.house)} only</span>`;
@@ -3268,11 +3259,21 @@ async function renderUsers(){
   if(error){tb.innerHTML=emptyRow(5,'Could not load users.');return;}
   schoolUsers=data||[];
   tb.innerHTML=schoolUsers.length?schoolUsers.map(u=>{
-    const me=u.id===SB_UID; const owner=u.permissions==null;
+    const me=u.id===SB_UID; const owner=u.permissions==null; const coAdmin=isPermCoAdmin(u.permissions); const locked=owner||coAdmin;
     const acts=me?'<span style="color:var(--muted);font-size:12px">You</span>':
-      `<div class="row-actions"><button class="act" onclick="openUserPerms('${u.id}')" ${owner?'disabled title="Owner has full access"':''}>Privileges</button><button class="act" onclick="resetUserPwd('${u.id}')">Reset</button><button class="act danger" onclick="deleteUser('${u.id}')">Delete</button></div>`;
+      `<div class="row-actions"><button class="act" onclick="openUserPerms('${u.id}')" ${locked?'disabled title="'+(owner?'Owner has full access':'Co-admin access is managed from the owner account')+'"':''}>Privileges</button><button class="act" onclick="resetUserPwd('${u.id}')">Reset</button><button class="act danger" onclick="deleteUser('${u.id}')">Delete</button></div>`;
     return `<tr><td class="nm">${u.full_name||'—'}${me?' <span class="pill" style="background:var(--surface-2);color:var(--ink-soft)">me</span>':''}</td><td class="mono">${u.email||'—'}</td><td>${permSummary(u.permissions)}</td><td class="mono">${(u.created_at||'').slice(0,10)}</td><td>${acts}</td></tr>`;
   }).join(''):emptyRow(5,'No users yet. Add one to let staff sign in.');
+}
+function toggleUserCreateMode(){
+  const mode=val('u_access');
+  const staffWrap=$('u_staff_wrap');
+  const help=$('u_access_help');
+  const isCoAdmin=mode==='co_admin';
+  if(staffWrap) staffWrap.style.display=isCoAdmin?'none':'';
+  if(help) help.textContent=isCoAdmin
+    ? 'Co-admins can manage the school with elevated write access, while owner-only account controls stay with the main school admin.'
+    : 'School users only see the areas you tick below, and those areas stay read-only for them.';
 }
 function permChecks(p){
   const main=`<div class="perm-grid">`+CAPS.map(([k,l])=>`<label class="perm-row"><input type="checkbox" data-perm="${k}" ${p&&p[k]?'checked':''}><span>${l}</span></label>`).join('')+`</div>`;
@@ -3288,20 +3289,25 @@ function openCreateUser(){
   <div class="modal-body">
     <div class="grid-2"><div class="field"><label>Full name</label><input id="u_name" placeholder="Full name"></div><div class="field"><label>Email</label><input id="u_email" type="email" placeholder="name@email"></div></div>
     <div class="field"><label>Temporary password</label><div style="display:flex;gap:8px"><input id="u_pass" type="text" placeholder="At least 8 characters" style="flex:1"><button class="btn btn-ghost btn-sm" type="button" onclick="genPass2()">Generate</button></div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">Share it with the user; they can change it after signing in.</div></div>
-    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Privileges <span><button type="button" class="act" onclick="permToggleAll(true)">All</button> <button type="button" class="act" onclick="permToggleAll(false)">None</button></span></label><div id="u_perms">${permChecks({})}</div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">Only the areas you tick will be visible to this user. Every granted area remains read-only for staff accounts.</div></div>
-    <div class="field"><label>Restrict to one house (optional)</label>${houseSelectHTML('')}<div style="font-size:11.5px;color:var(--muted);margin-top:5px">For a house master: they will only see this house and its students.</div></div>
+    <div class="field"><label>Account access</label><select id="u_access" onchange="toggleUserCreateMode()"><option value="staff">School user (read-only)</option><option value="co_admin">Co-admin</option></select><div id="u_access_help" style="font-size:11.5px;color:var(--muted);margin-top:5px">School users only see the areas you tick below, and those areas stay read-only for them.</div></div>
+    <div id="u_staff_wrap">
+      <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Privileges <span><button type="button" class="act" onclick="permToggleAll(true)">All</button> <button type="button" class="act" onclick="permToggleAll(false)">None</button></span></label><div id="u_perms">${permChecks({})}</div><div style="font-size:11.5px;color:var(--muted);margin-top:5px">Only the areas you tick will be visible to this user.</div></div>
+      <div class="field"><label>Restrict to one house (optional)</label>${houseSelectHTML('')}<div style="font-size:11.5px;color:var(--muted);margin-top:5px">For a house master: they will only see this house and its students.</div></div>
+    </div>
   </div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="u_btn" onclick="createUser()">Create user</button></div>`;
   $('overlay').classList.add('show');
+  toggleUserCreateMode();
 }
 async function createUser(){
   if(roGuard())return;
   const email=(val('u_email')||'').trim(), name=(val('u_name')||'').trim(), pass=val('u_pass')||'';
   if(!email||!pass){toast('Email and a temporary password are required');return;}
   if(pass.length<8){toast('Password must be at least 8 characters');return;}
-  const permissions=collectPerms('u_perms'); const hv=(val('u_house')||''); if(hv) permissions.house=hv;
+  const access=val('u_access')||'staff';
+  const permissions=access==='co_admin'?{co_admin:true}:collectPerms('u_perms'); const hv=(val('u_house')||''); if(access!=='co_admin'&&hv) permissions.house=hv;
   const btn=$('u_btn'); if(btn)btn.textContent='Creating…';
-  const {data,error}=await invokeFnDetailed('create-school-admin',{email,password:pass,full_name:name,permissions});
+  const {data,error}=await invokeFnDetailed('create-school-admin',{email,password:pass,full_name:name,permissions,account_type:access});
   if(btn)btn.textContent='Create user';
   if(error||(data&&data.error)){toast('Could not create: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   closeModal(); renderUsers();
@@ -3310,6 +3316,7 @@ async function createUser(){
 function openUserPerms(id){
   const u=schoolUsers.find(x=>x.id===id); if(!u)return;
   if(u.permissions==null){toast('This is the owner account — it has full access.');return;}
+  if(isPermCoAdmin(u.permissions)){toast('This co-admin already has full school access.');return;}
   const m=$('modal');
   m.innerHTML=`<div class="modal-head"><div><h2>Privileges</h2><p>${u.full_name||u.email}</p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body">
@@ -3419,7 +3426,7 @@ addPlacement=async function(){
   if(error){toast('Could not save: '+error.message);return;}
   if(!data||!data.ok){toast('Could not save: '+((data&&data.error)||'unknown'));return;}
   const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
-  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,other:p.other_names||'',gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   ['pl_index','pl_name','pl_gender','pl_res','pl_agg','pl_dob','pl_sms'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   notifyStudentPortalRefresh('placement-save',{index:i});
   renderPlacement(); closePop('manualPop');
