@@ -367,6 +367,7 @@
   .finance-paid-students{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-amount{font-size:16px;font-weight:800;color:#122648;line-height:1.4}
   .finance-summary-sub{font-size:11.5px;color:var(--muted);margin-top:6px}
+  .finance-aux-copy{font-size:12px;line-height:1.5;color:var(--muted)}
 
   .doc-line{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
   .doc-line .num{width:24px;height:24px;border-radius:6px;background:var(--primary-soft);color:var(--primary);font-family:'JetBrains Mono';font-size:12px;font-weight:600;display:grid;place-items:center;flex:none;margin-top:7px}
@@ -1323,13 +1324,21 @@ function preferredStudentSms(rawStudent,placementRow){
   const rec=(rawStudent&&rawStudent.records)||{};
   return cleanSmsText(rec.sms_contact||rawStudent.parent_phone||rawStudent.sms_contact||(placementRow&&placementRow.sms_contact)||'');
 }
-function submittedStudents(){ return students.filter(s=>s.submitted); }
+function submittedStudents(){
+  const hasSubmittedFlag=students.some(function(s){ return typeof s.submitted!=='undefined'; });
+  return hasSubmittedFlag ? students.filter(function(s){ return !!s.submitted; }) : students.slice();
+}
+function settledStudentCount(raw,maxCount){
+  const clean=Math.max(parseInt(raw,10)||0,0);
+  return typeof maxCount==='number' ? Math.min(clean,Math.max(maxCount,0)) : clean;
+}
 function schoolFinanceSnapshot(){
   const registered=submittedStudents().length;
   const total=Math.max(placement.length,registered);
   const completed=payments.filter(function(p){ return p.status==='completed'; });
-  const paidStudents=completed.length;
-  const dueStudents=Math.max(registered-paidStudents,0);
+  const completedStudents=completed.length;
+  const paidStudents=settledStudentCount(SB_CFG&&SB_CFG.finance_settled_students,completedStudents);
+  const dueStudents=Math.max(completedStudents-paidStudents,0);
   const itGross=round2(dueStudents*FINANCE_IT_RATE);
   const itCharge=round2(itGross*FINANCE_CHARGE_RATE);
   const headGross=round2(dueStudents*FINANCE_HEAD_RATE);
@@ -1337,6 +1346,7 @@ function schoolFinanceSnapshot(){
   return {
     registered:registered,
     total:total,
+    completedStudents:completedStudents,
     paidStudents:paidStudents,
     dueStudents:dueStudents,
     itGross:itGross,
@@ -1930,11 +1940,12 @@ function renderFinance(){
       </div>
     </td>
     <td>
-      <div class="finance-registered-block">
+        <div class="finance-registered-block">
         <div class="finance-registered-count">${safeHtml(fmt(snap.registered))} Out of ${safeHtml(fmt(snap.total))}</div>
         <div>
-          <div class="finance-history-label">Payment History:</div>
-          <div class="finance-history-paid">Already paid for ${safeHtml(fmt(snap.paidStudents))} students - GHC${safeHtml(moneyBare(snap.paidAmount))}</div>
+          <div class="finance-history-label">Settlement History:</div>
+          <div class="finance-history-paid">Already claimed for ${safeHtml(fmt(snap.paidStudents))} students - GHC${safeHtml(moneyBare(snap.paidAmount))}</div>
+          <div class="finance-summary-sub">Completed student payments: ${safeHtml(fmt(snap.completedStudents))}</div>
         </div>
         <div>
           <div class="finance-due-label">Due for Payment Now:</div>
@@ -1958,6 +1969,7 @@ function renderFinance(){
         </div>
       </div>
       <button class="btn btn-primary btn-sm finance-request-btn" onclick="printSchoolFinanceRequest()">Print Request Form</button>
+      <div class="finance-aux-copy">Reset history is controlled from the Super Admin portal after each school claim.</div>
     </td>
     <td><div class="finance-total mono">${safeHtml(moneyBare(snap.totalGross))}</div></td>
     <td><span class="finance-paid-flag ${snap.hasHistory?'yes':'no'}">${snap.hasHistory?'YES':'NO'}</span></td>

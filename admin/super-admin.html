@@ -270,7 +270,9 @@
   .finance-split-amount{font-size:15px;font-weight:700;color:#14201C}
   .finance-split-line{font-size:14px;line-height:1.45;color:#425572}
   .finance-split-line strong{color:#14201C}
+  .finance-action-group{display:grid;gap:10px;margin-top:14px}
   .finance-request-btn{margin-top:14px;justify-content:center;width:100%;min-height:44px}
+  .finance-action-group .finance-request-btn{margin-top:0}
   .finance-total{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-flag{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.06em}
   .finance-paid-flag.yes{background:#e7f7ec;color:#0a8a2a}
@@ -278,6 +280,16 @@
   .finance-paid-students{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-amount{font-size:16px;font-weight:800;color:#122648;line-height:1.4}
   .finance-summary-sub{font-size:11.5px;color:var(--muted);margin-top:6px}
+  .finance-aux-copy{font-size:12px;line-height:1.5;color:var(--muted)}
+  .finance-reset-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+  .finance-reset-card{padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2)}
+  .finance-reset-card .k{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .finance-reset-card .v{margin-top:6px;font-family:'Space Grotesk';font-size:24px;font-weight:700;color:#122648}
+  .finance-reset-preview{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:18px;background:#f7f9fc;display:grid;gap:10px}
+  .finance-reset-preview h4{margin:0;font-family:'Space Grotesk';font-size:15px;color:#122648}
+  .finance-reset-preview .row{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:#425572}
+  .finance-reset-preview .row strong{color:#122648}
+  .finance-reset-inline{font-size:12px;color:var(--muted);margin-top:8px}
 
   .toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:13px 18px;border-radius:10px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 12px 30px -8px rgba(0,0,0,.4);z-index:90;transform:translateY(80px);opacity:0;transition:.3s}
   .toast.show{transform:none;opacity:1}
@@ -313,6 +325,7 @@
     .modal{max-width:96vw}
     .finance-school-name{font-size:15px}
     .finance-total,.finance-paid-students{font-size:20px}
+    .finance-reset-grid{grid-template-columns:1fr}
   }
   @media(max-width:480px){
     .stat-grid{grid-template-columns:1fr!important}
@@ -708,12 +721,19 @@ function escapeAttr(v){ return escapeHtml(v).replace(/\r?\n/g,'&#10;'); }
 function safeHtml(v,fallback){ const text=String(v==null?'':v).trim(); return text?escapeHtml(text):(fallback||'&mdash;'); }
 function crest(s){return `<span class="sch-crest" style="background:${crestColors[s.color]}">${escapeHtml(s.short)}</span>`;}
 function toast(msg){$('toastMsg').textContent=msg;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+function settledStudentCount(raw,maxCount){
+  const clean=Math.max(parseInt(raw,10)||0,0);
+  return typeof maxCount==='number' ? Math.min(clean,Math.max(maxCount,0)) : clean;
+}
 function financeSettlementForSchool(s){
-  const registered=Math.max(Number(s.students||0),0);
+  const schoolStudents=students.filter(function(st){ return st.schoolId===s.id; });
+  const hasSubmittedFlag=schoolStudents.some(function(st){ return typeof st.submitted!=='undefined'; });
+  const registered=Math.max(hasSubmittedFlag ? schoolStudents.filter(function(st){ return !!st.submitted; }).length : Number(s.students||0),0);
   const total=Math.max(Number(s.placements||0),registered);
   const completed=payments.filter(function(p){ return p.schoolId===s.id && p.status==='completed'; });
-  const paidStudents=completed.length;
-  const dueStudents=Math.max(registered-paidStudents,0);
+  const completedStudents=completed.length;
+  const paidStudents=settledStudentCount(s&&s.financeSettledStudents,completedStudents);
+  const dueStudents=Math.max(completedStudents-paidStudents,0);
   const itGross=round2(dueStudents*FINANCE_IT_RATE);
   const itCharge=round2(itGross*FINANCE_CHARGE_RATE);
   const headGross=round2(dueStudents*FINANCE_HEAD_RATE);
@@ -723,6 +743,7 @@ function financeSettlementForSchool(s){
   return {
     registered:registered,
     total:total,
+    completedStudents:completedStudents,
     paidStudents:paidStudents,
     dueStudents:dueStudents,
     itGross:itGross,
@@ -733,6 +754,7 @@ function financeSettlementForSchool(s){
     headNet:round2(headGross-headCharge),
     totalGross:totalGross,
     paidAmount:paidAmount,
+    completedAmount:round2(completedStudents*FINANCE_TOTAL_RATE),
     hasHistory:paidStudents>0
   };
 }
@@ -862,6 +884,96 @@ function printSettlementRequest(id){
   const s=sById(id);
   toast('Request form for '+s.name+' will be built next.');
 }
+function financeResetPreviewHTML(summary,count){
+  const claim=Math.max(parseInt(count,10)||0,0);
+  const limited=Math.min(claim,summary.dueStudents);
+  const itGross=round2(limited*FINANCE_IT_RATE);
+  const itCharge=round2(itGross*FINANCE_CHARGE_RATE);
+  const headGross=round2(limited*FINANCE_HEAD_RATE);
+  const headCharge=round2(headGross*FINANCE_CHARGE_RATE);
+  const totalGross=round2(limited*FINANCE_TOTAL_RATE);
+  const totalNet=round2((itGross-itCharge)+(headGross-headCharge));
+  return `
+    <h4>Claim preview</h4>
+    <div class="row"><span>Students in this claim</span><strong>${safeHtml(fmt(limited))}</strong></div>
+    <div class="row"><span>IT / Contact Person</span><strong>GHC${safeHtml(moneyBare(round2(itGross-itCharge)))}</strong></div>
+    <div class="row"><span>Head</span><strong>GHC${safeHtml(moneyBare(round2(headGross-headCharge)))}</strong></div>
+    <div class="row"><span>Gross reset amount</span><strong>GHC${safeHtml(moneyBare(totalGross))}</strong></div>
+    <div class="row"><span>Net after charges</span><strong>GHC${safeHtml(moneyBare(totalNet))}</strong></div>
+  `;
+}
+function refreshFinanceResetPreview(id){
+  const s=sById(id); if(!s)return;
+  const summary=financeSettlementForSchool(s);
+  const input=$('fr_claim_count'); const preview=$('fr_preview'); const hint=$('fr_after');
+  if(!input||!preview||!hint)return;
+  let next=Math.max(parseInt(input.value,10)||0,0);
+  if(summary.dueStudents<=0){ next=0; }
+  if(next>summary.dueStudents){ next=summary.dueStudents; input.value=String(next); }
+  preview.innerHTML=financeResetPreviewHTML(summary,next);
+  hint.textContent='After this reset, '+fmt(Math.max(summary.dueStudents-next,0))+' student payment(s) will remain pending for this school.';
+}
+function openFinanceReset(id){
+  const s=sById(id); if(!s)return;
+  const summary=financeSettlementForSchool(s);
+  if(summary.dueStudents<=0){ toast('No unclaimed school revenue is pending for '+s.name); return; }
+  const m=$('modal');
+  m.innerHTML=`
+    <div class="modal-head">
+      <div><h2>Reset financial report</h2><p>${safeHtml(s.name)} - record the part-payment the school has claimed.</p></div>
+      <button class="modal-x" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="finance-aux-copy">This does not delete payment history. It moves part of the school's pending revenue into paid history so the due balance drops after a partial claim.</p>
+      <div class="finance-reset-grid">
+        <div class="finance-reset-card"><div class="k">Completed student payments</div><div class="v">${safeHtml(fmt(summary.completedStudents))}</div></div>
+        <div class="finance-reset-card"><div class="k">Already claimed / reset</div><div class="v">${safeHtml(fmt(summary.paidStudents))}</div></div>
+        <div class="finance-reset-card"><div class="k">Available now</div><div class="v">${safeHtml(fmt(summary.dueStudents))}</div></div>
+      </div>
+      <div class="field" style="margin-top:18px">
+        <label>Students covered by this claim</label>
+        <input id="fr_claim_count" type="number" min="1" max="${escapeAttr(summary.dueStudents)}" value="${escapeAttr(summary.dueStudents)}" oninput="refreshFinanceResetPreview(${id})">
+        <div class="finance-reset-inline">Enter how many student payments this partial claim should clear from the report.</div>
+      </div>
+      <div class="finance-reset-preview" id="fr_preview"></div>
+      <div class="finance-reset-inline" id="fr_after"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="fr_btn" onclick="saveFinanceReset(${id})">Apply reset</button>
+    </div>`;
+  $('overlay').classList.add('show');
+  refreshFinanceResetPreview(id);
+}
+async function saveFinanceReset(id){
+  const s=sById(id); if(!s)return;
+  const summary=financeSettlementForSchool(s);
+  const claim=Math.max(parseInt(sval('fr_claim_count'),10)||0,0);
+  if(!claim){ toast('Enter the number of students covered by this claim.'); return; }
+  if(claim>summary.dueStudents){ toast('The claim count cannot be more than the pending revenue count.'); return; }
+  const nextSettled=summary.paidStudents+claim;
+  const btn=$('fr_btn'); if(btn) btn.textContent='Applying...';
+  const stamp=new Date().toISOString();
+  const patch={school_id:s._id,finance_settled_students:nextSettled,finance_settled_at:stamp};
+  const {error}=await sb.from('school_config').upsert(patch,{onConflict:'school_id'});
+  if(error){
+    if(btn) btn.textContent='Apply reset';
+    const msg=/finance_settled_students|finance_settled_at|column/i.test(error.message||'')
+      ? 'This database still needs the finance reset migration before the tool can save.'
+      : 'Could not reset report: '+error.message;
+    toast(msg);
+    return;
+  }
+  await sb.from('activity_log').insert({
+    school_id:s._id,
+    actor:'Super Admin',
+    action:'Financial report reset for '+claim+' student(s) - GHS '+moneyBare(round2(claim*FINANCE_TOTAL_RATE))
+  });
+  closeModal();
+  await loadSA();
+  go('finance');
+  toast('Reset saved for '+s.name+' - '+claim+' student payment(s) moved into paid history');
+}
 function renderFinance(){
   const summary=schools.map(financeSettlementForSchool);
   const totalRegistered=summary.reduce((a,s)=>a+s.registered,0);
@@ -893,8 +1005,9 @@ function renderFinance(){
         <div class="finance-registered-block">
           <div class="finance-registered-count">${safeHtml(registeredLabel)}</div>
           <div>
-            <div class="finance-history-label">Payment History:</div>
-            <div class="finance-history-paid">Already paid for ${safeHtml(fmt(f.paidStudents))} students - GHC${safeHtml(moneyBare(f.paidAmount))}</div>
+            <div class="finance-history-label">Settlement History:</div>
+            <div class="finance-history-paid">Already claimed for ${safeHtml(fmt(f.paidStudents))} students - GHC${safeHtml(moneyBare(f.paidAmount))}</div>
+            <div class="finance-summary-sub">Completed student payments: ${safeHtml(fmt(f.completedStudents))}</div>
           </div>
           <div>
             <div class="finance-due-label">Due for Payment Now:</div>
@@ -917,7 +1030,10 @@ function renderFinance(){
             <div class="finance-split-line"><strong>To Pay: ${safeHtml(moneyBare(f.headNet))}</strong></div>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
+        <div class="finance-action-group">
+          <button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
+          <button class="btn btn-ghost btn-sm finance-request-btn" onclick="openFinanceReset(${s.id})">Reset Report After Claim</button>
+        </div>
       </td>
       <td><div class="finance-total mono">${safeHtml(moneyBare(f.totalGross))}</div></td>
       <td><span class="finance-paid-flag ${f.hasHistory?'yes':'no'}">${f.hasHistory?'YES':'NO'}</span></td>
@@ -1327,7 +1443,7 @@ async function fetchPlatformSmsHistory(){
 async function loadSA(){
   const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl]=await Promise.all([
     sb.from('schools').select('*').order('created_at'),
-    sb.from('school_config').select('school_id,admission_status,service_charge,sms_balance'),
+    sb.from('school_config').select('*'),
     sb.from('profiles').select('id,full_name,email,school_id,role,permissions'),
     sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,admission_no'),
     sb.from('payments').select('amount_pesewas,channel,status,reference,school_id,paid_at,created_at,payer_name, students(full_name)'),
@@ -1352,6 +1468,8 @@ async function loadSA(){
     return {id,_id:s.id,code:s.code,school_code:schoolCode,schoolCode:schoolCode,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
       plan:sa_cap(s.subscription_plan||'standard'),students:(stu.data||[]).filter(x=>x.school_id===s.id).length,placements:plcCountBy[s.id]||0,
       admission:c.admission_status||'CLOSED',status:s.status,charge:Number(c.service_charge||0),
+      financeSettledStudents:settledStudentCount(c.finance_settled_students),
+      financeSettledAt:c.finance_settled_at||'',
       expiry:s.subscription_expiry||'-',email:s.email||'',phone:s.phone||'',smsEnabled:smsCfg.sms_enabled!==false,color:i%crestColors.length}; });
   nextSchoolId=schools.length+1;
   students=(stu.data||[]).map(function(s){
