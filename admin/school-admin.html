@@ -213,7 +213,7 @@
   .stat.flash{animation:flash .8s ease}@keyframes flash{0%{background:var(--accent-soft)}100%{background:var(--surface)}}
 
   /* quick actions */
-  .qa-row{display:flex;gap:11px;flex-wrap:wrap;margin-bottom:22px}
+  .qa-row{display:none;gap:11px;flex-wrap:wrap;margin-bottom:0}
   .qa{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;font-weight:600;font-size:13px;transition:.14s;flex:1;min-width:180px}
   .qa:hover{border-color:var(--primary);background:var(--primary-soft)}
   .qa .ico{width:34px;height:34px;border-radius:9px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;flex:none}
@@ -596,7 +596,7 @@
         <div id="ag_err" class="gate-error"></div>
         <button class="btn btn-primary btn-block admin-login-button" type="button" id="ag_btn" onclick="adminLogin()">LOGIN</button>
         <div class="gate-help"><b>Need access?</b> Contact the platform owner or the school account owner to create or reconnect your school-admin login.</div>
-        <div class="gate-powered">Powered by VELOXIS TECH HUB</div>
+        <div class="gate-powered">Powered by AXIOMBYTE HUB</div>
       </div>
     </div>
   </div>
@@ -3579,7 +3579,7 @@ addPlacement=async function(){
 async function logout(){ if(!confirm('Log out of the admin portal?'))return; setSchoolAdminTabSessionActive(false); try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 </script>
 
-<footer style="position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:10px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))">Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
+<footer style="position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:10px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))">Copyright © 2026 AXIOMBYTE HUB. All rights reserved. · Version 1.0</footer>
 </body>
 </html>
 

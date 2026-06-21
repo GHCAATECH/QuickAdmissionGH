@@ -1,7 +1,7 @@
 # QuickAdmissionGH — User Manual
 
 **A web-based Senior High School admission system for Ghana**
-Powered by VELOXIS TECH HUB · Version 1.0
+Powered by AXIOMBYTE HUB · Version 1.0
 
 ---
 
@@ -143,6 +143,6 @@ Open the small **Super Admin** link under the student login card and sign in.
 
 ## 7. Support
 
-For help, contact your school's administration office, or VELOXIS TECH HUB.
+For help, contact your school's administration office, or AXIOMBYTE HUB.
 
-Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0
+Copyright © 2026 AXIOMBYTE HUB. All rights reserved. · Version 1.0

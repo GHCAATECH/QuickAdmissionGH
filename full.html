@@ -7,9 +7,9 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>QuickAdmissionGH — Ghana SHS Online Admission System</title>
-<meta name="description" content="QuickAdmissionGH is a web-based Senior High School admission system for Ghana. Students buy tokens, fill enrolment records and download admission documents online, while schools manage placements, classes and fees. Powered by VELOXIS TECH HUB.">
-<meta name="keywords" content="Ghana SHS admission, online admission Ghana, CSSPS placement, school enrolment, QuickAdmissionGH, VELOXIS TECH HUB">
-<meta name="author" content="VELOXIS TECH HUB">
+<meta name="description" content="QuickAdmissionGH is a web-based Senior High School admission system for Ghana. Students buy tokens, fill enrolment records and download admission documents online, while schools manage placements, classes and fees. Powered by AXIOMBYTE HUB.">
+<meta name="keywords" content="Ghana SHS admission, online admission Ghana, CSSPS placement, school enrolment, QuickAdmissionGH, AXIOMBYTE HUB">
+<meta name="author" content="AXIOMBYTE HUB">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://www.quickadmissiongh.com/">
 <link rel="icon" type="image/png" href="https://www.quickadmissiongh.com/favicon.png">
@@ -22,7 +22,7 @@
 <meta property="og:image" content="https://www.quickadmissiongh.com/veloxis-logo.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="QuickAdmissionGH — Ghana SHS Online Admission System">
-<meta name="twitter:description" content="Online Senior High School admission for Ghana, powered by VELOXIS TECH HUB.">
+<meta name="twitter:description" content="Online Senior High School admission for Ghana, powered by AXIOMBYTE HUB.">
 <meta name="twitter:image" content="https://www.quickadmissiongh.com/veloxis-logo.png">
 <style>
   *{box-sizing:border-box}
@@ -129,7 +129,7 @@
     })();
   </script>
   <div class="qa-tabs">
-    <img class="qa-logo" src="veloxis-logo.png" alt="VELOXIS TECH HUB">
+    <img class="qa-logo" src="veloxis-logo.png" alt="AXIOMBYTE HUB">
     <span class="spacer"></span>
     <button class="qa-tab active" data-t="student" onclick="qaShow('student')">Student Portal</button>
     <button class="qa-tab" data-t="school" onclick="qaShow('school')">School Admin</button>
@@ -1345,7 +1345,7 @@ function printDoc(title,bodyHTML,bare){
   const head='<html><head><title>'+title+'</title><style>body{font-family:'+bodyFont+';max-width:740px;margin:30px auto;padding:0 24px;color:#14201c;line-height:1.6}h1{font-size:20px;text-align:center;margin-bottom:2px}.sub{text-align:center;color:#555;font-size:13px;margin-bottom:24px}h2{font-size:16px;border-bottom:2px solid #1557B0;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin:12px 0}td{padding:6px 4px;border-bottom:1px solid #eee;font-size:14px}.lbl{color:#666;width:230px}.rn{color:#999;font-weight:600;margin-right:4px}.sec-h{background:#1557B0;color:#fff;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:7px 8px;border-bottom:none}img{max-width:100%}.qa-wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:62%;max-width:520px;z-index:0;pointer-events:none;opacity:.2;-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm img{width:100%;height:auto;display:block}body>*{position:relative;z-index:1}@media print{body{margin:0}.sec-h{-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm{opacity:.2}}'+onePage+recPage+'</style></head><body>';
   const wm=(wantWM&amp;&amp;crest)?'<div class=&quot;qa-wm&quot;><img src=&quot;'+crest+'&quot; alt=&quot;&quot;></div>':'';
   const banner=bare?'':'<h1>'+sch.toUpperCase()+'</h1><div class=&quot;sub&quot;>Online Admission · '+((SCHOOL&amp;&amp;SCHOOL.config.academic_year)||'2025/2026')+'</div>';
-  const copyright='<p style=&quot;margin-top:'+(isLetter?'18px':'30px')+';text-align:center;color:#888;font-size:11px;border-top:1px solid #e5e7eb;padding-top:8px&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</p>';
+  const copyright='<p style=&quot;margin-top:'+(isLetter?'18px':'30px')+';text-align:center;color:#888;font-size:11px;border-top:1px solid #e5e7eb;padding-top:8px&quot;>Copyright © 2026 AXIOMBYTE HUB. All rights reserved. · Version 1.0</p>';
   const inner=(bare?'<div style=&quot;position:relative&quot;>'+bodyHTML+'</div>':banner+bodyHTML)+copyright;
   w.document.write(head+wm+inner+'</body></html>');
   w.document.close(); setTimeout(()=>w.print(),350);
@@ -1716,7 +1716,7 @@ window.addEventListener('storage',function(evt){
 })();
 </script>
 <div class=&quot;footer-gap&quot; aria-hidden=&quot;true&quot;></div>
-<footer class=&quot;portal-footer&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
+<footer class=&quot;portal-footer&quot;>Copyright © 2026 AXIOMBYTE HUB. All rights reserved. · Version 1.0</footer>
 </body>
 </html>
 "></iframe>
@@ -4771,7 +4771,7 @@ addPlacement=async function(){
 async function logout(){ if(!confirm('Log out of the admin portal?'))return; try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 </script>
 
-<footer style=&quot;position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:10px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
+<footer style=&quot;position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:10px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))&quot;>Copyright © 2026 AXIOMBYTE HUB. All rights reserved. · Version 1.0</footer>
 </body>
 </html>
 "></iframe>
@@ -5959,7 +5959,7 @@ sendBulkSms=async function(){
 </script>
 
 <div style=&quot;height:46px&quot; aria-hidden=&quot;true&quot;></div>
-<footer style=&quot;position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</footer>
+<footer style=&quot;position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))&quot;>Copyright © 2026 AXIOMBYTE HUB. All rights reserved. · Version 1.0</footer>
 </body>
 </html>
 "></iframe>
@@ -6003,7 +6003,7 @@ sendBulkSms=async function(){
 
   <div class=&quot;hero&quot;>
     <h1>QuickAdmissionGH — User Manual</h1>
-    <p>A web-based Senior High School admission system for Ghana · Powered by VELOXIS TECH HUB · Version 1.0</p>
+    <p>A web-based Senior High School admission system for Ghana · Powered by AXIOMBYTE HUB · Version 1.0</p>
   </div>
 
   <div class=&quot;toc&quot;>
@@ -6116,7 +6116,7 @@ sendBulkSms=async function(){
     </table>
   </section>
 
-  <div class=&quot;foot&quot;>Copyright © 2026 VELOXIS TECH HUB. All rights reserved. · Version 1.0</div>
+  <div class=&quot;foot&quot;>Copyright © 2026 AXIOMBYTE HUB. All rights reserved. · Version 1.0</div>
 </div>
 </body>
 </html>
