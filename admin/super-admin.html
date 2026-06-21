@@ -248,6 +248,36 @@
   .credit-box .big{font-family:'Space Grotesk';font-size:30px;font-weight:600}
   .credit-box small{opacity:.8;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em}
 
+  /* Finance settlement */
+  .finance-rate-note{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);font-size:11.5px;font-weight:700;color:var(--primary)}
+  .finance-settlement-wrap table{min-width:1360px}
+  .finance-settlement-table thead th{vertical-align:top;text-transform:none;font-size:12.5px;letter-spacing:0;color:#122648;font-weight:800;background:#f7f9fc}
+  .finance-settlement-table tbody td{vertical-align:top}
+  .finance-index{font-size:26px;font-weight:700;color:#122648;line-height:1}
+  .finance-school-cell{display:grid;gap:8px}
+  .finance-school-name{font-family:'Space Grotesk';font-size:16px;font-weight:700;line-height:1.35;color:#122648}
+  .finance-school-meta{font-size:12px;color:var(--muted)}
+  .finance-registered-block{display:grid;gap:12px}
+  .finance-registered-count{font-size:16px;font-weight:800;line-height:1.4;color:#cf1717}
+  .finance-history-label,.finance-due-label{font-size:12px;font-weight:700;color:#425572;text-transform:uppercase;letter-spacing:.05em}
+  .finance-history-paid{font-size:15px;line-height:1.55;color:#098a1e}
+  .finance-due-count{font-size:15px;font-weight:700;line-height:1.5;color:#174bff}
+  .finance-split{display:grid;gap:16px}
+  .finance-split-group{display:grid;gap:6px}
+  .finance-split-group + .finance-split-group{padding-top:14px;border-top:1px solid var(--line)}
+  .finance-split-group h4{font-family:'Space Grotesk';font-size:15px;font-weight:700;color:#122648;text-decoration:underline;text-underline-offset:3px}
+  .finance-split-amount{font-size:15px;font-weight:700;color:#14201C}
+  .finance-split-line{font-size:14px;line-height:1.45;color:#425572}
+  .finance-split-line strong{color:#14201C}
+  .finance-request-btn{margin-top:14px;justify-content:center;width:100%;min-height:44px}
+  .finance-total{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
+  .finance-paid-flag{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.06em}
+  .finance-paid-flag.yes{background:#e7f7ec;color:#0a8a2a}
+  .finance-paid-flag.no{background:#f1f3f7;color:#63748a}
+  .finance-paid-students{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
+  .finance-paid-amount{font-size:16px;font-weight:800;color:#122648;line-height:1.4}
+  .finance-summary-sub{font-size:11.5px;color:var(--muted);margin-top:6px}
+
   .toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:13px 18px;border-radius:10px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 12px 30px -8px rgba(0,0,0,.4);z-index:90;transform:translateY(80px);opacity:0;transition:.3s}
   .toast.show{transform:none;opacity:1}
   .toast svg{width:17px;height:17px;color:var(--accent)}
@@ -273,12 +303,15 @@
     .clock{display:none}
     .toolbar .search,.toolbar select{width:100%;min-width:0}
     .toolbar .spacer{display:none}
+    .finance-rate-note{width:100%;justify-content:center}
   }
   @media(max-width:768px){
     .panel-head,.toolbar,.topbar-right{gap:8px}
     .content{padding:16px 14px calc(58px + env(safe-area-inset-bottom))}
     .btn,.icon-btn{min-height:44px}
     .modal{max-width:96vw}
+    .finance-school-name{font-size:15px}
+    .finance-total,.finance-paid-students{font-size:20px}
   }
   @media(max-width:480px){
     .stat-grid{grid-template-columns:1fr!important}
@@ -486,9 +519,15 @@
       <section class="view" id="view-finance">
         <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)" id="finStats"></div>
         <div class="panel" style="margin-bottom:18px">
-          <div class="panel-head"><h3>Revenue by school</h3></div>
+          <div class="panel-head">
+            <div>
+              <h3>School financial settlement</h3>
+              <div class="sub">IT Person [GHC5.00] / Head [GHC7.50] settlement summary</div>
+            </div>
+            <div class="finance-rate-note">Request form comes next. Transaction charge estimated at 1%.</div>
+          </div>
           <div class="tbl-wrap"><table>
-            <thead><tr><th>School</th><th>Transactions</th><th>Service charge</th><th>Collected</th><th>Share</th></tr></thead>
+            <thead><tr><th>S/N</th><th>Name of School</th><th>No of Registered Students</th><th>IT/Contact Person [GHC5.00] / Head [GHC7.50]</th><th>Total</th><th>Paid</th><th>No of Student Paid</th><th>Amount Paid</th></tr></thead>
             <tbody id="finRows"></tbody>
           </table></div>
         </div>
@@ -650,18 +689,52 @@ let smsHistory=[
   {date:'2026-06-05',school:3,group:'Pending',recip:34,msg:'Action needed: finish your programme selection.',status:'pending'},
 ];
 let smsBalance=12480;
+const FINANCE_IT_RATE=5;
+const FINANCE_HEAD_RATE=7.5;
+const FINANCE_CHARGE_RATE=.01;
+const FINANCE_TOTAL_RATE=FINANCE_IT_RATE+FINANCE_HEAD_RATE;
 
 /* ============ HELPERS ============ */
 const $=id=>document.getElementById(id);
 const sById=id=>schools.find(s=>s.id===id)||{name:'-',short:'?',color:0,code:''};
 const fmt=n=>n.toLocaleString('en-US');
 const money=n=>'GHS '+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const moneyBare=n=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const round2=n=>Math.round((Number(n)||0)*100)/100;
 const HTML_ESCAPE_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'};
 function escapeHtml(v){ return String(v==null?'':v).replace(/[&<>"'`]/g,function(ch){ return HTML_ESCAPE_MAP[ch]; }); }
 function escapeAttr(v){ return escapeHtml(v).replace(/\r?\n/g,'&#10;'); }
 function safeHtml(v,fallback){ const text=String(v==null?'':v).trim(); return text?escapeHtml(text):(fallback||'&mdash;'); }
 function crest(s){return `<span class="sch-crest" style="background:${crestColors[s.color]}">${escapeHtml(s.short)}</span>`;}
 function toast(msg){$('toastMsg').textContent=msg;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+function financeSettlementForSchool(s){
+  const registered=Math.max(Number(s.students||0),0);
+  const total=Math.max(Number(s.placements||0),registered);
+  const completed=payments.filter(function(p){ return p.schoolId===s.id && p.status==='completed'; });
+  const paidStudents=completed.length;
+  const dueStudents=Math.max(registered-paidStudents,0);
+  const itGross=round2(dueStudents*FINANCE_IT_RATE);
+  const itCharge=round2(itGross*FINANCE_CHARGE_RATE);
+  const headGross=round2(dueStudents*FINANCE_HEAD_RATE);
+  const headCharge=round2(headGross*FINANCE_CHARGE_RATE);
+  const totalGross=round2(dueStudents*FINANCE_TOTAL_RATE);
+  const paidAmount=round2(paidStudents*FINANCE_TOTAL_RATE);
+  return {
+    registered:registered,
+    total:total,
+    paidStudents:paidStudents,
+    dueStudents:dueStudents,
+    itGross:itGross,
+    itCharge:itCharge,
+    itNet:round2(itGross-itCharge),
+    headGross:headGross,
+    headCharge:headCharge,
+    headNet:round2(headGross-headCharge),
+    totalGross:totalGross,
+    paidAmount:paidAmount,
+    hasHistory:paidStudents>0
+  };
+}
 
 /* ============ STATS ============ */
 function totalStudents(){return schools.reduce((a,s)=>a+s.students,0);}
@@ -784,19 +857,78 @@ function renderStudents(){
     <td><div class="sch-cell" style="gap:8px"><span class="code">${safeHtml(sc.code)}</span> ${safeHtml(sc.name)}</div></td>
     <td>${safeHtml(s.programme)}</td><td><span class="pill ${s.status}">${safeHtml(s.status)}</span></td><td class="mono">${safeHtml(s.reg)}</td></tr>`;}).join(''):emptyRow(6,'No students match your filters.');
 }
+function printSettlementRequest(id){
+  const s=sById(id);
+  toast('Request form for '+s.name+' will be built next.');
+}
 function renderFinance(){
-  const completed=payments.filter(p=>p.status==='completed');
+  const summary=schools.map(financeSettlementForSchool);
+  const totalRegistered=summary.reduce((a,s)=>a+s.registered,0);
+  const totalDue=summary.reduce((a,s)=>a+s.dueStudents,0);
+  const totalPaidStudents=summary.reduce((a,s)=>a+s.paidStudents,0);
+  const totalPaidAmount=round2(summary.reduce((a,s)=>a+s.paidAmount,0));
   const stats=[
-    {lbl:'Total Collected',val:totalRevenue(),cur:true,ico:'cash',delta:completed.length+' transactions'},
-    {lbl:'Pending',val:payments.filter(p=>p.status==='pending').reduce((a,p)=>a+p.amount,0),cur:true,ico:'cash',delta:payments.filter(p=>p.status==='pending').length+' awaiting',flat:true},
-    {lbl:'Successful',val:completed.length,ico:'cash',delta:'this period',flat:true},
-    {lbl:'Failed',val:payments.filter(p=>p.status==='failed').length,ico:'cash',delta:'needs review',flat:true},
+    {lbl:'Registered Students',val:fmt(totalRegistered),ico:'users',delta:'submitted across all schools',flat:true},
+    {lbl:'Due For Payment Now',val:fmt(totalDue),ico:'door',delta:'students pending settlement',flat:true},
+    {lbl:'No Of Student Paid',val:fmt(totalPaidStudents),ico:'school',delta:'already settled',flat:true},
+    {lbl:'Amount Paid',val:totalPaidAmount,cur:true,ico:'cash',delta:'IT + Head share paid so far',flat:true},
   ];
-  $('finStats').innerHTML=stats.map(c=>`<div class="stat"><div class="top"><span class="lbl">${c.lbl}</span><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span></div><div class="val">${c.cur?'<span class="cur">GHS</span>'+fmt(c.val):c.val}</div><div class="delta flat">${c.delta}</div></div>`).join('');
-  const totalCol=totalRevenue()||1;
-  $('finRows').innerHTML=schools.map(s=>{const col=payments.filter(p=>p.schoolId===s.id&&p.status==='completed').reduce((a,p)=>a+p.amount,0);const cnt=payments.filter(p=>p.schoolId===s.id).length;const share=((col/totalCol)*100).toFixed(1);
-    return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${safeHtml(s.name)}</span></div></td><td class="mono">${safeHtml(cnt)}</td><td class="mono">${safeHtml(money(s.charge))}</td><td class="mono">${safeHtml(money(col))}</td>
-    <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;border-radius:4px;background:var(--line);max-width:90px"><div style="width:${share}%;height:100%;border-radius:4px;background:var(--primary)"></div></div><span class="mono" style="font-size:12px">${share}%</span></div></td></tr>`;}).join('');
+  $('finStats').innerHTML=stats.map(function(c){
+    const icons={school:'<path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>',users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',door:'<path d="M13 3v18M3 21h18M6 21V5a2 2 0 0 1 2-2h7"/>',cash:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'};
+    return `<div class="stat"><div class="top"><span class="lbl">${c.lbl}</span><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[c.ico]}</svg></span></div><div class="val">${c.cur?'<span class="cur">GHS</span>'+moneyBare(c.val):c.val}</div><div class="delta flat">${c.delta}</div></div>`;
+  }).join('');
+  $('finRows').innerHTML=schools.length?schools.map(function(s,idx){
+    const f=financeSettlementForSchool(s);
+    const registeredLabel=f.total?fmt(f.registered)+' Out of '+fmt(f.total):fmt(f.registered);
+    return `<tr>
+      <td><div class="finance-index mono">${idx+1}</div></td>
+      <td>
+        <div class="finance-school-cell">
+          <div class="sch-cell">${crest(s)}<span class="finance-school-name">${safeHtml(s.name)}</span></div>
+          <div class="finance-school-meta"><span class="code">${safeHtml(schoolSenderCode(s)||s.code||'-')}</span></div>
+        </div>
+      </td>
+      <td>
+        <div class="finance-registered-block">
+          <div class="finance-registered-count">${safeHtml(registeredLabel)}</div>
+          <div>
+            <div class="finance-history-label">Payment History:</div>
+            <div class="finance-history-paid">Already paid for ${safeHtml(fmt(f.paidStudents))} students - GHC${safeHtml(moneyBare(f.paidAmount))}</div>
+          </div>
+          <div>
+            <div class="finance-due-label">Due for Payment Now:</div>
+            <div class="finance-due-count">No of students: ${safeHtml(fmt(f.dueStudents))}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div class="finance-split">
+          <div class="finance-split-group">
+            <h4>IT Person</h4>
+            <div class="finance-split-amount">${safeHtml(moneyBare(f.itGross))}</div>
+            <div class="finance-split-line">Momo/Bank charges: ${safeHtml(moneyBare(f.itCharge))}</div>
+            <div class="finance-split-line"><strong>To Pay: ${safeHtml(moneyBare(f.itNet))}</strong></div>
+          </div>
+          <div class="finance-split-group">
+            <h4>Head</h4>
+            <div class="finance-split-amount">${safeHtml(moneyBare(f.headGross))}</div>
+            <div class="finance-split-line">Momo/Bank charges: ${safeHtml(moneyBare(f.headCharge))}</div>
+            <div class="finance-split-line"><strong>To Pay: ${safeHtml(moneyBare(f.headNet))}</strong></div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
+      </td>
+      <td><div class="finance-total mono">${safeHtml(moneyBare(f.totalGross))}</div></td>
+      <td><span class="finance-paid-flag ${f.hasHistory?'yes':'no'}">${f.hasHistory?'YES':'NO'}</span></td>
+      <td>
+        <div class="finance-paid-students mono">${safeHtml(fmt(f.paidStudents))}</div>
+        <div class="finance-summary-sub">students paid</div>
+      </td>
+      <td>
+        <div class="finance-paid-amount mono">GHC${safeHtml(moneyBare(f.paidAmount))}</div>
+      </td>
+    </tr>`;
+  }).join(''):emptyRow(8,'No schools available for financial reporting.');
   $('payRows').innerHTML=payments.slice(0,14).map(p=>{const s=sById(p.schoolId);return `<tr><td class="mono">${safeHtml(p.date)}</td><td>${safeHtml(p.student)}</td><td><span class="code">${safeHtml(s.code)}</span></td><td class="mono">${safeHtml(money(p.amount))}</td><td>${safeHtml(p.method)}</td><td><span class="pill ${p.status}">${safeHtml(p.status)}</span></td><td class="mono" style="font-size:12px">${safeHtml(p.txn)}</td></tr>`;}).join('');
 }
 function renderSms(){
@@ -1206,7 +1338,7 @@ async function loadSA(){
   ]);
   const cfgBy={}; (cfg.data||[]).forEach(c=>cfgBy[c.school_id]=c);
   const tplBy={}; (tmpl.data||[]).forEach(t=>tplBy[t.school_id]=t);
-  const plcSmsBy={}; (plc.data||[]).forEach(function(row){ plcSmsBy[String(row.school_id)+'::'+String(row.index_number)]=row.sms_contact||''; });
+  const plcSmsBy={}; const plcCountBy={}; (plc.data||[]).forEach(function(row){ plcSmsBy[String(row.school_id)+'::'+String(row.index_number)]=row.sms_contact||''; plcCountBy[row.school_id]=(plcCountBy[row.school_id]||0)+1; });
   const adminBy={}; (prof.data||[]).forEach(p=>{ if(p.role==='school_admin'&&p.school_id) adminBy[p.school_id]=p.full_name; });
   const schNameById={}; (sch.data||[]).forEach(s=>schNameById[s.id]=s.name);
   admins=(prof.data||[]).map(p=>({uid:p.id,name:p.full_name||'-',email:p.email||'-',role:p.role,coAdmin:!!(p.permissions&&p.permissions.co_admin),
@@ -1217,7 +1349,7 @@ async function loadSA(){
     const schoolCode=normalizeSchoolCodeInput(s.school_code||s.code||'');
     const smsCfg=tplBy[s.id]||{};
     return {id,_id:s.id,code:s.code,school_code:schoolCode,schoolCode:schoolCode,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
-      plan:sa_cap(s.subscription_plan||'standard'),students:(stu.data||[]).filter(x=>x.school_id===s.id).length,
+      plan:sa_cap(s.subscription_plan||'standard'),students:(stu.data||[]).filter(x=>x.school_id===s.id).length,placements:plcCountBy[s.id]||0,
       admission:c.admission_status||'CLOSED',status:s.status,charge:Number(c.service_charge||0),
       expiry:s.subscription_expiry||'-',email:s.email||'',phone:s.phone||'',smsEnabled:smsCfg.sms_enabled!==false,color:i%crestColors.length}; });
   nextSchoolId=schools.length+1;
