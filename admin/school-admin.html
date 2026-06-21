@@ -522,6 +522,45 @@
   .disc-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
   .disc-actions .btn:disabled{opacity:.5;cursor:not-allowed}
   @media(max-width:520px){.disc-actions{flex-direction:column-reverse}.disc-actions .btn{width:100%;justify-content:center}}
+  /* ---------- Motion polish ---------- */
+  #bootSplash,#authGate.gate-screen{background-size:140% 140%;animation:adminGlowShift 18s ease-in-out infinite}
+  .school-admin-login-card{animation:adminEnter .72s cubic-bezier(.22,1,.36,1) both}
+  .school-admin-login-card::before{animation:adminOrbFloat 12s ease-in-out infinite}
+  .school-admin-login-card::after{animation:adminOrbFloat 14s ease-in-out infinite reverse}
+  .admin-login-icon,.brand-mark{animation:adminBob 6.5s ease-in-out infinite}
+  .admin-login-form > *{animation:adminEnter .6s cubic-bezier(.22,1,.36,1) both}
+  .admin-login-form > *:nth-child(1){animation-delay:.05s}
+  .admin-login-form > *:nth-child(2){animation-delay:.1s}
+  .admin-login-form > *:nth-child(3){animation-delay:.15s}
+  .admin-login-form > *:nth-child(4){animation-delay:.2s}
+  .nav-item,.nav-parent,.nav-sub,.icon-btn,.btn,.qa,.act,.btn-grn,.exp-btn,.rep-tab,.sms-vars button,.dropzone,.sb-logout{
+    transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s cubic-bezier(.22,1,.36,1),border-color .18s ease,background-color .18s ease,color .18s ease,filter .18s ease;
+  }
+  .nav-item:hover,.nav-parent:hover,.nav-sub:hover{transform:translateX(4px)}
+  .icon-btn:hover,.btn:hover,.qa:hover,.act:hover,.btn-grn:hover,.exp-btn:hover,.rep-tab:hover,.sms-vars button:hover,.dropzone:hover,.sb-logout:hover{
+    transform:translateY(-2px);
+  }
+  .panel:hover,.stat:hover{filter:saturate(1.02)}
+  .dropzone:hover{box-shadow:0 20px 34px -28px rgba(18,38,72,.28)}
+  @keyframes adminGlowShift{
+    0%,100%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+  }
+  @keyframes adminBob{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-8px)}
+  }
+  @keyframes adminOrbFloat{
+    0%,100%{transform:translate3d(0,0,0) scale(1)}
+    50%{transform:translate3d(18px,-14px,0) scale(1.08)}
+  }
+  @keyframes adminEnter{
+    from{opacity:0;transform:translateY(18px) scale(.985)}
+    to{opacity:1;transform:none}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+  }
 </style>
 </head>
 <body class="auth-booting">

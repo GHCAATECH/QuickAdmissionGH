@@ -300,6 +300,44 @@
   .demo-faint code{font-family:'JetBrains Mono',monospace;font-size:11px;color:#8A9893;background:transparent}
   .demo-faint:hover{color:var(--primary)}.demo-faint:hover code{color:var(--primary)}
   .gate-powered{margin-top:14px;font-size:11px;line-height:1.5;letter-spacing:.08em;text-transform:uppercase;text-align:center;color:var(--muted)}
+  /* ---------- Motion polish ---------- */
+  #authGate{
+    background-size:140% 140%!important;
+    animation:superGlowShift 18s ease-in-out infinite;
+  }
+  #authGate > div{animation:superEnter .72s cubic-bezier(.22,1,.36,1) both}
+  #authGate .panel{position:relative;overflow:hidden}
+  #authGate .panel::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(115deg,transparent 22%,rgba(255,255,255,.22) 50%,transparent 78%);
+    transform:translateX(-140%);animation:superSheen 8.5s ease-in-out infinite;
+  }
+  .brand-mark{animation:superBob 7s ease-in-out infinite}
+  .nav-item,.icon-btn,.btn,.act,.tab,.sb-logout{
+    transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s cubic-bezier(.22,1,.36,1),border-color .18s ease,background-color .18s ease,color .18s ease,filter .18s ease;
+  }
+  .nav-item:hover{transform:translateX(4px)}
+  .icon-btn:hover,.btn:hover,.act:hover,.tab:hover,.sb-logout:hover{transform:translateY(-2px)}
+  .panel:hover,.stat:hover{filter:saturate(1.02)}
+  @keyframes superGlowShift{
+    0%,100%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+  }
+  @keyframes superBob{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-8px)}
+  }
+  @keyframes superSheen{
+    0%,18%{transform:translateX(-140%)}
+    38%,100%{transform:translateX(140%)}
+  }
+  @keyframes superEnter{
+    from{opacity:0;transform:translateY(18px) scale(.985)}
+    to{opacity:1;transform:none}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+  }
 </style>
 </head>
 <body class="auth-booting">
