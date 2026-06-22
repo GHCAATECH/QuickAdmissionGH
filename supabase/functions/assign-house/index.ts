@@ -40,6 +40,41 @@ function residentialMatches(houseResidential: unknown, studentResidential: strin
   return true;
 }
 
+function parseFiniteNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseTimestamp(value: unknown): number | null {
+  const text = safeText(value);
+  if (!text) return null;
+  const parsed = Date.parse(text);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function housePriorityRank(house: Record<string, unknown>): number {
+  const numericKeys = [
+    "priority",
+    "sort_order",
+    "sortOrder",
+    "display_order",
+    "displayOrder",
+    "order_no",
+    "orderNo",
+    "order_index",
+    "position",
+    "rank",
+  ];
+  for (const key of numericKeys) {
+    const numeric = parseFiniteNumber(house[key]);
+    if (numeric != null) return numeric;
+  }
+  const createdAt = parseTimestamp(house.created_at ?? house.createdAt);
+  if (createdAt != null) return createdAt;
+  return Number.MAX_SAFE_INTEGER;
+}
+
 Deno.serve(async (req: Request) => {
   const blocked = guardRequest(req, { maxBodyBytes: 4_096 });
   if (blocked) return blocked;
@@ -117,9 +152,8 @@ Deno.serve(async (req: Request) => {
       .maybeSingle(),
     admin
       .from("houses")
-      .select("id, name, capacity, gender, residential_type")
-      .eq("school_id", sid)
-      .order("name"),
+      .select("*")
+      .eq("school_id", sid),
     admin.from("students").select("house_id").eq("school_id", sid),
   ]);
 
@@ -166,7 +200,16 @@ Deno.serve(async (req: Request) => {
       const seats = unlimited ? Number.MAX_SAFE_INTEGER : Math.max(capacity - occupied, 0);
       return { house, houseId, occupied, capacity, seats, unlimited };
     })
-    .filter((entry) => entry.unlimited || entry.seats > 0);
+    .filter((entry) => entry.unlimited || entry.seats > 0)
+    .sort((left, right) => {
+      const priorityDiff = housePriorityRank(left.house) - housePriorityRank(right.house);
+      if (priorityDiff !== 0) return priorityDiff;
+      const nameDiff = safeText(left.house.name).localeCompare(safeText(right.house.name), undefined, {
+        sensitivity: "base",
+      });
+      if (nameDiff !== 0) return nameDiff;
+      return left.houseId.localeCompare(right.houseId);
+    });
 
   if (!ranked.length) {
     return json({

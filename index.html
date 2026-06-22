@@ -1351,8 +1351,28 @@ function refreshRail(){
 function goStep(i){app.current=i;document.querySelectorAll('.stepcard').forEach(c=>c.classList.toggle('active',c.dataset.step==i));if(i===3)buildReview();refreshRail();window.scrollTo(0,0);}
 function val(id){var e=$(id);return e?e.value.trim():'';}
 function need(ids){for(const id of ids){if(!val(id)){const e=$(id);if(e){e.focus();e.style.borderColor='var(--danger)';setTimeout(()=>e.style.borderColor='',1500);}return false;}}return true;}
-function firstMissing(ids){
-  for(const id of ids){ if(!val(id)) return id; }
+const FIELD_STATE_KEYS={
+  'pf-raw':'raw_score','pf-enrol':'enrolment_code','pf-jhs':'jhs_attended','pf-jhstype':'jhs_type',
+  'pf-dob':'dob','pf-pob':'place_of_birth','pf-nat':'nationality','pf-rel':'religion','pf-den':'denomination',
+  'pf-addr':'address','pf-town':'town','pf-region':'region','pf-district':'district','pf-interest':'interest',
+  'pf-card':'ghana_card','pf-sms':'sms_contact','pf-wa':'whatsapp','pf-other':'other_phone','pf-email':'email',
+  'pf-fname':'father_name','pf-focc':'father_occupation','pf-fphone':'father_phone','pf-mname':'mother_name',
+  'pf-mocc':'mother_occupation','pf-mphone':'mother_phone','pf-guard':'guardian','pf-gphone':'guardian_phone',
+  'pf-digital':'digital_address'
+};
+const OTHER_VALUE_IDS=new Set(['pf-nat','pf-rel','pf-den','pf-interest']);
+function storedFieldValue(id){
+  const key=FIELD_STATE_KEYS[id];
+  if(!key||!app||!app.fields) return '';
+  const v=app.fields[key];
+  return v==null?'':String(v).trim();
+}
+function fieldValue(id,useStored){
+  const live=OTHER_VALUE_IDS.has(id)?otherVal(id).trim():val(id);
+  return live||((useStored&&storedFieldValue(id))||'');
+}
+function firstMissing(ids,useStored){
+  for(const id of ids){ if(!fieldValue(id,useStored)) return id; }
   return '';
 }
 function flagField(id,silent){
@@ -1373,25 +1393,26 @@ function failStep(step,message,id,silent){
 }
 function validateStep(step,opts){
   const silent=!!(opts&&opts.silent);
+  const useStored=!!(opts&&opts.useStored);
   if(step===0){
-    const missing=firstMissing(['pf-raw','pf-enrol','pf-jhs','pf-jhstype']);
+    const missing=firstMissing(['pf-raw','pf-enrol','pf-jhs','pf-jhstype'],useStored);
     if(missing) return failStep(step,'Fill all required Part 2 fields',missing,silent);
     if(!app.enrUploaded) return failStep(step,'Please upload your enrolment form','',silent);
   }
   if(step===1){
-    const missing=firstMissing(['pf-dob','pf-pob','pf-nat','pf-rel','pf-addr','pf-town','pf-region','pf-district','pf-interest']);
+    const missing=firstMissing(['pf-dob','pf-pob','pf-nat','pf-rel','pf-addr','pf-town','pf-region','pf-district','pf-interest'],useStored);
     if(missing) return failStep(step,'Please complete the required personal fields',missing,silent);
     if(!app.classId&&(SCHOOL&&SCHOOL.classes&&SCHOOL.classes.length)) return failStep(step,'Please select a class','',silent);
   }
   if(step===2){
-    const missing=firstMissing(['pf-sms','pf-fname','pf-focc','pf-fphone','pf-mname','pf-mocc','pf-mphone']);
+    const missing=firstMissing(['pf-sms','pf-fname','pf-focc','pf-fphone','pf-mname','pf-mocc','pf-mphone'],useStored);
     if(missing) return failStep(step,'Please complete the required parent fields',missing,silent);
   }
-  collect(step);
+  collect(step,{useStored});
   return {ok:true,step};
 }
 function syncStepCompletion(){
-  app.done=[0,1,2].map(function(step){ return validateStep(step,{silent:true}).ok; });
+  app.done=[0,1,2].map(function(step){ return validateStep(step,{silent:true,useStored:true}).ok; });
   return app.done;
 }
 
@@ -1448,11 +1469,12 @@ function setSelectMaybeOther(selId,v){ const s=$(selId), o=$(selId+'-other'); if
   if(has){ s.value=v; } else { const oo=[...s.options].find(op=>/^others?$/i.test(op.value||op.text)); if(oo){ s.value=oo.value||oo.text; if(o){o.value=v;} } else { s.value=v; } }
   toggleOther(selId);
 }
-function collect(step){
+function collect(step,opts){
+  const useStored=!!(opts&&opts.useStored);
   const f=app.fields;
-  if(step===0){Object.assign(f,{raw_score:val('pf-raw'),enrolment_code:val('pf-enrol').toUpperCase(),jhs_attended:val('pf-jhs'),jhs_type:val('pf-jhstype'),enrolment_uploaded:app.enrUploaded});}
-  if(step===1){Object.assign(f,{dob:val('pf-dob'),place_of_birth:val('pf-pob'),nationality:otherVal('pf-nat'),religion:otherVal('pf-rel'),denomination:otherVal('pf-den'),address:val('pf-addr'),town:val('pf-town'),region:val('pf-region'),district:val('pf-district'),interest:otherVal('pf-interest'),ghana_card:val('pf-card'),class_id:app.classId,class_name:app.className});}
-  if(step===2){Object.assign(f,{sms_contact:val('pf-sms'),whatsapp:val('pf-wa'),other_phone:val('pf-other'),email:val('pf-email'),father_name:val('pf-fname'),father_occupation:val('pf-focc'),father_phone:val('pf-fphone'),mother_name:val('pf-mname'),mother_occupation:val('pf-mocc'),mother_phone:val('pf-mphone'),guardian:val('pf-guard'),guardian_phone:val('pf-gphone'),digital_address:val('pf-digital')});}
+  if(step===0){Object.assign(f,{raw_score:fieldValue('pf-raw',useStored),enrolment_code:fieldValue('pf-enrol',useStored).toUpperCase(),jhs_attended:fieldValue('pf-jhs',useStored),jhs_type:fieldValue('pf-jhstype',useStored),enrolment_uploaded:app.enrUploaded});}
+  if(step===1){Object.assign(f,{dob:fieldValue('pf-dob',useStored),place_of_birth:fieldValue('pf-pob',useStored),nationality:fieldValue('pf-nat',useStored),religion:fieldValue('pf-rel',useStored),denomination:fieldValue('pf-den',useStored),address:fieldValue('pf-addr',useStored),town:fieldValue('pf-town',useStored),region:fieldValue('pf-region',useStored),district:fieldValue('pf-district',useStored),interest:fieldValue('pf-interest',useStored),ghana_card:fieldValue('pf-card',useStored),class_id:app.classId,class_name:app.className});}
+  if(step===2){Object.assign(f,{sms_contact:fieldValue('pf-sms',useStored),whatsapp:fieldValue('pf-wa',useStored),other_phone:fieldValue('pf-other',useStored),email:fieldValue('pf-email',useStored),father_name:fieldValue('pf-fname',useStored),father_occupation:fieldValue('pf-focc',useStored),father_phone:fieldValue('pf-fphone',useStored),mother_name:fieldValue('pf-mname',useStored),mother_occupation:fieldValue('pf-mocc',useStored),mother_phone:fieldValue('pf-mphone',useStored),guardian:fieldValue('pf-guard',useStored),guardian_phone:fieldValue('pf-gphone',useStored),digital_address:fieldValue('pf-digital',useStored)});}
 }
 function stepNext(step){
   const check=validateStep(step);
@@ -1475,7 +1497,7 @@ function prefillRecords(r){
 }
 function rev(t,rows,step){return `<div class="rev-block"><div class="rev-head"><span class="t">${safeHtml(t)}</span><a onclick="goStep(${step})" style="font-size:11.5px">edit</a></div><dl class="rev-body">${rows.map(r=>`<dt>${safeHtml(r[0])}</dt><dd>${safeHtml(r[1],'-')}</dd>`).join('')}</dl></div>`;}
 function buildReview(){
-  collect(0);collect(1);collect(2);
+  collect(0,{useStored:true});collect(1,{useStored:true});collect(2,{useStored:true});
   const f=app.fields,s=STU;
   let h='';
   h+=rev('Enrolment data - Part 1',[['Index No',s.index],['Gender',s.gender],['Programme',s.programme],['Residential',s.residential],['Student Name',displayStudentName(s)||s.full_name],['Aggregate',s.aggregate]],0);
