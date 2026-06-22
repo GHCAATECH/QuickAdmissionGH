@@ -75,6 +75,19 @@ function housePriorityRank(house: Record<string, unknown>): number {
   return Number.MAX_SAFE_INTEGER;
 }
 
+function houseOrderCompare(
+  left: { house: Record<string, unknown>; houseId: string },
+  right: { house: Record<string, unknown>; houseId: string },
+): number {
+  const priorityDiff = housePriorityRank(left.house) - housePriorityRank(right.house);
+  if (priorityDiff !== 0) return priorityDiff;
+  const nameDiff = safeText(left.house.name).localeCompare(safeText(right.house.name), undefined, {
+    sensitivity: "base",
+  });
+  if (nameDiff !== 0) return nameDiff;
+  return left.houseId.localeCompare(right.houseId);
+}
+
 Deno.serve(async (req: Request) => {
   const blocked = guardRequest(req, { maxBodyBytes: 4_096 });
   if (blocked) return blocked;
@@ -154,7 +167,7 @@ Deno.serve(async (req: Request) => {
       .from("houses")
       .select("*")
       .eq("school_id", sid),
-    admin.from("students").select("house_id").eq("school_id", sid),
+    admin.from("students").select("house_id, gender").eq("school_id", sid),
   ]);
 
   if (placementRes.error) return json({ ok: false, error: "placement_lookup_failed", message: placementRes.error.message }, 500);
@@ -201,15 +214,7 @@ Deno.serve(async (req: Request) => {
       return { house, houseId, occupied, capacity, seats, unlimited };
     })
     .filter((entry) => entry.unlimited || entry.seats > 0)
-    .sort((left, right) => {
-      const priorityDiff = housePriorityRank(left.house) - housePriorityRank(right.house);
-      if (priorityDiff !== 0) return priorityDiff;
-      const nameDiff = safeText(left.house.name).localeCompare(safeText(right.house.name), undefined, {
-        sensitivity: "base",
-      });
-      if (nameDiff !== 0) return nameDiff;
-      return left.houseId.localeCompare(right.houseId);
-    });
+    .sort(houseOrderCompare);
 
   if (!ranked.length) {
     return json({
@@ -220,7 +225,23 @@ Deno.serve(async (req: Request) => {
     }, 409);
   }
 
-  const chosen = ranked[0];
+  let chosen = ranked[0];
+
+  if (residential === "BOARDING" && ranked.length > 1) {
+    const rankedHouseIds = new Set(ranked.map((entry) => entry.houseId));
+    const sameGenderAssignedCount = (occupancyRes.data ?? []).reduce((total, row) => {
+      const record = row as Record<string, unknown>;
+      const houseId = safeText(record.house_id);
+      if (!houseId || !rankedHouseIds.has(houseId)) return total;
+      if (studentGender) {
+        return normalizeGender(record.gender) === studentGender ? total + 1 : total;
+      }
+      return total + 1;
+    }, 0);
+
+    chosen = ranked[sameGenderAssignedCount % ranked.length];
+  }
+
   const { data: updatedRows, error: updateError } = await admin
     .from("students")
     .update({ house_id: chosen.houseId })
@@ -267,5 +288,6 @@ Deno.serve(async (req: Request) => {
     house_name: safeText(chosen.house.name),
     gender: studentGender,
     residential,
+    allocation_mode: residential === "DAY" ? "day-house" : "gender-round-robin",
   });
 });
