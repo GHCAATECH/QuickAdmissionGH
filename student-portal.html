@@ -1503,8 +1503,9 @@ function rev(t,rows,step){return `<div class="rev-block"><div class="rev-head"><
 function buildReview(){
   collect(0,{useStored:true});collect(1,{useStored:true});collect(2,{useStored:true});
   const f=app.fields,s=STU;
+  const studentDisplayName=studentName(s)||s.full_name||s.surname||'';
   let h='';
-  h+=rev('Enrolment data - Part 1',[['Index No',s.index],['Gender',s.gender],['Programme',s.programme],['Residential',s.residential],['Student Name',displayStudentName(s)||s.full_name],['Aggregate',s.aggregate]],0);
+  h+=rev('Enrolment data - Part 1',[['Index No',s.index],['Gender',s.gender],['Programme',s.programme],['Residential',s.residential],['Student Name',studentDisplayName],['Aggregate',s.aggregate]],0);
   h+=rev('Enrolment data - Part 2',[['Raw Score',f.raw_score],['Enrolment Code',f.enrolment_code],['JHS Attended',f.jhs_attended],['JHS Type',f.jhs_type],['Enrolment form',app.enrUploaded?'Uploaded':'Not uploaded']],0);
   h+=rev('Personal data',[['Date of Birth',f.dob],['Place of Birth',f.place_of_birth],['Nationality',f.nationality],['Religion',f.religion],['Denomination',f.denomination],['Address',f.address],['Town',f.town],['Region',f.region],['District',f.district],['Interest',f.interest],['Ghana Card/NHIS',f.ghana_card]],1);
   h+=rev('Class selection',[['Class',app.className||'To be assigned']],1);
