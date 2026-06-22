@@ -1,10 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { guardRequest, jsonResponse } from "../_shared/security.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -18,13 +13,6 @@ const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 });
 
 type JsonRecord = Record<string, unknown>;
-
-function json(body: JsonRecord, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
 
 function normalizeSchoolCode(value: unknown) {
   return String(value ?? "")
@@ -653,7 +641,9 @@ async function handleTestSms(req: Request, body: Record<string, unknown>) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const blocked = guardRequest(req, { maxBodyBytes: 131_072 });
+  if (blocked) return blocked;
+  const json = (body: JsonRecord, status = 200) => jsonResponse(req, body, status);
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !ARKESEL_API_KEY) {
     return json({ ok: false, error: "not_configured", message: "SMS provider is not configured." }, 500);

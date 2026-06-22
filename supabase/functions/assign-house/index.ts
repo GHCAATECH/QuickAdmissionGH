@@ -1,21 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { guardRequest, jsonResponse } from "../_shared/security.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-function json(body: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...cors, "Content-Type": "application/json" },
-  });
-}
 
 function safeText(value: unknown): string {
   return value == null ? "" : String(value).trim();
@@ -53,7 +41,9 @@ function residentialMatches(houseResidential: unknown, studentResidential: strin
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const blocked = guardRequest(req, { maxBodyBytes: 4_096 });
+  if (blocked) return blocked;
+  const json = (body: Record<string, unknown>, status = 200) => jsonResponse(req, body, status);
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return json({ ok: false, error: "not_configured", message: "Supabase service credentials are missing." }, 500);

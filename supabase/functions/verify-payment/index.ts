@@ -2,12 +2,7 @@
 // status/message on failure for diagnosis. Secret: PAYSTACK_SECRET_KEY.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { guardRequest, jsonResponse } from "../_shared/security.ts";
 function genToken(): string {
   const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let t = "AS";
   for (let i = 0; i < 6; i++) t += c[Math.floor(Math.random() * c.length)];
@@ -30,9 +25,9 @@ function paystackMode(key: string): "live" | "test" | "unknown" {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  const json = (o: unknown, s = 200) =>
-    new Response(JSON.stringify(o), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
+  const blocked = guardRequest(req, { maxBodyBytes: 12_288 });
+  if (blocked) return blocked;
+  const json = (o: unknown, s = 200) => jsonResponse(req, o, s);
 
   const url = Deno.env.get("SUPABASE_URL")!;
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
