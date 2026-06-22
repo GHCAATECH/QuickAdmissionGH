@@ -1095,6 +1095,10 @@ async function bootStudent(){
 }
 async function refreshStudent(){
   if(!session||!session.index||!session.token) return;
+  const force=arguments[0]&&arguments[0].force;
+  const formPanel=$('panel-form');
+  const formOpen=!!(formPanel&&formPanel.style.display!=='none');
+  if(!force&&formOpen&&STU&&!STU.submitted) return;
   const activeSession={index:session.index,token:session.token,school:session.school||null};
   const {data}=await studentLoginRequest({p_index:activeSession.index,p_token:activeSession.token,p_school:activeSession.school});
   if(!session||session.index!==activeSession.index||session.token!==activeSession.token||(session.school||null)!==activeSession.school) return;
@@ -1567,7 +1571,7 @@ async function submitApp(){
       sms_status_label:smsStatusLabel,
       sms_note:smsNote
     });
-    await refreshStudent();
+    await refreshStudent({force:true});
     app.current=0;
     showPanel('dash');
     renderSubmissionSuccess();
