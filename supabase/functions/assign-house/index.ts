@@ -229,17 +229,14 @@ Deno.serve(async (req: Request) => {
 
   if (residential === "BOARDING" && ranked.length > 1) {
     const rankedHouseIds = new Set(ranked.map((entry) => entry.houseId));
-    const sameGenderAssignedCount = (occupancyRes.data ?? []).reduce((total, row) => {
+    const assignedCountAcrossEligibleHouses = (occupancyRes.data ?? []).reduce((total, row) => {
       const record = row as Record<string, unknown>;
       const houseId = safeText(record.house_id);
       if (!houseId || !rankedHouseIds.has(houseId)) return total;
-      if (studentGender) {
-        return normalizeGender(record.gender) === studentGender ? total + 1 : total;
-      }
       return total + 1;
     }, 0);
 
-    chosen = ranked[sameGenderAssignedCount % ranked.length];
+    chosen = ranked[assignedCountAcrossEligibleHouses % ranked.length];
   }
 
   const { data: updatedRows, error: updateError } = await admin
