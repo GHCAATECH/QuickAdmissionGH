@@ -830,7 +830,7 @@
       <!-- HOUSES -->
       <section class="view" id="view-houses">
         <div class="toolbar"><h2 class="section-title" style="margin:0">Houses</h2><div style="flex:1"></div><button class="btn btn-primary" onclick="openHouse()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add house</button></div>
-        <div class="panel"><div class="tbl-wrap"><table><thead><tr><th>House</th><th>Category</th><th>Motto</th><th>Capacity</th><th>Occupants</th><th></th></tr></thead><tbody id="houseRows"></tbody></table></div></div>
+        <div class="panel"><div class="tbl-wrap"><table><thead><tr><th>Priority</th><th>House</th><th>Category</th><th>Motto</th><th>Capacity</th><th>Occupants</th><th></th></tr></thead><tbody id="houseRows"></tbody></table></div></div>
       </section>
 
       <!-- CLASSES -->
@@ -1437,8 +1437,25 @@ function renderRecent(){
 function renderProg(){
   $('progRows').innerHTML=programmes.map(p=>{const pct=Math.round(p.enr/p.cap*100);return `<tr><td><span class="code">${safeHtml(p.code)}</span></td><td class="nm">${safeHtml(p.name)}</td><td style="max-width:260px;color:var(--ink-soft);font-size:12.5px">${safeHtml(p.subjects)}</td><td class="mono">${safeHtml(p.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(p.enr)}</span></td><td><div class="row-actions"><button class="act" onclick="openProg(${p.id})">Edit</button><button class="act danger" onclick="delItem('prog',${p.id})">Delete</button></div></td></tr>`;}).join('');
 }
+function housePriorityValue(h,fallback){
+  const num=Number(h&&h.priority);
+  return Number.isFinite(num)&&num>0?num:(fallback==null?Number.MAX_SAFE_INTEGER:fallback);
+}
+function sortLocalHouses(list){
+  return [...(list||[])].sort((a,b)=>{
+    const diff=housePriorityValue(a)-housePriorityValue(b);
+    if(diff!==0)return diff;
+    const nameDiff=String((a&&a.name)||'').localeCompare(String((b&&b.name)||''),undefined,{sensitivity:'base'});
+    if(nameDiff!==0)return nameDiff;
+    return String((a&&(a._id||a.id))||'').localeCompare(String((b&&(b._id||b.id))||''),undefined,{sensitivity:'base'});
+  });
+}
+function nextHousePriority(){
+  const nums=(houses||[]).map(h=>Number(h&&h.priority)).filter(n=>Number.isFinite(n)&&n>0);
+  return nums.length?Math.max(...nums)+1:1;
+}
 function renderHouses(){
-  $('houseRows').innerHTML=houses.map(h=>{const pct=Math.round(h.occ/h.cap*100);const cat=[h.rtype,h.gender].filter(Boolean).join(' · ')||'Any';return `<tr><td class="nm"><span class="dot-color" style="background:${h.color}"></span>${safeHtml(h.name)}</td><td><span class="pill ${h.rtype==='Boarding'?'open':(h.rtype==='Day'?'closed':'')}">${safeHtml(cat)}</span></td><td style="color:var(--ink-soft)">${safeHtml(h.motto,'&mdash;')}</td><td class="mono">${safeHtml(h.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(h.occ)}</span></td><td><div class="row-actions"><button class="act" onclick="openHouse(${h.id})">Edit</button><button class="act danger" onclick="delItem('house',${h.id})">Delete</button></div></td></tr>`;}).join('');
+  $('houseRows').innerHTML=sortLocalHouses(houses).map(h=>{const pct=Math.round(h.occ/h.cap*100);const cat=[h.rtype,h.gender].filter(Boolean).join(' · ')||'Any';return `<tr><td class="mono">${safeHtml(h.priority,'-')}</td><td class="nm"><span class="dot-color" style="background:${h.color}"></span>${safeHtml(h.name)}</td><td><span class="pill ${h.rtype==='Boarding'?'open':(h.rtype==='Day'?'closed':'')}">${safeHtml(cat)}</span></td><td style="color:var(--ink-soft)">${safeHtml(h.motto,'&mdash;')}</td><td class="mono">${safeHtml(h.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(h.occ)}</span></td><td><div class="row-actions"><button class="act" onclick="openHouse(${h.id})">Edit</button><button class="act danger" onclick="delItem('house',${h.id})">Delete</button></div></td></tr>`;}).join('');
 }
 function renderClasses(){
   $('classRows').innerHTML=classes.map(c=>{const pct=Math.round(c.occ/c.cap*100);const pr=c.progId?(programmes.find(p=>p.id===c.progId)||{}).name:'';const combo=(c.subjects||'').split(',').map(x=>x.trim()).filter(Boolean).join(' · ');return `<tr><td class="nm">${safeHtml(c.name)}</td><td>${pr?`<span class="pill open">${escapeHtml(pr)}</span>`:'<span style="color:var(--muted)">&mdash;</span>'}</td><td style="font-size:12px;max-width:280px">${combo?escapeHtml(combo):'<span style="color:var(--muted)">&mdash;</span>'}</td><td><span class="code">${safeHtml(c.code,'&mdash;')}</span></td><td class="mono">${safeHtml(c.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(c.occ)}</span></td><td><div class="row-actions"><button class="act" onclick="openClass(${c.id})">Edit</button><button class="act danger" onclick="delItem('class',${c.id})">Delete</button></div></td></tr>`;}).join('');
@@ -2913,7 +2930,7 @@ async function loadSchoolData(prof){
 
   const pRev={},hRev={},cRev={},progNameByUuid={}; pMap={};hMap={};cMap={};
   programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;progNameByUuid[p.id]=p.name||'';return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:(stu.data||[]).filter(s=>s.programme_id===p.id).length};});
-  houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,gender:h.gender||'',rtype:h.residential_type||'',occ:(stu.data||[]).filter(s=>s.house_id===h.id).length};});
+  houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,priority:h.priority||'',gender:h.gender||'',rtype:h.residential_type||'',occ:(stu.data||[]).filter(s=>s.house_id===h.id).length};});
   classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:(stu.data||[]).filter(s=>s.class_id===c.id).length};});
   const plcByIdx={}; (plc.data||[]).forEach(p=>plcByIdx[p.index_number]=p);
   students=(stu.data||[]).map((s,i)=>{ const pl=plcByIdx[s.bece_index]||{}; const rec=s.records||{}; const regAt=s.submitted_at||s.created_at||''; const dt=regAt?new Date(regAt):null; const sms=preferredStudentSms(s,pl);
@@ -3648,17 +3665,19 @@ openProg=function(id){
 };
 openHouse=function(id){
   if(roGuard())return;
-  const h=id?houses.find(x=>x.id===id):{name:'',color:'#1557B0',motto:'',cap:100,gender:'',rtype:''};
+  const h=id?houses.find(x=>x.id===id):{name:'',color:'#1557B0',motto:'',cap:100,priority:nextHousePriority(),gender:'',rtype:''};
+  const priority=housePriorityValue(h,nextHousePriority());
   const gOpt=v=>((h.gender||'')===v?'selected':''); const rOpt=v=>((h.rtype||'')===v?'selected':'');
   crudModal(id?'Edit house':'Add house',
     `<div class="grid-2"><div class="field"><label>House name</label><input id="c_name" value="${escapeAttr(h.name)}"></div><div class="field"><label>Colour</label><input id="c_color" type="color" value="${escapeAttr(h.color)}"></div></div>
      <div class="grid-2"><div class="field"><label>Gender</label><select id="c_gender"><option value="" ${gOpt('')}>Any</option><option value="Male" ${gOpt('Male')}>Male</option><option value="Female" ${gOpt('Female')}>Female</option></select></div><div class="field"><label>Residential type</label><select id="c_rtype"><option value="" ${rOpt('')}>Any</option><option value="Boarding" ${rOpt('Boarding')}>Boarding</option><option value="Day" ${rOpt('Day')}>Day</option></select></div></div>
      <div class="field"><label>Motto</label><input id="c_motto" value="${escapeAttr(h.motto||'')}"></div>
-     <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(h.cap)}"></div>`,
+     <div class="grid-2"><div class="field" style="max-width:160px"><label>Priority order</label><input id="c_priority" type="number" min="1" step="1" value="${escapeAttr(priority)}"></div><div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(h.cap)}"></div></div>`,
     async ()=>{ const name=val('c_name'); if(!name){toast('House name required');return;}
       const gender=val('c_gender'), rtype=val('c_rtype');
-      if(id){ await sb.from('houses').update({name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,gender,residential_type:rtype}).eq('id',h._id); h.name=name;h.color=val('c_color');h.motto=val('c_motto');h.cap=+val('c_cap')||100;h.gender=gender;h.rtype=rtype; }
-      else { const {data}=await sb.from('houses').insert({school_id:SB_SCHOOL.id,name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,gender,residential_type:rtype}).select().single(); const nid=Math.max(0,...houses.map(x=>x.id))+1; hMap[nid]=data.id; houses.push({id:nid,_id:data.id,name,color:val('c_color'),motto:val('c_motto'),cap:+val('c_cap')||100,occ:0,gender,rtype}); }
+      const priorityVal=Math.max(1,+val('c_priority')||0); if(!priorityVal){toast('Priority order must be 1 or higher');return;}
+      if(id){ await sb.from('houses').update({name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,priority:priorityVal,gender,residential_type:rtype}).eq('id',h._id); h.name=name;h.color=val('c_color');h.motto=val('c_motto');h.cap=+val('c_cap')||100;h.priority=priorityVal;h.gender=gender;h.rtype=rtype; }
+      else { const {data}=await sb.from('houses').insert({school_id:SB_SCHOOL.id,name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,priority:priorityVal,gender,residential_type:rtype}).select().single(); const nid=Math.max(0,...houses.map(x=>x.id))+1; hMap[nid]=data.id; houses.push({id:nid,_id:data.id,name,color:val('c_color'),motto:val('c_motto'),cap:+val('c_cap')||100,priority:priorityVal,occ:0,gender,rtype}); }
       notifyStudentPortalRefresh('house-save');
       closeModal(); renderHouses(); fillSelects&&fillSelects(); toast('House saved'); });
 };
