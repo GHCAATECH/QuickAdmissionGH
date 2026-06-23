@@ -964,6 +964,12 @@ function writeSubmissionSuccess(next){
     else sessionStorage.removeItem(qagTabKey('qag_submission_success'));
   }catch(e){}
 }
+function patchSubmissionSuccess(next){
+  const prev=readSubmissionSuccess()||{};
+  writeSubmissionSuccess(Object.assign({},prev,next||{}));
+  const dash=$('panel-dash');
+  if(dash&&dash.style.display!=='none') renderSubmissionSuccess();
+}
 function dismissSubmissionSuccess(){
   writeSubmissionSuccess(null);
   renderSubmissionSuccess();
@@ -1543,6 +1549,45 @@ async function assignStudentHouse(){
     return {ok:false,status:'pending',message:'House assignment is pending.'};
   }
 }
+function applySubmittedStudentState(admissionNo,payload){
+  if(!STU) return;
+  const nextRecords=Object.assign({},STU.records||{},payload||{});
+  STU=Object.assign({},STU,{
+    records:nextRecords,
+    contact:(payload&&payload.sms_contact)||STU.contact||'',
+    school_no:admissionNo||STU.school_no||'',
+    class_id:app.classId||STU.class_id||null,
+    class:app.className||STU.class||'',
+    personal_done:true,
+    programme_done:true,
+    undertaking_done:true,
+    documents_done:!!app.enrUploaded,
+    submitted:true
+  });
+  app.done=[true,true,true];
+}
+async function runSubmissionAftercare(admissionNo){
+  const [smsTask,houseTask]=await Promise.allSettled([
+    sendSubmissionConfirmation(admissionNo),
+    assignStudentHouse()
+  ]);
+  const smsResult=smsTask.status==='fulfilled'&&smsTask.value?smsTask.value:{ok:false,status:'pending',message:'SMS confirmation is pending.'};
+  const houseResult=houseTask.status==='fulfilled'&&houseTask.value?houseTask.value:{ok:false,status:'pending',message:'House assignment is pending.'};
+  const smsStatus=(smsResult&&smsResult.status)||'pending';
+  const smsStatusLabel=smsStatus==='sent'||smsStatus==='duplicate'?'Sent':(smsStatus==='skipped'?'Skipped':'Pending');
+  const smsNote=smsStatusLabel==='Sent'
+    ? 'A confirmation SMS has been sent to your phone number.'
+    : ((smsResult&&smsResult.message)||'SMS confirmation is pending. Your submission has still been received.');
+  patchSubmissionSuccess({
+    sms_status:smsStatus,
+    sms_status_label:smsStatusLabel,
+    sms_note:smsNote
+  });
+  try{ await refreshStudent({force:true}); }catch(e){}
+  if(houseResult&&houseResult.ok&&houseResult.status==='assigned'&&houseResult.house_name){
+    toast('House assigned: '+houseResult.house_name);
+  }
+}
 async function submitApp(){
   syncStepCompletion();
   const firstInvalid=app.done.findIndex(d=>!d);
@@ -1558,28 +1603,20 @@ async function submitApp(){
       if(data&&data.error==='closed'){toast('Admission is closed for this school - submission not allowed.');return;}
       toast('Submission failed - please try again');return;
     }
-    const smsResult=await sendSubmissionConfirmation(data.admission_no);
-    const houseResult=await assignStudentHouse();
-    const smsStatus=(smsResult&&smsResult.status)||'pending';
-    const smsStatusLabel=smsStatus==='sent'||smsStatus==='duplicate'?'Sent':(smsStatus==='skipped'?'Skipped':'Pending');
-    const smsNote=smsStatusLabel==='Sent'
-      ? 'A confirmation SMS has been sent to your phone number.'
-      : ((smsResult&&smsResult.message)||'SMS confirmation is pending. Your submission has still been received.');
-    writeSubmissionSuccess({
+    applySubmittedStudentState(data.admission_no,payload);
+    patchSubmissionSuccess({
       school_name:(SCHOOL&&SCHOOL.school&&SCHOOL.school.name)||'Your school',
       application_no:data.admission_no||'',
-      sms_status:smsStatus,
-      sms_status_label:smsStatusLabel,
-      sms_note:smsNote
+      sms_status:'pending',
+      sms_status_label:'Processing',
+      sms_note:'Your form has been received. SMS confirmation and house allocation are finishing in the background.'
     });
-    await refreshStudent({force:true});
     app.current=0;
+    hydrate();
     showPanel('dash');
     renderSubmissionSuccess();
-    const houseNote=houseResult&&houseResult.ok&&houseResult.status==='assigned'&&houseResult.house_name
-      ? ' House assigned: '+houseResult.house_name+'.'
-      : '';
-    toast('Forms submitted successfully - Admission No '+data.admission_no+'.'+houseNote);
+    toast('Forms submitted successfully - Admission No '+data.admission_no+'.');
+    setTimeout(function(){ runSubmissionAftercare(data.admission_no); },0);
   } finally {
     submitBtn.textContent=previousLabel;
     submitBtn.disabled=false;
