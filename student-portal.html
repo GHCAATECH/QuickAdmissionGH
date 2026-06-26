@@ -808,6 +808,9 @@
               <div class="grid-2"><div class="field"><label>Index No</label><input id="pf1-index" disabled></div><div class="field"><label>Gender</label><input id="pf1-gender" disabled></div></div>
               <div class="grid-2"><div class="field"><label>Programme</label><input id="pf1-prog" disabled></div><div class="field"><label>Residential Status</label><input id="pf1-res" disabled></div></div>
               <div class="field"><label>Student Name</label><input id="pf1-surname" disabled></div>
+              <div class="field" id="passportPhotoField" style="display:none"><label>Passport Photo <span class="hint">(.jpg / .png - max 2 MB)</span></label>
+                <input type="file" id="photoFileInput" accept="image/jpeg,image/png,.jpg,.jpeg,.png" style="display:none" onchange="handlePassportFile(this)">
+                <div id="photoWrap"><div class="dropzone" onclick="uploadPassportPhoto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg><b>Tap to upload your passport photo</b><small>JPG or PNG - up to 2 MB</small></div></div></div>
               <div class="field"><label>Aggregate of Best Six</label><input id="pf1-agg" disabled></div>
 
               <div class="sub-h">Enrolment data - Part 2 <span class="req-note">enter exactly as captured on your CSSPS enrolment form</span></div>
@@ -822,12 +825,14 @@
             <!-- STEP 1 - PERSONAL -->
             <section class="stepcard" data-step="1"><div class="card2"><div class="card2-head"><h2>Personal data</h2><p>Some fields are mandatory.</p></div><div class="card2-body">
               <div class="grid-2"><div class="field"><label>Date of Birth <span class="rq">*</span></label><input type="date" id="pf-dob"></div><div class="field"><label>Place of Birth <span class="rq">*</span></label><input id="pf-pob"></div></div>
-              <div class="grid-2"><div class="field"><label>Nationality <span class="rq">*</span></label><select id="pf-nat" onchange="toggleOther('pf-nat')"></select><input id="pf-nat-other" placeholder="Please specify nationality" style="display:none;margin-top:6px"></div><div class="field"><label>Religion <span class="rq">*</span></label><select id="pf-rel" onchange="toggleOther('pf-rel')"><option value="">Select...</option><option>Christianity</option><option>Islam</option><option>Traditional African Religions</option><option>Buddhism</option><option>Hinduism</option><option>Judaism</option><option>Atheism/Agnosticism</option><option>Other</option></select><input id="pf-rel-other" placeholder="Please specify religion" style="display:none;margin-top:6px"></div></div>
-              <div class="grid-2"><div class="field"><label>Religious Denomination <span class="hint">(Christians only)</span></label><select id="pf-den" onchange="toggleOther('pf-den')"><option value="">Select...</option><option>Catholic</option><option>Methodist</option><option>Anglican</option><option>Presbyterian</option><option>Pentecostal</option><option>Baptist</option><option>Lutheran</option><option>Seventh-Day Adventist</option><option>Evangelical Charismatic</option><option>Church of Christ</option><option>Other</option></select><input id="pf-den-other" placeholder="Please specify denomination" style="display:none;margin-top:6px"></div><div class="field"><label>Permanent Address <span class="rq">*</span></label><input id="pf-addr" placeholder="House / digital address"></div></div>
+              <div class="grid-2"><div class="field"><label>Nationality <span class="rq">*</span></label><select id="pf-nat" onchange="toggleOther('pf-nat')"></select><input id="pf-nat-other" placeholder="Please specify nationality" style="display:none;margin-top:6px"></div><div class="field"><label>Religion <span class="rq">*</span></label><select id="pf-rel" onchange="onReligionChange()"><option value="">Select...</option><option value="Christianity">Christian</option><option>Islam</option><option>Traditional African Religions</option><option>Buddhism</option><option>Hinduism</option><option>Judaism</option><option>Atheism/Agnosticism</option><option>Other</option></select><input id="pf-rel-other" placeholder="Please specify religion" style="display:none;margin-top:6px"></div></div>
+              <div class="grid-2"><div class="field" id="pf-den-field" style="display:none"><label>Religious Denomination <span class="rq">*</span></label><select id="pf-den" onchange="toggleOther('pf-den')"><option value="">Select...</option><option>Catholic</option><option>Methodist</option><option>Anglican</option><option>Presbyterian</option><option>Pentecostal</option><option>Baptist</option><option>Lutheran</option><option>Seventh-Day Adventist</option><option>Evangelical Charismatic</option><option>Church of Christ</option><option>Other</option></select><input id="pf-den-other" placeholder="Please specify denomination" style="display:none;margin-top:6px"></div><div class="field"><label>Permanent Address <span class="rq">*</span></label><input id="pf-addr" placeholder="House / digital address"></div></div>
               <div class="grid-3"><div class="field"><label>Town <span class="rq">*</span></label><input id="pf-town"></div><div class="field"><label>Region <span class="rq">*</span></label><select id="pf-region"></select></div><div class="field"><label>District <span class="rq">*</span></label><input id="pf-district" list="pf-district-list" placeholder="Start typing your district"><datalist id="pf-district-list"></datalist></div></div>
               <div class="grid-2"><div class="field"><label>Interest(s) <span class="rq">*</span></label><select id="pf-interest" onchange="toggleOther('pf-interest')"><option value="">Select...</option><option>Athletics</option><option>Football</option><option>Debating Club</option><option>Drama</option><option>Music</option><option>Others</option></select><input id="pf-interest-other" placeholder="Please specify your interest" style="display:none;margin-top:6px"></div><div class="field"><label>Ghana Card / NHIS No</label><input id="pf-card" placeholder="NA"></div></div>
-              <div class="sub-h">Class selection <span class="req-note">pick a class based on the available subject combinations - you must choose one</span></div>
-              <div class="cls-wrap"><table class="cls-table"><thead><tr><th>Class</th><th>Subject combination</th><th>Seats</th></tr></thead><tbody id="clsRows"></tbody></table></div>
+              <div id="classSelectBlock"><div class="sub-h">Class selection <span class="req-note">pick a class based on the available subject combinations - you must choose one</span></div>
+              <div class="cls-wrap"><table class="cls-table"><thead><tr><th>Class</th><th>Subject combination</th><th>Seats</th></tr></thead><tbody id="clsRows"></tbody></table></div></div>
+              <div id="houseSelectBlock" style="display:none"><div class="sub-h">House selection <span class="req-note">pick one available house</span></div>
+              <div class="cls-wrap"><table class="cls-table"><thead><tr><th>House</th><th>Type</th><th>Capacity</th></tr></thead><tbody id="houseRows"></tbody></table></div></div>
               <div class="step-nav"><button class="btn btn-ghost" onclick="goStep(0)">Back</button><button class="btn btn-primary" onclick="stepNext(1)">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
             </div></div></section>
 
@@ -872,19 +877,34 @@ const NATIONALITIES=['Ghanaian','Nigerian','Togolese','Ivorian','Burkinabe','Ben
 const DISTRICTS=Array.isArray(window.QAG_DISTRICTS)?window.QAG_DISTRICTS:[];
 
 let session=null, SCHOOL=null, PROGRAMMES=[], STU=null;
-let app={done:[false,false,false],classId:null,className:'',enrUploaded:false,current:0,fields:{}};
+let app={done:[false,false,false],classId:null,className:'',houseId:null,houseName:'',enrUploaded:false,photoUploaded:false,current:0,fields:{}};
 let activeStudentSessionKey='';
 const $=id=>document.getElementById(id);
 const HTML_ESCAPE_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'};
 function escapeHtml(v){return String(v==null?'':v).replace(/[&<>"'`]/g,function(ch){return HTML_ESCAPE_MAP[ch];});}
 function safeHtml(v,fallback){const text=String(v==null?'':v);return text?escapeHtml(text):(fallback||'');}
+function schoolConfig(){return (SCHOOL&&SCHOOL.config)||{};}
+function configBool(key,defaultValue){
+  const cfg=schoolConfig();
+  const v=cfg[key];
+  if(v===undefined||v===null||v==='') return !!defaultValue;
+  return v===true||v===1||v==='1'||String(v).toLowerCase()==='true'||String(v).toLowerCase()==='yes';
+}
+function allowPassportPhoto(){return configBool('allow_passport_photo',false);}
+function allowHouseSelection(){return configBool('allow_house_selection',false);}
+function allowClassSelection(){return configBool('allow_class_selection',true);}
+function forceEnrolmentUpload(){return configBool('force_enrolment_upload',true);}
+function isChristianReligion(){
+  const rel=fieldValue?fieldValue('pf-rel',false):(($('pf-rel')&&$('pf-rel').value)||'');
+  return /^christ/i.test(String(rel||'').trim());
+}
 function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));window.scrollTo(0,0);if(id==='s-purchase'){try{showPendingBanner();}catch(e){}}}
 function studentSessionKey(){
   return [session&&session.school||'',session&&session.index||'',session&&session.token||''].join('::');
 }
 function resetStudentWizardState(){
-  app={done:[false,false,false],classId:null,className:'',enrUploaded:false,current:0,fields:{}};
+  app={done:[false,false,false],classId:null,className:'',houseId:null,houseName:'',enrUploaded:false,photoUploaded:false,current:0,fields:{}};
   ['pf-raw','pf-enrol','pf-jhs','pf-jhstype','pf-dob','pf-pob','pf-nat','pf-rel','pf-den','pf-addr','pf-town','pf-region','pf-district','pf-interest','pf-card','pf-sms','pf-wa','pf-other','pf-email','pf-fname','pf-focc','pf-fphone','pf-mname','pf-mocc','pf-mphone','pf-guard','pf-gphone','pf-digital','pf-nat-other','pf-rel-other','pf-den-other','pf-interest-other'].forEach(function(id){
     const el=$(id);
     if(!el) return;
@@ -899,6 +919,7 @@ function resetStudentWizardState(){
   const review=$('reviewBlocks');
   if(review) review.innerHTML='';
   removeEnr();
+  resetPassportUploadUi();
 }
 function isHostedPortal(){
   const host=String((window.location&&window.location.hostname)||'').toLowerCase();
@@ -1045,8 +1066,8 @@ async function lookupPlacementSms(idx,school){
 }
 
 async function applySchool(data){
-  // data carries school + config + programmes + classes from login
-  SCHOOL={school:data.school,config:data.config,classes:data.classes||[]};
+  // data carries school + config + programmes + houses + classes from login
+  SCHOOL={school:data.school,config:data.config,houses:data.houses||[],classes:data.classes||[]};
   PROGRAMMES=data.programmes||[];
   try{
     const sid=(data.school&&data.school.id)||(session&&session.school);
@@ -1224,10 +1245,12 @@ function hydrate(){
   $('wuSchoolNo').textContent='School No.: '+(s.school_no||'-');
   app.done=s.submitted?[true,true,true]:[!!s.personal_done,!!s.programme_done,!!s.undertaking_done];
   app.classId=s.class_id||null;
+  app.houseId=s.house_id||null;
+  app.houseName=s.house||'';
   $('pf1-index').value=s.index||''; $('pf1-gender').value=s.gender||''; $('pf1-prog').value=s.programme||'';
   $('pf1-res').value=s.residential||'-'; $('pf1-surname').value=displayName||s.surname||'';
   $('pf1-agg').value=(s.aggregate!=null?s.aggregate:'-');
-  buildPickers(); buildClassTable(); prefillRecords(s.records);
+  buildPickers(); buildClassTable(); buildHouseTable(); prefillRecords(s.records); applyFeatureVisibility();
   if(!$('pf-sms').value&&smsContact)$('pf-sms').value=smsContact;
   if(!app.fields.sms_contact&&smsContact)app.fields.sms_contact=smsContact;
   if(!s.submitted) syncStepCompletion();
@@ -1419,12 +1442,14 @@ function validateStep(step,opts){
   if(step===0){
     const missing=firstMissing(['pf-raw','pf-enrol','pf-jhs','pf-jhstype'],useStored);
     if(missing) return failStep(step,'Fill all required Part 2 fields',missing,silent);
-    if(!app.enrUploaded) return failStep(step,'Please upload your enrolment form','',silent);
+    if(forceEnrolmentUpload()&&!app.enrUploaded) return failStep(step,'Please upload your enrolment form','',silent);
   }
   if(step===1){
     const missing=firstMissing(['pf-dob','pf-pob','pf-nat','pf-rel','pf-addr','pf-town','pf-region','pf-district','pf-interest'],useStored);
     if(missing) return failStep(step,'Please complete the required personal fields',missing,silent);
-    if(!app.classId&&(SCHOOL&&SCHOOL.classes&&SCHOOL.classes.length)) return failStep(step,'Please select a class','',silent);
+    if(isChristianReligion()&&!fieldValue('pf-den',useStored)) return failStep(step,'Please select your religious denomination','pf-den',silent);
+    if(allowClassSelection()&&!app.classId&&(SCHOOL&&SCHOOL.classes&&SCHOOL.classes.length)) return failStep(step,'Please select a class','',silent);
+    if(allowHouseSelection()&&!app.houseId&&(SCHOOL&&SCHOOL.houses&&SCHOOL.houses.length)) return failStep(step,'Please select a house','',silent);
   }
   if(step===2){
     const missing=firstMissing(['pf-sms','pf-fname','pf-focc','pf-fphone','pf-mname','pf-mocc','pf-mphone'],useStored);
@@ -1446,10 +1471,11 @@ function buildPickers(){
 }
 function fmtCombo(str){ return (str||'').split(',').map(x=>x.trim()).filter(Boolean).join(' - '); }
 function buildClassTable(){
-  const progSubs=fmtCombo((progById(STU.programme_id)||{}).subjects||'');
+  const studentProgrammeId=STU.programme_id||((PROGRAMMES||[]).find(p=>String(p.name||'').trim().toLowerCase()===String(STU.programme||'').trim().toLowerCase())||{}).id||null;
+  const progSubs=fmtCombo((progById(studentProgrammeId)||{}).subjects||'');
   let classes=(SCHOOL&&SCHOOL.classes)||[];
   // Only show classes for this student's programme (classes without a programme are shown to all)
-  const mine=classes.filter(c=>!c.programme_id || String(c.programme_id)===String(STU.programme_id));
+  const mine=classes.filter(c=>!c.programme_id || (studentProgrammeId&&String(c.programme_id)===String(studentProgrammeId)));
   if(mine.length) classes=mine;
   $('clsRows').innerHTML=classes.length?classes.map(c=>{
     const combo=fmtCombo(c.subjects)||progSubs||'Standard combination';
@@ -1457,6 +1483,42 @@ function buildClassTable(){
   }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No classes published yet. You can still submit; a class will be assigned by the school.</td></tr>`;
 }
 function pickClass(id,name){app.classId=id;app.className=decodeURIComponent(String(name||''));document.querySelectorAll('.cls-row').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));}
+function houseMatchesStudent(h){
+  const type=String(h.residential_type||h.rtype||'').toLowerCase();
+  const res=String((STU&&STU.residential)||'').toLowerCase();
+  if(type&&res&&type.indexOf('day')>-1&&res.indexOf('day')===-1) return false;
+  if(type&&res&&type.indexOf('boarding')>-1&&res.indexOf('boarding')===-1) return false;
+  const hg=String(h.gender||'').toLowerCase();
+  const sg=String((STU&&STU.gender)||'').toLowerCase();
+  if(!hg||hg==='both'||hg==='mixed') return true;
+  if(hg.startsWith('m')) return sg==='m'||sg==='male';
+  if(hg.startsWith('f')) return sg==='f'||sg==='female';
+  return true;
+}
+function buildHouseTable(){
+  const body=$('houseRows'); if(!body)return;
+  const all=(SCHOOL&&SCHOOL.houses)||[];
+  const houses=all.filter(houseMatchesStudent);
+  body.innerHTML=houses.length?houses.map(function(h){
+    const id=String(h.id||'');
+    const type=[h.residential_type||h.rtype||'',h.gender||''].filter(Boolean).join(' - ')||'Available';
+    return `<tr class="cls-row house-row ${id===String(app.houseId||'')?'sel':''}" data-id="${safeHtml(id)}" onclick="pickHouse('${encodeURIComponent(id)}','${encodeURIComponent(String(h.name||''))}')"><td><span class="cls-radio"></span>${safeHtml(h.name,'-')}</td><td class="cls-combo">${safeHtml(type,'Available')}</td><td class="cls-seats">${safeHtml(h.capacity||h.cap||'-')}</td></tr>`;
+  }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No houses are available for your residential status yet.</td></tr>`;
+}
+function pickHouse(id,name){
+  app.houseId=decodeURIComponent(String(id||''));
+  app.houseName=decodeURIComponent(String(name||''));
+  document.querySelectorAll('.house-row').forEach(r=>r.classList.toggle('sel',String(r.dataset.id)===String(app.houseId)));
+}
+function applyFeatureVisibility(){
+  const passport=$('passportPhotoField'); if(passport) passport.style.display=allowPassportPhoto()?'':'none';
+  const cls=$('classSelectBlock'); if(cls) cls.style.display=allowClassSelection()?'':'none';
+  const hs=$('houseSelectBlock'); if(hs) hs.style.display=allowHouseSelection()?'':'none';
+  const enrLabel=document.querySelector('label[for="enrFileInput"]');
+  const enrReq=document.querySelector('#enrWrap')&&document.querySelector('#enrWrap').closest('.field')?.querySelector('.rq');
+  if(enrReq) enrReq.style.display=forceEnrolmentUpload()?'':'none';
+  onReligionChange();
+}
 function uploadEnr(){ const inp=$('enrFileInput'); if(inp) inp.click(); }
 async function handleEnrFile(inp){
   const file=inp.files&&inp.files[0]; inp.value='';
@@ -1483,9 +1545,46 @@ async function handleEnrFile(inp){
   toast('Enrolment form uploaded');
 }
 function removeEnr(){app.enrUploaded=false;app.fields.enrolment_form_url='';app.fields.enrolment_uploaded=false;$('enrWrap').innerHTML=`<div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only - up to 2 MB - enrolment code must be visible</small></div>`;}
+function resetPassportUploadUi(){
+  const wrap=$('photoWrap'); if(!wrap)return;
+  app.photoUploaded=false;
+  if(app.fields){app.fields.passport_photo_url='';app.fields.passport_photo_uploaded=false;}
+  wrap.innerHTML=`<div class="dropzone" onclick="uploadPassportPhoto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg><b>Tap to upload your passport photo</b><small>JPG or PNG - up to 2 MB</small></div>`;
+}
+function uploadPassportPhoto(){ const inp=$('photoFileInput'); if(inp) inp.click(); }
+async function handlePassportFile(inp){
+  const file=inp.files&&inp.files[0]; inp.value='';
+  if(!file) return;
+  const okType=/^image\/(jpeg|png)$/i.test(file.type)||/\.(jpe?g|png)$/i.test(file.name);
+  if(!okType){ toast('Please upload a JPG or PNG passport photo'); return; }
+  if(file.size > 2*1024*1024){ toast('Photo too large - max 2 MB'); return; }
+  if(!STU||!session){ toast('Please log in again'); return; }
+  $('photoWrap').innerHTML='<div class="dropzone"><b>Uploading photo...</b><small>Please wait</small></div>';
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path='passport-photos/'+(STU.index||'student')+'_'+Date.now()+'.'+ext;
+  const {error}=await sb.storage.from('enrolment-forms').upload(path,file,{contentType:file.type||'image/jpeg',upsert:true});
+  if(error){ toast('Passport upload failed - '+error.message); resetPassportUploadUi(); return; }
+  const {data:pub}=sb.storage.from('enrolment-forms').getPublicUrl(path);
+  app.photoUploaded=true;
+  app.fields.passport_photo_url=pub.publicUrl;
+  app.fields.passport_photo_uploaded=true;
+  $('photoWrap').innerHTML=`<div class="file-done"><span class="fi"><img src="${escapeHtml(pub.publicUrl)}" alt="" style="width:48px;height:54px;object-fit:cover;border-radius:6px"></span><div><b>${escapeHtml(file.name)}</b><small>Passport photo uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
+  toast('Passport photo uploaded');
+}
 
 function toggleOther(selId){ const s=$(selId), o=$(selId+'-other'); if(!s||!o)return; const isOther=/^others?$/i.test((s.value||'').trim()); o.style.display=isOther?'block':'none'; if(!isOther)o.value=''; }
 function otherVal(selId){ const s=$(selId), o=$(selId+'-other'); if(s&&/^others?$/i.test((s.value||'').trim())&&o&&o.value.trim()) return o.value.trim(); return s?s.value:''; }
+function onReligionChange(){
+  toggleOther('pf-rel');
+  const field=$('pf-den-field');
+  const show=isChristianReligion();
+  if(field) field.style.display=show?'':'none';
+  if(!show){
+    const den=$('pf-den'),other=$('pf-den-other');
+    if(den) den.value='';
+    if(other){other.value='';other.style.display='none';}
+  }
+}
 function setSelectMaybeOther(selId,v){ const s=$(selId), o=$(selId+'-other'); if(!s)return; if(v==null||v==='')return;
   const has=[...s.options].some(op=>op.value===v||op.text===v);
   if(has){ s.value=v; } else { const oo=[...s.options].find(op=>/^others?$/i.test(op.value||op.text)); if(oo){ s.value=oo.value||oo.text; if(o){o.value=v;} } else { s.value=v; } }
@@ -1495,7 +1594,7 @@ function collect(step,opts){
   const useStored=!!(opts&&opts.useStored);
   const f=app.fields;
   if(step===0){Object.assign(f,{raw_score:fieldValue('pf-raw',useStored),enrolment_code:fieldValue('pf-enrol',useStored).toUpperCase(),jhs_attended:fieldValue('pf-jhs',useStored),jhs_type:fieldValue('pf-jhstype',useStored),enrolment_uploaded:app.enrUploaded});}
-  if(step===1){Object.assign(f,{dob:fieldValue('pf-dob',useStored),place_of_birth:fieldValue('pf-pob',useStored),nationality:fieldValue('pf-nat',useStored),religion:fieldValue('pf-rel',useStored),denomination:fieldValue('pf-den',useStored),address:fieldValue('pf-addr',useStored),town:fieldValue('pf-town',useStored),region:fieldValue('pf-region',useStored),district:fieldValue('pf-district',useStored),interest:fieldValue('pf-interest',useStored),ghana_card:fieldValue('pf-card',useStored),class_id:app.classId,class_name:app.className});}
+  if(step===1){Object.assign(f,{dob:fieldValue('pf-dob',useStored),place_of_birth:fieldValue('pf-pob',useStored),nationality:fieldValue('pf-nat',useStored),religion:fieldValue('pf-rel',useStored),denomination:isChristianReligion()?fieldValue('pf-den',useStored):'',address:fieldValue('pf-addr',useStored),town:fieldValue('pf-town',useStored),region:fieldValue('pf-region',useStored),district:fieldValue('pf-district',useStored),interest:fieldValue('pf-interest',useStored),ghana_card:fieldValue('pf-card',useStored),class_id:app.classId,class_name:app.className,house_id:app.houseId,house_name:app.houseName});}
   if(step===2){Object.assign(f,{sms_contact:fieldValue('pf-sms',useStored),whatsapp:fieldValue('pf-wa',useStored),other_phone:fieldValue('pf-other',useStored),email:fieldValue('pf-email',useStored),father_name:fieldValue('pf-fname',useStored),father_occupation:fieldValue('pf-focc',useStored),father_phone:fieldValue('pf-fphone',useStored),mother_name:fieldValue('pf-mname',useStored),mother_occupation:fieldValue('pf-mocc',useStored),mother_phone:fieldValue('pf-mphone',useStored),guardian:fieldValue('pf-guard',useStored),guardian_phone:fieldValue('pf-gphone',useStored),digital_address:fieldValue('pf-digital',useStored)});}
 }
 function stepNext(step){
@@ -1514,8 +1613,12 @@ function prefillRecords(r){
   set('pf-fname',r.father_name);set('pf-focc',r.father_occupation);set('pf-fphone',r.father_phone);set('pf-mname',r.mother_name);set('pf-mocc',r.mother_occupation);set('pf-mphone',r.mother_phone);
   set('pf-guard',r.guardian);set('pf-gphone',r.guardian_phone);set('pf-digital',r.digital_address);
   if(r.enrolment_uploaded){app.enrUploaded=true;$('enrWrap').innerHTML=`<div class="file-done"><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div><b>enrolment-form.jpg</b><small>Uploaded</small></div><button class="x" onclick="removeEnr()">Remove</button></div>`;}
+  if(r.passport_photo_url){app.photoUploaded=true;$('photoWrap').innerHTML=`<div class="file-done"><span class="fi"><img src="${escapeHtml(r.passport_photo_url)}" alt="" style="width:48px;height:54px;object-fit:cover;border-radius:6px"></span><div><b>passport-photo</b><small>Uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;}
   if(r.class_name)app.className=r.class_name;
+  if(r.house_id)app.houseId=r.house_id;
+  if(r.house_name)app.houseName=r.house_name;
   Object.assign(app.fields,r);
+  onReligionChange();
 }
 function rev(t,rows,step){return `<div class="rev-block"><div class="rev-head"><span class="t">${safeHtml(t)}</span><a onclick="goStep(${step})" style="font-size:11.5px">edit</a></div><dl class="rev-body">${rows.map(r=>`<dt>${safeHtml(r[0])}</dt><dd>${safeHtml(r[1],'-')}</dd>`).join('')}</dl></div>`;}
 function buildReview(){
@@ -1524,9 +1627,9 @@ function buildReview(){
   const studentDisplayName=studentName(s)||s.full_name||s.surname||'';
   let h='';
   h+=rev('Enrolment data - Part 1',[['Index No',s.index],['Gender',s.gender],['Programme',s.programme],['Residential',s.residential],['Student Name',studentDisplayName],['Aggregate',s.aggregate]],0);
-  h+=rev('Enrolment data - Part 2',[['Raw Score',f.raw_score],['Enrolment Code',f.enrolment_code],['JHS Attended',f.jhs_attended],['JHS Type',f.jhs_type],['Enrolment form',app.enrUploaded?'Uploaded':'Not uploaded']],0);
+  h+=rev('Enrolment data - Part 2',[['Raw Score',f.raw_score],['Enrolment Code',f.enrolment_code],['JHS Attended',f.jhs_attended],['JHS Type',f.jhs_type],['Enrolment form',app.enrUploaded?'Uploaded':'Not uploaded'],['Passport photo',app.photoUploaded?'Uploaded':'Not uploaded']],0);
   h+=rev('Personal data',[['Date of Birth',f.dob],['Place of Birth',f.place_of_birth],['Nationality',f.nationality],['Religion',f.religion],['Denomination',f.denomination],['Address',f.address],['Town',f.town],['Region',f.region],['District',f.district],['Interest',f.interest],['Ghana Card/NHIS',f.ghana_card]],1);
-  h+=rev('Class selection',[['Class',app.className||'To be assigned']],1);
+  h+=rev('Class / house selection',[['Class',allowClassSelection()?(app.className||'To be assigned'):'Assigned by school'],['House',allowHouseSelection()?(app.houseName||'To be assigned'):'Assigned by school']],1);
   h+=rev('Communication',[['Mobile (SMS)',f.sms_contact],['WhatsApp',f.whatsapp],['Other Phone',f.other_phone],['E-mail',f.email]],2);
   h+=rev('Parental data',[["Father's Name",f.father_name],["Father's Occupation",f.father_occupation],["Father's Contact",f.father_phone],["Mother's Name",f.mother_name],["Mother's Occupation",f.mother_occupation],["Mother's Contact",f.mother_phone],['Guardian',f.guardian],['Residential Tel.',f.guardian_phone],['Digital Address',f.digital_address]],2);
   $('reviewBlocks').innerHTML=h;
@@ -1576,6 +1679,8 @@ function applySubmittedStudentState(admissionNo,payload){
     documents_done:!!app.enrUploaded,
     submitted:true
   });
+  if(app.houseId) STU.house_id=app.houseId;
+  if(app.houseName) STU.house=app.houseName;
   app.done=[true,true,true];
 }
 async function runSubmissionAftercare(admissionNo){

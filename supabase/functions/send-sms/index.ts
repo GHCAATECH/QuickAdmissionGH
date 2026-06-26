@@ -37,6 +37,10 @@ function safeString(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function smsJson(req: Request, body: JsonRecord, status = 200) {
+  return jsonResponse(req, body, status);
+}
+
 function hasSchoolWriteAccess(profile: Record<string, unknown> | null, schoolId: string) {
   if (!profile) return false;
   if (profile.role === "super_admin") return true;
@@ -214,7 +218,7 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
   const token = safeString(body.token);
   const schoolId = safeString(body.school || body.school_id);
   if (!index || !token) {
-    return json({ ok: false, error: "validation", message: "Index number and token are required." }, 400);
+    return smsJson(req, { ok: false, error: "validation", message: "Index number and token are required." }, 400);
   }
 
   let studentQuery = admin
@@ -227,27 +231,27 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
   if (schoolId) studentQuery = studentQuery.eq("school_id", schoolId);
   const { data: studentRows, error: studentError } = await studentQuery;
   if (studentError) {
-    return json({ ok: false, error: "student_lookup_failed", message: studentError.message }, 500);
+    return smsJson(req, { ok: false, error: "student_lookup_failed", message: studentError.message }, 500);
   }
   if (!studentRows || studentRows.length === 0) {
-    return json({ ok: false, error: "index", message: "Student record not found." }, 404);
+    return smsJson(req, { ok: false, error: "index", message: "Student record not found." }, 404);
   }
   if (studentRows.length > 1) {
-    return json({ ok: false, error: "ambiguous", message: "Index number matches more than one school." }, 409);
+    return smsJson(req, { ok: false, error: "ambiguous", message: "Index number matches more than one school." }, 409);
   }
 
   const student = studentRows[0];
   if (safeString(student.admission_token).toUpperCase() !== token.toUpperCase()) {
-    return json({ ok: false, error: "token", message: "Admission token is not valid." }, 403);
+    return smsJson(req, { ok: false, error: "token", message: "Admission token is not valid." }, 403);
   }
   if (!student.submitted_at) {
-    return json({ ok: false, error: "not_submitted", message: "Submission has not been completed yet." }, 409);
+    return smsJson(req, { ok: false, error: "not_submitted", message: "Submission has not been completed yet." }, 409);
   }
   if (student.submission_sms_sent) {
-    return json({ ok: true, status: "duplicate", message: "Confirmation SMS was already sent for this submission." });
+    return smsJson(req, { ok: true, status: "duplicate", message: "Confirmation SMS was already sent for this submission." });
   }
   if (safeString(student.submission_sms_status).toLowerCase() === "processing") {
-    return json({ ok: true, status: "duplicate", message: "Confirmation SMS is already being processed." });
+    return smsJson(req, { ok: true, status: "duplicate", message: "Confirmation SMS is already being processed." });
   }
 
   const { data: claimRows } = await admin
@@ -262,7 +266,7 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
     .select("id");
 
   if (!claimRows || !claimRows.length) {
-    return json({ ok: true, status: "duplicate", message: "Confirmation SMS has already been handled." });
+    return smsJson(req, { ok: true, status: "duplicate", message: "Confirmation SMS has already been handled." });
   }
 
   const { data: school } = await admin
@@ -314,7 +318,7 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
       template_name: "submission",
       api_response: { skipped: true, reason: "sms_disabled" },
     });
-    return json({ ok: true, status: "skipped", message: "SMS is disabled for this school." });
+    return smsJson(req, { ok: true, status: "skipped", message: "SMS is disabled for this school." });
   }
 
   if (!senderId) {
@@ -335,7 +339,7 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
       template_name: "submission",
       api_response: { skipped: true, reason: "missing_school_code" },
     });
-    return json({ ok: true, status: "skipped", message: "School sender ID is missing." });
+    return smsJson(req, { ok: true, status: "skipped", message: "School sender ID is missing." });
   }
 
   if (!phone) {
@@ -356,7 +360,7 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
       template_name: "submission",
       api_response: { skipped: true, reason: "missing_phone" },
     });
-    return json({ ok: true, status: "skipped", message: "Student phone number is missing." });
+    return smsJson(req, { ok: true, status: "skipped", message: "Student phone number is missing." });
   }
 
   const result = await sendArkeselSms({
@@ -392,7 +396,7 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
         submission_sms_last_error: null,
       })
       .eq("id", student.id);
-    return json({
+    return smsJson(req, {
       ok: true,
       status: "sent",
       message: "Confirmation SMS sent successfully.",
@@ -408,7 +412,7 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
     })
     .eq("id", student.id);
 
-  return json(
+  return smsJson(req,
     {
       ok: false,
       status: "failed",
@@ -445,18 +449,18 @@ async function getSchoolSmsMeta(schoolId: string) {
 async function handleBulkSms(req: Request, body: Record<string, unknown>) {
   const { profile } = await resolveProfile(req);
   const schoolId = safeString(body.school_id);
-  if (!schoolId) return json({ ok: false, error: "validation", message: "school_id is required." }, 400);
+  if (!schoolId) return smsJson(req, { ok: false, error: "validation", message: "school_id is required." }, 400);
 
   const access = await assertSchoolAccess(profile, schoolId);
-  if (!access.ok) return json({ ok: false, error: "forbidden", message: access.message }, access.status);
+  if (!access.ok) return smsJson(req, { ok: false, error: "forbidden", message: access.message }, access.status);
 
   const messages = Array.isArray(body.messages) ? body.messages : [];
-  if (!messages.length) return json({ ok: false, error: "validation", message: "No messages supplied." }, 400);
+  if (!messages.length) return smsJson(req, { ok: false, error: "validation", message: "No messages supplied." }, 400);
 
   const { school, settings } = await getSchoolSmsMeta(schoolId);
   const senderId = normalizeSchoolCode(school?.school_code ?? school?.code);
-  if (!senderId) return json({ ok: false, error: "missing_school_code", message: "This school has no sender ID configured." }, 422);
-  if (settings?.sms_enabled === false) return json({ ok: false, error: "sms_disabled", message: "SMS is disabled for this school." }, 422);
+  if (!senderId) return smsJson(req, { ok: false, error: "missing_school_code", message: "This school has no sender ID configured." }, 422);
+  if (settings?.sms_enabled === false) return smsJson(req, { ok: false, error: "sms_disabled", message: "SMS is disabled for this school." }, 422);
 
   const candidates: BulkCandidate[] = [];
   const requestKeys = new Set<string>();
@@ -482,7 +486,7 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
   }
 
   if (!candidates.length) {
-    return json({ ok: false, error: "validation", message: "No valid recipients were supplied." }, 400);
+    return smsJson(req, { ok: false, error: "validation", message: "No valid recipients were supplied." }, 400);
   }
 
   const existingKeys = await getExistingBulkDeliveryKeys(schoolId);
@@ -498,7 +502,7 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
   }
 
   if (!sendableCandidates.length) {
-    return json({
+    return smsJson(req, {
       ok: true,
       status: "duplicate",
       sent: 0,
@@ -575,7 +579,7 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
 
   await syncSchoolBalance(schoolId, balance);
 
-  return json({
+  return smsJson(req, {
     ok: failed === 0,
     status,
     sent,
@@ -599,16 +603,16 @@ async function handleTestSms(req: Request, body: Record<string, unknown>) {
   const schoolId = safeString(body.school_id);
   const phone = normalizePhone(body.phone);
   if (!schoolId || !phone) {
-    return json({ ok: false, error: "validation", message: "school_id and phone are required." }, 400);
+    return smsJson(req, { ok: false, error: "validation", message: "school_id and phone are required." }, 400);
   }
 
   const access = await assertSchoolAccess(profile, schoolId);
-  if (!access.ok) return json({ ok: false, error: "forbidden", message: access.message }, access.status);
+  if (!access.ok) return smsJson(req, { ok: false, error: "forbidden", message: access.message }, access.status);
 
   const { school, settings } = await getSchoolSmsMeta(schoolId);
   const senderId = normalizeSchoolCode(school?.school_code ?? school?.code);
-  if (!senderId) return json({ ok: false, error: "missing_school_code", message: "This school has no sender ID configured." }, 422);
-  if (settings?.sms_enabled === false) return json({ ok: false, error: "sms_disabled", message: "SMS is disabled for this school." }, 422);
+  if (!senderId) return smsJson(req, { ok: false, error: "missing_school_code", message: "This school has no sender ID configured." }, 422);
+  if (settings?.sms_enabled === false) return smsJson(req, { ok: false, error: "sms_disabled", message: "SMS is disabled for this school." }, 422);
 
   const schoolName = safeString(school?.name) || "your school";
   const message = `This is a test SMS from ${schoolName}.`;
@@ -631,7 +635,7 @@ async function handleTestSms(req: Request, body: Record<string, unknown>) {
 
   await syncSchoolBalance(schoolId, balance);
 
-  return json({
+  return smsJson(req, {
     ok: status === "sent",
     status,
     sender_id: senderId,
@@ -643,10 +647,9 @@ async function handleTestSms(req: Request, body: Record<string, unknown>) {
 Deno.serve(async (req) => {
   const blocked = guardRequest(req, { maxBodyBytes: 131_072 });
   if (blocked) return blocked;
-  const json = (body: JsonRecord, status = 200) => jsonResponse(req, body, status);
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !ARKESEL_API_KEY) {
-    return json({ ok: false, error: "not_configured", message: "SMS provider is not configured." }, 500);
+    return smsJson(req, { ok: false, error: "not_configured", message: "SMS provider is not configured." }, 500);
   }
 
   try {
@@ -661,7 +664,7 @@ Deno.serve(async (req) => {
     }
     return await handleBulkSms(req, body);
   } catch (error) {
-    return json({
+    return smsJson(req, {
       ok: false,
       error: "internal_error",
       message: error instanceof Error ? error.message : "Unexpected error.",

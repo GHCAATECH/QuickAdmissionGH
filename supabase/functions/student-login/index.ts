@@ -85,6 +85,7 @@ Deno.serve(async (req: Request) => {
     classRes,
     houseRes,
     programmesRes,
+    housesRes,
     classesRes,
     classStudentsRes,
   ] = await Promise.all([
@@ -106,6 +107,7 @@ Deno.serve(async (req: Request) => {
       ? admin.from("houses").select("id,name").eq("id", String(student.house_id)).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     admin.from("programmes").select("id,code,name,subjects").eq("school_id", sid).order("code"),
+    admin.from("houses").select("id,name,capacity,gender,residential_type,priority").eq("school_id", sid).order("priority", { ascending: true }).order("name"),
     admin.from("classrooms").select("id,name,programme_id,subjects,capacity").eq("school_id", sid).order("name"),
     admin.from("students").select("class_id").eq("school_id", sid),
   ]);
@@ -163,6 +165,17 @@ Deno.serve(async (req: Request) => {
       seats: Math.max(capacity - taken, 0),
     };
   });
+  const houses = (housesRes.data ?? []).map((row) => {
+    const rec = row as Record<string, unknown>;
+    return {
+      id: rec.id,
+      name: safeText(rec.name),
+      capacity: rec.capacity ?? null,
+      gender: safeText(rec.gender),
+      residential_type: safeText(rec.residential_type),
+      priority: rec.priority ?? null,
+    };
+  });
 
   return json({
     ok: true,
@@ -209,6 +222,7 @@ Deno.serve(async (req: Request) => {
     },
     config,
     programmes,
+    houses,
     classes,
   });
 });

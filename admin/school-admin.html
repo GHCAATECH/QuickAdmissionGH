@@ -753,10 +753,10 @@
               <div class="grid-2"><div class="field"><label>Service charge (GHS)</label><input type="number" value="30" step="0.5"></div><div class="field"><label>Accept online payment</label><select><option>Yes — accept online payments</option><option>No — manual payments only</option></select></div></div>
             </fieldset>
             <fieldset><legend>Student features</legend>
-              <div class="switch-row"><div class="meta">Allow passport photo upload<small>Students upload their own photo</small></div><label class="switch"><input type="checkbox"><span class="track"></span></label></div>
-              <div class="switch-row"><div class="meta">Allow house selection<small>Students pick their house</small></div><label class="switch"><input type="checkbox"><span class="track"></span></label></div>
-              <div class="switch-row"><div class="meta">Allow class selection<small>Students pick their class</small></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-              <div class="switch-row"><div class="meta">Force enrolment form upload<small>Required before submission</small></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
+              <div class="switch-row"><div class="meta">Allow passport photo upload<small>Students upload their own photo</small></div><label class="switch"><input id="s_allow_passport_photo" type="checkbox"><span class="track"></span></label></div>
+              <div class="switch-row"><div class="meta">Allow house selection<small>Students pick their house</small></div><label class="switch"><input id="s_allow_house_selection" type="checkbox"><span class="track"></span></label></div>
+              <div class="switch-row"><div class="meta">Allow class selection<small>Students pick their class</small></div><label class="switch"><input id="s_allow_class_selection" type="checkbox" checked><span class="track"></span></label></div>
+              <div class="switch-row"><div class="meta">Force enrolment form upload<small>Required before submission</small></div><label class="switch"><input id="s_force_enrolment_upload" type="checkbox" checked><span class="track"></span></label></div>
             </fieldset>
             <fieldset><legend>SMS configuration</legend>
               <div class="panel panel-pad" style="margin:0;background:#fff8e6;border:1px solid rgba(199,134,26,.22)">
@@ -1016,7 +1016,7 @@
 
       <!-- REPORTS -->
       <section class="view" id="view-reports">
-        <div class="toolbar"><h2 class="section-title" style="margin:0">Enrolment reports</h2><div style="flex:1"></div><button class="btn btn-ghost btn-sm" onclick="toast('Exporting all reports…')">Export all</button></div>
+        <div class="toolbar"><h2 class="section-title" style="margin:0">Enrolment reports</h2><div style="flex:1"></div><button class="btn btn-ghost btn-sm" onclick="exportEnrolmentAnalytics()">Export all</button></div>
         <div class="chart-grid">
           <div class="panel" style="margin:0"><div class="panel-head"><h3>Gender distribution</h3></div><div class="chart-box"><canvas id="genderChart"></canvas></div></div>
           <div class="panel" style="margin:0"><div class="panel-head"><h3>Programme enrolment</h3></div><div class="chart-box"><canvas id="progChart"></canvas></div></div>
@@ -1770,12 +1770,21 @@ function bulkSms(){
   else toast('SMS composer is grouped by programme. Pick a programme to continue.');
 }
 function clearSel(){selected.clear();renderStudents();}
+function studentClassOptionsForProgramme(progId,selectedClassId){
+  const pid=progId?String(progId):'';
+  const filtered=classes.filter(function(c){ return !c.progId || !pid || String(c.progId)===pid; });
+  return '<option value="">- Not allocated -</option>'+filtered.map(c=>`<option value="${c.id}" ${String(selectedClassId||'')===String(c.id)?'selected':''}>${escapeHtml(c.name)}</option>`).join('');
+}
+function refreshEditClassOptions(){
+  const sel=$('es_class'); if(!sel)return;
+  sel.innerHTML=studentClassOptionsForProgramme(val('es_prog'),sel.value);
+}
 function viewStudent(id){
   const s=students.find(x=>x.id===id);
   const m=$('modal');
   const selectedProgId=s.progId||studentProgrammeIdByName(s.prog);
   const progOpts=programmes.map(p=>`<option value="${p.id}" ${selectedProgId==p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
-  const classOpts='<option value="">— Not allocated —</option>'+classes.map(c=>`<option value="${c.id}" ${s.classId==c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('');
+  const classOpts=studentClassOptionsForProgramme(selectedProgId,s.classId);
   const houseOpts='<option value="">— Not allocated —</option>'+houses.map(h=>`<option value="${h.id}" ${s.houseId==h.id?'selected':''}>${escapeHtml(h.name)}</option>`).join('');
   m.innerHTML=`<div class="modal-head"><div><h2>${safeHtml(s.name)}</h2><p><span class="code">${safeHtml(s.index)}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body"><div class="grid-2">
@@ -1783,7 +1792,7 @@ function viewStudent(id){
     <div class="field"><label>Gender</label><select id="es_gender"><option value="M" ${s.gender==='M'?'selected':''}>Male</option><option value="F" ${s.gender==='F'?'selected':''}>Female</option></select></div>
     <div class="field"><label>Admission No</label><input id="es_adm" value="${escapeAttr(s.adm)}"></div>
     <div class="field"><label>SMS Contact</label><input id="es_sms" value="${escapeAttr(s.sms)}"></div>
-    <div class="field"><label>Programme</label><select id="es_prog">${progOpts}</select></div>
+    <div class="field"><label>Programme</label><select id="es_prog" onchange="refreshEditClassOptions()">${progOpts}</select></div>
     <div class="field"><label>Class</label><select id="es_class">${classOpts}</select></div>
     <div class="field"><label>House</label><select id="es_house">${houseOpts}</select></div>
     <div class="field"><label>Registered</label><input value="${escapeAttr(s.reg)}" disabled style="opacity:.6"></div>
@@ -2361,7 +2370,25 @@ function renderRegistered(){
   });
   document.getElementById('regRows').innerHTML=rows.length?html:emptyRow(visible,'No students found.');
 }
-function toggleRegExpand(id){ regExpanded.has(id)?regExpanded.delete(id):regExpanded.add(id); renderRegistered(); }
+function toggleRegExpand(id){ showRegisteredStudentDetails(id); }
+function showRegisteredStudentDetails(id){
+  const s=students.find(x=>x.id===id); if(!s)return;
+  const h=houseById(s.houseId),c=classById(s.classId),r=s.rec||{};
+  const rows=[
+    ['JHS Index No',s.index],['Admission No',s.adm],['Student Name',s.name],['Gender',s.gender==='M'?'Male':(s.gender==='F'?'Female':s.gender)],
+    ['Programme',studentProgrammeName(s)],['Class',c?c.name:'Not allocated'],['House',h?h.name:'Not allocated'],['Residential',s.res],
+    ['SMS Contact',s.sms],['Enrolment Code',s.enrol],['Date Registered',s.reg],['Time',s.time],
+    ['Date of Birth',r.dob||s.dob],['Region',r.region],['District',r.district],['Religion',r.religion],['Denomination',r.denomination],
+    ['Father',r.father_name],['Mother',r.mother_name],['Guardian',r.guardian]
+  ];
+  const form=s.form?`<div class="field"><label>Enrolment Form</label><a class="btn btn-ghost btn-sm" href="${escapeAttr(s.form)}" target="_blank" rel="noopener">Open uploaded form</a></div>`:'';
+  const photo=r.passport_photo_url?`<div class="field"><label>Passport Photo</label><img src="${escapeAttr(r.passport_photo_url)}" alt="Passport photo" style="width:104px;height:124px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"></div>`:'';
+  const m=$('modal');
+  m.innerHTML=`<div class="modal-head"><div><h2>${safeHtml(s.name)}</h2><p><span class="code">${safeHtml(s.index)}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
+  <div class="modal-body"><div class="grid-2">${rows.map(function(row){return `<div class="kv"><b>${safeHtml(row[0])}</b>${safeHtml(row[1],'-')}</div>`;}).join('')}${photo}${form}</div></div>
+  <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>`;
+  $('overlay').classList.add('show');
+}
 function exportCSV(kind){
   var cols=regCols.filter(k=>!regHidden.has(k));
   var rows=regFiltered();
@@ -2380,7 +2407,7 @@ function exportCSV(kind){
 function downloadAdmissionList(){ openReportsModal(); }
 
 /* ===== DETAILED ENROLMENT REPORTS ===== */
-const REP_TABS=['Programme Report','CSSPS Enrolment Report','House Report','Class List Report','QuickAdmissionGH (Excel Import)','Boarding Status Report'];
+const REP_TABS=['Programme Report','House Report','Class List Report','CSSPS Enrolment Report','Boarding Status Report'];
 function openReportsModal(){
   var ov=document.getElementById('reportsOverlay');
   if(!ov){ov=document.createElement('div');ov.id='reportsOverlay';ov.className='overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)closeReports();});}
@@ -2388,7 +2415,7 @@ function openReportsModal(){
     +'<div class="modal-head"><div><h2>Detailed Enrolment Reports</h2><p>Generate and download enrolment reports</p></div><button class="modal-x" onclick="closeReports()">×</button></div>'
     +'<div class="rep-tabs" id="repTabs">'+REP_TABS.map((t,i)=>`<button class="rep-tab" data-i="${i}" onclick="repTab(${i})">${t}</button>`).join('')+'</div>'
     +'<div class="modal-body" id="repBody"></div></div>';
-  ov.classList.add('show'); repTab(1);
+  ov.classList.add('show'); repTab(3);
 }
 function closeReports(){var ov=document.getElementById('reportsOverlay');if(ov)ov.classList.remove('show');}
 function dateDefaults(){var to=new Date(),from=new Date();from.setDate(from.getDate()-60);return {from:from.toISOString().slice(0,10),to:to.toISOString().slice(0,10)};}
@@ -2398,23 +2425,20 @@ function selOpts(arr,all){return (all?`<option value="">${all}</option>`:'<optio
 function repTab(i){
   document.querySelectorAll('#repTabs .rep-tab').forEach((t,x)=>t.classList.toggle('active',x===i));
   var b=document.getElementById('repBody'),h='';
-  if(i===0){ h=`<div class="rep-title">Programme Report — enrolment by academic programme</div>${repDateRow()}
+  if(i===0){ h=`<div class="rep-title">Programme Report - enrolment by academic programme</div>${repDateRow()}
     <label class="rep-lbl">Programme</label><select id="rep_prog">${selOpts(programmes,'- All programmes -')}</select>${repRadios()}
     <div class="rep-actions"><button class="btn-grn" onclick="runReport('programme')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (Excel)</button><button class="btn btn-ghost btn-sm" onclick="runReport('programme','pdf')">PDF</button></div>`; }
-  else if(i===1){ h=`<div class="rep-title">Admission Report (MS Excel) — HEADMASTER'S PORTAL · CSSPS ENROLMENT</div>${repDateRow()}
-    <label class="rep-lbl">Programme</label><select id="rep_prog">${selOpts(programmes)}</select>${repRadios()}
-    <div class="rep-actions"><button class="btn-grn" onclick="runReport('cssps')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download Registered Students (Excel)</button></div>`; }
-  else if(i===2){ h=`<div class="rep-title">House Report</div>${repDateRow()}
+  else if(i===1){ h=`<div class="rep-title">House Report</div>${repDateRow()}
     <label class="rep-lbl">House</label><select id="rep_house">${selOpts(houses,'- All houses -')}</select>
     <label class="rep-lbl">Boarding status</label><select id="rep_board"><option value="">All</option><option>Boarding</option><option>Day</option></select>
     <div class="rep-actions"><button class="btn-grn" onclick="runReport('house')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (Excel)</button><button class="btn btn-ghost btn-sm" onclick="runReport('house','pdf')">PDF</button></div>`; }
-  else if(i===3){ h=`<div class="rep-title">Class List Report</div>${repDateRow()}
+  else if(i===2){ h=`<div class="rep-title">Class List Report</div>${repDateRow()}
     <label class="rep-lbl">Class</label><select id="rep_class">${selOpts(classes,'- All classes -')}</select>
     <div class="rep-actions"><button class="btn-grn" onclick="runReport('class')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (Excel)</button><button class="btn btn-ghost btn-sm" onclick="runReport('class','pdf')">PDF</button></div>`; }
-  else if(i===4){ h=`<div class="rep-title">QuickAdmissionGH — Excel Import</div>
-    <p class="rep-note">Exports every student's complete personal record — placement data, enrolment details, personal data, class, parent/guardian and contact fields — in the column layout for the QuickAdmissionGH desktop software.</p>
+  else if(i===3){ h=`<div class="rep-title">CSSPS Enrolment Report</div>
+    <p class="rep-note">Exports every submitted student's complete enrolment record, including programme, class, house, enrolment code, contact, parent/guardian, and personal record fields.</p>
     ${repDateRow()}
-    <div class="rep-actions"><button class="btn-grn" onclick="runReport('saprosoft')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download Import File (Excel)</button></div>`; }
+    <div class="rep-actions"><button class="btn-grn" onclick="runReport('saprosoft')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download CSSPS Enrolment Report (Excel)</button></div>`; }
   else { h=`<div class="rep-title">Boarding Status Report</div>${repDateRow()}
     <label class="rep-lbl">Status</label><select id="rep_board"><option value="">All</option><option>Boarding</option><option>Day</option></select>
     <div class="rep-actions"><button class="btn-grn" onclick="runReport('boarding')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (Excel)</button><button class="btn btn-ghost btn-sm" onclick="runReport('boarding','pdf')">PDF</button></div>`; }
@@ -2453,10 +2477,37 @@ function runReport(type,fmt){
         (r.sms_contact||s.sms||''), r.whatsapp||'', r.other_phone||'', r.email||'',
         r.father_name||'', r.father_occupation||'', r.mother_name||'', r.mother_occupation||'',
         r.guardian||'', r.guardian_phone||'', r.digital_address||'', s.reg||'', done?'YES':'NO']; });
-    title='QuickAdmissionGH Import';
+    title='CSSPS Enrolment Report';
   }
   if(!rows.length){toast('No records match the selected filters');return;}
   if(fmt==='pdf') repPrint(title,headers,rows); else repExcel(title,headers,rows);
+}
+function analyticsRows(kind){
+  var data=submittedStudents();
+  var by={};
+  data.forEach(function(s){
+    var key=kind==='programme'?pN(s):(kind==='house'?hN(s):(kind==='class'?cN(s):(s.res||'Unknown')));
+    by[key]=(by[key]||0)+1;
+  });
+  return Object.keys(by).sort().map(function(k){return [k,by[k]];});
+}
+function exportEnrolmentAnalytics(){
+  var sheets=[
+    {name:'Programme',headers:['Programme','Students'],rows:analyticsRows('programme')},
+    {name:'House',headers:['House','Students'],rows:analyticsRows('house')},
+    {name:'Class',headers:['Class','Students'],rows:analyticsRows('class')},
+    {name:'Boarding',headers:['Residential Status','Students'],rows:analyticsRows('boarding')}
+  ];
+  if(typeof XLSX==='undefined'){
+    downloadExcelRows('enrolment_analytics','Programme',sheets[0].headers,sheets[0].rows,'Enrolment analytics');
+    return;
+  }
+  const wb=XLSX.utils.book_new();
+  sheets.forEach(function(sheet){
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([sheet.headers].concat(sheet.rows)),sanitizeSheetName(sheet.name));
+  });
+  XLSX.writeFile(wb,excelFileName('enrolment_analytics'),{bookType:preferredExcelExtension()==='xls'?'xls':'xlsx'});
+  toast('Enrolment analytics exported');
 }
 function repExcel(title,headers,rows){
   if(downloadExcelRows(title.replace(/[^a-z0-9]+/gi,'_'),title,headers,rows,title)) return;
@@ -2723,6 +2774,12 @@ function writeSchoolProfileCache(next){
 function cachePublicSchoolProfile(extra){
   if(!SB_SCHOOL||!SB_SCHOOL.id) return;
   const cache=readSchoolProfileCache();
+  const featureFlags={
+    allow_passport_photo:SB_CFG&&SB_CFG.allow_passport_photo,
+    allow_house_selection:SB_CFG&&SB_CFG.allow_house_selection,
+    allow_class_selection:SB_CFG&&SB_CFG.allow_class_selection,
+    force_enrolment_upload:SB_CFG&&SB_CFG.force_enrolment_upload
+  };
   cache[String(SB_SCHOOL.id)]=Object.assign({},cache[String(SB_SCHOOL.id)]||{},{
     id:SB_SCHOOL.id,
     name:SB_SCHOOL.name||'',
@@ -2736,7 +2793,7 @@ function cachePublicSchoolProfile(extra){
     crest_url:SB_SCHOOL.crest_url||'',
     service_charge:SB_CFG&&SB_CFG.service_charge,
     admission_status:SB_CFG&&SB_CFG.admission_status
-  },extra||{});
+  },featureFlags,extra||{});
   writeSchoolProfileCache(cache);
 }
 function ensureSetupRuntimeFields(){
@@ -2744,6 +2801,17 @@ function ensureSetupRuntimeFields(){
   if(!setup) return;
   const serviceCharge=setup.querySelector('input[id="s_charge"]')||setup.querySelector('[data-tab="1"] fieldset:nth-of-type(2) input[type="number"]');
   if(serviceCharge&&!serviceCharge.id) serviceCharge.id='s_charge';
+}
+function cfgBool(key,defaultValue){
+  if(!SB_CFG||typeof SB_CFG[key]==='undefined'||SB_CFG[key]===null) return !!defaultValue;
+  return SB_CFG[key]===true||SB_CFG[key]==='true'||SB_CFG[key]===1||SB_CFG[key]==='1';
+}
+function setChecked(id,value){ const el=document.getElementById(id); if(el) el.checked=!!value; }
+function fillStudentFeatureToggles(){
+  setChecked('s_allow_passport_photo',cfgBool('allow_passport_photo',false));
+  setChecked('s_allow_house_selection',cfgBool('allow_house_selection',false));
+  setChecked('s_allow_class_selection',cfgBool('allow_class_selection',true));
+  setChecked('s_force_enrolment_upload',cfgBool('force_enrolment_upload',true));
 }
 function fillSchoolProfileForm(){
   if(!SB_SCHOOL) return;
@@ -2758,6 +2826,7 @@ function fillSchoolProfileForm(){
   setValue('sp_helpdesk',SB_SCHOOL.helpdesk||SB_SCHOOL.phone||'');
   const theme=document.getElementById('sp_theme');
   if(theme) theme.value=(SB_SCHOOL.theme_color||'#1557B0');
+  fillStudentFeatureToggles();
 }
 async function fetchSchoolSmsHistory(schoolId){
   let res=await sb.from('sms_logs').select('*').eq('school_id',schoolId).is('external_id',null).order('sent_at',{ascending:false});
@@ -2940,7 +3009,7 @@ async function loadSchoolData(prof){
       time: dt?dt.toTimeString().slice(0,8):'-',
       sms: sms||'-',
       prog: cleanSmsText(progNameByUuid[s.programme_id])||cleanSmsText(pl.programme)||cleanSmsText(rec.programme)||'',
-      enrol: pl.enrolment_code||'-',
+      enrol: rec.enrolment_code||pl.enrolment_code||'-',
       form: s.enrolment_form_url||null,
       dob: pl.dob||'', parent: rec.guardian||rec.father_name||rec.mother_name||s.parent_name||'-',
       res: pl.residential_status||'-', rec: rec,
@@ -2959,6 +3028,7 @@ async function loadSchoolData(prof){
     row.sms=sms||'-';
     row.smsRaw=sms||'';
     row.prog=cleanSmsText(progNameByUuid[raw.programme_id])||row.prog||cleanSmsText(pl.programme)||cleanSmsText(rec.programme)||'';
+    row.enrol=rec.enrolment_code||pl.enrolment_code||row.enrol||'-';
     row.parent=rec.guardian||rec.father_name||rec.mother_name||row.parent||'-';
     row.rec=rec;
     return row;
@@ -3071,6 +3141,12 @@ async function saveAcademicConfig(){
   const reopeningDate=(val('s_reopen_date')||'').trim()||null;
   const reopeningTime=(val('s_reopen_time')||'').trim()||null;
   const serviceCharge=(document.getElementById('s_charge')&&document.getElementById('s_charge').value!=='')?parseFloat(document.getElementById('s_charge').value):null;
+  const featurePatch={
+    allow_passport_photo:!!(document.getElementById('s_allow_passport_photo')&&document.getElementById('s_allow_passport_photo').checked),
+    allow_house_selection:!!(document.getElementById('s_allow_house_selection')&&document.getElementById('s_allow_house_selection').checked),
+    allow_class_selection:!!(document.getElementById('s_allow_class_selection')&&document.getElementById('s_allow_class_selection').checked),
+    force_enrolment_upload:!!(document.getElementById('s_force_enrolment_upload')&&document.getElementById('s_force_enrolment_upload').checked)
+  };
   if(!newYear){toast('Academic year is required');return;}
   const curYear=(SB_CFG&&SB_CFG.academic_year)||'';
   if(newYear!==curYear && curYear){
@@ -3084,7 +3160,7 @@ async function saveAcademicConfig(){
     const {data,error}=await sb.rpc('switch_academic_year',{p_school:SB_SCHOOL.id,p_new_year:newYear});
     if(error){toast('Switch failed: '+error.message);return;}
     if(!data||!data.ok){toast('Switch failed: '+((data&&data.error)||'unknown'));return;}
-    await sb.from('school_config').update({admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}).eq('school_id',SB_SCHOOL.id);
+    await sb.from('school_config').update(Object.assign({admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge},featurePatch)).eq('school_id',SB_SCHOOL.id);
     notifyStudentPortalRefresh('academic-year-switch');
     alert('Academic year is now '+newYear+'.\n\n'+(data.restored
       ? 'Loaded saved data for '+newYear+':\n• '+data.students+' students\n• '+data.placements+' placements\n• '+data.payments+' payments'
@@ -3095,10 +3171,10 @@ async function saveAcademicConfig(){
     return;
   }
   // No year change — just persist year/admission-year
-  const {error}=await sb.from('school_config').update({academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}).eq('school_id',SB_SCHOOL.id);
+  const {error}=await sb.from('school_config').update(Object.assign({academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge},featurePatch)).eq('school_id',SB_SCHOOL.id);
   if(error){toast('Could not save: '+error.message);return;}
-  if(SB_CFG){SB_CFG.academic_year=newYear;SB_CFG.admission_year=newAdmYear;SB_CFG.reopening_date=reopeningDate;SB_CFG.reopening_time=reopeningTime;SB_CFG.service_charge=serviceCharge;}
-  cachePublicSchoolProfile({service_charge:serviceCharge});
+  if(SB_CFG){Object.assign(SB_CFG,{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge},featurePatch);}
+  cachePublicSchoolProfile(Object.assign({service_charge:serviceCharge},featurePatch));
   notifyStudentPortalRefresh('academic-config');
   toast('Admission configuration saved');
 }
@@ -3738,4 +3814,5 @@ async function logout(){ if(!confirm('Log out of the admin portal?'))return; set
 <footer style="position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;padding:10px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))">Copyright © 2026 AXIOMBYTE HUB. All rights reserved. · Version 1.0</footer>
 </body>
 </html>
+
 
