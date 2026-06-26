@@ -753,10 +753,11 @@
               <div class="grid-2"><div class="field"><label>Service charge (GHS)</label><input type="number" value="30" step="0.5"></div><div class="field"><label>Accept online payment</label><select><option>Yes — accept online payments</option><option>No — manual payments only</option></select></div></div>
             </fieldset>
             <fieldset><legend>Student features</legend>
-              <div class="switch-row"><div class="meta">Allow passport photo upload<small>Students upload their own photo</small></div><label class="switch"><input id="s_allow_passport_photo" type="checkbox"><span class="track"></span></label></div>
-              <div class="switch-row"><div class="meta">Allow house selection<small>Students pick their house</small></div><label class="switch"><input id="s_allow_house_selection" type="checkbox"><span class="track"></span></label></div>
-              <div class="switch-row"><div class="meta">Allow class selection<small>Students pick their class</small></div><label class="switch"><input id="s_allow_class_selection" type="checkbox" checked><span class="track"></span></label></div>
-              <div class="switch-row"><div class="meta">Force enrolment form upload<small>Required before submission</small></div><label class="switch"><input id="s_force_enrolment_upload" type="checkbox" checked><span class="track"></span></label></div>
+              <div class="switch-row"><div class="meta">Allow passport photo upload<small>Students upload their own photo</small></div><label class="switch"><input id="s_allow_passport_photo" type="checkbox" onchange="queueStudentFeatureSave()"><span class="track"></span></label></div>
+              <div class="switch-row"><div class="meta">Allow house selection<small>Students pick their house</small></div><label class="switch"><input id="s_allow_house_selection" type="checkbox" onchange="queueStudentFeatureSave()"><span class="track"></span></label></div>
+              <div class="switch-row"><div class="meta">Allow class selection<small>Students pick their class</small></div><label class="switch"><input id="s_allow_class_selection" type="checkbox" checked onchange="queueStudentFeatureSave()"><span class="track"></span></label></div>
+              <div class="switch-row"><div class="meta">Force enrolment form upload<small>Required before submission</small></div><label class="switch"><input id="s_force_enrolment_upload" type="checkbox" checked onchange="queueStudentFeatureSave()"><span class="track"></span></label></div>
+              <div id="s_feature_status" style="min-height:18px;margin-top:10px;font-size:12px;color:var(--muted)">Changes save automatically.</div>
             </fieldset>
             <fieldset><legend>SMS configuration</legend>
               <div class="panel panel-pad" style="margin:0;background:#fff8e6;border:1px solid rgba(199,134,26,.22)">
@@ -2813,6 +2814,65 @@ function fillStudentFeatureToggles(){
   setChecked('s_allow_class_selection',cfgBool('allow_class_selection',true));
   setChecked('s_force_enrolment_upload',cfgBool('force_enrolment_upload',true));
 }
+function studentFeaturePatch(){
+  return {
+    allow_passport_photo:!!(document.getElementById('s_allow_passport_photo')&&document.getElementById('s_allow_passport_photo').checked),
+    allow_house_selection:!!(document.getElementById('s_allow_house_selection')&&document.getElementById('s_allow_house_selection').checked),
+    allow_class_selection:!!(document.getElementById('s_allow_class_selection')&&document.getElementById('s_allow_class_selection').checked),
+    force_enrolment_upload:!!(document.getElementById('s_force_enrolment_upload')&&document.getElementById('s_force_enrolment_upload').checked)
+  };
+}
+function setStudentFeatureStatus(message,isError){
+  const el=document.getElementById('s_feature_status');
+  if(!el)return;
+  el.textContent=message;
+  el.style.color=isError?'#b42318':'var(--muted)';
+}
+let studentFeatureSaveTimer=null;
+function queueStudentFeatureSave(){
+  if(roGuard())return;
+  clearTimeout(studentFeatureSaveTimer);
+  setStudentFeatureStatus('Saving changes...');
+  studentFeatureSaveTimer=setTimeout(function(){ persistStudentFeatureSettings({showToast:true}); },350);
+}
+async function persistStudentFeatureSettings(options){
+  if(roGuard())return false;
+  if(!SB_SCHOOL||!SB_SCHOOL.id){setStudentFeatureStatus('School not loaded.',true);return false;}
+  clearTimeout(studentFeatureSaveTimer);
+  const patch=studentFeaturePatch();
+  setStudentFeatureStatus('Saving changes...');
+  let saved=null;
+  let rpcError=null;
+  try{
+    const result=await sb.rpc('update_student_feature_settings',{
+      p_school:SB_SCHOOL.id,
+      p_allow_passport_photo:patch.allow_passport_photo,
+      p_allow_house_selection:patch.allow_house_selection,
+      p_allow_class_selection:patch.allow_class_selection,
+      p_force_enrolment_upload:patch.force_enrolment_upload
+    });
+    rpcError=result.error;
+    if(!rpcError&&result.data&&result.data.ok!==false) saved=result.data.config||patch;
+  }catch(e){rpcError=e;}
+  if(!saved){
+    const fallback=await sb.from('school_config').update(patch).eq('school_id',SB_SCHOOL.id).select('school_id,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload').maybeSingle();
+    if(fallback.error||!fallback.data){
+      const message=(fallback.error&&fallback.error.message)||(rpcError&&rpcError.message)||'No school configuration row was updated.';
+      setStudentFeatureStatus('Could not save: '+message,true);
+      toast('Could not save student features: '+message);
+      fillStudentFeatureToggles();
+      return false;
+    }
+    saved=fallback.data;
+  }
+  if(SB_CFG)Object.assign(SB_CFG,saved);
+  fillStudentFeatureToggles();
+  cachePublicSchoolProfile(saved);
+  notifyStudentPortalRefresh('student-features');
+  setStudentFeatureStatus('Saved. New student logins will use these settings.');
+  if(options&&options.showToast)toast('Student features saved');
+  return true;
+}
 function fillSchoolProfileForm(){
   if(!SB_SCHOOL) return;
   const setValue=function(id,value){ const el=document.getElementById(id); if(el) el.value=value||''; };
@@ -3141,12 +3201,7 @@ async function saveAcademicConfig(){
   const reopeningDate=(val('s_reopen_date')||'').trim()||null;
   const reopeningTime=(val('s_reopen_time')||'').trim()||null;
   const serviceCharge=(document.getElementById('s_charge')&&document.getElementById('s_charge').value!=='')?parseFloat(document.getElementById('s_charge').value):null;
-  const featurePatch={
-    allow_passport_photo:!!(document.getElementById('s_allow_passport_photo')&&document.getElementById('s_allow_passport_photo').checked),
-    allow_house_selection:!!(document.getElementById('s_allow_house_selection')&&document.getElementById('s_allow_house_selection').checked),
-    allow_class_selection:!!(document.getElementById('s_allow_class_selection')&&document.getElementById('s_allow_class_selection').checked),
-    force_enrolment_upload:!!(document.getElementById('s_force_enrolment_upload')&&document.getElementById('s_force_enrolment_upload').checked)
-  };
+  const featurePatch=studentFeaturePatch();
   if(!newYear){toast('Academic year is required');return;}
   const curYear=(SB_CFG&&SB_CFG.academic_year)||'';
   if(newYear!==curYear && curYear){
@@ -3160,7 +3215,8 @@ async function saveAcademicConfig(){
     const {data,error}=await sb.rpc('switch_academic_year',{p_school:SB_SCHOOL.id,p_new_year:newYear});
     if(error){toast('Switch failed: '+error.message);return;}
     if(!data||!data.ok){toast('Switch failed: '+((data&&data.error)||'unknown'));return;}
-    await sb.from('school_config').update(Object.assign({admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge},featurePatch)).eq('school_id',SB_SCHOOL.id);
+    await sb.from('school_config').update({admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}).eq('school_id',SB_SCHOOL.id);
+    await persistStudentFeatureSettings();
     notifyStudentPortalRefresh('academic-year-switch');
     alert('Academic year is now '+newYear+'.\n\n'+(data.restored
       ? 'Loaded saved data for '+newYear+':\n• '+data.students+' students\n• '+data.placements+' placements\n• '+data.payments+' payments'
@@ -3171,8 +3227,9 @@ async function saveAcademicConfig(){
     return;
   }
   // No year change — just persist year/admission-year
-  const {error}=await sb.from('school_config').update(Object.assign({academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge},featurePatch)).eq('school_id',SB_SCHOOL.id);
+  const {error}=await sb.from('school_config').update({academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}).eq('school_id',SB_SCHOOL.id);
   if(error){toast('Could not save: '+error.message);return;}
+  if(!await persistStudentFeatureSettings())return;
   if(SB_CFG){Object.assign(SB_CFG,{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge},featurePatch);}
   cachePublicSchoolProfile(Object.assign({service_charge:serviceCharge},featurePatch));
   notifyStudentPortalRefresh('academic-config');
