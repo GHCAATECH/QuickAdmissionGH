@@ -345,7 +345,20 @@
   .finance-rate-note{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);font-size:11.5px;font-weight:700;color:var(--primary)}
   .finance-settlement-wrap{overflow-x:hidden}
   .finance-settlement-wrap table{min-width:0;width:100%;table-layout:fixed}
-  .finance-settlement-table thead th{vertical-align:top;text-transform:none;font-size:12.5px;letter-spacing:0;color:#122648;font-weight:800;background:#f7f9fc}
+  .finance-settlement-table thead th{
+    vertical-align:bottom;
+    text-transform:none;
+    font-size:12px;
+    letter-spacing:.02em;
+    color:#122648;
+    font-weight:800;
+    background:#f7f9fc;
+    height:220px;
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    text-align:left;
+    white-space:normal;
+  }
   .finance-settlement-table thead th,.finance-settlement-table tbody td{padding:12px 10px;overflow-wrap:anywhere;word-break:break-word}
   .finance-settlement-table tbody td{vertical-align:top}
   .finance-settlement-table th:nth-child(1),.finance-settlement-table td:nth-child(1){width:5%}
@@ -417,6 +430,13 @@
     .toolbar .search,.toolbar select,.bulkbar select{width:100%;min-width:0}
     .finance-settlement-wrap{overflow-x:auto}
     .finance-settlement-wrap table{min-width:980px;table-layout:auto}
+    .finance-settlement-table thead th{
+      height:auto;
+      writing-mode:horizontal-tb;
+      transform:none;
+      text-align:left;
+      white-space:normal;
+    }
   }
   @media(max-width:768px){
     .toolbar,.dt-toolbar,.dt-actions,.topbar-right,.panel-head,.bulkbar{flex-wrap:wrap;gap:8px}
