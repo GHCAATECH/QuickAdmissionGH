@@ -647,6 +647,17 @@
   .nav-item.active,.nav-parent.active,.nav-sub.active,.nav-item.active::before,.progress i,.cap-bar i,.dot,.exp-btn{background:linear-gradient(135deg,#34d399 0%,#10b981 50%,#059669 100%)!important;color:#04110c!important}
   .env-badge{background:#0b2c22;color:#7ef2c0;border-color:#1d5a46}
   .env-badge.dev{background:#173223;color:#c7ffe8;border-color:#236143}
+  .brand-logo-text,.brand-sub,.sb-foot small,.nav-label{color:#bff6df!important}
+  .nav-label:hover{color:#ecfff5!important}
+  .finance-index,.finance-school-name,.finance-split-group h4,.finance-split-amount,.finance-split-line strong,.finance-total,.finance-paid-students,.finance-paid-amount{color:#ecfff5!important}
+  .finance-history-label,.finance-due-label,.finance-split-line{color:#b5d5c4!important}
+  .finance-history-paid,.finance-due-count{color:#7ef2c0!important;text-shadow:0 0 10px rgba(52,211,153,.16)}
+  .rep-tabs{background:linear-gradient(135deg,#0d2a20,#123026)!important}
+  .rep-tab{color:#d9fff0!important}
+  .rep-tab.active{background:#d9fff0!important;color:#04110c!important}
+  .portal-emerald-note{background:rgba(15,42,31,.94)!important;border:1px solid rgba(52,211,153,.18)!important}
+  .portal-emerald-note-title{font-size:13px;font-weight:700;color:#d9fff0!important;text-shadow:0 0 14px rgba(52,211,153,.22)}
+  .portal-emerald-note-copy{font-size:12px;color:var(--ink-soft)!important;margin-top:6px}
   /* ---------- Motion polish ---------- */
   #bootSplash,#authGate.gate-screen{background-size:140% 140%;animation:adminGlowShift 18s ease-in-out infinite}
   .school-admin-login-card{animation:adminEnter .72s cubic-bezier(.22,1,.36,1) both}
@@ -1089,9 +1100,9 @@
               <div class="char-count"><span id="smsRemain">300</span> characters remaining - <span id="smsCred">1</span> SMS part(s) each - est. <span id="smsCost">0</span> credits</div>
               <div class="sms-vars">Insert: <button type="button" onclick="insVar('{STUDNAME}')">{STUDNAME}</button><button type="button" onclick="insVar('{INDEX}')">{INDEX}</button><button type="button" onclick="insVar('{SCHOOL}')">{SCHOOL}</button><button type="button" onclick="insVar('{PROGRAMME}')">{PROGRAMME}</button><button type="button" onclick="insVar('{REPORTING}')">{REPORTING}</button><button type="button" onclick="insVar('{HELPDESK}')">{HELPDESK}</button></div>
             </div>
-            <div class="panel panel-pad" style="margin:0 0 14px;background:#eef6ff;border:1px solid rgba(21,87,176,.16)">
-              <div style="font-size:13px;font-weight:700;color:#1557B0">Delivery uses this school's registered Sender ID.</div>
-              <div style="font-size:12px;color:var(--muted);margin-top:6px">Recipients are deduplicated by index number, the imported SMS contact is preferred, and every send attempt is logged against this school.</div>
+            <div class="panel panel-pad portal-emerald-note" style="margin:0 0 14px">
+              <div class="portal-emerald-note-title">Delivery uses this school's registered Sender ID.</div>
+              <div class="portal-emerald-note-copy">Recipients are deduplicated by index number, the imported SMS contact is preferred, and every send attempt is logged against this school.</div>
             </div>
             <div class="sms-inline-meta"><span id="smsRecipMeta"><b>0</b> ready</span><span id="smsSkipMeta"><b>0</b> without SMS contact</span><span id="smsDupMeta"><b>0</b> duplicate records removed</span></div>
             <div class="sms-actions"><button class="btn btn-primary" onclick="sendSms()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send SMS to Selected Candidates (<span id="smsRecip">0</span>)</button><button class="btn btn-ghost" type="button" onclick="loadTpl('welcome')">Load sample</button></div>
@@ -3208,9 +3219,9 @@ function fillSmsSettingsForm(){
   updateSmsSettingsPreview();
   const setupNote=document.querySelector('#view-setup [data-tab="1"] fieldset:last-of-type .panel');
   if(setupNote){
-    setupNote.style.background='#eef6ff';
-    setupNote.style.border='1px solid rgba(21,87,176,.16)';
-    setupNote.innerHTML='<div style="font-size:13px;font-weight:700;color:#1557B0">Manage Sender ID, template, and SMS enablement under SMS Settings.</div><div style="font-size:12px;color:var(--muted);margin-top:6px">Bulk SMS, automatic submission SMS, and test messages all use the school\'s registered Sender ID.</div>';
+    setupNote.style.background='rgba(15,42,31,.94)';
+    setupNote.style.border='1px solid rgba(52,211,153,.18)';
+    setupNote.innerHTML='<div class="portal-emerald-note-title">Manage Sender ID, template, and SMS enablement under SMS Settings.</div><div class="portal-emerald-note-copy">Bulk SMS, automatic submission SMS, and test messages all use the school\'s registered Sender ID.</div>';
   }
 }
 function loadDefaultSmsTemplate(){

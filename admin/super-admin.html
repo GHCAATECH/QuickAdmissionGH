@@ -418,6 +418,11 @@
   .nav-item.active,.nav-item.active::before,.dot{background:linear-gradient(135deg,#34d399 0%,#10b981 50%,#059669 100%)!important;color:#04110c!important}
   .env-badge{background:#0b2c22;color:#7ef2c0;border-color:#1d5a46}
   .env-badge.dev{background:#173223;color:#c7ffe8;border-color:#236143}
+  .brand-sub,.sb-foot small,.nav-label{color:#bff6df!important}
+  .nav-label:hover{color:#ecfff5!important}
+  .portal-emerald-note{background:rgba(15,42,31,.94)!important;border:1px solid rgba(52,211,153,.18)!important}
+  .portal-emerald-note-title{font-size:13px;font-weight:700;color:#d9fff0!important;text-shadow:0 0 14px rgba(52,211,153,.22)}
+  .portal-emerald-note-copy{font-size:12px;color:var(--ink-soft)!important;margin-top:6px}
   /* ---------- Motion polish ---------- */
   #authGate{
     background-size:140% 140%!important;
@@ -646,9 +651,9 @@
               <textarea id="smsBody" rows="4" placeholder="Type your message..." oninput="updateSmsCount()"></textarea>
               <div class="char-count"><span id="smsChars">0</span> / 160 chars - <span id="smsCredits">1</span> credit each</div>
             </div>
-            <div class="panel panel-pad" style="margin:0 0 14px;background:#eef6ff;border:1px solid rgba(21,87,176,.16)">
-              <div style="font-size:13px;font-weight:700;color:#1557B0">Delivery uses each school's registered Sender ID.</div>
-              <div style="font-size:12px;color:var(--muted);margin-top:6px">Platform broadcasts are grouped by school and sent through Arkesel with that school's School Code / SMS Sender ID. Schools without a sender ID or with SMS disabled will be skipped and logged as failed.</div>
+            <div class="panel panel-pad portal-emerald-note" style="margin:0 0 14px">
+              <div class="portal-emerald-note-title">Delivery uses each school's registered Sender ID.</div>
+              <div class="portal-emerald-note-copy">Platform broadcasts are grouped by school and sent through Arkesel with that school's School Code / SMS Sender ID. Schools without a sender ID or with SMS disabled will be skipped and logged as failed.</div>
             </div>
             <button class="btn btn-primary" onclick="sendBulkSms()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send to <span id="smsRecip">-</span> recipients</button>
           </div>
