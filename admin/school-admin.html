@@ -343,9 +343,19 @@
   .composer{display:grid;grid-template-columns:1fr 280px;gap:18px;align-items:start}
   .char-count{font-size:11.5px;color:var(--muted);margin-top:6px;text-align:right}
   .finance-rate-note{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);font-size:11.5px;font-weight:700;color:var(--primary)}
-  .finance-settlement-wrap table{min-width:1360px}
+  .finance-settlement-wrap{overflow-x:hidden}
+  .finance-settlement-wrap table{min-width:0;width:100%;table-layout:fixed}
   .finance-settlement-table thead th{vertical-align:top;text-transform:none;font-size:12.5px;letter-spacing:0;color:#122648;font-weight:800;background:#f7f9fc}
+  .finance-settlement-table thead th,.finance-settlement-table tbody td{padding:12px 10px;overflow-wrap:anywhere;word-break:break-word}
   .finance-settlement-table tbody td{vertical-align:top}
+  .finance-settlement-table th:nth-child(1),.finance-settlement-table td:nth-child(1){width:5%}
+  .finance-settlement-table th:nth-child(2),.finance-settlement-table td:nth-child(2){width:16%}
+  .finance-settlement-table th:nth-child(3),.finance-settlement-table td:nth-child(3){width:18%}
+  .finance-settlement-table th:nth-child(4),.finance-settlement-table td:nth-child(4){width:28%}
+  .finance-settlement-table th:nth-child(5),.finance-settlement-table td:nth-child(5){width:9%}
+  .finance-settlement-table th:nth-child(6),.finance-settlement-table td:nth-child(6){width:7%}
+  .finance-settlement-table th:nth-child(7),.finance-settlement-table td:nth-child(7){width:8%}
+  .finance-settlement-table th:nth-child(8),.finance-settlement-table td:nth-child(8){width:9%}
   .finance-index{font-size:26px;font-weight:700;color:#122648;line-height:1}
   .finance-school-cell{display:grid;gap:8px}
   .finance-school-name{font-family:'Space Grotesk';font-size:16px;font-weight:700;line-height:1.35;color:#122648}
@@ -371,6 +381,13 @@
   .finance-paid-amount{font-size:16px;font-weight:800;color:#122648;line-height:1.4}
   .finance-summary-sub{font-size:11.5px;color:var(--muted);margin-top:6px}
   .finance-aux-copy{font-size:12px;line-height:1.5;color:var(--muted)}
+  .finance-transactions-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .finance-transactions-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .finance-transactions-search input{width:min(260px,100%)}
+  .finance-transactions-meta{font-size:12px;color:var(--muted)}
+  .finance-transactions-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .finance-pager{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .finance-pager-status{font-size:12px;color:var(--muted)}
 
   .doc-line{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
   .doc-line .num{width:24px;height:24px;border-radius:6px;background:var(--primary-soft);color:var(--primary);font-family:'JetBrains Mono';font-size:12px;font-weight:600;display:grid;place-items:center;flex:none;margin-top:7px}
@@ -398,6 +415,8 @@
     .nav-select{width:100%;max-width:none;margin-left:0}
     .composer,.chart-grid,.grid-2,.grid-3,.perm-grid{grid-template-columns:1fr}
     .toolbar .search,.toolbar select,.bulkbar select{width:100%;min-width:0}
+    .finance-settlement-wrap{overflow-x:auto}
+    .finance-settlement-wrap table{min-width:980px;table-layout:auto}
   }
   @media(max-width:768px){
     .toolbar,.dt-toolbar,.dt-actions,.topbar-right,.panel-head,.bulkbar{flex-wrap:wrap;gap:8px}
@@ -405,6 +424,8 @@
     .modal{max-width:96vw}
     .finance-school-name{font-size:15px}
     .finance-total,.finance-paid-students{font-size:20px}
+    .finance-transactions-tools,.finance-transactions-search{width:100%}
+    .finance-transactions-search input,.finance-transactions-search .btn{width:100%}
   }
   @media(max-width:480px){
     .stat-grid,.adm-cards{grid-template-columns:1fr!important}
@@ -980,8 +1001,9 @@
           </div>
           <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table"><thead><tr><th>S/N</th><th>Name of School</th><th>No of Registered Students</th><th>IT/Contact Person[GHC5.00]/Head [GHC7.50]</th><th>Total</th><th>Paid</th><th>No of Student Paid</th><th>Amount Paid</th></tr></thead><tbody id="financeSettlementRows"></tbody></table></div>
         </div>
-        <div class="panel"><div class="panel-head"><div><h3>Transactions</h3><div class="sub">Token purchases</div></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="toast('Exporting as CSV…')">CSV</button><button class="btn btn-ghost btn-sm" onclick="toast('Exporting as PDF…')">PDF</button></div></div>
+        <div class="panel"><div class="panel-head"><div><h3>Transactions</h3><div class="sub">Token purchases</div></div><div class="finance-transactions-tools"><div class="finance-transactions-search"><input id="financePaySearch" placeholder="Search student, index, txn..." onkeydown="if(event.key==='Enter')applyFinancePaymentSearch()"><button class="btn btn-ghost btn-sm" type="button" onclick="applyFinancePaymentSearch()">Search</button></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="toast('Exporting as CSV…')">CSV</button><button class="btn btn-ghost btn-sm" onclick="toast('Exporting as PDF…')">PDF</button></div></div></div>
           <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Student</th><th>Index No</th><th>Amount</th><th>Method</th><th>Status</th><th>Txn ID</th></tr></thead><tbody id="payRows"></tbody></table></div>
+          <div class="finance-transactions-foot"><div class="finance-transactions-meta" id="financePayMeta">Showing 0 of 0 transactions</div><div class="finance-pager"><span class="finance-pager-status" id="financePayPageStatus">Page 1 of 1 · 25 per page</span><button class="btn btn-ghost btn-sm" type="button" onclick="changeFinancePayPage(-1)">Previous</button><button class="btn btn-ghost btn-sm" type="button" onclick="changeFinancePayPage(1)">Next</button></div></div>
         </div>
       </section>
 
@@ -1230,6 +1252,9 @@ let activityLog=[
   {time:'Yesterday 14:05',action:'Sent reporting reminder to 12 students',by:'Isaac Addo'},
 ];
 let selected=new Set();
+let financePayQuery='';
+let financePayPage=1;
+const FINANCE_PAY_PAGE_SIZE=25;
 
 /* ===== HELPERS ===== */
 const $=id=>document.getElementById(id);
@@ -1500,6 +1525,45 @@ function openFinanceClaimPrintWindow(title,pagesHTML){
     +'</style></head><body><div class="claim-shell">'+pagesHTML+'</div></body></html>');
   w.document.close();
   setTimeout(function(){ w.print(); },300);
+}
+function filteredFinancePayments(){
+  const q=cleanSmsText(financePayQuery).toLowerCase();
+  if(!q) return payments.slice();
+  return payments.filter(function(p){
+    return [p.date,p.name,p.index,p.amount,p.method,p.status,p.txn].some(function(part){
+      return String(part==null?'':part).toLowerCase().includes(q);
+    });
+  });
+}
+function renderFinancePayments(){
+  const rows=filteredFinancePayments();
+  const total=rows.length;
+  const totalPages=Math.max(1,Math.ceil(total/FINANCE_PAY_PAGE_SIZE));
+  if(financePayPage>totalPages) financePayPage=totalPages;
+  if(financePayPage<1) financePayPage=1;
+  const start=(financePayPage-1)*FINANCE_PAY_PAGE_SIZE;
+  const pageRows=rows.slice(start,start+FINANCE_PAY_PAGE_SIZE);
+  $('payRows').innerHTML=pageRows.length?pageRows.map(function(p){
+    return `<tr><td class="mono">${safeHtml(p.date)}</td><td class="nm">${safeHtml(p.name)}</td><td class="mono">${safeHtml(p.index)}</td><td class="mono">${safeHtml(money(p.amount))}</td><td>${safeHtml(p.method)}</td><td><span class="pill ${p.status}">${safeHtml(p.status)}</span></td><td class="mono" style="font-size:12px">${safeHtml(p.txn)}</td></tr>`;
+  }).join(''):emptyRow(7,total?'No transactions on this page.':'No transactions found.');
+  const from=total?start+1:0;
+  const to=Math.min(start+pageRows.length,total);
+  const meta=$('financePayMeta');
+  if(meta) meta.textContent='Showing '+from+'-'+to+' of '+total+' transactions';
+  const status=$('financePayPageStatus');
+  if(status) status.textContent='Page '+financePayPage+' of '+totalPages+' · 25 per page';
+}
+function applyFinancePaymentSearch(){
+  financePayQuery=val('financePaySearch').trim();
+  financePayPage=1;
+  renderFinancePayments();
+}
+function changeFinancePayPage(step){
+  const totalPages=Math.max(1,Math.ceil(filteredFinancePayments().length/FINANCE_PAY_PAGE_SIZE));
+  const next=Math.min(Math.max(financePayPage+step,1),totalPages);
+  if(next===financePayPage) return;
+  financePayPage=next;
+  renderFinancePayments();
 }
 function studentSmsContact(s){
   if(!s) return '';
@@ -2169,7 +2233,7 @@ function renderFinance(){
     <td><div class="finance-paid-students mono">${safeHtml(fmt(snap.paidStudents))}</div><div class="finance-summary-sub">students paid</div></td>
     <td><div class="finance-paid-amount mono">GHC${safeHtml(moneyBare(snap.paidAmount))}</div></td>
   </tr>`;
-  $('payRows').innerHTML=payments.slice(0,16).map(p=>`<tr><td class="mono">${safeHtml(p.date)}</td><td class="nm">${safeHtml(p.name)}</td><td class="mono">${safeHtml(p.index)}</td><td class="mono">${safeHtml(money(p.amount))}</td><td>${safeHtml(p.method)}</td><td><span class="pill ${p.status}">${safeHtml(p.status)}</span></td><td class="mono" style="font-size:12px">${safeHtml(p.txn)}</td></tr>`).join('');
+  renderFinancePayments();
 }
 
 /* ===== SMS ===== */
