@@ -710,6 +710,38 @@ const FINANCE_IT_RATE=5;
 const FINANCE_HEAD_RATE=7.5;
 const FINANCE_CHARGE_RATE=.01;
 const FINANCE_TOTAL_RATE=FINANCE_IT_RATE+FINANCE_HEAD_RATE;
+const FINANCE_BRAND_NAME='AXIOMBYTE HUB';
+const FINANCE_BANK_NAME='GCB Bank PLC';
+const FINANCE_CONTACT_PHONES='+233 (0)256744028 | +233 (0)544762763';
+const FINANCE_CONTACT_EMAIL='axiombytehub@quickadmissiongh.com';
+const FINANCE_REF_PREFIX='ABH/PAY/AD';
+const FINANCE_BRAND_ICON=`<svg width="76" height="76" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AXIOMBYTE HUB icon">
+  <defs>
+    <linearGradient id="abhTopFaceSA" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="abhRightFaceSA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d9466"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="abhBottomFaceSA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#065f46"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="82" cy="148" rx="66" ry="11" fill="#0F172A" opacity="0.18"/>
+  <polygon points="22,116 130,116 148,134 40,134" fill="url(#abhBottomFaceSA)"/>
+  <polygon points="130,18 130,116 148,134 148,36" fill="url(#abhRightFaceSA)"/>
+  <rect x="20" y="14" width="110" height="104" rx="26" fill="url(#abhTopFaceSA)"/>
+  <rect x="20" y="14" width="110" height="104" rx="26" fill="none" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1.5"/>
+  <g stroke="#ffffff" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M75 38 L52 100"/>
+    <path d="M75 38 L98 100"/>
+  </g>
+  <rect x="60" y="80" width="30" height="11" rx="5" fill="#ffffff"/>
+  <circle cx="75" cy="38" r="7" fill="#ffffff"/>
+</svg>`;
 
 /* ============ HELPERS ============ */
 const $=id=>document.getElementById(id);
@@ -760,6 +792,111 @@ function financeSettlementForSchool(s){
     completedAmount:round2(completedStudents*FINANCE_TOTAL_RATE),
     hasHistory:paidStudents>0
   };
+}
+function financeAcademicYearValue(raw){
+  const text=String(raw==null?'':raw).trim();
+  if(!text) return String(new Date().getFullYear());
+  const years=text.match(/20\d{2}/g);
+  return years&&years.length ? years[years.length-1] : text;
+}
+function financeClaimCountValue(raw){
+  return Math.max(parseInt(raw,10)||0,0);
+}
+function financeClaimSequence(raw){
+  return String(financeClaimCountValue(raw)+1).padStart(4,'0');
+}
+function financeReferenceNumber(rawAcademicYear,rawClaimCount){
+  return FINANCE_REF_PREFIX+'/'+financeAcademicYearValue(rawAcademicYear)+'/'+financeClaimSequence(rawClaimCount);
+}
+function financePrintDate(){
+  return new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+}
+function financeClaimPageHTML(opts){
+  const schoolName=safeHtml(opts.schoolName||'School Name');
+  const sectionTitle=safeHtml(opts.sectionTitle||'REQUEST FOR PAYMENT DETAILS');
+  const studentsCount=safeHtml(fmt(opts.studentsCount||0));
+  const rate=safeHtml(opts.rateText||'0.00');
+  const gross=safeHtml(moneyBare(opts.gross||0));
+  const charge=safeHtml(moneyBare(opts.charge||0));
+  const net=safeHtml(moneyBare(opts.net||0));
+  const refNo=safeHtml(opts.referenceNo||financeReferenceNumber('',0));
+  return `<section class="claim-page">
+    <div class="claim-header">
+      <div class="claim-brand-icon">${FINANCE_BRAND_ICON}</div>
+      <div class="claim-brand-copy">
+        <div class="claim-brand-name">${safeHtml(FINANCE_BRAND_NAME)}</div>
+        <div class="claim-meta-row"><strong>Bankers -</strong> ${safeHtml(FINANCE_BANK_NAME)}</div>
+        <div class="claim-meta-row"><strong>PHONE:</strong> ${safeHtml(FINANCE_CONTACT_PHONES)}</div>
+        <div class="claim-meta-row"><strong>EMAIL:</strong> ${safeHtml(FINANCE_CONTACT_EMAIL)}</div>
+      </div>
+    </div>
+    <div class="claim-ref-grid">
+      <div><strong>Our Ref. No.</strong> ${refNo}</div>
+      <div><strong>Your Ref. No.</strong> ....................</div>
+    </div>
+    <p class="claim-salute">Dear Sir/Madam,</p>
+    <h1 class="claim-title">${sectionTitle}</h1>
+    <div class="claim-school"><strong>NAME OF SCHOOL:</strong> ${schoolName}</div>
+    <p class="claim-copy">Statistics of Admission at the close of admission on ${safeHtml(financePrintDate())}</p>
+    <dl class="claim-stats">
+      <div><dt>Total Registered Students:</dt><dd>${studentsCount}</dd></div>
+      <div><dt>Rate:</dt><dd>GHS ${rate}</dd></div>
+      <div><dt>Total Revenue:</dt><dd>GHS ${gross}</dd></div>
+      <div><dt>Momo/Bank charges (1%):</dt><dd>GHS ${charge}</dd></div>
+      <div><dt>Amount Payable:</dt><dd>GHS ${net}</dd></div>
+    </dl>
+    <p class="claim-copy">Kindly provide your Account or Momo Details (Merchant Numbers and Rural Banks excluded):</p>
+    <div class="claim-line"><span>Account No/Momo Number:</span><i></i></div>
+    <div class="claim-line"><span>Account Name/Name on Momo:</span><i></i></div>
+    <div class="claim-line"><span>Bank Name and Branch/Network Provider:</span><i></i></div>
+    <div class="claim-signature">
+      <div class="claim-sign-line"></div>
+      <div class="claim-sign-copy">Stamp & Signature of Head of School here</div>
+    </div>
+    <p class="claim-copy">Please fill out this form, scan it, and submit it to WhatsApp no ${safeHtml('+233 (0)544762763')} or email ${safeHtml(FINANCE_CONTACT_EMAIL)}.</p>
+    <p class="claim-copy">As soon as ${safeHtml(FINANCE_BRAND_NAME)} receives this document, payment will be made.</p>
+    <p class="claim-copy">Many thanks.</p>
+    <div class="claim-signoff">
+      <p>Yours faithfully,</p>
+      <p><strong>For ${safeHtml(FINANCE_BRAND_NAME)}</strong></p>
+      <p>Authorized Signatory</p>
+    </div>
+  </section>`;
+}
+function openFinanceClaimPrintWindow(title,pagesHTML){
+  const w=window.open('','_blank');
+  if(!w){ toast('Allow pop-ups to print / save PDF'); return; }
+  w.document.write('<html><head><title>'+escapeHtml(title)+'</title><style>'
+    +'@page{size:A4;margin:15mm}'
+    +'*{box-sizing:border-box}'
+    +'body{margin:0;background:#eef3f8;font-family:Georgia,"Times New Roman",serif;color:#102437}'
+    +'.claim-shell{padding:24px}'
+    +'.claim-page{width:100%;max-width:840px;margin:0 auto 22px;background:#fff;padding:24px 28px;border:1px solid #d6dde8;box-shadow:0 18px 40px rgba(15,23,42,.08)}'
+    +'.claim-page:last-child{margin-bottom:0}'
+    +'.claim-header{display:flex;gap:16px;align-items:flex-start;border-bottom:2px solid #10B981;padding-bottom:14px;margin-bottom:12px}'
+    +'.claim-brand-icon{width:82px;flex:0 0 82px}'
+    +'.claim-brand-icon svg{display:block;width:100%;height:auto}'
+    +'.claim-brand-name{font-family:Arial,sans-serif;font-size:25px;font-weight:800;letter-spacing:.04em;color:#0f766e;margin-bottom:4px}'
+    +'.claim-meta-row{font-family:Arial,sans-serif;font-size:12.5px;line-height:1.55;color:#18324a}'
+    +'.claim-ref-grid{display:flex;justify-content:space-between;gap:16px;font-family:Arial,sans-serif;font-size:12.5px;margin:10px 0 18px}'
+    +'.claim-salute,.claim-copy,.claim-signoff p{font-size:13.5px;line-height:1.7;margin:0 0 12px}'
+    +'.claim-title{font-family:Arial,sans-serif;font-size:20px;font-weight:800;text-align:center;letter-spacing:.02em;margin:8px 0 14px;color:#1557B0}'
+    +'.claim-school{font-family:Arial,sans-serif;font-size:14px;margin-bottom:10px}'
+    +'.claim-stats{margin:14px 0 18px}'
+    +'.claim-stats div{display:flex;justify-content:space-between;gap:20px;border-bottom:1px solid #e6ecf3;padding:8px 0;font-size:13.5px}'
+    +'.claim-stats dt{font-weight:700}'
+    +'.claim-stats dd{margin:0;font-weight:700}'
+    +'.claim-line{display:flex;align-items:flex-end;gap:10px;font-size:13.5px;margin:16px 0}'
+    +'.claim-line span{white-space:nowrap}'
+    +'.claim-line i{display:block;flex:1;border-bottom:1px dotted #2f4858;height:16px}'
+    +'.claim-signature{margin:26px 0 18px;text-align:center}'
+    +'.claim-sign-line{width:260px;max-width:100%;border-bottom:1px solid #2f4858;margin:0 auto 10px;height:18px}'
+    +'.claim-sign-copy{font-size:12.5px}'
+    +'.claim-signoff{margin-top:18px}'
+    +'@media print{body{background:#fff}.claim-shell{padding:0}.claim-page{box-shadow:none;border:none;margin:0 auto;page-break-after:always;min-height:auto;padding:0}.claim-page:last-child{page-break-after:auto}}'
+    +'</style></head><body><div class="claim-shell">'+pagesHTML+'</div></body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); },300);
 }
 
 /* ============ STATS ============ */
@@ -885,7 +1022,33 @@ function renderStudents(){
 }
 function printSettlementRequest(id){
   const s=sById(id);
-  toast('Request form for '+s.name+' will be built next.');
+  if(!s){ toast('School not found.'); return; }
+  const snap=financeSettlementForSchool(s);
+  if(!snap.dueStudents){ toast('No pending school claim is available right now.'); return; }
+  const refNo=financeReferenceNumber(s.academicYear,s.financeClaimCount);
+  const headTitle=String(s.headmasterTitle||'Head of School').trim().toUpperCase();
+  const pagesHTML=
+    financeClaimPageHTML({
+      schoolName:s.name,
+      sectionTitle:'REQUEST FOR PAYMENT DETAILS - IT AND ADMISSIONS TEAM',
+      studentsCount:snap.dueStudents,
+      rateText:moneyBare(FINANCE_IT_RATE),
+      gross:snap.itGross,
+      charge:snap.itCharge,
+      net:snap.itNet,
+      referenceNo:refNo
+    })+
+    financeClaimPageHTML({
+      schoolName:s.name,
+      sectionTitle:'REQUEST FOR PAYMENT DETAILS - '+headTitle,
+      studentsCount:snap.dueStudents,
+      rateText:moneyBare(FINANCE_HEAD_RATE),
+      gross:snap.headGross,
+      charge:snap.headCharge,
+      net:snap.headNet,
+      referenceNo:refNo
+    });
+  openFinanceClaimPrintWindow(s.name+' Claim Form',pagesHTML);
 }
 function financeResetPreviewHTML(summary,count){
   const claim=Math.max(parseInt(count,10)||0,0);
@@ -957,11 +1120,15 @@ async function saveFinanceReset(id){
   const nextSettled=summary.paidStudents+claim;
   const btn=$('fr_btn'); if(btn) btn.textContent='Applying...';
   const stamp=new Date().toISOString();
-  const patch={school_id:s._id,finance_settled_students:nextSettled,finance_settled_at:stamp};
-  const {error}=await sb.from('school_config').upsert(patch,{onConflict:'school_id'});
+  const nextClaimCount=financeClaimCountValue(s.financeClaimCount)+1;
+  const patch={school_id:s._id,finance_settled_students:nextSettled,finance_settled_at:stamp,finance_claim_count:nextClaimCount};
+  let {error}=await sb.from('school_config').upsert(patch,{onConflict:'school_id'});
+  if(error && /finance_claim_count|column/i.test(error.message||'')){
+    ({error}=await sb.from('school_config').upsert({school_id:s._id,finance_settled_students:nextSettled,finance_settled_at:stamp},{onConflict:'school_id'}));
+  }
   if(error){
     if(btn) btn.textContent='Apply reset';
-    const msg=/finance_settled_students|finance_settled_at|column/i.test(error.message||'')
+    const msg=/finance_settled_students|finance_settled_at|finance_claim_count|column/i.test(error.message||'')
       ? 'This database still needs the finance reset migration before the tool can save.'
       : 'Could not reset report: '+error.message;
     toast(msg);
@@ -970,7 +1137,7 @@ async function saveFinanceReset(id){
   await sb.from('activity_log').insert({
     school_id:s._id,
     actor:'Super Admin',
-    action:'Financial report reset for '+claim+' student(s) - GHS '+moneyBare(round2(claim*FINANCE_TOTAL_RATE))
+    action:'Financial report reset for '+claim+' student(s) - GHS '+moneyBare(round2(claim*FINANCE_TOTAL_RATE))+' - Ref '+financeReferenceNumber(s.academicYear,s.financeClaimCount)
   });
   closeModal();
   await loadSA();
@@ -1473,6 +1640,9 @@ async function loadSA(){
       admission:c.admission_status||'CLOSED',status:s.status,charge:Number(c.service_charge||0),
       financeSettledStudents:settledStudentCount(c.finance_settled_students),
       financeSettledAt:c.finance_settled_at||'',
+      financeClaimCount:financeClaimCountValue(c.finance_claim_count),
+      academicYear:c.academic_year||'',
+      headmasterTitle:s.headmaster_title||'Head of School',
       expiry:s.subscription_expiry||'-',email:s.email||'',phone:s.phone||'',smsEnabled:smsCfg.sms_enabled!==false,color:i%crestColors.length}; });
   nextSchoolId=schools.length+1;
   students=(stu.data||[]).map(function(s){
