@@ -256,21 +256,21 @@
   .finance-rate-note{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);font-size:11.5px;font-weight:700;color:var(--primary)}
   .finance-settlement-wrap{overflow-x:hidden}
   .finance-settlement-wrap table{min-width:0;width:100%;table-layout:fixed}
+  .finance-settlement-table{border-collapse:collapse;border:1px solid #000;background:#fff}
   .finance-settlement-table thead th{
-    vertical-align:bottom;
+    vertical-align:middle;
     text-transform:none;
-    font-size:12px;
-    letter-spacing:.02em;
-    color:#122648;
+    font-size:11.5px;
+    letter-spacing:.01em;
+    color:#000;
     font-weight:800;
     background:#f7f9fc;
-    height:220px;
-    writing-mode:vertical-rl;
-    transform:rotate(180deg);
-    text-align:left;
+    text-align:center;
     white-space:normal;
+    line-height:1.35;
   }
-  .finance-settlement-table thead th,.finance-settlement-table tbody td{padding:12px 10px;overflow-wrap:anywhere;word-break:break-word}
+  .finance-settlement-table thead th,.finance-settlement-table tbody td{padding:12px 10px;overflow-wrap:anywhere;word-break:break-word;border:1px solid #000}
+  .finance-head-stack{display:inline-block;line-height:1.35}
   .finance-settlement-table tbody td{vertical-align:top}
   .finance-settlement-table th:nth-child(1),.finance-settlement-table td:nth-child(1){width:5%}
   .finance-settlement-table th:nth-child(2),.finance-settlement-table td:nth-child(2){width:16%}
@@ -352,13 +352,6 @@
     .finance-rate-note{width:100%;justify-content:center}
     .finance-settlement-wrap{overflow-x:auto}
     .finance-settlement-wrap table{min-width:980px;table-layout:auto}
-    .finance-settlement-table thead th{
-      height:auto;
-      writing-mode:horizontal-tb;
-      transform:none;
-      text-align:left;
-      white-space:normal;
-    }
   }
   @media(max-width:768px){
     .panel-head,.toolbar,.topbar-right{gap:8px}
@@ -585,7 +578,7 @@
             <div class="finance-rate-note">Request form comes next. Transaction charge estimated at 1%.</div>
           </div>
           <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table">
-            <thead><tr><th>S/N</th><th>Name of School</th><th>No of Registered Students</th><th>IT/Contact Person [GHC5.00] / Head [GHC7.50]</th><th>Total</th><th>Paid</th><th>No of Student Paid</th><th>Amount Paid</th></tr></thead>
+            <thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Paid</th><th><span class="finance-head-stack">No of Student<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead>
             <tbody id="finRows"></tbody>
           </table></div>
         </div>
