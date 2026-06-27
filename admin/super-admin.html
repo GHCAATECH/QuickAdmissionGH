@@ -439,8 +439,8 @@
   .nav-item,.icon-btn,.btn,.act,.tab,.sb-logout{
     transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s cubic-bezier(.22,1,.36,1),border-color .18s ease,background-color .18s ease,color .18s ease,filter .18s ease;
   }
-  .nav-item:hover{transform:translateX(4px)}
-  .icon-btn:hover,.btn:hover,.act:hover,.tab:hover,.sb-logout:hover{transform:translateY(-2px)}
+  .nav-item:hover{transform:translateX(4px);animation:superElectricPulse .95s ease-in-out infinite alternate}
+  .icon-btn:hover,.btn:hover,.act:hover,.tab:hover,.sb-logout:hover{transform:translateY(-2px);animation:superElectricPulse .95s ease-in-out infinite alternate}
   .panel:hover,.stat:hover{filter:saturate(1.02)}
   @keyframes superGlowShift{
     0%,100%{background-position:0% 50%}
@@ -457,6 +457,10 @@
   @keyframes superEnter{
     from{opacity:0;transform:translateY(18px) scale(.985)}
     to{opacity:1;transform:none}
+  }
+  @keyframes superElectricPulse{
+    0%{box-shadow:0 0 0 0 rgba(191,255,42,0),0 0 0 1px rgba(191,255,42,.12)}
+    100%{box-shadow:0 0 0 2px rgba(191,255,42,.16),0 0 18px rgba(191,255,42,.34),0 0 36px rgba(191,255,42,.2)}
   }
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation:none!important;transition:none!important}
