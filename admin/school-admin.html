@@ -13,15 +13,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#06110d; --surface:#0d1915; --surface-2:#12231c;
-    --ink:#ecfff5; --ink-soft:#b5d5c4; --muted:#7da08f; --line:#1f3a30;
-    --primary:#10b981; --primary-deep:#059669; --primary-soft:#0e2a21;
-    --accent:#34d399; --accent-soft:#0d2a20;
+    --bg:#081007; --surface:#11170c; --surface-2:#171f10;
+    --ink:#ffffff; --ink-soft:rgba(255,255,255,.82); --muted:rgba(255,255,255,.64); --line:#35441c;
+    --primary:#bfff2a; --primary-deep:#8fcb00; --primary-soft:#1d2809;
+    --accent:#dfff63; --accent-soft:#1d2809;
     --danger:#ef4444; --danger-soft:#311314;
-    --ok:#34d399; --warn:#22c55e; --info:#2dd4bf; --info-soft:#0d2522;
-    --sb:#04100c; --sb-soft:#0b1a15; --sb-text:#a6d3be; --sb-active:#123026;
+    --ok:#c8ff55; --warn:#a8ff1e; --info:#c8ff55; --info-soft:#202a0d;
+    --sb:#0a1107; --sb-soft:#12190e; --sb-text:#efffcf; --sb-active:#2b3912;
     --r:10px; --r-sm:7px;
-    --shadow:0 18px 42px -26px rgba(0,0,0,.72),0 0 0 1px rgba(52,211,153,.05);
+    --shadow:0 18px 42px -26px rgba(0,0,0,.72),0 0 0 1px rgba(191,255,42,.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Inter',system-ui,sans-serif;background:
@@ -600,63 +600,63 @@
   /* ---------- Emerald dark theme ---------- */
   #bootSplash,#authGate.gate-screen{
     background:
-      radial-gradient(70% 55% at 50% 0%,rgba(16,185,129,.2),transparent 55%),
-      radial-gradient(32% 28% at 10% 10%,rgba(52,211,153,.16),transparent 56%),
-      radial-gradient(34% 28% at 90% 14%,rgba(45,212,191,.12),transparent 54%),
-      linear-gradient(180deg,#04110c 0%,#071711 48%,#08110d 100%)!important;
+      radial-gradient(70% 55% at 50% 0%,rgba(191,255,42,.16),transparent 55%),
+      radial-gradient(32% 28% at 10% 10%,rgba(223,255,99,.08),transparent 56%),
+      radial-gradient(34% 28% at 90% 14%,rgba(163,230,53,.06),transparent 54%),
+      linear-gradient(180deg,#070d05 0%,#0b1408 48%,#091006 100%)!important;
   }
-  .sidebar{background:linear-gradient(180deg,#04100c 0%,#0a1914 100%)!important}
+  .sidebar{background:linear-gradient(180deg,#090f06 0%,#11180b 100%)!important}
   .topbar,body>footer,.panel,.stat,.metric,.finance-reset-card,.modal-head,.modal-body,.modal-foot,.disc-modal{
     background:rgba(9,22,17,.5)!important;
-    border-color:rgba(52,211,153,.16)!important;
-    box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(52,211,153,.04);
+    border-color:rgba(191,255,42,.14)!important;
+    box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(191,255,42,.05);
   }
   .school-admin-login-card{
-    background:linear-gradient(180deg,rgba(8,28,21,.5),rgba(9,33,25,.56))!important;
-    border-color:rgba(74,222,128,.24)!important;
-    box-shadow:0 34px 80px -32px rgba(0,0,0,.72),0 0 40px rgba(16,185,129,.14)!important;
+    background:linear-gradient(180deg,rgba(13,24,8,.5),rgba(20,34,10,.56))!important;
+    border-color:rgba(191,255,42,.16)!important;
+    box-shadow:0 34px 80px -32px rgba(0,0,0,.72),0 0 28px rgba(191,255,42,.12)!important;
   }
-  .school-admin-login-card::before{background:radial-gradient(circle,rgba(126,242,192,.18) 0%,rgba(126,242,192,0) 72%)!important}
-  .school-admin-login-card::after{background:radial-gradient(circle,rgba(16,185,129,.28) 0%,rgba(16,185,129,0) 72%)!important}
-  .admin-login-icon,.brand-mark,.icon-btn,.hamburger{background:linear-gradient(180deg,rgba(15,49,36,.96),rgba(8,30,22,.98))!important;border-color:rgba(52,211,153,.18)!important;color:#7ef2c0!important}
-  .admin-login-title,.pagetitle,.section-title,.panel-head h3{background:linear-gradient(135deg,#ecfff5 0%,#7ef2c0 50%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .school-admin-login-card::before{background:radial-gradient(circle,rgba(223,255,99,.12) 0%,rgba(223,255,99,0) 72%)!important}
+  .school-admin-login-card::after{background:radial-gradient(circle,rgba(191,255,42,.16) 0%,rgba(191,255,42,0) 72%)!important}
+  .admin-login-icon,.brand-mark,.icon-btn,.hamburger{background:linear-gradient(180deg,rgba(35,56,12,.96),rgba(17,28,10,.98))!important;border-color:rgba(191,255,42,.14)!important;color:#ffffff!important}
+  .admin-login-title,.pagetitle,.section-title,.panel-head h3{background:none!important;-webkit-background-clip:border-box;background-clip:border-box;color:#ffffff!important}
   .admin-login-copy,.pagetitle small,.sub,.clock,.brand-sub,.nav-label,.finance-reset-card .k{color:var(--ink-soft)!important}
   .admin-login-input-shell,input,select,textarea,.colvis-menu,.tpl-toolbar select,.tpl-page,.tpl-fieldbar{
     background:rgba(9,22,17,.5)!important;
     color:var(--ink)!important;
-    border-color:rgba(52,211,153,.18)!important;
+    border-color:rgba(191,255,42,.14)!important;
   }
   .admin-login-button.btn,.btn-primary,.btn-grn{
-    background:linear-gradient(135deg,#34d399 0%,#10b981 45%,#059669 100%)!important;
-    color:#04110c!important;
-    box-shadow:0 18px 34px -20px rgba(16,185,129,.82),0 0 0 1px rgba(255,255,255,.06) inset!important;
+    background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 48%,#96d700 100%)!important;
+    color:#ffffff!important;
+    box-shadow:0 14px 28px -20px rgba(191,255,42,.46),0 0 0 1px rgba(255,255,255,.08) inset!important;
   }
   .admin-login-button.btn:hover,.btn-primary:hover,.btn-grn:hover{
-    filter:brightness(1.05);
-    box-shadow:0 22px 40px -18px rgba(16,185,129,.9),0 0 26px rgba(16,185,129,.28)!important;
+    filter:brightness(1.03);
+    box-shadow:0 18px 34px -20px rgba(191,255,42,.54),0 0 16px rgba(191,255,42,.16)!important;
   }
   .btn-ghost,.icon-btn,.clock,.act,.seg-btn,.tpl-toolbar button,.sms-vars button,.nav-item.active,.nav-parent.active,.nav-sub.active{
-    background:rgba(12,27,21,.9)!important;
-    color:var(--ink)!important;
-    border-color:rgba(52,211,153,.18)!important;
+    background:rgba(17,28,10,.9)!important;
+    color:#ffffff!important;
+    border-color:rgba(191,255,42,.16)!important;
   }
   .btn-ghost:hover,.icon-btn:hover,.act:hover,.seg-btn:hover,.tpl-toolbar button:hover,.sms-vars button:hover,.nav-item:hover,.nav-parent:hover,.nav-sub:hover{
-    background:rgba(16,42,31,.96)!important;
-    color:#ecfff5!important;
+    background:rgba(28,45,14,.9)!important;
+    color:#ffffff!important;
   }
-  .nav-item.active,.nav-parent.active,.nav-sub.active,.nav-item.active::before,.progress i,.cap-bar i,.dot,.exp-btn{background:linear-gradient(135deg,#34d399 0%,#10b981 50%,#059669 100%)!important;color:#04110c!important}
-  .env-badge{background:#0b2c22;color:#7ef2c0;border-color:#1d5a46}
-  .env-badge.dev{background:#173223;color:#c7ffe8;border-color:#236143}
-  .brand-logo-text,.brand-sub,.sb-foot small,.nav-label{color:#bff6df!important}
-  .nav-label:hover{color:#ecfff5!important}
-  .finance-index,.finance-school-name,.finance-split-group h4,.finance-split-amount,.finance-split-line strong,.finance-total,.finance-paid-students,.finance-paid-amount{color:#ecfff5!important}
-  .finance-history-label,.finance-due-label,.finance-split-line{color:#b5d5c4!important}
-  .finance-history-paid,.finance-due-count{color:#7ef2c0!important;text-shadow:0 0 10px rgba(52,211,153,.16)}
+  .nav-item.active,.nav-parent.active,.nav-sub.active,.nav-item.active::before,.progress i,.cap-bar i,.dot,.exp-btn{background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 50%,#96d700 100%)!important;color:#ffffff!important}
+  .env-badge{background:#1d2809;color:#ffffff;border-color:#4f6914}
+  .env-badge.dev{background:#293511;color:#ffffff;border-color:#637f1c}
+  .brand-logo-text,.brand-sub,.sb-foot small,.nav-label{color:#ffffff!important}
+  .nav-label:hover{color:#ffffff!important}
+  .finance-index,.finance-school-name,.finance-split-group h4,.finance-split-amount,.finance-split-line strong,.finance-total,.finance-paid-students,.finance-paid-amount{color:#ffffff!important}
+  .finance-history-label,.finance-due-label,.finance-split-line{color:rgba(255,255,255,.82)!important}
+  .finance-history-paid,.finance-due-count{color:#ffffff!important;text-shadow:0 0 8px rgba(191,255,42,.12)}
   .rep-tabs{background:linear-gradient(135deg,#0d2a20,#123026)!important}
-  .rep-tab{color:#d9fff0!important}
-  .rep-tab.active{background:#d9fff0!important;color:#04110c!important}
-  .portal-emerald-note{background:rgba(15,42,31,.5)!important;border:1px solid rgba(52,211,153,.18)!important}
-  .portal-emerald-note-title{font-size:13px;font-weight:700;color:#d9fff0!important;text-shadow:0 0 14px rgba(52,211,153,.22)}
+  .rep-tab{color:#ffffff!important}
+  .rep-tab.active{background:#ffffff!important;color:#1d2809!important}
+  .portal-emerald-note{background:rgba(48,66,14,.42)!important;border:1px solid rgba(191,255,42,.16)!important}
+  .portal-emerald-note-title{font-size:13px;font-weight:700;color:#ffffff!important;text-shadow:0 0 10px rgba(191,255,42,.12)}
   .portal-emerald-note-copy{font-size:12px;color:var(--ink-soft)!important;margin-top:6px}
   /* ---------- Motion polish ---------- */
   #bootSplash,#authGate.gate-screen{background-size:140% 140%;animation:adminGlowShift 18s ease-in-out infinite}

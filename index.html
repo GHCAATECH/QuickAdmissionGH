@@ -14,13 +14,13 @@
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <style>
   :root{
-    --bg:#06110d;--surface:#0d1915;--surface-2:#12231c;
-    --ink:#ecfff5;--ink-soft:#b5d5c4;--muted:#7da08f;--line:#1f3a30;
-    --primary:#10b981;--primary-deep:#059669;--primary-soft:#0e2a21;
-    --accent:#34d399;--accent-soft:#0d2a20;--accent-ink:#ddfff1;
-    --danger:#ef4444;--danger-soft:#311314;--info:#2dd4bf;--info-soft:#0d2522;
-    --sb:#04100c;--sb-soft:#0b1a15;--sb-text:#a6d3be;--sb-active:#123026;
-    --r:12px;--r-sm:8px;--shadow:0 12px 34px -20px rgba(0,0,0,.58),0 0 0 1px rgba(52,211,153,.05);
+    --bg:#081007;--surface:#11170c;--surface-2:#171f10;
+    --ink:#ffffff;--ink-soft:rgba(255,255,255,.82);--muted:rgba(255,255,255,.64);--line:#35441c;
+    --primary:#bfff2a;--primary-deep:#8fcb00;--primary-soft:#1d2809;
+    --accent:#dfff63;--accent-soft:#1d2809;--accent-ink:#ffffff;
+    --danger:#ef4444;--danger-soft:#311314;--info:#c8ff55;--info-soft:#202a0d;
+    --sb:#0a1107;--sb-soft:#12190e;--sb-text:#efffcf;--sb-active:#2b3912;
+    --r:12px;--r-sm:8px;--shadow:0 12px 34px -20px rgba(0,0,0,.58),0 0 0 1px rgba(191,255,42,.06);
     --portal-footer-height:46px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -452,41 +452,41 @@
   /* ---------- Emerald dark theme ---------- */
   .auth,.screen,#s-login .auth{background:transparent!important}
   #s-login{background:
-    radial-gradient(95% 80% at 50% -8%,rgba(16,185,129,.18),transparent 58%),
-    radial-gradient(46% 36% at 8% 10%,rgba(52,211,153,.12),transparent 58%),
-    radial-gradient(42% 34% at 92% 14%,rgba(45,212,191,.1),transparent 56%),
-    linear-gradient(180deg,#05130e 0%,#081712 54%,#07110d 100%)!important}
+    radial-gradient(95% 80% at 50% -8%,rgba(191,255,42,.16),transparent 58%),
+    radial-gradient(46% 36% at 8% 10%,rgba(223,255,99,.08),transparent 58%),
+    radial-gradient(42% 34% at 92% 14%,rgba(163,230,53,.06),transparent 56%),
+    linear-gradient(180deg,#070d05 0%,#0b1408 54%,#091006 100%)!important}
   .card,.card2,.welcome,.submit-success,.hero-feat,.docs,.wu,.report-box,.token-show,.declare,.dropzone,.disc-modal,.boot-card,.rev-head,.rev-block{
     background:rgba(9,22,17,.5);
-    border-color:rgba(52,211,153,.16)!important;
-    box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(52,211,153,.04);
+    border-color:rgba(191,255,42,.14)!important;
+    box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(191,255,42,.05);
   }
-  .ptopbar,.portal-footer{background:rgba(5,16,13,.5)!important;border-color:rgba(52,211,153,.14)!important;backdrop-filter:blur(18px)}
-  .psidebar{background:linear-gradient(180deg,#04100c 0%,#0a1914 100%)!important}
-  .btn-primary,.btn-accent,#s-login #loginBtn,#s-login #buyTokenBtn{background:linear-gradient(135deg,#34d399 0%,#10b981 45%,#059669 100%)!important;color:#04110c!important;box-shadow:0 18px 34px -20px rgba(16,185,129,.8),0 0 0 1px rgba(255,255,255,.06) inset}
-  .btn-primary:hover,.btn-accent:hover,#s-login #loginBtn:hover,#s-login #buyTokenBtn:hover{filter:brightness(1.05);box-shadow:0 22px 40px -18px rgba(16,185,129,.9),0 0 26px rgba(16,185,129,.28)}
-  .btn-ghost,.pay-opt,#s-login .portal-link-btn,.corner-nav a,.ptopbar .out,.ptopbar .ham{background:rgba(12,27,21,.88)!important;color:var(--ink)!important;border-color:rgba(52,211,153,.18)!important}
-  .btn-ghost:hover,.pay-opt:hover,#s-login .portal-link-btn:hover,.corner-nav a:hover,.ptopbar .out:hover,.ptopbar .ham:hover{background:rgba(16,42,31,.96)!important}
-  .auth-head h1,.auth-hero h2,#s-login .portal-brand-copy h1,#s-login .portal-form-head h2,.card2-head h2{background:linear-gradient(135deg,#ecfff5 0%,#7ef2c0 48%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .auth-head .tag,.sch-code,.hero-feat svg,.hero-upload label,.super-link:hover{color:#7ef2c0!important}
-  #s-login .portal-login-brand{background:linear-gradient(135deg,rgba(8,28,21,.5) 0%,rgba(11,45,33,.5) 58%,rgba(7,102,72,.5) 100%)!important;border-color:rgba(74,222,128,.24)!important;box-shadow:0 26px 54px -36px rgba(16,185,129,.5)!important}
-  #s-login .portal-brand-crest,.crest,#s-login .portal-info-icon,#s-login .portal-link-btn .ico{background:linear-gradient(180deg,rgba(15,49,36,.95),rgba(8,30,22,.98))!important;color:#7ef2c0!important;border-color:rgba(52,211,153,.18)!important;box-shadow:0 16px 34px -24px rgba(16,185,129,.42)!important}
-  #s-login .portal-login-shell{background:linear-gradient(180deg,rgba(7,19,15,.5),rgba(10,22,18,.56))!important;border-color:rgba(52,211,153,.16)!important;box-shadow:0 30px 72px -36px rgba(0,0,0,.74)!important}
+  .ptopbar,.portal-footer{background:rgba(8,15,6,.5)!important;border-color:rgba(191,255,42,.12)!important;backdrop-filter:blur(18px)}
+  .psidebar{background:linear-gradient(180deg,#090f06 0%,#11180b 100%)!important}
+  .btn-primary,.btn-accent,#s-login #loginBtn,#s-login #buyTokenBtn{background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 48%,#96d700 100%)!important;color:#ffffff!important;box-shadow:0 14px 28px -20px rgba(191,255,42,.46),0 0 0 1px rgba(255,255,255,.08) inset}
+  .btn-primary:hover,.btn-accent:hover,#s-login #loginBtn:hover,#s-login #buyTokenBtn:hover{filter:brightness(1.03);box-shadow:0 18px 34px -20px rgba(191,255,42,.54),0 0 16px rgba(191,255,42,.16)}
+  .btn-ghost,.pay-opt,#s-login .portal-link-btn,.corner-nav a,.ptopbar .out,.ptopbar .ham{background:rgba(17,28,10,.88)!important;color:#ffffff!important;border-color:rgba(191,255,42,.16)!important}
+  .btn-ghost:hover,.pay-opt:hover,#s-login .portal-link-btn:hover,.corner-nav a:hover,.ptopbar .out:hover,.ptopbar .ham:hover{background:rgba(28,45,14,.9)!important}
+  .auth-head h1,.auth-hero h2,#s-login .portal-brand-copy h1,#s-login .portal-form-head h2,.card2-head h2{background:none!important;-webkit-background-clip:border-box;background-clip:border-box;color:#ffffff!important}
+  .auth-head .tag,.sch-code,.hero-feat svg,.hero-upload label,.super-link:hover{color:#ffffff!important}
+  #s-login .portal-login-brand{background:linear-gradient(135deg,rgba(13,24,8,.5) 0%,rgba(20,34,10,.5) 58%,rgba(47,71,14,.5) 100%)!important;border-color:rgba(191,255,42,.16)!important;box-shadow:0 24px 46px -36px rgba(191,255,42,.22)!important}
+  #s-login .portal-brand-crest,.crest,#s-login .portal-info-icon,#s-login .portal-link-btn .ico{background:linear-gradient(180deg,rgba(35,56,12,.96),rgba(17,28,10,.98))!important;color:#ffffff!important;border-color:rgba(191,255,42,.14)!important;box-shadow:0 14px 26px -24px rgba(191,255,42,.18)!important}
+  #s-login .portal-login-shell{background:linear-gradient(180deg,rgba(10,18,7,.5),rgba(14,22,9,.56))!important;border-color:rgba(191,255,42,.12)!important;box-shadow:0 30px 72px -36px rgba(0,0,0,.74)!important}
   #s-login .portal-login-info,#s-login .portal-login-form,.welcome .wh,.wu-head{background:linear-gradient(180deg,rgba(10,25,19,.5),rgba(11,28,22,.56))!important}
-  #s-login .portal-token-note,.notice.info,.notice.warn,.submit-success-item,.report-box,.prog-card.sel,.cls-row.sel,.dropzone:hover,.file-done{background:rgba(15,42,31,.5)!important}
-  #s-login .portal-info-head p,#s-login .portal-charge,#s-login .portal-token-note,#s-login .portal-form-divider span,#s-login .portal-link-btn,#s-login .portal-link-btn .ico,.login-school-option:hover,.login-school-option.active{color:#d9fff0!important;text-shadow:0 0 10px rgba(52,211,153,.12)}
-  #s-login .portal-info-copy,#s-login .portal-info-item span,#s-login .portal-form-head p,#s-login .portal-login-form .hint,#s-login .portal-login-foot,#s-login .portal-link-btn .arrow,.login-school-option small{color:#b5d5c4!important}
-  #s-login .portal-info-item b,#s-login .portal-login-form .field label,.login-school-trigger,.login-school-trigger-caret,#s-login .portal-brand-crest span{color:#ecfff5!important}
-  #s-login .portal-info-head h2,#s-login .portal-form-head h2{background:linear-gradient(135deg,#ecfff5 0%,#7ef2c0 48%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+  #s-login .portal-token-note,.notice.info,.notice.warn,.submit-success-item,.report-box,.prog-card.sel,.cls-row.sel,.dropzone:hover,.file-done{background:rgba(48,66,14,.42)!important}
+  #s-login .portal-info-head p,#s-login .portal-charge,#s-login .portal-token-note,#s-login .portal-form-divider span,#s-login .portal-link-btn,#s-login .portal-link-btn .ico,.login-school-option:hover,.login-school-option.active{color:#ffffff!important;text-shadow:0 0 8px rgba(191,255,42,.12)}
+  #s-login .portal-info-copy,#s-login .portal-info-item span,#s-login .portal-form-head p,#s-login .portal-login-form .hint,#s-login .portal-login-foot,#s-login .portal-link-btn .arrow,.login-school-option small{color:rgba(255,255,255,.82)!important}
+  #s-login .portal-info-item b,#s-login .portal-login-form .field label,.login-school-trigger,.login-school-trigger-caret,#s-login .portal-brand-crest span{color:#ffffff!important}
+  #s-login .portal-info-head h2,#s-login .portal-form-head h2{background:none!important;-webkit-background-clip:border-box;background-clip:border-box;color:#ffffff!important}
   #s-login .portal-link-btn .arrow{opacity:.9}
-  #s-login .portal-form-divider::before,#s-login .portal-form-divider::after{background:rgba(52,211,153,.18)!important}
-  #s-login .login-input-shell:focus-within,.login-school-search:focus{border-color:#34d399!important;box-shadow:0 0 0 3px rgba(52,211,153,.12)!important}
-  input,select,textarea,.login-school-panel,.login-school-search,.login-school-option,#s-login .login-input-shell{background:rgba(9,22,17,.5)!important;color:var(--ink)!important;border-color:rgba(52,211,153,.18)!important}
-  #s-login .login-input-icon{background:linear-gradient(180deg,rgba(12,33,25,.98),rgba(10,24,19,.98))!important;border-color:rgba(52,211,153,.14)!important;color:#7ef2c0!important}
-  .login-school-option:hover,.login-school-option.active,.prog-card:hover{background:rgba(18,52,38,.95)!important;color:#dffff2!important}
-  .welcome .wh,.pill.ok,.prog-card .pc-code,.checklist .n,.step.done .dot,.progress-line i,.checkbox.on{background:linear-gradient(135deg,#34d399 0%,#10b981 50%,#059669 100%)!important;color:#04110c!important;border-color:transparent!important}
-  .env-badge{background:#0b2c22;color:#7ef2c0;border-color:#1d5a46}
-  .env-badge.dev{background:#173223;color:#c7ffe8;border-color:#236143}
+  #s-login .portal-form-divider::before,#s-login .portal-form-divider::after{background:rgba(191,255,42,.16)!important}
+  #s-login .login-input-shell:focus-within,.login-school-search:focus{border-color:#c7ff39!important;box-shadow:0 0 0 3px rgba(191,255,42,.1)!important}
+  input,select,textarea,.login-school-panel,.login-school-search,.login-school-option,#s-login .login-input-shell{background:rgba(9,22,17,.5)!important;color:#ffffff!important;border-color:rgba(191,255,42,.14)!important}
+  #s-login .login-input-icon{background:linear-gradient(180deg,rgba(28,45,14,.98),rgba(17,28,10,.98))!important;border-color:rgba(191,255,42,.12)!important;color:#ffffff!important}
+  .login-school-option:hover,.login-school-option.active,.prog-card:hover{background:rgba(48,66,14,.58)!important;color:#ffffff!important}
+  .welcome .wh,.pill.ok,.prog-card .pc-code,.checklist .n,.step.done .dot,.progress-line i,.checkbox.on{background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 50%,#96d700 100%)!important;color:#ffffff!important;border-color:transparent!important}
+  .env-badge{background:#1d2809;color:#ffffff;border-color:#4f6914}
+  .env-badge.dev{background:#293511;color:#ffffff;border-color:#637f1c}
   /* ===== DISCLAIMER ===== */
   .disc-overlay{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(12,30,24,.55);backdrop-filter:blur(3px)}
   .disc-overlay.show{display:flex;animation:fade .2s}
