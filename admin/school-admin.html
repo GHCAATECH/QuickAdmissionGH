@@ -225,10 +225,31 @@
   .qa-row{display:none;gap:11px;flex-wrap:wrap;margin-bottom:0}
   .qa{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;font-weight:600;font-size:13px;transition:.14s;flex:1;min-width:180px}
   .qa:hover{border-color:var(--primary);background:var(--primary-soft)}
+  .qa.qa-neon{position:relative;overflow:visible;box-shadow:0 0 0 1px rgba(191,255,42,.14),0 0 18px rgba(191,255,42,.12)}
+  .qa.qa-neon::after{
+    content:'';
+    position:absolute;
+    inset:-2px;
+    border-radius:calc(var(--r) + 2px);
+    border:1px solid rgba(191,255,42,.58);
+    box-shadow:0 0 8px rgba(191,255,42,.34),0 0 20px rgba(191,255,42,.24),0 0 36px rgba(191,255,42,.16);
+    pointer-events:none;
+    animation:qaNeonPulse 1.8s ease-in-out infinite;
+  }
   .qa .ico{width:34px;height:34px;border-radius:9px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;flex:none}
   .qa:hover .ico{background:var(--primary);color:#fff}
   .qa .ico svg{width:16px;height:16px}
   .qa small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+  @keyframes qaNeonPulse{
+    0%,100%{
+      opacity:.72;
+      box-shadow:0 0 8px rgba(191,255,42,.26),0 0 18px rgba(191,255,42,.2),0 0 30px rgba(191,255,42,.14);
+    }
+    50%{
+      opacity:1;
+      box-shadow:0 0 12px rgba(191,255,42,.44),0 0 28px rgba(191,255,42,.34),0 0 48px rgba(191,255,42,.22);
+    }
+  }
 
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:18px}
   /* ===== 3D depth (broad) ===== */
@@ -814,9 +835,9 @@
       <section class="view active" id="view-dashboard">
         <div class="adm-cards" id="admCards"></div>
         <div class="qa-row">
-          <button class="qa" onclick="toggleAdmission()"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3v18M3 21h18M6 21V5a2 2 0 0 1 2-2h7"/></svg></span><span id="qaToggle">Close admission<small>Currently accepting</small></span></button>
-          <button class="qa" onclick="go('sms')"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span><span>Send bulk SMS<small>Message students</small></span></button>
-          <button class="qa" onclick="toast('Exporting student data as CSV…')"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span><span>Export students<small>Download CSV / Excel</small></span></button>
+          <button class="qa qa-neon" onclick="toggleAdmission()"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3v18M3 21h18M6 21V5a2 2 0 0 1 2-2h7"/></svg></span><span id="qaToggle">Close admission<small>Currently accepting</small></span></button>
+          <button class="qa qa-neon" onclick="go('sms')"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span><span>Send bulk SMS<small>Message students</small></span></button>
+          <button class="qa qa-neon" onclick="toast('Exporting student data as CSV…')"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span><span>Export students<small>Download CSV / Excel</small></span></button>
           <button class="qa" onclick="go('placement')"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span>Placement list<small id="qaPending">Manage CSSPS records</small></span></button>
         </div>
         <div class="panel">
