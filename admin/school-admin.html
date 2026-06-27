@@ -607,12 +607,12 @@
   }
   .sidebar{background:linear-gradient(180deg,#04100c 0%,#0a1914 100%)!important}
   .topbar,body>footer,.panel,.stat,.metric,.finance-reset-card,.modal-head,.modal-body,.modal-foot,.disc-modal{
-    background:rgba(9,22,17,.9)!important;
+    background:rgba(9,22,17,.5)!important;
     border-color:rgba(52,211,153,.16)!important;
     box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(52,211,153,.04);
   }
   .school-admin-login-card{
-    background:linear-gradient(180deg,rgba(8,28,21,.92),rgba(9,33,25,.96))!important;
+    background:linear-gradient(180deg,rgba(8,28,21,.5),rgba(9,33,25,.56))!important;
     border-color:rgba(74,222,128,.24)!important;
     box-shadow:0 34px 80px -32px rgba(0,0,0,.72),0 0 40px rgba(16,185,129,.14)!important;
   }
@@ -622,7 +622,7 @@
   .admin-login-title,.pagetitle,.section-title,.panel-head h3{background:linear-gradient(135deg,#ecfff5 0%,#7ef2c0 50%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
   .admin-login-copy,.pagetitle small,.sub,.clock,.brand-sub,.nav-label,.finance-reset-card .k{color:var(--ink-soft)!important}
   .admin-login-input-shell,input,select,textarea,.colvis-menu,.tpl-toolbar select,.tpl-page,.tpl-fieldbar{
-    background:rgba(9,22,17,.94)!important;
+    background:rgba(9,22,17,.5)!important;
     color:var(--ink)!important;
     border-color:rgba(52,211,153,.18)!important;
   }
@@ -655,7 +655,7 @@
   .rep-tabs{background:linear-gradient(135deg,#0d2a20,#123026)!important}
   .rep-tab{color:#d9fff0!important}
   .rep-tab.active{background:#d9fff0!important;color:#04110c!important}
-  .portal-emerald-note{background:rgba(15,42,31,.94)!important;border:1px solid rgba(52,211,153,.18)!important}
+  .portal-emerald-note{background:rgba(15,42,31,.5)!important;border:1px solid rgba(52,211,153,.18)!important}
   .portal-emerald-note-title{font-size:13px;font-weight:700;color:#d9fff0!important;text-shadow:0 0 14px rgba(52,211,153,.22)}
   .portal-emerald-note-copy{font-size:12px;color:var(--ink-soft)!important;margin-top:6px}
   /* ---------- Motion polish ---------- */
@@ -3219,7 +3219,7 @@ function fillSmsSettingsForm(){
   updateSmsSettingsPreview();
   const setupNote=document.querySelector('#view-setup [data-tab="1"] fieldset:last-of-type .panel');
   if(setupNote){
-    setupNote.style.background='rgba(15,42,31,.94)';
+    setupNote.style.background='rgba(15,42,31,.5)';
     setupNote.style.border='1px solid rgba(52,211,153,.18)';
     setupNote.innerHTML='<div class="portal-emerald-note-title">Manage Sender ID, template, and SMS enablement under SMS Settings.</div><div class="portal-emerald-note-copy">Bulk SMS, automatic submission SMS, and test messages all use the school\'s registered Sender ID.</div>';
   }

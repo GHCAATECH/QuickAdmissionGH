@@ -451,12 +451,17 @@
   .env-badge.dev{background:#5b3a08;color:#FBD37A;border-color:#7a5409}
   /* ---------- Emerald dark theme ---------- */
   .auth,.screen,#s-login .auth{background:transparent!important}
+  #s-login{background:
+    radial-gradient(95% 80% at 50% -8%,rgba(16,185,129,.18),transparent 58%),
+    radial-gradient(46% 36% at 8% 10%,rgba(52,211,153,.12),transparent 58%),
+    radial-gradient(42% 34% at 92% 14%,rgba(45,212,191,.1),transparent 56%),
+    linear-gradient(180deg,#05130e 0%,#081712 54%,#07110d 100%)!important}
   .card,.card2,.welcome,.submit-success,.hero-feat,.docs,.wu,.report-box,.token-show,.declare,.dropzone,.disc-modal,.boot-card,.rev-head,.rev-block{
-    background:rgba(9,22,17,.86);
+    background:rgba(9,22,17,.5);
     border-color:rgba(52,211,153,.16)!important;
     box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(52,211,153,.04);
   }
-  .ptopbar,.portal-footer{background:rgba(5,16,13,.9)!important;border-color:rgba(52,211,153,.14)!important;backdrop-filter:blur(18px)}
+  .ptopbar,.portal-footer{background:rgba(5,16,13,.5)!important;border-color:rgba(52,211,153,.14)!important;backdrop-filter:blur(18px)}
   .psidebar{background:linear-gradient(180deg,#04100c 0%,#0a1914 100%)!important}
   .btn-primary,.btn-accent,#s-login #loginBtn,#s-login #buyTokenBtn{background:linear-gradient(135deg,#34d399 0%,#10b981 45%,#059669 100%)!important;color:#04110c!important;box-shadow:0 18px 34px -20px rgba(16,185,129,.8),0 0 0 1px rgba(255,255,255,.06) inset}
   .btn-primary:hover,.btn-accent:hover,#s-login #loginBtn:hover,#s-login #buyTokenBtn:hover{filter:brightness(1.05);box-shadow:0 22px 40px -18px rgba(16,185,129,.9),0 0 26px rgba(16,185,129,.28)}
@@ -464,13 +469,19 @@
   .btn-ghost:hover,.pay-opt:hover,#s-login .portal-link-btn:hover,.corner-nav a:hover,.ptopbar .out:hover,.ptopbar .ham:hover{background:rgba(16,42,31,.96)!important}
   .auth-head h1,.auth-hero h2,#s-login .portal-brand-copy h1,#s-login .portal-form-head h2,.card2-head h2{background:linear-gradient(135deg,#ecfff5 0%,#7ef2c0 48%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
   .auth-head .tag,.sch-code,.hero-feat svg,.hero-upload label,.super-link:hover{color:#7ef2c0!important}
-  #s-login .portal-login-brand{background:linear-gradient(135deg,rgba(8,28,21,.96) 0%,rgba(11,45,33,.94) 58%,rgba(7,102,72,.88) 100%)!important;border-color:rgba(74,222,128,.24)!important;box-shadow:0 26px 54px -36px rgba(16,185,129,.5)!important}
+  #s-login .portal-login-brand{background:linear-gradient(135deg,rgba(8,28,21,.5) 0%,rgba(11,45,33,.5) 58%,rgba(7,102,72,.5) 100%)!important;border-color:rgba(74,222,128,.24)!important;box-shadow:0 26px 54px -36px rgba(16,185,129,.5)!important}
   #s-login .portal-brand-crest,.crest,#s-login .portal-info-icon,#s-login .portal-link-btn .ico{background:linear-gradient(180deg,rgba(15,49,36,.95),rgba(8,30,22,.98))!important;color:#7ef2c0!important;border-color:rgba(52,211,153,.18)!important;box-shadow:0 16px 34px -24px rgba(16,185,129,.42)!important}
-  #s-login .portal-login-shell{background:linear-gradient(180deg,rgba(7,19,15,.9),rgba(10,22,18,.96))!important;border-color:rgba(52,211,153,.16)!important;box-shadow:0 30px 72px -36px rgba(0,0,0,.74)!important}
-  #s-login .portal-login-info,#s-login .portal-login-form,.welcome .wh,.wu-head{background:linear-gradient(180deg,rgba(10,25,19,.92),rgba(11,28,22,.96))!important}
-  #s-login .portal-token-note,.notice.info,.notice.warn,.submit-success-item,.report-box,.prog-card.sel,.cls-row.sel,.dropzone:hover,.file-done{background:rgba(15,42,31,.94)!important}
+  #s-login .portal-login-shell{background:linear-gradient(180deg,rgba(7,19,15,.5),rgba(10,22,18,.56))!important;border-color:rgba(52,211,153,.16)!important;box-shadow:0 30px 72px -36px rgba(0,0,0,.74)!important}
+  #s-login .portal-login-info,#s-login .portal-login-form,.welcome .wh,.wu-head{background:linear-gradient(180deg,rgba(10,25,19,.5),rgba(11,28,22,.56))!important}
+  #s-login .portal-token-note,.notice.info,.notice.warn,.submit-success-item,.report-box,.prog-card.sel,.cls-row.sel,.dropzone:hover,.file-done{background:rgba(15,42,31,.5)!important}
   #s-login .portal-info-head p,#s-login .portal-charge,#s-login .portal-token-note,#s-login .portal-form-divider span,#s-login .portal-link-btn,#s-login .portal-link-btn .ico,.login-school-option:hover,.login-school-option.active{color:#d9fff0!important;text-shadow:0 0 10px rgba(52,211,153,.12)}
-  input,select,textarea,.login-school-panel,.login-school-search,.login-school-option,#s-login .login-input-shell{background:rgba(9,22,17,.94)!important;color:var(--ink)!important;border-color:rgba(52,211,153,.18)!important}
+  #s-login .portal-info-copy,#s-login .portal-info-item span,#s-login .portal-form-head p,#s-login .portal-login-form .hint,#s-login .portal-login-foot,#s-login .portal-link-btn .arrow,.login-school-option small{color:#b5d5c4!important}
+  #s-login .portal-info-item b,#s-login .portal-login-form .field label,.login-school-trigger,.login-school-trigger-caret,#s-login .portal-brand-crest span{color:#ecfff5!important}
+  #s-login .portal-info-head h2,#s-login .portal-form-head h2{background:linear-gradient(135deg,#ecfff5 0%,#7ef2c0 48%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+  #s-login .portal-link-btn .arrow{opacity:.9}
+  #s-login .portal-form-divider::before,#s-login .portal-form-divider::after{background:rgba(52,211,153,.18)!important}
+  #s-login .login-input-shell:focus-within,.login-school-search:focus{border-color:#34d399!important;box-shadow:0 0 0 3px rgba(52,211,153,.12)!important}
+  input,select,textarea,.login-school-panel,.login-school-search,.login-school-option,#s-login .login-input-shell{background:rgba(9,22,17,.5)!important;color:var(--ink)!important;border-color:rgba(52,211,153,.18)!important}
   #s-login .login-input-icon{background:linear-gradient(180deg,rgba(12,33,25,.98),rgba(10,24,19,.98))!important;border-color:rgba(52,211,153,.14)!important;color:#7ef2c0!important}
   .login-school-option:hover,.login-school-option.active,.prog-card:hover{background:rgba(18,52,38,.95)!important;color:#dffff2!important}
   .welcome .wh,.pill.ok,.prog-card .pc-code,.checklist .n,.step.done .dot,.progress-line i,.checkbox.on{background:linear-gradient(135deg,#34d399 0%,#10b981 50%,#059669 100%)!important;color:#04110c!important;border-color:transparent!important}
