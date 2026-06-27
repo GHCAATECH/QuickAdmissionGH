@@ -1403,7 +1403,7 @@ async function payToken(method){
 function retryVerify(){ const p=getPending(); if(!p||!p.reference){toast('No pending payment found');return;} verifyPayment(p.reference,p.index,p.name||'',p.school||null); }
 function normalizedPaymentEmail(idx){
   const raw=$('p-email')?$('p-email').value.trim():'';
-  return raw||(String(idx||'applicant').trim()+'@noemail.qadmission');
+  return raw||(String(idx||'applicant').trim()+'@quickadmissiongh.com');
 }
 async function verifyPayment(reference, idx, name, school){
   toast('Verifying payment\u2026');
