@@ -406,6 +406,8 @@
   .cls-seats{font-family:'JetBrains Mono';font-weight:600;text-align:center}
 
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:13px 18px;border-radius:10px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 12px 30px -8px rgba(0,0,0,.4);z-index:90;opacity:0;transition:.3s}
+  .toast.warn{background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 48%,#96d700 100%);color:#111111}
+  .toast.warn svg{color:#111111}
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}.toast svg{width:17px;height:17px;color:var(--accent)}
   .footer-gap{height:var(--portal-footer-height)}
   .portal-footer{position:fixed;left:0;right:0;bottom:0;z-index:50;min-height:var(--portal-footer-height);text-align:center;padding:12px 18px;font-size:12px;color:var(--muted,#888);background:var(--surface,#fff);border-top:1px solid var(--line,var(--border,#e5e7eb))}
@@ -484,7 +486,10 @@
   #s-login .portal-link-btn .arrow{opacity:.9}
   #s-login .portal-form-divider::before,#s-login .portal-form-divider::after{background:rgba(191,255,42,.16)!important}
   #s-login .login-input-shell:focus-within,.login-school-search:focus{border-color:#c7ff39!important;box-shadow:0 0 0 3px rgba(191,255,42,.1)!important}
-  input,select,textarea,.login-school-panel,.login-school-search,.login-school-option,#s-login .login-input-shell{background:rgba(9,22,17,.5)!important;color:#ffffff!important;border-color:rgba(191,255,42,.14)!important}
+  input,select,textarea,#s-login .login-input-shell{background:rgba(9,22,17,.5)!important;color:#ffffff!important;border-color:rgba(191,255,42,.14)!important}
+  .login-school-panel{background:#11170c!important;color:#ffffff!important;border-color:rgba(191,255,42,.16)!important}
+  .login-school-search{background:#171f10!important;color:#ffffff!important;border-color:rgba(191,255,42,.14)!important}
+  .login-school-option{background:#11170c!important;color:#ffffff!important;border-color:transparent!important}
   #s-login .login-input-icon{background:linear-gradient(180deg,rgba(28,45,14,.98),rgba(17,28,10,.98))!important;border-color:rgba(191,255,42,.12)!important;color:#ffffff!important}
   .login-school-option:hover,.login-school-option.active,.prog-card:hover{background:rgba(48,66,14,.58)!important;color:#ffffff!important}
   .welcome .wh,.pill.ok,.prog-card .pc-code,.checklist .n,.step.done .dot,.progress-line i,.checkbox.on,.prog-card.sel .radio-tick,.file-done .fi{background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 50%,#96d700 100%)!important;color:#111111!important;border-color:transparent!important}
@@ -1011,7 +1016,7 @@ function isChristianReligion(){
   const rel=fieldValue?fieldValue('pf-rel',false):(($('pf-rel')&&$('pf-rel').value)||'');
   return /^christ/i.test(String(rel||'').trim());
 }
-function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
+function toast(m,type){$('toastMsg').textContent=m;const t=$('toast');t.classList.toggle('warn',type==='warn');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>{t.classList.remove('show');t.classList.remove('warn');},2800);}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));window.scrollTo(0,0);if(id==='s-purchase'){try{showPendingBanner();}catch(e){}}}
 function studentSessionKey(){
   return [session&&session.school||'',session&&session.index||'',session&&session.token||''].join('::');
@@ -1496,8 +1501,8 @@ async function verifyPayment(reference, idx, name, school){
 function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in - tap Log in');}
 $('r-by').addEventListener('change',e=>$('r-label').textContent=e.target.value==='index'?'Index number':'Payment receipt number');
 async function retrieveToken(){
-  const by=$('r-by').value,v=$('r-value').value.trim(); if(!v){toast('Enter a value to search');return;}
-  const rsid=$('r-school').value; if(!rsid){toast('Please select your school first');return;}
+  const by=$('r-by').value,v=$('r-value').value.trim(); if(!v){toast('Enter a value to search','warn');return;}
+  const rsid=$('r-school').value; if(!rsid){toast('Please select your school first','warn');return;}
   const {data,error}=await sb.rpc('retrieve_token',{p_by:by,p_value:v,p_school:rsid});
   if(error||!data.ok){toast(data&&data.error?data.error:'No token found');return;}
   $('ret-token').textContent=data.token;$('retrieve-result').style.display='block';window._retRec={idx:data.index,tk:data.token};
