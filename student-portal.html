@@ -14,18 +14,23 @@
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <style>
   :root{
-    --bg:#EEF2F8;--surface:#FFFFFF;--surface-2:#F4F7FB;
-    --ink:#14201C;--ink-soft:#46554F;--muted:#8A9893;--line:#E1E7E4;
-    --primary:#1557B0;--primary-deep:#0E3F86;--primary-soft:#E2ECFB;
-    --accent:#D2941A;--accent-soft:#FBF1DC;--accent-ink:#7a5409;
-    --danger:#B23A3A;--danger-soft:#F6E5E5;--info:#3066A3;--info-soft:#E6EEF6;
-    --sb:#0E2238;--sb-soft:#16304D;--sb-text:#A9B8B2;--sb-active:#173F7A;
-    --r:12px;--r-sm:8px;--shadow:0 1px 2px rgba(20,32,28,.05),0 10px 30px -14px rgba(20,32,28,.2);
+    --bg:#06110d;--surface:#0d1915;--surface-2:#12231c;
+    --ink:#ecfff5;--ink-soft:#b5d5c4;--muted:#7da08f;--line:#1f3a30;
+    --primary:#10b981;--primary-deep:#059669;--primary-soft:#0e2a21;
+    --accent:#34d399;--accent-soft:#0d2a20;--accent-ink:#ddfff1;
+    --danger:#ef4444;--danger-soft:#311314;--info:#2dd4bf;--info-soft:#0d2522;
+    --sb:#04100c;--sb-soft:#0b1a15;--sb-text:#a6d3be;--sb-active:#123026;
+    --r:12px;--r-sm:8px;--shadow:0 12px 34px -20px rgba(0,0,0,.58),0 0 0 1px rgba(52,211,153,.05);
     --portal-footer-height:46px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{min-height:100%;overflow-x:hidden}
-  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:clamp(13px,.82vw,14px);line-height:1.55;-webkit-font-smoothing:antialiased}
+  body{font-family:'Inter',system-ui,sans-serif;background:
+    radial-gradient(70% 55% at 50% 0%,rgba(16,185,129,.18),transparent 55%),
+    radial-gradient(38% 30% at 8% 10%,rgba(52,211,153,.14),transparent 58%),
+    radial-gradient(36% 28% at 92% 12%,rgba(45,212,191,.12),transparent 56%),
+    linear-gradient(180deg,#04110c 0%,#071711 42%,#08110d 100%);
+    color:var(--ink);font-size:clamp(13px,.82vw,14px);line-height:1.55;-webkit-font-smoothing:antialiased}
   .mono{font-family:'JetBrains Mono',monospace}
   button{font-family:inherit;cursor:pointer;border:none;background:none}
   a{color:var(--primary);text-decoration:none;font-weight:600}a:hover{text-decoration:underline}
@@ -444,6 +449,32 @@
   }
   .env-badge{position:fixed;bottom:10px;right:12px;z-index:99999;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;padding:4px 9px;border-radius:20px;background:#0E3F86;color:#AFD3FF;border:1px solid #173F7A;box-shadow:0 4px 14px -6px rgba(0,0,0,.5);pointer-events:none}
   .env-badge.dev{background:#5b3a08;color:#FBD37A;border-color:#7a5409}
+  /* ---------- Emerald dark theme ---------- */
+  .auth,.screen,#s-login .auth{background:transparent!important}
+  .card,.card2,.welcome,.submit-success,.hero-feat,.docs,.wu,.report-box,.token-show,.declare,.dropzone,.disc-modal,.boot-card,.rev-head,.rev-block{
+    background:rgba(9,22,17,.86);
+    border-color:rgba(52,211,153,.16)!important;
+    box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(52,211,153,.04);
+  }
+  .ptopbar,.portal-footer{background:rgba(5,16,13,.9)!important;border-color:rgba(52,211,153,.14)!important;backdrop-filter:blur(18px)}
+  .psidebar{background:linear-gradient(180deg,#04100c 0%,#0a1914 100%)!important}
+  .btn-primary,.btn-accent,#s-login #loginBtn,#s-login #buyTokenBtn{background:linear-gradient(135deg,#34d399 0%,#10b981 45%,#059669 100%)!important;color:#04110c!important;box-shadow:0 18px 34px -20px rgba(16,185,129,.8),0 0 0 1px rgba(255,255,255,.06) inset}
+  .btn-primary:hover,.btn-accent:hover,#s-login #loginBtn:hover,#s-login #buyTokenBtn:hover{filter:brightness(1.05);box-shadow:0 22px 40px -18px rgba(16,185,129,.9),0 0 26px rgba(16,185,129,.28)}
+  .btn-ghost,.pay-opt,#s-login .portal-link-btn,.corner-nav a,.ptopbar .out,.ptopbar .ham{background:rgba(12,27,21,.88)!important;color:var(--ink)!important;border-color:rgba(52,211,153,.18)!important}
+  .btn-ghost:hover,.pay-opt:hover,#s-login .portal-link-btn:hover,.corner-nav a:hover,.ptopbar .out:hover,.ptopbar .ham:hover{background:rgba(16,42,31,.96)!important}
+  .auth-head h1,.auth-hero h2,#s-login .portal-brand-copy h1,#s-login .portal-form-head h2,.card2-head h2{background:linear-gradient(135deg,#ecfff5 0%,#7ef2c0 48%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .auth-head .tag,.sch-code,.hero-feat svg,.hero-upload label,.super-link:hover{color:#7ef2c0!important}
+  #s-login .portal-login-brand{background:linear-gradient(135deg,rgba(8,28,21,.96) 0%,rgba(11,45,33,.94) 58%,rgba(7,102,72,.88) 100%)!important;border-color:rgba(74,222,128,.24)!important;box-shadow:0 26px 54px -36px rgba(16,185,129,.5)!important}
+  #s-login .portal-brand-crest,.crest,#s-login .portal-info-icon,#s-login .portal-link-btn .ico{background:linear-gradient(180deg,rgba(15,49,36,.95),rgba(8,30,22,.98))!important;color:#7ef2c0!important;border-color:rgba(52,211,153,.18)!important;box-shadow:0 16px 34px -24px rgba(16,185,129,.42)!important}
+  #s-login .portal-login-shell{background:linear-gradient(180deg,rgba(7,19,15,.9),rgba(10,22,18,.96))!important;border-color:rgba(52,211,153,.16)!important;box-shadow:0 30px 72px -36px rgba(0,0,0,.74)!important}
+  #s-login .portal-login-info,#s-login .portal-login-form,.welcome .wh,.wu-head{background:linear-gradient(180deg,rgba(10,25,19,.92),rgba(11,28,22,.96))!important}
+  #s-login .portal-token-note,.notice.info,.notice.warn,.submit-success-item,.report-box,.prog-card.sel,.cls-row.sel,.dropzone:hover,.file-done{background:rgba(15,42,31,.94)!important}
+  input,select,textarea,.login-school-panel,.login-school-search,.login-school-option,#s-login .login-input-shell{background:rgba(9,22,17,.94)!important;color:var(--ink)!important;border-color:rgba(52,211,153,.18)!important}
+  #s-login .login-input-icon{background:linear-gradient(180deg,rgba(12,33,25,.98),rgba(10,24,19,.98))!important;border-color:rgba(52,211,153,.14)!important;color:#7ef2c0!important}
+  .login-school-option:hover,.login-school-option.active,.prog-card:hover{background:rgba(18,52,38,.95)!important;color:#dffff2!important}
+  .welcome .wh,.pill.ok,.prog-card .pc-code,.checklist .n,.step.done .dot,.progress-line i,.checkbox.on{background:linear-gradient(135deg,#34d399 0%,#10b981 50%,#059669 100%)!important;color:#04110c!important;border-color:transparent!important}
+  .env-badge{background:#0b2c22;color:#7ef2c0;border-color:#1d5a46}
+  .env-badge.dev{background:#173223;color:#c7ffe8;border-color:#236143}
   /* ===== DISCLAIMER ===== */
   .disc-overlay{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(12,30,24,.55);backdrop-filter:blur(3px)}
   .disc-overlay.show{display:flex;animation:fade .2s}

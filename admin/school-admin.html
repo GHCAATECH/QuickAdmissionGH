@@ -13,18 +13,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#EEF2F8; --surface:#FFFFFF; --surface-2:#F4F7FB;
-    --ink:#14201C; --ink-soft:#46554F; --muted:#8A9893; --line:#E1E7E4;
-    --primary:#1557B0; --primary-deep:#0E3F86; --primary-soft:#E2ECFB;
-    --accent:#D2941A; --accent-soft:#FBF1DC;
-    --danger:#B23A3A; --danger-soft:#F6E5E5;
-    --ok:#2E7D4F; --warn:#C7861A; --info:#3066A3; --info-soft:#E6EEF6;
-    --sb:#0E2238; --sb-soft:#16304D; --sb-text:#A9B8B2; --sb-active:#173F7A;
+    --bg:#06110d; --surface:#0d1915; --surface-2:#12231c;
+    --ink:#ecfff5; --ink-soft:#b5d5c4; --muted:#7da08f; --line:#1f3a30;
+    --primary:#10b981; --primary-deep:#059669; --primary-soft:#0e2a21;
+    --accent:#34d399; --accent-soft:#0d2a20;
+    --danger:#ef4444; --danger-soft:#311314;
+    --ok:#34d399; --warn:#22c55e; --info:#2dd4bf; --info-soft:#0d2522;
+    --sb:#04100c; --sb-soft:#0b1a15; --sb-text:#a6d3be; --sb-active:#123026;
     --r:10px; --r-sm:7px;
-    --shadow:0 1px 2px rgba(20,32,28,.05),0 8px 24px -12px rgba(20,32,28,.12);
+    --shadow:0 18px 42px -26px rgba(0,0,0,.72),0 0 0 1px rgba(52,211,153,.05);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:clamp(13px,.82vw,14px);line-height:1.5;-webkit-font-smoothing:antialiased}
+  body{font-family:'Inter',system-ui,sans-serif;background:
+    radial-gradient(70% 55% at 50% 0%,rgba(16,185,129,.16),transparent 55%),
+    radial-gradient(35% 30% at 8% 10%,rgba(52,211,153,.12),transparent 58%),
+    radial-gradient(34% 28% at 92% 12%,rgba(45,212,191,.1),transparent 56%),
+    linear-gradient(180deg,#04110c 0%,#071711 42%,#08110d 100%);
+    color:var(--ink);font-size:clamp(13px,.82vw,14px);line-height:1.5;-webkit-font-smoothing:antialiased}
   .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
   button{font-family:inherit;cursor:pointer;border:none;background:none}
   a{color:inherit;text-decoration:none}
@@ -592,6 +597,56 @@
   .disc-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
   .disc-actions .btn:disabled{opacity:.5;cursor:not-allowed}
   @media(max-width:520px){.disc-actions{flex-direction:column-reverse}.disc-actions .btn{width:100%;justify-content:center}}
+  /* ---------- Emerald dark theme ---------- */
+  #bootSplash,#authGate.gate-screen{
+    background:
+      radial-gradient(70% 55% at 50% 0%,rgba(16,185,129,.2),transparent 55%),
+      radial-gradient(32% 28% at 10% 10%,rgba(52,211,153,.16),transparent 56%),
+      radial-gradient(34% 28% at 90% 14%,rgba(45,212,191,.12),transparent 54%),
+      linear-gradient(180deg,#04110c 0%,#071711 48%,#08110d 100%)!important;
+  }
+  .sidebar{background:linear-gradient(180deg,#04100c 0%,#0a1914 100%)!important}
+  .topbar,body>footer,.panel,.stat,.metric,.finance-reset-card,.modal-head,.modal-body,.modal-foot,.disc-modal{
+    background:rgba(9,22,17,.9)!important;
+    border-color:rgba(52,211,153,.16)!important;
+    box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(52,211,153,.04);
+  }
+  .school-admin-login-card{
+    background:linear-gradient(180deg,rgba(8,28,21,.92),rgba(9,33,25,.96))!important;
+    border-color:rgba(74,222,128,.24)!important;
+    box-shadow:0 34px 80px -32px rgba(0,0,0,.72),0 0 40px rgba(16,185,129,.14)!important;
+  }
+  .school-admin-login-card::before{background:radial-gradient(circle,rgba(126,242,192,.18) 0%,rgba(126,242,192,0) 72%)!important}
+  .school-admin-login-card::after{background:radial-gradient(circle,rgba(16,185,129,.28) 0%,rgba(16,185,129,0) 72%)!important}
+  .admin-login-icon,.brand-mark,.icon-btn,.hamburger{background:linear-gradient(180deg,rgba(15,49,36,.96),rgba(8,30,22,.98))!important;border-color:rgba(52,211,153,.18)!important;color:#7ef2c0!important}
+  .admin-login-title,.pagetitle,.section-title,.panel-head h3{background:linear-gradient(135deg,#ecfff5 0%,#7ef2c0 50%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .admin-login-copy,.pagetitle small,.sub,.clock,.brand-sub,.nav-label,.finance-reset-card .k{color:var(--ink-soft)!important}
+  .admin-login-input-shell,input,select,textarea,.colvis-menu,.tpl-toolbar select,.tpl-page,.tpl-fieldbar{
+    background:rgba(9,22,17,.94)!important;
+    color:var(--ink)!important;
+    border-color:rgba(52,211,153,.18)!important;
+  }
+  .admin-login-button.btn,.btn-primary,.btn-grn{
+    background:linear-gradient(135deg,#34d399 0%,#10b981 45%,#059669 100%)!important;
+    color:#04110c!important;
+    box-shadow:0 18px 34px -20px rgba(16,185,129,.82),0 0 0 1px rgba(255,255,255,.06) inset!important;
+  }
+  .admin-login-button.btn:hover,.btn-primary:hover,.btn-grn:hover{
+    filter:brightness(1.05);
+    box-shadow:0 22px 40px -18px rgba(16,185,129,.9),0 0 26px rgba(16,185,129,.28)!important;
+  }
+  .btn-ghost,.icon-btn,.clock,.act,.seg-btn,.tpl-toolbar button,.sms-vars button,.nav-item.active,.nav-parent.active,.nav-sub.active{
+    background:rgba(12,27,21,.9)!important;
+    color:var(--ink)!important;
+    border-color:rgba(52,211,153,.18)!important;
+  }
+  .btn-ghost:hover,.icon-btn:hover,.act:hover,.seg-btn:hover,.tpl-toolbar button:hover,.sms-vars button:hover,.nav-item:hover,.nav-parent:hover,.nav-sub:hover{
+    background:rgba(16,42,31,.96)!important;
+    color:#ecfff5!important;
+  }
+  .nav-item.active,.nav-parent.active,.nav-sub.active,.nav-item.active::before,.progress i,.cap-bar i,.dot,.exp-btn{background:linear-gradient(135deg,#34d399 0%,#10b981 50%,#059669 100%)!important;color:#04110c!important}
+  .env-badge{background:#0b2c22;color:#7ef2c0;border-color:#1d5a46}
+  .env-badge.dev{background:#173223;color:#c7ffe8;border-color:#236143}
   /* ---------- Motion polish ---------- */
   #bootSplash,#authGate.gate-screen{background-size:140% 140%;animation:adminGlowShift 18s ease-in-out infinite}
   .school-admin-login-card{animation:adminEnter .72s cubic-bezier(.22,1,.36,1) both}
