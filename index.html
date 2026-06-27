@@ -1424,21 +1424,21 @@ function dismissPending(){ clearPending(); showPendingBanner(); toast('Cleared. 
 async function payToken(method){
   const idx=$('p-index').value.trim(),name=$('p-name').value.trim();
   const sid=$('p-school-sel').value;
-  if(!sid){toast('Please select your school first');return;}
-  if(admissionClosed(sid)){toast('Admission is closed for this school');return;}
-  if(!idx||!name){toast('Enter your index number and name first');return;}
+  if(!sid){toast('Please select your school first','warn');return;}
+  if(admissionClosed(sid)){toast('Admission is closed for this school','warn');return;}
+  if(!idx||!name){toast('Enter your index number and name first','warn');return;}
   if(method!=='Paystack'){toast(method+' isn\u2019t available yet - please use Paystack');return;}
   // recover an unconfirmed payment instead of charging again
   const pend=getPending();
   if(pend&&pend.index===idx&&pend.reference){ toast('Found an unconfirmed payment - verifying instead of charging again'); return verifyPayment(pend.reference, idx, name); }
   // already paid? then don't charge again
   const {data:has}=await sb.rpc('index_has_token',{p_index:idx,p_school:sid});
-  if(has&&has.ok&&has.paid){ toast('This index has already paid. Use "Retrieve token" to get your token.'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
+  if(has&&has.ok&&has.paid){ toast('This index has already paid. Use "Retrieve token" to get your token.','warn'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
   const {data:sch}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:sid});
-  if(!sch||!sch.ok){toast('This index is not on any participating school\u2019s placement list');return;}
+  if(!sch||!sch.ok){toast('This index is not on any participating school\u2019s placement list','warn');return;}
   const verifiedName=nameFromLookup(sch)||await lookupPlacementName(idx,sid)||name;
   const amount=Math.round(Number(sch.charge||0)*100);
-  if(!amount){toast('This school has no service charge set');return;}
+  if(!amount){toast('This school has no service charge set','warn');return;}
   const email=normalizedPaymentEmail(idx);
   if(!PAYSTACK_PUBLIC_KEY){toast('Paystack public key is not configured for this portal yet.');return;}
   if(paystackModeMismatch()){toast('Paystack public and secret keys are in different modes - contact the administrator.');return;}
