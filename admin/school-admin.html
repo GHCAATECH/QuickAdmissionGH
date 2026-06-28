@@ -1800,7 +1800,7 @@
         <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Activity log</h3></div><div class="tbl-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>By</th></tr></thead><tbody id="logRows"></tbody></table></div></div>
         <div class="panel panel-pad" style="margin-top:18px;border:1px solid #f3c2c2;background:#fff7f7">
           <h3 class="section-title" style="color:#b42318">Danger zone</h3>
-          <p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">Permanently delete <b>all student records for this school</b> — the entire <b>placement list</b> and the <b>admission list</b> (submitted students, payments and uploaded forms). This cannot be undone. Use it to clear data before a new academic year.</p>
+          <p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">Permanently delete <b>all student records for this school</b> — the entire <b>placement list</b>, <b>admission list</b>, <b>payment records</b>, <b>uploaded forms</b>, <b>SMS history</b> and <b>activity log</b>. This cannot be undone. Use it to clear data before a new academic year.</p>
           <button class="btn btn-sm" style="background:#b42318;color:#fff" onclick="deleteAllStudentRecords()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;vertical-align:-2px;margin-right:5px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete all student records</button>
         </div>
       </section>
@@ -2457,7 +2457,7 @@ async function deletePlacementBatch(scope){
 async function deleteAllStudentRecords(){
   if(roGuard())return;
   if(!SB_SCHOOL){toast('School not loaded');return;}
-  if(!confirm('Delete ALL student records for '+(SB_SCHOOL.name||'this school')+'?\n\nThis permanently removes the ENTIRE placement list AND the admission list (submitted students, payments and tokens). This CANNOT be undone.'))return;
+  if(!confirm('Delete ALL school records for '+(SB_SCHOOL.name||'this school')+'?\n\nThis permanently removes the ENTIRE placement list, admission list, payments, tokens, uploaded forms, SMS history and activity log. This CANNOT be undone.'))return;
   const typed=prompt('This is irreversible. Type DELETE to confirm:');
   if((typed||'').trim().toUpperCase()!=='DELETE'){toast('Cancelled — not deleted');return;}
   toast('Deleting all student records…');
@@ -2476,13 +2476,16 @@ async function deleteAllStudentRecords(){
       if(paths.length) await sb.storage.from('enrolment-forms').remove(paths);
     }catch(e){}
   }
-  placement=[]; students=[]; payments=[]; selected&&selected.clear&&selected.clear();
+  placement=[]; students=[]; payments=[]; smsHistory=[]; activityLog=[]; selected&&selected.clear&&selected.clear();
   if(typeof renderPlacement==='function')renderPlacement();
   if(typeof renderStudents==='function')renderStudents();
   if(typeof renderFinance==='function')renderFinance();
   if(typeof renderStats==='function')renderStats();
+  if(typeof renderSms==='function')renderSms();
+  if(typeof renderLog==='function')renderLog();
   notifyStudentPortalRefresh('student-records-delete-all');
-  toast('Done — deleted '+(data.students||0)+' student(s), '+(data.placements||0)+' placement(s), '+(data.payments||0)+' payment(s)');
+  const smsDeleted=Number(data.sms_logs||0)+Number(data.legacy_sms_logs||0);
+  toast('Done — deleted '+(data.students||0)+' student(s), '+(data.placements||0)+' placement(s), '+(data.payments||0)+' payment(s), '+smsDeleted+' SMS log(s) and '+(data.activity_logs||0)+' activity log(s)');
 }
 function importPlacement(){
   document.getElementById('csvFileInput').click();
@@ -3130,7 +3133,7 @@ async function sendTestSms(){
     if(btn){ btn.disabled=false; btn.textContent='Send Test SMS'; }
   }
 }
-function renderLog(){$('logRows').innerHTML=activityLog.map(l=>`<tr><td class="mono" style="font-size:12px">${safeHtml(l.time)}</td><td>${safeHtml(l.action)}</td><td>${safeHtml(l.by)}</td></tr>`).join('');renderArchives();}
+function renderLog(){$('logRows').innerHTML=activityLog.length?activityLog.map(l=>`<tr><td class="mono" style="font-size:12px">${safeHtml(l.time)}</td><td>${safeHtml(l.action)}</td><td>${safeHtml(l.by)}</td></tr>`).join(''):emptyRow(3,'No activity logged yet.');renderArchives();}
 const DOC_COL={prospectus:'prospectus_url',undertaking:'undertaking_url',subjects:'subjects_url'};
 function showSchoolDocLink(kind,url){
   const a=document.getElementById('doc_'+kind+'_link'); if(!a)return;

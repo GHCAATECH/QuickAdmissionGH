@@ -99,6 +99,8 @@ Deno.serve(async (req: Request) => {
       legacySmsDeleted = 0;
     }
 
+    const activityLogsDeleted = await countDeleted("activity_log", "school_id", schoolId);
+
     const studentsDeleted = await countDeleted("students", "school_id", schoolId);
     const placementsDeleted = await countDeleted("placement_list", "school_id", schoolId);
 
@@ -111,6 +113,7 @@ Deno.serve(async (req: Request) => {
       tokens: tokensDeleted,
       sms_logs: smsLogsDeleted,
       legacy_sms_logs: legacySmsDeleted,
+      activity_logs: activityLogsDeleted,
       form_urls: formUrls,
     });
   } catch (error) {
