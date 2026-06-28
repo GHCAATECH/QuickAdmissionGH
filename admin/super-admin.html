@@ -531,6 +531,25 @@
   tbody tr:hover{background:#f0fdf4!important}
   .env-badge{background:#dcfce7!important;color:#14532d!important;border-color:#bbf7d0!important}
   .env-badge.dev{background:#fef3c7!important;color:#92400e!important;border-color:#fde68a!important}
+  #authGate{isolation:isolate;overflow:hidden!important}
+  #authGate .super-login-shell{position:relative;z-index:2}
+  #authGate .login-butterfly-field{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
+  #authGate .login-butterfly{position:absolute;top:var(--top);left:-72px;width:34px;height:25px;opacity:.78;filter:drop-shadow(0 4px 7px rgba(20,83,45,.42));animation:loginButterflyFlight var(--duration) linear var(--delay) infinite;will-change:transform}
+  #authGate .login-butterfly::before,#authGate .login-butterfly::after{content:"";position:absolute;top:2px;width:16px;height:20px;border:1px solid rgba(220,252,231,.72);background:linear-gradient(145deg,rgba(220,252,231,.98) 0%,rgba(74,222,128,.92) 42%,rgba(22,163,74,.98) 100%);box-shadow:inset 0 0 7px rgba(255,255,255,.42)}
+  #authGate .login-butterfly::before{left:1px;border-radius:82% 38% 72% 34%;transform-origin:100% 58%;animation:loginButterflyLeftWing var(--flap,.34s) ease-in-out infinite alternate}
+  #authGate .login-butterfly::after{right:1px;border-radius:38% 82% 34% 72%;transform-origin:0 58%;animation:loginButterflyRightWing var(--flap,.34s) ease-in-out infinite alternate}
+  #authGate .login-butterfly i{position:absolute;left:50%;top:5px;z-index:2;width:3px;height:17px;border-radius:999px;background:#14532d;transform:translateX(-50%);box-shadow:0 -4px 0 -1px #14532d}
+  @keyframes loginButterflyFlight{
+    0%{transform:translate3d(-8vw,10px,0) scale(var(--scale,1)) rotate(-8deg)}
+    24%{transform:translate3d(30vw,-42px,0) scale(var(--scale,1)) rotate(7deg)}
+    50%{transform:translate3d(58vw,24px,0) scale(var(--scale,1)) rotate(-5deg)}
+    76%{transform:translate3d(86vw,-34px,0) scale(var(--scale,1)) rotate(8deg)}
+    100%{transform:translate3d(116vw,8px,0) scale(var(--scale,1)) rotate(-6deg)}
+  }
+  @keyframes loginButterflyLeftWing{from{transform:perspective(50px) rotateY(18deg) rotate(-8deg)}to{transform:perspective(50px) rotateY(74deg) rotate(4deg)}}
+  @keyframes loginButterflyRightWing{from{transform:perspective(50px) rotateY(-18deg) rotate(8deg)}to{transform:perspective(50px) rotateY(-74deg) rotate(-4deg)}}
+  @media(max-width:600px){#authGate .login-butterfly:nth-child(n+6){display:none}}
+  @media(prefers-reduced-motion:reduce){#authGate .login-butterfly-field{display:none!important}}
 </style>
 </head>
 <body class="auth-booting">
@@ -1758,7 +1777,16 @@ function smsTargets(){
   document.querySelector('.app').style.display='none';
   const ov=document.createElement('div'); ov.id='authGate';
   ov.style.cssText='position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(120% 80% at 50% -10%,rgba(17,94,74,.12),transparent 60%),linear-gradient(180deg,#e6ebe8,#EEF2F8)';
-  ov.innerHTML=`<div style="width:100%;max-width:400px">
+  ov.innerHTML=`<div class="login-butterfly-field" aria-hidden="true">
+    <span class="login-butterfly" style="--top:9%;--duration:19s;--delay:-12s;--scale:.72;--flap:.32s"><i></i></span>
+    <span class="login-butterfly" style="--top:21%;--duration:23s;--delay:-5s;--scale:1.05;--flap:.39s"><i></i></span>
+    <span class="login-butterfly" style="--top:36%;--duration:17s;--delay:-15s;--scale:.82;--flap:.28s"><i></i></span>
+    <span class="login-butterfly" style="--top:52%;--duration:25s;--delay:-9s;--scale:1.18;--flap:.42s"><i></i></span>
+    <span class="login-butterfly" style="--top:67%;--duration:21s;--delay:-18s;--scale:.66;--flap:.3s"><i></i></span>
+    <span class="login-butterfly" style="--top:78%;--duration:18s;--delay:-3s;--scale:.94;--flap:.36s"><i></i></span>
+    <span class="login-butterfly" style="--top:88%;--duration:27s;--delay:-21s;--scale:.76;--flap:.33s"><i></i></span>
+    <span class="login-butterfly" style="--top:44%;--duration:29s;--delay:-24s;--scale:.58;--flap:.27s"><i></i></span>
+  </div><div class="super-login-shell" style="width:100%;max-width:400px">
     <div style="text-align:center;margin-bottom:18px">
       <div style="width:64px;height:64px;border-radius:16px;margin:0 auto 12px;display:grid;place-items:center;background:linear-gradient(150deg,#1557B0,#2F74D0);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);overflow:hidden"><img src="../logo-icon.svg" alt="AXIOMBYTE HUB" style="width:100%;height:100%;object-fit:contain;padding:6px"></div>
       <div style="font-family:'Space Grotesk';font-weight:600;font-size:19px">QuickAdmissionGH - Super Admin</div>
