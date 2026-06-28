@@ -17,10 +17,10 @@
     --bg:#081007;--surface:#11170c;--surface-2:#171f10;
     --ink:#ffffff;--ink-soft:rgba(255,255,255,.82);--muted:rgba(255,255,255,.64);--line:#35441c;
     --primary:#bfff2a;--primary-deep:#8fcb00;--primary-soft:#1d2809;
-    --accent:#dfff63;--accent-soft:#1d2809;--accent-ink:#ffffff;
-    --danger:#ef4444;--danger-soft:#311314;--info:#c8ff55;--info-soft:#202a0d;
+    --accent:#16a34a;--accent-soft:#14532d;--accent-ink:#ffffff;
+    --danger:#ef4444;--danger-soft:#311314;--info:#16a34a;--info-soft:#202a0d;
     --sb:#0a1107;--sb-soft:#12190e;--sb-text:#efffcf;--sb-active:#2b3912;
-    --r:12px;--r-sm:8px;--shadow:0 12px 34px -20px rgba(0,0,0,.58),0 0 0 1px rgba(191,255,42,.06);
+    --r:12px;--r-sm:8px;--shadow:0 12px 34px -20px rgba(0,0,0,.58),0 0 0 1px rgba(22,163,74,.06);
     --portal-footer-height:46px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -405,8 +405,8 @@
   .cls-combo{color:var(--ink-soft);line-height:1.5;min-width:240px}
   .cls-seats{font-family:'JetBrains Mono';font-weight:600;text-align:center}
 
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 48%,#96d700 100%);color:#111111;padding:13px 18px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 14px 34px -10px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.14) inset;z-index:90;opacity:0;transition:.3s}
-  .toast.warn{background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 48%,#96d700 100%);color:#111111}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,#14532d 0%,#16a34a 48%,#22c55e 100%);color:#ffffff;padding:13px 18px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 14px 34px -10px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.14) inset;z-index:90;opacity:0;transition:.3s}
+  .toast.warn{background:linear-gradient(135deg,#14532d 0%,#16a34a 48%,#22c55e 100%);color:#ffffff}
   .toast.warn svg{color:#111111}
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}.toast svg{width:17px;height:17px;color:#111111}
   .footer-gap{height:var(--portal-footer-height)}
@@ -454,46 +454,46 @@
   /* ---------- Emerald dark theme ---------- */
   .auth,.screen,#s-login .auth{background:transparent!important}
   #s-login{background:
-    radial-gradient(95% 80% at 50% -8%,rgba(191,255,42,.16),transparent 58%),
-    radial-gradient(46% 36% at 8% 10%,rgba(223,255,99,.08),transparent 58%),
+    radial-gradient(95% 80% at 50% -8%,rgba(22,163,74,.16),transparent 58%),
+    radial-gradient(46% 36% at 8% 10%,rgba(34,197,94,.08),transparent 58%),
     radial-gradient(42% 34% at 92% 14%,rgba(163,230,53,.06),transparent 56%),
     linear-gradient(180deg,#070d05 0%,#0b1408 54%,#091006 100%)!important}
   .card,.card2,.welcome,.submit-success,.hero-feat,.docs,.wu,.report-box,.token-show,.declare,.dropzone,.disc-modal,.boot-card,.rev-head,.rev-block{
     background:rgba(9,22,17,.5);
-    border-color:rgba(191,255,42,.14)!important;
-    box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(191,255,42,.05);
+    border-color:rgba(22,163,74,.14)!important;
+    box-shadow:0 22px 50px -30px rgba(0,0,0,.72),0 0 0 1px rgba(22,163,74,.05);
   }
-  .ptopbar,.portal-footer{background:rgba(8,15,6,.5)!important;border-color:rgba(191,255,42,.12)!important;backdrop-filter:blur(18px)}
+  .ptopbar,.portal-footer{background:rgba(8,15,6,.5)!important;border-color:rgba(22,163,74,.12)!important;backdrop-filter:blur(18px)}
   .psidebar{background:linear-gradient(180deg,#090f06 0%,#11180b 100%)!important}
-  .btn-primary,.btn-accent,#s-login #loginBtn,#s-login #buyTokenBtn{background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 48%,#96d700 100%)!important;color:#111111!important;box-shadow:0 14px 28px -20px rgba(191,255,42,.46),0 0 0 1px rgba(255,255,255,.08) inset}
-  .btn-primary:hover,.btn-accent:hover,#s-login #loginBtn:hover,#s-login #buyTokenBtn:hover{filter:brightness(1.03);box-shadow:0 18px 34px -20px rgba(191,255,42,.54),0 0 16px rgba(191,255,42,.16)}
-  .btn-ghost,.pay-opt,#s-login .portal-link-btn,.corner-nav a,.ptopbar .out,.ptopbar .ham{background:rgba(17,28,10,.88)!important;color:#c7ff39!important;border-color:rgba(191,255,42,.16)!important;text-shadow:0 0 10px rgba(191,255,42,.18)!important}
-  .btn-ghost:hover,.pay-opt:hover,#s-login .portal-link-btn:hover,.corner-nav a:hover,.ptopbar .out:hover,.ptopbar .ham:hover{background:rgba(28,45,14,.9)!important;color:#e6ff72!important;text-shadow:0 0 14px rgba(191,255,42,.26)!important}
+  .btn-primary,.btn-accent,#s-login #loginBtn,#s-login #buyTokenBtn{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%)!important;color:#ffffff!important;box-shadow:0 14px 28px -20px rgba(22,163,74,.42),0 0 0 1px rgba(255,255,255,.08) inset}
+  .btn-primary:hover,.btn-accent:hover,#s-login #loginBtn:hover,#s-login #buyTokenBtn:hover{filter:brightness(1.03);box-shadow:0 18px 34px -20px rgba(22,163,74,.5),0 0 16px rgba(22,163,74,.18)}
+  .btn-ghost,.pay-opt,#s-login .portal-link-btn,.corner-nav a,.ptopbar .out,.ptopbar .ham{background:rgba(17,28,10,.88)!important;color:#dcfce7!important;border-color:rgba(22,163,74,.16)!important;text-shadow:0 0 10px rgba(22,163,74,.18)!important}
+  .btn-ghost:hover,.pay-opt:hover,#s-login .portal-link-btn:hover,.corner-nav a:hover,.ptopbar .out:hover,.ptopbar .ham:hover{background:rgba(28,45,14,.9)!important;color:#ffffff!important;text-shadow:0 0 14px rgba(22,163,74,.26)!important}
   .auth-head h1,.auth-hero h2,#s-login .portal-brand-copy h1,#s-login .portal-form-head h2,.card2-head h2{background:none!important;-webkit-background-clip:border-box;background-clip:border-box;color:#ffffff!important}
   .auth-head .tag,.sch-code,.hero-feat svg,.hero-upload label,.super-link:hover{color:#ffffff!important}
-  #s-login .portal-login-brand{background:linear-gradient(135deg,rgba(13,24,8,.5) 0%,rgba(20,34,10,.5) 58%,rgba(47,71,14,.5) 100%)!important;border-color:rgba(191,255,42,.16)!important;box-shadow:0 24px 46px -36px rgba(191,255,42,.22)!important}
-  #s-login .portal-brand-crest,.crest,#s-login .portal-info-icon,#s-login .portal-link-btn .ico{background:linear-gradient(180deg,rgba(35,56,12,.96),rgba(17,28,10,.98))!important;color:#ffffff!important;border-color:rgba(191,255,42,.14)!important;box-shadow:0 14px 26px -24px rgba(191,255,42,.18)!important}
-  #s-login .portal-login-shell{background:linear-gradient(180deg,rgba(10,18,7,.5),rgba(14,22,9,.56))!important;border-color:rgba(191,255,42,.12)!important;box-shadow:0 30px 72px -36px rgba(0,0,0,.74)!important}
+  #s-login .portal-login-brand{background:linear-gradient(135deg,rgba(13,24,8,.5) 0%,rgba(20,52,30,.5) 58%,rgba(22,101,52,.5) 100%)!important;border-color:rgba(22,163,74,.16)!important;box-shadow:0 24px 46px -36px rgba(22,163,74,.22)!important}
+  #s-login .portal-brand-crest,.crest,#s-login .portal-info-icon,#s-login .portal-link-btn .ico{background:linear-gradient(180deg,rgba(20,83,45,.96),rgba(22,101,52,.98))!important;color:#ffffff!important;border-color:rgba(22,163,74,.14)!important;box-shadow:0 14px 26px -24px rgba(22,163,74,.18)!important}
+  #s-login .portal-login-shell{background:linear-gradient(180deg,rgba(10,18,7,.5),rgba(12,36,18,.56))!important;border-color:rgba(22,163,74,.12)!important;box-shadow:0 30px 72px -36px rgba(0,0,0,.74)!important}
   #s-login .portal-login-info,#s-login .portal-login-form,.welcome .wh,.wu-head{background:linear-gradient(180deg,rgba(10,25,19,.5),rgba(11,28,22,.56))!important}
   #s-login .portal-token-note,.notice.info,.notice.warn,.submit-success-item,.report-box,.prog-card.sel,.cls-row.sel,.dropzone:hover,.file-done{background:rgba(48,66,14,.42)!important}
   .notice.warn,.notice.warn *,#p-pending,#p-pending *{color:#111111!important;text-shadow:none!important}
-  #s-login .portal-info-head p,#s-login .portal-charge,#s-login .portal-token-note,#s-login .portal-form-divider span,#s-login .portal-link-btn,#s-login .portal-link-btn .ico,.login-school-option:hover,.login-school-option.active{color:#ffffff!important;text-shadow:0 0 8px rgba(191,255,42,.12)}
+  #s-login .portal-info-head p,#s-login .portal-charge,#s-login .portal-token-note,#s-login .portal-form-divider span,#s-login .portal-link-btn,#s-login .portal-link-btn .ico,.login-school-option:hover,.login-school-option.active{color:#ffffff!important;text-shadow:0 0 8px rgba(22,163,74,.12)}
   #s-login .portal-info-copy,#s-login .portal-info-item span,#s-login .portal-form-head p,#s-login .portal-login-form .hint,#s-login .portal-login-foot,#s-login .portal-link-btn .arrow,.login-school-option small{color:rgba(255,255,255,.82)!important}
   #s-login .portal-info-item b,#s-login .portal-login-form .field label,.login-school-trigger,.login-school-trigger-caret,#s-login .portal-brand-crest span{color:#ffffff!important}
   #s-login .portal-info-head h2,#s-login .portal-form-head h2{background:none!important;-webkit-background-clip:border-box;background-clip:border-box;color:#ffffff!important}
-  #s-login .portal-link-btn .arrow,#s-login .portal-link-btn .ico{color:#c7ff39!important;text-shadow:0 0 10px rgba(191,255,42,.18)!important}
+  #s-login .portal-link-btn .arrow,#s-login .portal-link-btn .ico{color:#86efac!important;text-shadow:0 0 10px rgba(22,163,74,.18)!important}
   #s-login #loginBtn,#s-login #buyTokenBtn{color:#111111!important}
   #s-login .portal-link-btn .arrow{opacity:.9}
-  #s-login .portal-form-divider::before,#s-login .portal-form-divider::after{background:rgba(191,255,42,.16)!important}
-  #s-login .login-input-shell:focus-within,.login-school-search:focus{border-color:#c7ff39!important;box-shadow:0 0 0 3px rgba(191,255,42,.1)!important}
-  input,select,textarea,#s-login .login-input-shell{background:rgba(9,22,17,.5)!important;color:#ffffff!important;border-color:rgba(191,255,42,.14)!important}
-  .login-school-panel{background:#11170c!important;color:#ffffff!important;border-color:rgba(191,255,42,.16)!important}
-  .login-school-search{background:#171f10!important;color:#ffffff!important;border-color:rgba(191,255,42,.14)!important}
+  #s-login .portal-form-divider::before,#s-login .portal-form-divider::after{background:rgba(22,163,74,.16)!important}
+  #s-login .login-input-shell:focus-within,.login-school-search:focus{border-color:#16a34a!important;box-shadow:0 0 0 3px rgba(22,163,74,.1)!important}
+  input,select,textarea,#s-login .login-input-shell{background:rgba(9,22,17,.5)!important;color:#ffffff!important;border-color:rgba(22,163,74,.14)!important}
+  .login-school-panel{background:#11170c!important;color:#ffffff!important;border-color:rgba(22,163,74,.16)!important}
+  .login-school-search{background:#171f10!important;color:#ffffff!important;border-color:rgba(22,163,74,.14)!important}
   .login-school-option{background:#11170c!important;color:#ffffff!important;border-color:transparent!important}
-  #s-login .login-input-icon{background:linear-gradient(180deg,rgba(28,45,14,.98),rgba(17,28,10,.98))!important;border-color:rgba(191,255,42,.12)!important;color:#ffffff!important}
+  #s-login .login-input-icon{background:linear-gradient(180deg,rgba(20,83,45,.98),rgba(22,101,52,.98))!important;border-color:rgba(22,163,74,.12)!important;color:#ffffff!important}
   .login-school-option:hover,.login-school-option.active,.prog-card:hover{background:rgba(48,66,14,.58)!important;color:#ffffff!important}
-  .welcome .wh,.pill.ok,.prog-card .pc-code,.checklist .n,.step.done .dot,.progress-line i,.checkbox.on,.prog-card.sel .radio-tick,.file-done .fi{background:linear-gradient(135deg,#e6ff72 0%,#c7ff39 50%,#96d700 100%)!important;color:#111111!important;border-color:transparent!important}
-  .checkbox.on svg,.prog-card.sel .radio-tick svg,.file-done .fi svg{color:#111111!important}
+  .welcome .wh,.pill.ok,.prog-card .pc-code,.checklist .n,.step.done .dot,.progress-line i,.checkbox.on,.prog-card.sel .radio-tick,.file-done .fi{background:linear-gradient(135deg,#14532d 0%,#16a34a 50%,#22c55e 100%)!important;color:#ffffff!important;border-color:transparent!important}
+  .checkbox.on svg,.prog-card.sel .radio-tick svg,.file-done .fi svg{color:#ffffff!important}
   .env-badge{background:#1d2809;color:#ffffff;border-color:#4f6914}
   .env-badge.dev{background:#293511;color:#ffffff;border-color:#637f1c}
   /* ===== DISCLAIMER ===== */
@@ -584,7 +584,7 @@
   }
   .btn:hover,#s-login .portal-link-btn:hover,.pay-opt:hover,.prog-card:hover,.dropzone:hover,.ptopbar .out:hover,.ptopbar .ham:hover,.checkbox:hover,.step:hover .dot{
     transform:translateY(-2px);
-    box-shadow:0 0 5px limegreen,0 0 25px limegreen,0 0 50px limegreen,0 0 100px limegreen,0 0 200px limegreen;
+    box-shadow:0 0 5px rgba(22,163,74,.55),0 0 25px rgba(22,163,74,.5),0 0 50px rgba(22,163,74,.42),0 0 100px rgba(22,163,74,.3),0 0 200px rgba(22,163,74,.22);
     animation:portalElectricPulse .95s ease-in-out infinite alternate;
   }
   #s-login .portal-link-btn .ico,#s-login .portal-link-btn .arrow,#s-login #loginBtn,#s-login #buyTokenBtn{
@@ -592,8 +592,8 @@
   }
   #s-login .portal-link-btn:hover .ico{transform:scale(1.06) rotate(-4deg)}
   #s-login .portal-link-btn:hover .arrow{transform:translateX(4px)}
-  #s-login #loginBtn:hover{transform:translateY(-2px);box-shadow:0 0 5px limegreen,0 0 25px limegreen,0 0 50px limegreen,0 0 100px limegreen,0 0 200px limegreen}
-  #s-login #buyTokenBtn:hover{transform:translateY(-2px);box-shadow:0 0 5px limegreen,0 0 25px limegreen,0 0 50px limegreen,0 0 100px limegreen,0 0 200px limegreen}
+  #s-login #loginBtn:hover{transform:translateY(-2px);box-shadow:0 0 5px rgba(22,163,74,.55),0 0 25px rgba(22,163,74,.5),0 0 50px rgba(22,163,74,.42),0 0 100px rgba(22,163,74,.3),0 0 200px rgba(22,163,74,.22)}
+  #s-login #buyTokenBtn:hover{transform:translateY(-2px);box-shadow:0 0 5px rgba(22,163,74,.55),0 0 25px rgba(22,163,74,.5),0 0 50px rgba(22,163,74,.42),0 0 100px rgba(22,163,74,.3),0 0 200px rgba(22,163,74,.22)}
   .pnav button:hover{transform:translateX(4px);animation:portalElectricPulse .95s ease-in-out infinite alternate}
   .dropzone:hover{box-shadow:0 20px 34px -28px rgba(18,38,72,.28)}
   .progress-line i{background-size:200% 100%;animation:portalProgressGlow 2.8s linear infinite}
@@ -623,13 +623,50 @@
     100%{transform:translateX(-50%) translateY(0) scale(1);opacity:1}
   }
   @keyframes portalElectricPulse{
-    0%{box-shadow:0 0 0 0 rgba(191,255,42,0),0 0 0 1px rgba(191,255,42,.12)}
-    100%{box-shadow:0 0 0 2px rgba(191,255,42,.16),0 0 18px rgba(191,255,42,.34),0 0 36px rgba(191,255,42,.2)}
+    0%{box-shadow:0 0 0 0 rgba(22,163,74,0),0 0 0 1px rgba(22,163,74,.12)}
+    100%{box-shadow:0 0 0 2px rgba(22,163,74,.16),0 0 18px rgba(22,163,74,.34),0 0 36px rgba(22,163,74,.2)}
   }
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto}
     *,*::before,*::after{animation:none!important;transition:none!important}
   }
+  :root{
+    --primary:#14532d;--primary-deep:#166534;--primary-soft:#dcfce7;
+    --accent:#facc15;--accent-soft:#fef08a;--bg:#f4f7f6;--surface:#ffffff;--surface-2:#f8faf9;
+    --ink:#1f2937;--ink-soft:#374151;--muted:#6b7280;--line:#e5e7eb;--danger:#dc2626;--danger-soft:#fee2e2;
+    --muted-green:#3f6b57;
+    --shadow:0 10px 25px rgba(0,0,0,.08);
+  }
+  body{background:var(--bg)!important;color:var(--ink)!important}
+  .card,.card2,.welcome,.submit-success,.hero-feat,.docs,.wu,.report-box,.token-show,.declare,.dropzone,.disc-modal,.boot-card,.rev-head,.rev-block,#s-login .portal-login-shell,#s-login .portal-login-info,#s-login .portal-login-form{background:#ffffff!important;border-color:#e5e7eb!important;box-shadow:var(--shadow)!important;color:var(--muted-green)!important}
+  .corner-nav a,.pay-opt,#s-login .portal-link-btn,.ptopbar .out,.ptopbar .ham,.pnav button,.btn-ghost{background:linear-gradient(135deg,#14532d,#16a34a)!important;color:#ffffff!important;border:1px solid rgba(22,163,74,.28)!important;text-shadow:none!important;box-shadow:0 8px 18px rgba(22,163,74,.2)!important}
+  .corner-nav a:hover,.pay-opt:hover,#s-login .portal-link-btn:hover,.ptopbar .out:hover,.ptopbar .ham:hover,.pnav button:hover,.btn-ghost:hover{background:linear-gradient(135deg,#166534,#22c55e)!important;color:#ffffff!important}
+  .btn-primary,.btn-accent,#s-login #loginBtn,#s-login #buyTokenBtn{background:linear-gradient(135deg,#14532d,#16a34a)!important;color:#ffffff!important;box-shadow:0 6px 15px rgba(22,163,74,.25)!important}
+  .btn-primary:hover,.btn-accent:hover,#s-login #loginBtn:hover,#s-login #buyTokenBtn:hover{box-shadow:0 10px 20px rgba(22,163,74,.35)!important;color:#ffffff!important}
+  #s-login .portal-login-brand{background:linear-gradient(135deg,#14532d,#16a34a)!important;border-color:rgba(20,83,45,.18)!important;box-shadow:var(--shadow)!important}
+  #s-login .portal-brand-copy h1,#s-login .portal-brand-helpdesk-label,#s-login .portal-brand-helpdesk-links a,#s-login .portal-brand-helpdesk-sep{color:#ffffff!important}
+  #s-login .portal-brand-crest{background:#ffffff!important}
+  #s-login .portal-brand-crest span,.hero-feat svg,.auth-head .tag,.sch-code,.auth-hero h2 .grn{color:#14532d!important}
+  .auth-head .tag,.hero-feat,.crest{background:#dcfce7!important;border-color:#bbf7d0!important}
+  .auth-head h1,.auth-hero h2,.hero-feat b,.portal-login-form h2,.portal-info-head h2,.welcome .wh,.ptopbar .t,.prog-card .pc-title{color:#14532d!important}
+  #s-login #loginWelcomeTitle,#s-login .portal-info-head h2,#s-login .portal-info-copy{color:var(--muted-green)!important;text-shadow:none!important}
+  #s-login .portal-info-head h2{background:none!important;-webkit-text-fill-color:var(--muted-green)!important}
+  .auth-hero p.lead,.hero-feat small,.portal-info-copy,#s-login .portal-info-head p,#s-login .portal-info-item b,#s-login .portal-info-item span,#s-login .portal-form-head p,#s-login .portal-login-form .field label,#s-login .portal-login-form .hint,#s-login .portal-login-foot,.portal-charge,.portal-token-note,.portal-form-divider span,.welcome .ws,.ptopbar .s,.card p,.card2 p,.report-box,.docs,.wu,.token-show,.declare,.disc-modal,.rev-head,.rev-block,.login-school-trigger,.login-school-trigger-caret,.login-school-option,.login-school-option small,.login-school-empty{color:var(--muted-green)!important}
+  .login-school-search-title{color:#14532d!important}
+  .login-school-option{background:#ffffff!important}
+  .login-school-option:hover,.login-school-option.active{background:#f0fdf4!important;color:#14532d!important}
+  input,select,textarea,.login-school-panel,.login-school-search{background:#ffffff!important;color:#1f2937!important;border-color:#e5e7eb!important}
+  input:focus,select:focus,textarea:focus{border-color:#16a34a!important;box-shadow:0 0 0 3px rgba(22,163,74,.15)!important}
+  .toast{background:linear-gradient(135deg,#14532d,#16a34a)!important;color:#ffffff!important}
+  .toast svg{color:#ffffff!important}
+  .toast.warn{background:linear-gradient(135deg,#14532d,#16a34a)!important;color:#ffffff!important}
+  .toast.warn svg{color:#ffffff!important}
+  table{background:#ffffff!important;color:#1f2937!important;box-shadow:var(--shadow)!important}
+  thead th,.sec-h{background:#14532d!important;color:#ffffff!important}
+  tbody td{border-bottom:1px solid #e5e7eb!important;color:#1f2937!important}
+  .welcome .wh,.pill.ok,.prog-card .pc-code,.checklist .n,.step.done .dot,.progress-line i,.checkbox.on,.prog-card.sel .radio-tick,.file-done .fi{background:linear-gradient(135deg,#14532d,#16a34a)!important;color:#ffffff!important;border-color:transparent!important}
+  #s-login .portal-link-btn .ico,#s-login .portal-link-btn .arrow{color:#ffffff!important;text-shadow:none!important}
+  #s-login .login-input-shell:focus-within,.login-school-search:focus{border-color:#16a34a!important;box-shadow:0 0 0 3px rgba(22,163,74,.15)!important}
 </style>
 </head>
 <body class="booting">
