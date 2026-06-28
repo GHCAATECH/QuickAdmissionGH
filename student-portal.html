@@ -669,6 +669,15 @@
   .welcome .wh,.pill.ok,.prog-card .pc-code,.checklist .n,.step.done .dot,.progress-line i,.checkbox.on,.prog-card.sel .radio-tick,.file-done .fi{background:linear-gradient(135deg,#14532d,#16a34a)!important;color:#ffffff!important;border-color:transparent!important}
   #s-login .portal-link-btn .ico,#s-login .portal-link-btn .arrow{color:#ffffff!important;text-shadow:none!important}
   #s-login .login-input-shell:focus-within,.login-school-search:focus{border-color:#16a34a!important;box-shadow:0 0 0 3px rgba(22,163,74,.15)!important}
+  #s-login #studentLoginPanel[hidden],#s-login #admissionClosedView[hidden]{display:none!important}
+  #s-login .admission-closed-view{display:grid;justify-items:center;gap:16px;max-width:760px;margin:0 auto;padding:18px;border:1px solid rgba(220,38,38,.22);border-radius:24px;background:#ffffff;box-shadow:0 28px 64px -34px rgba(127,29,29,.48)}
+  #s-login .admission-closed-image{display:block;width:100%;max-width:620px;max-height:72vh;object-fit:contain;border-radius:16px}
+  #s-login .admission-closed-change{min-width:220px;justify-content:center}
+  @media(max-width:768px){
+    #s-login .admission-closed-view{padding:12px;border-radius:20px}
+    #s-login .admission-closed-image{max-height:none;border-radius:12px}
+    #s-login .admission-closed-change{width:100%;min-height:48px}
+  }
 </style>
 </head>
 <body class="booting">
@@ -705,7 +714,7 @@
       </div>
     </div>
 
-    <div class="portal-login-shell">
+    <div class="portal-login-shell" id="studentLoginPanel">
       <section class="portal-login-info" aria-labelledby="loginWelcomeTitle">
         <div class="portal-info-head">
           <h2 id="loginWelcomeTitle">Welcome to QuickAdmissionGH</h2>
@@ -803,6 +812,11 @@
         </div>
       </section>
     </div>
+
+    <section class="admission-closed-view" id="admissionClosedView" aria-label="Admission closed" hidden>
+      <img class="admission-closed-image" src="admission-closed.png" alt="Admission closed. Thank you to all applicants and parents for your interest and support.">
+      <button class="btn btn-primary admission-closed-change" type="button" onclick="chooseAnotherLoginSchool()">Choose another school</button>
+    </section>
 
     <div class="auth-foot portal-login-foot">Powered by AXIOMBYTE HUB</div>
   </div></div>
@@ -2455,6 +2469,26 @@ function schoolStatus(id){
 function admissionClosed(id){
   return !!id&&schoolStatus(id)==='CLOSED';
 }
+function setAdmissionClosedView(closed){
+  const panel=$('studentLoginPanel');
+  const closedView=$('admissionClosedView');
+  if(panel){
+    panel.hidden=!!closed;
+    panel.setAttribute('aria-hidden',closed?'true':'false');
+  }
+  if(closedView){
+    closedView.hidden=!closed;
+    closedView.setAttribute('aria-hidden',closed?'false':'true');
+  }
+}
+function chooseAnotherLoginSchool(){
+  const school=$('login-school');
+  if(school) school.value='';
+  onLoginSchoolChange();
+  const trigger=$('loginSchoolTrigger');
+  if(trigger) trigger.focus();
+  if(typeof toggleLoginSchoolPicker==='function') toggleLoginSchoolPicker();
+}
 function onLoginSchoolChange(){
   const sid=$('login-school')?$('login-school').value:'';
   const s=getSelectedSchool();
@@ -2502,6 +2536,7 @@ function onLoginSchoolChange(){
   const closed=admissionClosed(sid);
   const banner=$('admClosedBanner');
   if(banner) banner.style.display=closed?'block':'none';
+  setAdmissionClosedView(closed);
   setButtonDisabled($('loginBtn'),closed);
   setButtonDisabled($('buyTokenBtn'),closed);
 }
