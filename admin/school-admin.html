@@ -267,7 +267,7 @@
 
   /* quick actions */
   .qa-row{display:none;gap:11px;flex-wrap:wrap;margin-bottom:0}
-  .qa{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff;border:1px solid rgba(34,197,94,.32);border-radius:var(--r);padding:12px 16px;font-weight:600;font-size:13px;transition:.14s;flex:1;min-width:180px;box-shadow:0 12px 28px -16px rgba(22,163,74,.5),inset 0 1px 0 rgba(255,255,255,.08)}
+  .qa{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff;border:1px solid rgba(34,197,94,.32);border-radius:var(--r);padding:12px 16px;font-weight:600;font-size:13px;transition:.14s;flex:1;min-width:180px;box-shadow:0 12px 28px -16px rgba(22,163,74,.5),inset 0 1px 0 rgba(255,255,255,.08);animation:qaBlink 1.9s ease-in-out infinite}
   .qa:hover{border-color:rgba(74,222,128,.58);background:linear-gradient(135deg,#166534 0%,#22c55e 100%)}
   .qa.qa-neon{position:relative;overflow:visible;box-shadow:0 0 0 1px rgba(22,163,74,.14),0 0 18px rgba(22,163,74,.12)}
   .qa.qa-neon::after{
@@ -280,10 +280,20 @@
     pointer-events:none;
     animation:qaNeonPulse 1.8s ease-in-out infinite;
   }
-  .qa .ico{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.14);color:#ffffff;display:grid;place-items:center;flex:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
-  .qa:hover .ico{background:rgba(255,255,255,.2);color:#ffffff}
+  .qa .ico{width:34px;height:34px;border-radius:9px;background:transparent;color:#ffffff;display:grid;place-items:center;flex:none;box-shadow:none}
+  .qa:hover .ico{background:transparent;color:#ffffff}
   .qa .ico svg{width:16px;height:16px}
   .qa small{display:block;font-weight:400;color:rgba(255,255,255,.88);font-size:11px}
+  @keyframes qaBlink{
+    0%,100%{
+      box-shadow:0 12px 28px -16px rgba(22,163,74,.44),0 0 10px rgba(34,197,94,.2),inset 0 1px 0 rgba(255,255,255,.08);
+      filter:brightness(1);
+    }
+    50%{
+      box-shadow:0 14px 30px -14px rgba(22,163,74,.62),0 0 18px rgba(34,197,94,.38),0 0 34px rgba(34,197,94,.2),inset 0 1px 0 rgba(255,255,255,.12);
+      filter:brightness(1.08);
+    }
+  }
   @keyframes qaNeonPulse{
     0%,100%{
       opacity:.72;
@@ -1137,15 +1147,16 @@
   }
 
   .qa{
-    background:#ffffff!important;
-    color:#1f2937!important;
-    border:1px solid #e5e7eb!important;
-    box-shadow:var(--shadow)!important;
+    background:linear-gradient(135deg,#14532d 0%,#16a34a 100%)!important;
+    color:#ffffff!important;
+    border:1px solid rgba(34,197,94,.32)!important;
+    box-shadow:0 12px 28px -16px rgba(22,163,74,.5),inset 0 1px 0 rgba(255,255,255,.08)!important;
+    animation:qaBlink 1.9s ease-in-out infinite!important;
   }
-  .qa small{color:#6b7280!important}
-  .qa:hover{background:#f0fdf4!important;border-color:#16a34a!important}
-  .qa .ico{background:#dcfce7!important;color:#14532d!important}
-  .qa:hover .ico{background:#16a34a!important;color:#ffffff!important}
+  .qa small{color:rgba(255,255,255,.88)!important}
+  .qa:hover{background:linear-gradient(135deg,#166534 0%,#22c55e 100%)!important;border-color:rgba(74,222,128,.58)!important}
+  .qa .ico{background:transparent!important;color:#ffffff!important;box-shadow:none!important}
+  .qa:hover .ico{background:transparent!important;color:#ffffff!important}
 
   table{
     background:#ffffff!important;
