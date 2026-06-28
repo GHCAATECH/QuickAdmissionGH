@@ -851,18 +851,17 @@
   }
   .main,.content,.dashboard-content{background:transparent!important}
   .sidebar{
-    background:rgba(15,61,37,.5)!important;
+    background:#0f3d25!important;
     color:#ffffff!important;
     box-shadow:var(--shadow)!important;
-    backdrop-filter:blur(16px)!important;
   }
   .sidebar::-webkit-scrollbar-thumb{background:#1b5a37!important}
   .brand,.sb-foot{border-color:rgba(255,255,255,.08)!important}
   .brand-name,.brand-sub,.sb-foot small,.nav-label{color:#ffffff!important}
   .brand-sub .d{background:#facc15!important}
   .nav-label:hover{background:rgba(20,83,45,.5)!important;color:#ffffff!important}
-  .nav-item,.nav-parent,.nav-sub{color:#ffffff!important}
-  .nav-item:hover,.nav-parent:hover,.nav-sub:hover{background:rgba(20,83,45,.5)!important;color:#ffffff!important}
+  .nav-item,.nav-parent,.nav-sub{color:#ffffff!important;background:rgba(20,83,45,.5)!important;backdrop-filter:blur(10px)!important}
+  .nav-item:hover,.nav-parent:hover,.nav-sub:hover{background:rgba(20,83,45,.56)!important;color:#ffffff!important}
   .nav-item.active,.nav-parent.active,.nav-sub.active{background:linear-gradient(135deg,rgba(20,83,45,.5),rgba(22,163,74,.5))!important;color:#ffffff!important;backdrop-filter:blur(10px)!important}
   .nav-item.active::before{background:#facc15!important}
   .nav-badge,.sb-avatar{background:#facc15!important;color:#1f2937!important}
@@ -4153,8 +4152,13 @@ const LEGACY_TPL_DEFAULT={
   +'{RECORDS_TABLE}'
   +'<p style="margin-top:18px">Signature: _______________________ &nbsp;&nbsp; Date: _______________</p>'
 };
+function normalizeTemplateHeader(tpl){
+  const raw=String(tpl||'');
+  if(!raw.trim()) return raw;
+  return raw.includes(LEGACY_GES_HEAD) ? raw.replace(LEGACY_GES_HEAD,GES_HEAD) : raw;
+}
 function resolveTemplateDraft(kind,tpl){
-  const raw=(tpl||'').trim();
+  const raw=normalizeTemplateHeader(tpl).trim();
   const fallback=kind==='letter'?TPL_DEFAULT.letter:TPL_DEFAULT.records;
   if(!raw) return fallback;
   if(kind==='letter' && raw===LEGACY_TPL_DEFAULT.letter) return TPL_DEFAULT.letter;
