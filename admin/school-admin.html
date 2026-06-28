@@ -1484,14 +1484,8 @@
         <div class="panel">
           <div class="dt-toolbar">
             <div class="dt-actions">
-              <button onclick="exportCSV('csv')">CSV</button>
               <button onclick="exportCSV('excel')">Excel</button>
-              <button onclick="toast('Generating PDF…')">PDF</button>
-              <button onclick="window.print()">Print</button>
-              <div class="dt-colvis">
-                <button onclick="toggleColvis(event)">Column visibility ▾</button>
-                <div class="colvis-menu" id="colvisMenu"></div>
-              </div>
+              <button onclick="exportCSV('pdf')">PDF</button>
             </div>
             <div class="dt-search"><label>Search:</label><input id="regSearch" oninput="renderRegistered()"></div>
           </div>
@@ -3197,6 +3191,10 @@ function showRegisteredStudentDetails(id){
 function exportCSV(kind){
   var cols=regCols.filter(k=>!regHidden.has(k));
   var rows=regFiltered();
+  if(kind==='pdf'){
+    exportRegisteredPdf();
+    return;
+  }
   if(kind==='excel'){
     var headers=cols.map(k=>regColLabels[k]);
     var excelRows=rows.map(s=>cols.map(k=>k==='form'?(s.form?'yes':'no'):(s[k]||'')));
@@ -3208,6 +3206,47 @@ function exportCSV(kind){
   var blob=new Blob([head+'\n'+lines],{type:'text/csv'}),a=document.createElement('a');
   a.href=URL.createObjectURL(blob); a.download='registered-students.csv'; a.click();
   toast('Exported '+rows.length+' rows');
+}
+function exportRegisteredPdf(){
+  var rows=regFiltered();
+  if(!rows.length){ toast('No registered students to export'); return; }
+  var showHouse=canViewStudentHouse();
+  var headers=['JHS Index No','Admission #','Student Name','Programme','Class'];
+  if(showHouse) headers.push('House');
+  headers=headers.concat(['Date Registered','Time','SMS Contact','Enrolment Code','Enrolment Form']);
+  var dataRows=rows.map(function(s){
+    var row=[s.index||'',s.adm||'',s.name||'',studentProgrammeName(s)||'',(classById(s.classId)||{}).name||'Not allocated'];
+    if(showHouse) row.push((houseById(s.houseId)||{}).name||'Not allocated');
+    row.push(s.reg||'',s.time||'',s.sms||'',s.enrol||'',s.form?'Uploaded':'Missing');
+    return row;
+  });
+  var crest=(SB_SCHOOL&&SB_SCHOOL.crest_url)||'';
+  var schoolName=(SB_SCHOOL&&SB_SCHOOL.name)||'Registered Students';
+  var generated=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  var w=window.open('','_blank');
+  if(!w){ toast('Allow pop-ups to print / save PDF'); return; }
+  w.document.write('<html><head><title>Registered Students</title><style>'
+    +'@page{size:A4 landscape;margin:12mm}'
+    +'*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#111827;padding:18px 20px 10px}'
+    +'.pdf-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:12px}'
+    +'.pdf-brand{display:flex;align-items:center;gap:12px}.pdf-brand img{width:62px;height:62px;object-fit:contain}'
+    +'.pdf-title{font-size:24px;font-weight:800;line-height:1.1}.pdf-sub{font-size:12px;color:#4b5563;margin-top:4px}'
+    +'.pdf-meta{text-align:right;font-size:12px;color:#374151}'
+    +'.pdf-rule{border-top:2px solid #111827;margin:10px 0 14px}'
+    +'table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #111827;padding:6px 7px;vertical-align:top;text-align:left}'
+    +'th{background:#f3f4f6;font-weight:700}tbody tr:nth-child(even){background:#fafafa}'
+    +'.pdf-foot{margin-top:12px;font-size:11px;color:#4b5563;text-align:right}'
+    +'</style></head><body>'
+    +'<div class="pdf-head">'
+      +'<div class="pdf-brand">'+(crest?'<img src="'+escapeAttr(crest)+'" alt="">':'')+'<div><div class="pdf-title">'+safeHtml(schoolName)+'</div><div class="pdf-sub">Registered students report</div></div></div>'
+      +'<div class="pdf-meta"><div><b>Generated:</b> '+safeHtml(generated)+'</div><div><b>Total students:</b> '+rows.length+'</div></div>'
+    +'</div>'
+    +'<div class="pdf-rule"></div>'
+    +'<table><thead><tr>'+headers.map(function(h){ return '<th>'+safeHtml(h)+'</th>'; }).join('')+'</tr></thead><tbody>'
+    +dataRows.map(function(r){ return '<tr>'+r.map(function(c){ return '<td>'+safeHtml(c==null?'':String(c),'&mdash;')+'</td>'; }).join('')+'</tr>'; }).join('')
+    +'</tbody></table><div class="pdf-foot">Exported from AXIOMBYTE HUB school admin</div></body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); },350);
 }
 function downloadAdmissionList(){ openReportsModal(); }
 
@@ -4074,9 +4113,28 @@ applyBulk=async function(){
 /* ===== SCHOOL USERS ===== */
 /* ===== DOCUMENT TEMPLATES ===== */
 let SCHOOL_CREST='data:image/png;base64,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';
-const GES_HEAD='<div style="text-align:center;line-height:1.3">{CREST}<div style="font-size:22px;font-weight:700;letter-spacing:.5px">{SCHOOL_NAME}</div><div style="font-size:12px">(GHANA EDUCATION SERVICE)</div><div style="font-size:12px">{SCHOOL_ADDRESS} &middot; Tel: {SCHOOL_PHONE}</div></div><hr style="border:none;border-top:2px solid #000;margin:8px 0">';
+const GES_HEAD='<table style="width:100%;border-collapse:collapse;margin:0 0 6px"><tr><td style="border:none;width:64px;vertical-align:middle">{CREST_TOP}</td><td style="border:none;vertical-align:middle;padding-left:10px"><div style="font-size:16px;font-weight:700;letter-spacing:.35px">{SCHOOL_NAME}</div><div style="font-size:11px">{SCHOOL_ADDRESS}</div></td></tr></table><div style="border-top:1.6px solid #111;margin:4px 0 24px"></div><div style="text-align:center;line-height:1.25;margin-bottom:12px"><div style="font-size:28px;font-weight:700;letter-spacing:.35px">{SCHOOL_NAME}</div><div style="font-size:12px;font-weight:700;margin-top:6px">(GHANA EDUCATION SERVICE)</div></div><table style="width:100%;border-collapse:collapse;margin:0 0 14px"><tr><td style="border:none;vertical-align:top;width:34%;font-size:12px;line-height:1.45"><div style="font-weight:700">{HEADMASTER}</div><div><b>Our Ref. No.</b> ........................</div><div><b>Your Ref. No.</b> ........................</div><div><b>Phone:</b> {SCHOOL_PHONE}</div><div><b>Email:</b> {SCHOOL_EMAIL}</div></td><td style="border:none;vertical-align:top;width:32%;text-align:center">{CREST_CENTER}</td><td style="border:none;vertical-align:top;width:34%;font-size:12px;line-height:1.45;text-align:right"><div style="font-weight:700">{SCHOOL_ADDRESS}</div><div style="margin-top:14px;font-weight:700">{DATE}</div></td></tr></table><div style="border-top:1.2px solid #111;margin:6px 0 18px"></div>';
 const TPL_DEFAULT={
  letter:GES_HEAD
+  +'<h3 style="text-align:center;text-decoration:underline;margin:12px 0 18px;font-size:17px">ADMISSION &mdash; {ACADEMIC_YEAR} ACADEMIC YEAR</h3>'
+  +'<p style="font-size:13.5px;line-height:1.6">I am pleased to inform you that on the basis of your ward&rsquo;s performance at the BECE, Master/Miss <b>{STUDENT_NAME}</b> (Index No. <b>{INDEX}</b>) has been offered admission into <b>{SCHOOL_NAME}</b> as a <b>{RESIDENTIAL}</b> student to pursue the Free SHS Programme. Admission No: <b>{ADMISSION_NO}</b>.</p>'
+  +'<ol><li>He/she is allocated to House <b>{HOUSE}</b>.</li>'
+  +'<li>The Programme offered him/her is <b>{PROGRAMME}</b>. Parents are to note that after admission students have only two weeks to change their course/Programme if they wish to do so.</li>'
+  +'<li>Please find enclosed a copy of the prospectus of the school.</li>'
+  +'<li>Fill the enclosed forms and return them without delay to the school&rsquo;s Administration.</li>'
+  +'<li>You are required to attach a copy of your ward&rsquo;s Admission Letter, BECE Result Slip, Birth Certificate, Placement Slip, and completed Enrolment Form for submission to the Headmaster.</li>'
+  +'<li>Your ward should bring to school four (4) passport-size photographs for his/her personal records.</li>'
+  +'<li><b>ALL NEWLY ADMITTED STUDENTS ARE TO REPORT ON {REPORTING_DATE}.</b></li></ol>'
+  +'<table style="width:100%;border-collapse:collapse;margin-top:54px"><tr><td style="border:none;vertical-align:bottom;width:68%"><p style="margin:0 0 34px">Yours faithfully,</p><div style="border-top:1.2px solid #111;width:220px;margin-bottom:4px"></div><div><b>{HEADMASTER}</b></div><div>(HEADMASTER)</div></td><td style="border:none;text-align:right;vertical-align:bottom">{QR_CODE}</td></tr></table>',
+ records:GES_HEAD
+  +'<h3 style="text-align:center;text-decoration:underline;margin:10px 0 12px;font-size:17px">PERSONAL RECORDS FORM &mdash; {ACADEMIC_YEAR}</h3>'
+  +'<table style="width:100%;border-collapse:collapse;margin:0 0 10px"><tr><td style="border:none;font-size:12.5px"><b>Student:</b> {STUDENT_NAME}</td><td style="border:none;font-size:12.5px"><b>Index No.:</b> {INDEX}</td><td style="border:none;font-size:12.5px"><b>Admission No.:</b> {ADMISSION_NO}</td></tr><tr><td style="border:none;font-size:12.5px"><b>Programme:</b> {PROGRAMME}</td><td style="border:none;font-size:12.5px"><b>Class:</b> {CLASS}</td><td style="border:none;font-size:12.5px"><b>House:</b> {HOUSE}</td></tr></table>'
+  +'{RECORDS_TABLE}'
+  +'<p style="margin-top:18px">Signature: _______________________ &nbsp;&nbsp; Date: _______________</p>'
+};
+const LEGACY_GES_HEAD='<div style="text-align:center;line-height:1.3">{CREST}<div style="font-size:22px;font-weight:700;letter-spacing:.5px">{SCHOOL_NAME}</div><div style="font-size:12px">(GHANA EDUCATION SERVICE)</div><div style="font-size:12px">{SCHOOL_ADDRESS} &middot; Tel: {SCHOOL_PHONE}</div></div><hr style="border:none;border-top:2px solid #000;margin:8px 0">';
+const LEGACY_TPL_DEFAULT={
+ letter:LEGACY_GES_HEAD
   +'<table style="width:100%;font-size:12px"><tr><td style="border:none;text-align:left">Our Ref. No: ........................<br>Your Ref. No: ........................</td><td style="border:none;text-align:right">Date: {DATE}</td></tr></table>'
   +'<h3 style="text-align:center;text-decoration:underline;margin:12px 0">ADMISSION &mdash; {ACADEMIC_YEAR} ACADEMIC YEAR</h3>'
   +'<p>I am pleased to inform you that on the basis of your ward&rsquo;s performance at the BECE, Master/Miss <b>{STUDENT_NAME}</b> (Index No. {INDEX}) has been offered admission into <b>{SCHOOL_NAME}</b> as a <b>{RESIDENTIAL}</b> student to pursue the Free SHS Programme. Admission No: <b>{ADMISSION_NO}</b>.</p>'
@@ -4088,13 +4146,21 @@ const TPL_DEFAULT={
   +'<li>Your ward should bring to school four (4) passport-size photographs for his/her personal records.</li>'
   +'<li><b>ALL NEWLY ADMITTED STUDENTS ARE TO REPORT ON {REPORTING_DATE}.</b></li></ol>'
   +'<p>Yours faithfully,</p><p style="margin-top:34px">_______________________<br><b>{HEADMASTER}</b><br>(HEADMASTER)</p>',
- records:GES_HEAD
+ records:LEGACY_GES_HEAD
   +'<h3 style="text-align:center;text-decoration:underline;margin:10px 0">PERSONAL RECORDS FORM &mdash; {ACADEMIC_YEAR}</h3>'
   +'<p>Student: <b>{STUDENT_NAME}</b> &middot; Index: {INDEX} &middot; Programme: {PROGRAMME}</p>'
   +'{RECORDS_TABLE}'
   +'<p style="margin-top:18px">Signature: _______________________ &nbsp;&nbsp; Date: _______________</p>'
 };
-const TPL_VARS=['CREST','SCHOOL_NAME','SCHOOL_ADDRESS','SCHOOL_PHONE','HEADMASTER','ACADEMIC_YEAR','DATE','REPORTING_DATE','REPORTING_TIME','STUDENT_NAME','INDEX','ADMISSION_NO','PROGRAMME','CLASS','HOUSE','GENDER','RESIDENTIAL','AGGREGATE','CONTACT'];
+function resolveTemplateDraft(kind,tpl){
+  const raw=(tpl||'').trim();
+  const fallback=kind==='letter'?TPL_DEFAULT.letter:TPL_DEFAULT.records;
+  if(!raw) return fallback;
+  if(kind==='letter' && raw===LEGACY_TPL_DEFAULT.letter) return TPL_DEFAULT.letter;
+  if(kind==='records' && raw===LEGACY_TPL_DEFAULT.records) return TPL_DEFAULT.records;
+  return raw;
+}
+const TPL_VARS=['CREST','CREST_TOP','CREST_CENTER','SCHOOL_NAME','SCHOOL_ADDRESS','SCHOOL_PHONE','SCHOOL_EMAIL','HEADMASTER','ACADEMIC_YEAR','DATE','REPORTING_DATE','REPORTING_TIME','STUDENT_NAME','INDEX','ADMISSION_NO','PROGRAMME','CLASS','HOUSE','GENDER','RESIDENTIAL','AGGREGATE','CONTACT'];
 let TPL={letter:'',records:''}, tplCur='letter', tplRange=null, tplLoaded=false, tplBound=false, tplSelectedFloat=null;
 function tplSelectionRoot(){
   if(tplSelectedFloat && tplSelectedFloat.getAttribute('data-float-type')==='text' && tplSelectedFloat.getAttribute('data-editing')==='1') return tplSelectedFloat;
@@ -4330,7 +4396,7 @@ function tplResizeFloat(el){
 }
 function buildTplVars(){ $('tplVars').innerHTML=TPL_VARS.map(v=>`<button type="button" onclick="insertTplVar('{${v}}')">{${v}}</button>`).join('')+(tplCur==='records'?`<button type="button" onclick="insertTplVar('{RECORDS_TABLE}')">{RECORDS_TABLE}</button>`:'')+`<button type="button" title="Scannable QR of the student's details" onclick="insertTplVar('{QR_CODE}')">{QR_CODE}</button>`; $('tplRecordsHint').hidden=tplCur!=='records'; }
 function renderTemplates(){
-  if(!tplLoaded){ TPL.letter=(SB_CFG&&SB_CFG.letter_template)||TPL_DEFAULT.letter; TPL.records=(SB_CFG&&SB_CFG.records_template)||TPL_DEFAULT.records; tplLoaded=true; }
+  if(!tplLoaded){ TPL.letter=resolveTemplateDraft('letter',(SB_CFG&&SB_CFG.letter_template)||''); TPL.records=resolveTemplateDraft('records',(SB_CFG&&SB_CFG.records_template)||''); tplLoaded=true; }
   const ed=$('tplEditor');
   if(!tplBound){ ['keyup','mouseup','input'].forEach(e=>ed.addEventListener(e,tplSaveSel));
     // Keep the editor's selection alive when a ribbon button is clicked
@@ -4414,7 +4480,7 @@ function tplPreview(){
   TPL[tplCur]=tplEditorHTML();
   const S=(SB_SCHOOL&&SB_SCHOOL.name)||'Senior High School';
   const _cr=(typeof SCHOOL_CREST!=='undefined'&&SCHOOL_CREST)||(SB_SCHOOL&&SB_SCHOOL.crest_url)||'';
-  const sample={CREST:_cr?('<img src="'+_cr+'" style="width:90px;height:auto;display:block;margin:0 auto 4px" alt="">'):'',SCHOOL_NAME:S,SCHOOL_ADDRESS:(SB_SCHOOL&&SB_SCHOOL.address)||'P.O. Box 1',SCHOOL_PHONE:(SB_SCHOOL&&SB_SCHOOL.phone)||(SB_CFG&&SB_CFG.helpdesk)||'024 000 0000',HEADMASTER:(SB_SCHOOL&&SB_SCHOOL.headmaster_name)||'The Headmaster',ACADEMIC_YEAR:(SB_CFG&&SB_CFG.academic_year)||'2025/2026',DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),REPORTING_DATE:'18 October 2025',REPORTING_TIME:(SB_CFG&&SB_CFG.reopening_time)||'8:00 AM',STUDENT_NAME:'AMA MENSAH',INDEX:'100000000026',ADMISSION_NO:'AM/2025/0001',PROGRAMME:'General Science',CLASS:'Science 1',HOUSE:'Unity House',GENDER:'FEMALE',RESIDENTIAL:'Boarding',AGGREGATE:'06',CONTACT:'024 123 4567'};
+  const sample={CREST:_cr?('<img src="'+_cr+'" style="width:90px;height:auto;display:block;margin:0 auto 4px" alt="">'):'',CREST_TOP:_cr?('<img src="'+_cr+'" style="width:54px;height:auto;display:block" alt="">'):'',CREST_CENTER:_cr?('<img src="'+_cr+'" style="width:148px;height:auto;display:block;margin:0 auto" alt="">'):'',SCHOOL_NAME:S,SCHOOL_ADDRESS:(SB_SCHOOL&&SB_SCHOOL.address)||'P.O. Box 1',SCHOOL_PHONE:(SB_SCHOOL&&SB_SCHOOL.phone)||(SB_CFG&&SB_CFG.helpdesk)||'024 000 0000',SCHOOL_EMAIL:(SB_SCHOOL&&SB_SCHOOL.email)||'admissions@school.edu.gh',HEADMASTER:(SB_SCHOOL&&SB_SCHOOL.headmaster_name)||'The Headmaster',ACADEMIC_YEAR:(SB_CFG&&SB_CFG.academic_year)||'2025/2026',DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),REPORTING_DATE:'18 October 2025',REPORTING_TIME:(SB_CFG&&SB_CFG.reopening_time)||'8:00 AM',STUDENT_NAME:'AMA MENSAH',INDEX:'100000000026',ADMISSION_NO:'AM/2025/0001',PROGRAMME:'General Science',CLASS:'Science 1',HOUSE:'Unity House',GENDER:'FEMALE',RESIDENTIAL:'Boarding',AGGREGATE:'06',CONTACT:'024 123 4567'};
   let body=TPL[tplCur].replace(/\{RECORDS_TABLE\}/g,tplSampleTable());
   let qurl=''; try{ if(typeof qrcode!=='undefined'){ const q=qrcode(0,'M'); q.addData([sample.SCHOOL_NAME,'Name: '+sample.STUDENT_NAME,'Index: '+sample.INDEX,'Adm No: '+sample.ADMISSION_NO,'Programme: '+sample.PROGRAMME,'House: '+sample.HOUSE,'Residential: '+sample.RESIDENTIAL,'Year: '+sample.ACADEMIC_YEAR].join('\n')); q.make(); const cells=q.getModuleCount(); const cell=Math.max(2,Math.round(108/(cells+8))); qurl=q.createDataURL(cell,cell*4); } }catch(e){}
   body=body.replace(/\{QR_CODE\}/g, qurl?'<img src="'+qurl+'" style="width:108px;height:108px" alt="QR code">':'[QR]').replace(/\{([A-Z_]+)\}/g,(m,k)=>k in sample?sample[k]:m);
@@ -4433,7 +4499,7 @@ tplPreview=function(){
   TPL[tplCur]=tplEditorHTML();
   const S=(SB_SCHOOL&&SB_SCHOOL.name)||'Senior High School';
   const _cr=(typeof SCHOOL_CREST!=='undefined'&&SCHOOL_CREST)||(SB_SCHOOL&&SB_SCHOOL.crest_url)||'';
-  const sample={CREST:_cr?('<img src="'+_cr+'" style="width:90px;height:auto;display:block;margin:0 auto 4px" alt="">'):'',SCHOOL_NAME:S,SCHOOL_ADDRESS:(SB_SCHOOL&&SB_SCHOOL.address)||'P.O. Box 1',SCHOOL_PHONE:(SB_SCHOOL&&SB_SCHOOL.phone)||(SB_CFG&&SB_CFG.helpdesk)||'024 000 0000',HEADMASTER:(SB_SCHOOL&&SB_SCHOOL.headmaster_name)||'The Headmaster',ACADEMIC_YEAR:(SB_CFG&&SB_CFG.academic_year)||'2025/2026',DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),REPORTING_DATE:'18 October 2025',REPORTING_TIME:(SB_CFG&&SB_CFG.reopening_time)||'8:00 AM',STUDENT_NAME:'AMA MENSAH',INDEX:'100000000026',ADMISSION_NO:'AM/2025/0001',PROGRAMME:'General Science',CLASS:'Science 1',HOUSE:'Unity House',GENDER:'FEMALE',RESIDENTIAL:'Boarding',AGGREGATE:'06',CONTACT:'024 123 4567'};
+  const sample={CREST:_cr?('<img src="'+_cr+'" style="width:90px;height:auto;display:block;margin:0 auto 4px" alt="">'):'',CREST_TOP:_cr?('<img src="'+_cr+'" style="width:54px;height:auto;display:block" alt="">'):'',CREST_CENTER:_cr?('<img src="'+_cr+'" style="width:148px;height:auto;display:block;margin:0 auto" alt="">'):'',SCHOOL_NAME:S,SCHOOL_ADDRESS:(SB_SCHOOL&&SB_SCHOOL.address)||'P.O. Box 1',SCHOOL_PHONE:(SB_SCHOOL&&SB_SCHOOL.phone)||(SB_CFG&&SB_CFG.helpdesk)||'024 000 0000',SCHOOL_EMAIL:(SB_SCHOOL&&SB_SCHOOL.email)||'admissions@school.edu.gh',HEADMASTER:(SB_SCHOOL&&SB_SCHOOL.headmaster_name)||'The Headmaster',ACADEMIC_YEAR:(SB_CFG&&SB_CFG.academic_year)||'2025/2026',DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),REPORTING_DATE:'18 October 2025',REPORTING_TIME:(SB_CFG&&SB_CFG.reopening_time)||'8:00 AM',STUDENT_NAME:'AMA MENSAH',INDEX:'100000000026',ADMISSION_NO:'AM/2025/0001',PROGRAMME:'General Science',CLASS:'Science 1',HOUSE:'Unity House',GENDER:'FEMALE',RESIDENTIAL:'Boarding',AGGREGATE:'06',CONTACT:'024 123 4567'};
   let body=TPL[tplCur].replace(/\{RECORDS_TABLE\}/g,tplSampleTable());
   let qurl=''; try{ if(typeof qrcode!=='undefined'){ const q=qrcode(0,'M'); q.addData([sample.SCHOOL_NAME,'Name: '+sample.STUDENT_NAME,'Index: '+sample.INDEX,'Adm No: '+sample.ADMISSION_NO,'Programme: '+sample.PROGRAMME,'House: '+sample.HOUSE,'Residential: '+sample.RESIDENTIAL,'Year: '+sample.ACADEMIC_YEAR].join('\n')); q.make(); const cells=q.getModuleCount(); const cell=Math.max(2,Math.round(108/(cells+8))); qurl=q.createDataURL(cell,cell*4); } }catch(e){}
   body=body.replace(/\{QR_CODE\}/g, qurl?'<img src="'+qurl+'" style="width:108px;height:108px" alt="QR code">':'[QR]').replace(/\{([A-Z_]+)\}/g,(m,k)=>k in sample?sample[k]:m);

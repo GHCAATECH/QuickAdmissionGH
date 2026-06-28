@@ -1909,6 +1909,26 @@ function schoolCrest(){
     if(m)u=m.crest_url||''; }
   return u;
 }
+function schoolProfileRecord(){
+  const s=(SCHOOL&&SCHOOL.school)||{};
+  const sid=s&&s.id, snm=s&&s.name;
+  const m=(SCHOOLS_LIST||[]).find(x=>(sid&&String(x.id)===String(sid))||(snm&&x.name===snm));
+  return Object.assign({}, m||{}, s||{});
+}
+function schoolPhoneValue(){
+  const s=schoolProfileRecord();
+  return firstNonEmpty(
+    s.helpdesk_line,s.helpdeskLine,s.helpdesk_phone,s.helpdeskPhone,s.support_phone,s.supportPhone,
+    s.helpdesk,s.helpline,s.help_line,s.phone,s.contact_phone,s.school_phone,''
+  )||'';
+}
+function schoolEmailValue(){
+  const s=schoolProfileRecord();
+  return firstNonEmpty(
+    s.helpdesk_email,s.helpdeskEmail,s.support_email,s.supportEmail,s.help_email,
+    s.email,s.contact_email,s.school_email,''
+  )||'';
+}
 function printDoc(title,bodyHTML,bare){
   const w=window.open('','_blank'); if(!w){toast('Allow pop-ups to open the document');return;}
   const sch=(SCHOOL&&SCHOOL.school.name)||'Senior High School';
@@ -1917,13 +1937,13 @@ function printDoc(title,bodyHTML,bare){
   const wantWM=(title==='Admission Letter'||title==='Personal Records Form');
   const crest=schoolCrest();
   const onePage=isLetter
-    ? 'html,body{height:auto}body{max-width:680px;margin:0 auto;padding:18px 28px 10px;line-height:1.35}h1{font-size:18px;margin-bottom:1px}.sub{font-size:12px;margin-bottom:12px}h2{font-size:15px;padding-bottom:3px;margin:6px 0}p{margin:6px 0}table{margin:8px 0}td{padding:3px 4px;font-size:13px}@page{size:A4;margin:12.7mm}@media print{body{margin:0;padding:0;max-width:none}p,table,h2,div{page-break-inside:avoid}}'
+    ? 'html,body{height:auto}body{max-width:760px;margin:0 auto;padding:14px 22px 6px;line-height:1.45}h1{font-size:18px;margin-bottom:1px}.sub{font-size:12px;margin-bottom:12px}h2{font-size:15px;padding-bottom:3px;margin:6px 0}p{margin:6px 0}table{margin:8px 0}td{padding:3px 4px;font-size:13px}@page{size:A4;margin:12.7mm}@media print{body{margin:0;padding:0;max-width:none}p,table,h2,div{page-break-inside:avoid}}'
     : '';
   // Compact layout so the full Personal Records Form fits within 2 A4 pages, with Word-default 1in margins.
   const recPage=(title==='Personal Records Form')
-    ? 'body{max-width:720px;margin:0 auto;padding:16px 26px;line-height:1.3}h1{font-size:18px;margin-bottom:1px}.sub{font-size:12px;margin-bottom:10px}h2{font-size:14px;padding-bottom:3px;margin:6px 0}p{margin:4px 0;font-size:12.5px}table{margin:6px 0}td{padding:3px 6px;font-size:12px}.sec-h{font-size:11px;padding:5px 6px}@page{size:A4;margin:12.7mm}@media print{body{margin:0;padding:0;max-width:none}tr{page-break-inside:avoid}}'
+    ? 'body{max-width:760px;margin:0 auto;padding:14px 22px;line-height:1.3}h1{font-size:18px;margin-bottom:1px}.sub{font-size:12px;margin-bottom:10px}h2{font-size:14px;padding-bottom:3px;margin:6px 0}p{margin:4px 0;font-size:12.5px}table{margin:6px 0}td{padding:3px 6px;font-size:12px}.sec-h{font-size:11px;padding:5px 6px}@page{size:A4;margin:12.7mm}@media print{body{margin:0;padding:0;max-width:none}tr{page-break-inside:avoid}}'
     : '';
-  const head='<html><head><title>'+title+'</title><style>body{font-family:'+bodyFont+';max-width:740px;margin:30px auto;padding:0 24px;color:#14201c;line-height:1.6}h1{font-size:20px;text-align:center;margin-bottom:2px}.sub{text-align:center;color:#555;font-size:13px;margin-bottom:24px}h2{font-size:16px;border-bottom:2px solid #1557B0;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin:12px 0}td{padding:6px 4px;border-bottom:1px solid #eee;font-size:14px}.lbl{color:#666;width:230px}.rn{color:#999;font-weight:600;margin-right:4px}.sec-h{background:#1557B0;color:#fff;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:7px 8px;border-bottom:none}img{max-width:100%}.qa-wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:62%;max-width:520px;z-index:0;pointer-events:none;opacity:.2;-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm img{width:100%;height:auto;display:block}body>*{position:relative;z-index:1}@media print{body{margin:0}.sec-h{-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm{opacity:.2}}'+onePage+recPage+'</style></head><body>';
+  const head='<html><head><title>'+title+'</title><style>body{font-family:'+bodyFont+';max-width:780px;margin:30px auto;padding:0 24px;color:#14201c;line-height:1.6}h1{font-size:20px;text-align:center;margin-bottom:2px}.sub{text-align:center;color:#555;font-size:13px;margin-bottom:24px}h2{font-size:16px;border-bottom:2px solid #1557B0;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin:12px 0}td{padding:6px 4px;border-bottom:1px solid #eee;font-size:14px}.lbl{color:#666;width:230px}.rn{color:#999;font-weight:600;margin-right:4px}.sec-h{background:#1557B0;color:#fff;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:7px 8px;border-bottom:none}img{max-width:100%}.qa-wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:62%;max-width:520px;z-index:0;pointer-events:none;opacity:.2;-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm img{width:100%;height:auto;display:block}body>*{position:relative;z-index:1}@media print{body{margin:0}.sec-h{-webkit-print-color-adjust:exact;print-color-adjust:exact}.qa-wm{opacity:.2}}'+onePage+recPage+'</style></head><body>';
   const wm=(wantWM&&crest)?'<div class="qa-wm"><img src="'+crest+'" alt=""></div>':'';
   const banner=bare?'':'<h1>'+sch.toUpperCase()+'</h1><div class="sub">Online Admission - '+((SCHOOL&&SCHOOL.config.academic_year)||'2025/2026')+'</div>';
   const copyright='<p style="margin-top:'+(isLetter?'18px':'30px')+';text-align:center;color:#888;font-size:11px;border-top:1px solid #e5e7eb;padding-top:8px">Copyright &copy; 2026 AXIOMBYTE HUB. All rights reserved. - Version 1.0</p>';
@@ -1961,7 +1981,9 @@ function tplVars(){
   const cu=schoolCrest();
   return {
     CREST: cu?('<img src="'+cu+'" style="width:90px;height:auto;display:block;margin:0 auto 4px" alt="">'):'',
-    SCHOOL_NAME:sc.name||'', SCHOOL_ADDRESS:sc.address||'', SCHOOL_PHONE:sc.phone||sc.helpdesk||'',
+    CREST_TOP: cu?('<img src="'+cu+'" style="width:54px;height:auto;display:block" alt="">'):'',
+    CREST_CENTER: cu?('<img src="'+cu+'" style="width:148px;height:auto;display:block;margin:0 auto" alt="">'):'',
+    SCHOOL_NAME:sc.name||'', SCHOOL_ADDRESS:sc.address||'', SCHOOL_PHONE:schoolPhoneValue(), SCHOOL_EMAIL:schoolEmailValue(),
     HEADMASTER:sc.headmaster_name||'', ACADEMIC_YEAR:cf.academic_year||'2025/2026',
     DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
     REPORTING_DATE:reopening(), REPORTING_TIME:cf.reopening_time||'',
@@ -1983,8 +2005,25 @@ function buildQR(text,px){
     return q.createDataURL(cell,cell*4);
   }catch(e){ return ''; }
 }
-const GES_HEAD='<div style="text-align:center;line-height:1.3">{CREST}<div style="font-size:22px;font-weight:700;letter-spacing:.5px">{SCHOOL_NAME}</div><div style="font-size:12px">(GHANA EDUCATION SERVICE)</div><div style="font-size:12px">{SCHOOL_ADDRESS} &middot; Tel: {SCHOOL_PHONE}</div></div><hr style="border:none;border-top:2px solid #000;margin:8px 0">';
+const GES_HEAD='<table style="width:100%;border-collapse:collapse;margin:0 0 6px"><tr><td style="border:none;width:64px;vertical-align:middle">{CREST_TOP}</td><td style="border:none;vertical-align:middle;padding-left:10px"><div style="font-size:16px;font-weight:700;letter-spacing:.35px">{SCHOOL_NAME}</div><div style="font-size:11px">{SCHOOL_ADDRESS}</div></td></tr></table><div style="border-top:1.6px solid #111;margin:4px 0 24px"></div><div style="text-align:center;line-height:1.25;margin-bottom:12px"><div style="font-size:28px;font-weight:700;letter-spacing:.35px">{SCHOOL_NAME}</div><div style="font-size:12px;font-weight:700;margin-top:6px">(GHANA EDUCATION SERVICE)</div></div><table style="width:100%;border-collapse:collapse;margin:0 0 14px"><tr><td style="border:none;vertical-align:top;width:34%;font-size:12px;line-height:1.45"><div style="font-weight:700">{HEADMASTER}</div><div><b>Our Ref. No.</b> ........................</div><div><b>Your Ref. No.</b> ........................</div><div><b>Phone:</b> {SCHOOL_PHONE}</div><div><b>Email:</b> {SCHOOL_EMAIL}</div></td><td style="border:none;vertical-align:top;width:32%;text-align:center">{CREST_CENTER}</td><td style="border:none;vertical-align:top;width:34%;font-size:12px;line-height:1.45;text-align:right"><div style="font-weight:700">{SCHOOL_ADDRESS}</div><div style="margin-top:14px;font-weight:700">{DATE}</div></td></tr></table><div style="border-top:1.2px solid #111;margin:6px 0 18px"></div>';
 const LETTER_DEFAULT=GES_HEAD
+ +'<h3 style="text-align:center;text-decoration:underline;margin:12px 0 18px;font-size:17px">ADMISSION &mdash; {ACADEMIC_YEAR} ACADEMIC YEAR</h3>'
+ +'<p style="font-size:13.5px;line-height:1.6">I am pleased to inform you that on the basis of your ward&rsquo;s performance at the BECE, Master/Miss <b>{STUDENT_NAME}</b> (Index No. <b>{INDEX}</b>) has been offered admission into <b>{SCHOOL_NAME}</b> as a <b>{RESIDENTIAL}</b> student to pursue the Free SHS Programme. Admission No: <b>{ADMISSION_NO}</b>.</p>'
+ +'<ol><li>He/she is allocated to House <b>{HOUSE}</b>.</li>'
+ +'<li>The Programme offered him/her is <b>{PROGRAMME}</b>. Parents are to note that after admission students have only two weeks to change their course/Programme if they wish to do so.</li>'
+ +'<li>Please find enclosed a copy of the prospectus of the school.</li>'
+ +'<li>Fill the enclosed forms and return them without delay to the school&rsquo;s Administration.</li>'
+ +'<li>You are required to attach a copy of your ward&rsquo;s Admission Letter, BECE Result Slip, Birth Certificate, Placement Slip, and completed Enrolment Form for submission to the Headmaster.</li>'
+ +'<li>Your ward should bring to school four (4) passport-size photographs for his/her personal records.</li>'
+ +'<li><b>ALL NEWLY ADMITTED STUDENTS ARE TO REPORT ON {REPORTING_DATE}.</b></li></ol>'
+ +'<table style="width:100%;border-collapse:collapse;margin-top:54px"><tr><td style="border:none;vertical-align:bottom;width:68%"><p style="margin:0 0 34px">Yours faithfully,</p><div style="border-top:1.2px solid #111;width:220px;margin-bottom:4px"></div><div><b>{HEADMASTER}</b></div><div>(HEADMASTER)</div></td><td style="border:none;text-align:right;vertical-align:bottom">{QR_CODE}</td></tr></table>';
+const RECORDS_DEFAULT=GES_HEAD
+ +'<h3 style="text-align:center;text-decoration:underline;margin:10px 0 12px;font-size:17px">PERSONAL RECORDS FORM &mdash; {ACADEMIC_YEAR}</h3>'
+ +'<table style="width:100%;border-collapse:collapse;margin:0 0 10px"><tr><td style="border:none;font-size:12.5px"><b>Student:</b> {STUDENT_NAME}</td><td style="border:none;font-size:12.5px"><b>Index No.:</b> {INDEX}</td><td style="border:none;font-size:12.5px"><b>Admission No.:</b> {ADMISSION_NO}</td></tr><tr><td style="border:none;font-size:12.5px"><b>Programme:</b> {PROGRAMME}</td><td style="border:none;font-size:12.5px"><b>Class:</b> {CLASS}</td><td style="border:none;font-size:12.5px"><b>House:</b> {HOUSE}</td></tr></table>'
+ +'{RECORDS_TABLE}'
+ +'<p style="margin-top:18px">Signature: _______________________ &nbsp;&nbsp; Date: _______________</p>';
+const LEGACY_GES_HEAD='<div style="text-align:center;line-height:1.3">{CREST}<div style="font-size:22px;font-weight:700;letter-spacing:.5px">{SCHOOL_NAME}</div><div style="font-size:12px">(GHANA EDUCATION SERVICE)</div><div style="font-size:12px">{SCHOOL_ADDRESS} &middot; Tel: {SCHOOL_PHONE}</div></div><hr style="border:none;border-top:2px solid #000;margin:8px 0">';
+const LEGACY_LETTER_DEFAULT=LEGACY_GES_HEAD
  +'<table style="width:100%;font-size:12px"><tr><td style="border:none;text-align:left">Our Ref. No: ........................<br>Your Ref. No: ........................</td><td style="border:none;text-align:right">Date: {DATE}</td></tr></table>'
  +'<h3 style="text-align:center;text-decoration:underline;margin:12px 0">ADMISSION &mdash; {ACADEMIC_YEAR} ACADEMIC YEAR</h3>'
  +'<p>I am pleased to inform you that on the basis of your ward&rsquo;s performance at the BECE, Master/Miss <b>{STUDENT_NAME}</b> (Index No. {INDEX}) has been offered admission into <b>{SCHOOL_NAME}</b> as a <b>{RESIDENTIAL}</b> student to pursue the Free SHS Programme. Admission No: <b>{ADMISSION_NO}</b>.</p>'
@@ -1996,11 +2035,19 @@ const LETTER_DEFAULT=GES_HEAD
  +'<li>Your ward should bring to school four (4) passport-size photographs for his/her personal records.</li>'
  +'<li><b>ALL NEWLY ADMITTED STUDENTS ARE TO REPORT ON {REPORTING_DATE}.</b></li></ol>'
  +'<p>Yours faithfully,</p><p style="margin-top:34px">_______________________<br><b>{HEADMASTER}</b><br>(HEADMASTER)</p>';
-const RECORDS_DEFAULT=GES_HEAD
+const LEGACY_RECORDS_DEFAULT=LEGACY_GES_HEAD
  +'<h3 style="text-align:center;text-decoration:underline;margin:10px 0">PERSONAL RECORDS FORM &mdash; {ACADEMIC_YEAR}</h3>'
  +'<p>Student: <b>{STUDENT_NAME}</b> &middot; Index: {INDEX} &middot; Programme: {PROGRAMME}</p>'
  +'{RECORDS_TABLE}'
  +'<p style="margin-top:18px">Signature: _______________________ &nbsp;&nbsp; Date: _______________</p>';
+function resolveDocTemplate(kind,tpl){
+  const raw=(tpl||'').trim();
+  const fallback=kind==='letter'?LETTER_DEFAULT:RECORDS_DEFAULT;
+  if(!raw) return fallback;
+  if(kind==='letter' && raw===LEGACY_LETTER_DEFAULT) return LETTER_DEFAULT;
+  if(kind==='records' && raw===LEGACY_RECORDS_DEFAULT) return RECORDS_DEFAULT;
+  return raw;
+}
 function fillTemplate(tpl){
   const v=tplVars();
   let out=String(tpl).replace(/\{RECORDS_TABLE\}/g, recordsTableHTML());
@@ -2011,11 +2058,11 @@ function fillTemplate(tpl){
 }
 function docAdmissionLetter(){
   const tpl=(SCHOOL&&SCHOOL.config&&SCHOOL.config.letter_template);
-  printDoc('Admission Letter', fillTemplate(tpl&&tpl.trim()?tpl:LETTER_DEFAULT), true);
+  printDoc('Admission Letter', fillTemplate(resolveDocTemplate('letter',tpl)), true);
 }
 function docRecords(){
   const tpl=(SCHOOL&&SCHOOL.config&&SCHOOL.config.records_template);
-  printDoc('Personal Records Form', fillTemplate(tpl&&tpl.trim()?tpl:RECORDS_DEFAULT), true);
+  printDoc('Personal Records Form', fillTemplate(resolveDocTemplate('records',tpl)), true);
 }
 function schoolDocUrl(k){ const c=(SCHOOL&&SCHOOL.config)||{}; return c[k]||''; }
 function openUploadedDoc(url){ const w=window.open(url,'_blank'); if(!w)toast('Allow pop-ups to open the document'); }
