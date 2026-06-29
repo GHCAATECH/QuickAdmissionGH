@@ -469,6 +469,7 @@
   .finance-total{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-flag{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.06em}
   .finance-paid-flag.yes{background:#e7f7ec;color:#0a8a2a}
+  .finance-paid-flag.partial{background:#fff4d6;color:#9a6700}
   .finance-paid-flag.no{background:#f1f3f7;color:#63748a}
   .finance-paid-students{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-amount{font-size:16px;font-weight:800;color:#122648;line-height:1.4}
@@ -1660,7 +1661,7 @@
             </div>
             <div class="finance-rate-note">Request form comes next. Transaction charge estimated at 1%.</div>
           </div>
-          <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table"><thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Paid</th><th><span class="finance-head-stack">No of Student<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead><tbody id="financeSettlementRows"></tbody></table></div>
+          <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table"><thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Claim Status</th><th><span class="finance-head-stack">No of Student<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead><tbody id="financeSettlementRows"></tbody></table></div>
         </div>
         <div class="panel"><div class="panel-head"><div><h3>Transactions</h3><div class="sub">Token purchases</div></div><div class="finance-transactions-tools"><div class="finance-transactions-search"><input id="financePaySearch" placeholder="Search student, index, txn..." onkeydown="if(event.key==='Enter')applyFinancePaymentSearch()"><button class="btn btn-ghost btn-sm" type="button" onclick="applyFinancePaymentSearch()">Search</button></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" type="button" onclick="downloadFinancePaymentsCSV()">CSV</button><button class="btn btn-ghost btn-sm" type="button" onclick="printFinancePayments()">PDF</button></div></div></div>
           <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Student</th><th>Index No</th><th>Amount</th><th>Method</th><th>Status</th><th>Txn ID</th></tr></thead><tbody id="payRows"></tbody></table></div>
@@ -2074,8 +2075,8 @@ function schoolFinanceSnapshot(){
   const registered=submittedStudents().length;
   const total=Math.max(placement.length,registered);
   const completedStudents=completedFinancePaymentCount(payments);
-  const paidStudents=settledStudentCount(SB_CFG&&SB_CFG.finance_settled_students,registered);
-  const dueStudents=Math.max(registered-paidStudents,0);
+  const paidStudents=settledStudentCount(SB_CFG&&SB_CFG.finance_settled_students,completedStudents);
+  const dueStudents=Math.max(completedStudents-paidStudents,0);
   const itGross=round2(dueStudents*FINANCE_IT_RATE);
   const itCharge=round2(itGross*FINANCE_CHARGE_RATE);
   const headGross=round2(dueStudents*FINANCE_HEAD_RATE);
@@ -2094,7 +2095,8 @@ function schoolFinanceSnapshot(){
     headNet:round2(headGross*(1-FINANCE_CHARGE_RATE)),
     totalGross:round2(dueStudents*FINANCE_TOTAL_RATE),
     paidAmount:round2(paidStudents*FINANCE_TOTAL_RATE),
-    hasHistory:paidStudents>0
+    hasHistory:paidStudents>0,
+    claimStatus:paidStudents<=0?'NO':(dueStudents<=0?'YES':'PARTIAL')
   };
 }
 function financeAcademicYearValue(raw){
@@ -2945,7 +2947,7 @@ function renderFinance(){
       <div class="finance-aux-copy">Reset history is controlled from the Super Admin portal after each school claim.</div>
     </td>
     <td><div class="finance-total mono">${safeHtml(moneyBare(snap.totalGross))}</div></td>
-    <td><span class="finance-paid-flag ${snap.hasHistory?'yes':'no'}">${snap.hasHistory?'YES':'NO'}</span></td>
+    <td><span class="finance-paid-flag ${snap.claimStatus.toLowerCase()}">${snap.claimStatus}</span></td>
     <td><div class="finance-paid-students mono">${safeHtml(fmt(snap.paidStudents))}</div><div class="finance-summary-sub">students paid</div></td>
     <td><div class="finance-paid-amount mono">GHC${safeHtml(moneyBare(snap.paidAmount))}</div></td>
   </tr>`;

@@ -306,6 +306,7 @@
   .finance-total{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-flag{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.06em}
   .finance-paid-flag.yes{background:#e7f7ec;color:#0a8a2a}
+  .finance-paid-flag.partial{background:#fff4d6;color:#9a6700}
   .finance-paid-flag.no{background:#f1f3f7;color:#63748a}
   .finance-paid-students{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-amount{font-size:16px;font-weight:800;color:#122648;line-height:1.4}
@@ -706,7 +707,7 @@
             <div class="finance-rate-note">Request form comes next. Transaction charge estimated at 1%.</div>
           </div>
           <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table">
-            <thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Paid</th><th><span class="finance-head-stack">No of Student<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead>
+            <thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Claim Status</th><th><span class="finance-head-stack">No of Student<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead>
             <tbody id="finRows"></tbody>
           </table></div>
         </div>
@@ -949,8 +950,8 @@ function financeSettlementForSchool(s){
   const registered=Math.max(hasSubmittedFlag ? schoolStudents.filter(function(st){ return !!st.submitted; }).length : Number(s.students||0),0);
   const total=Math.max(Number(s.placements||0),registered);
   const completedStudents=completedFinancePaymentCount(payments,s.id);
-  const paidStudents=settledStudentCount(s&&s.financeSettledStudents,registered);
-  const dueStudents=Math.max(registered-paidStudents,0);
+  const paidStudents=settledStudentCount(s&&s.financeSettledStudents,completedStudents);
+  const dueStudents=Math.max(completedStudents-paidStudents,0);
   const itGross=round2(dueStudents*FINANCE_IT_RATE);
   const itCharge=round2(itGross*FINANCE_CHARGE_RATE);
   const headGross=round2(dueStudents*FINANCE_HEAD_RATE);
@@ -972,7 +973,8 @@ function financeSettlementForSchool(s){
     totalGross:totalGross,
     paidAmount:paidAmount,
     completedAmount:round2(completedStudents*FINANCE_TOTAL_RATE),
-    hasHistory:paidStudents>0
+    hasHistory:paidStudents>0,
+    claimStatus:paidStudents<=0?'NO':(dueStudents<=0?'YES':'PARTIAL')
   };
 }
 function financeAcademicYearValue(raw){
@@ -1320,7 +1322,7 @@ function refreshFinanceResetPreview(id){
   if(summary.dueStudents<=0){ next=0; }
   if(next>summary.dueStudents){ next=summary.dueStudents; input.value=String(next); }
   preview.innerHTML=financeResetPreviewHTML(summary,next);
-  hint.textContent='After this reset, '+fmt(Math.max(summary.dueStudents-next,0))+' student payment(s) will remain pending for this school.';
+  hint.textContent='After this payout, '+fmt(Math.max(summary.dueStudents-next,0))+' successful student payment(s) will remain unpaid for this school.';
 }
 function openFinanceReset(id){
   const s=sById(id); if(!s)return;
@@ -1329,27 +1331,27 @@ function openFinanceReset(id){
   const m=$('modal');
   m.innerHTML=`
     <div class="modal-head">
-      <div><h2>Reset financial report</h2><p>${safeHtml(s.name)} - record the part-payment the school has claimed.</p></div>
+      <div><h2>Mark financial claim as paid</h2><p>${safeHtml(s.name)} - record the successful-payment claims covered by this payout.</p></div>
       <button class="modal-x" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
       <p class="finance-aux-copy">This does not delete payment history. It moves part of the school's pending revenue into paid history so the due balance drops after a partial claim.</p>
       <div class="finance-reset-grid">
-        <div class="finance-reset-card"><div class="k">Submitted / registered students</div><div class="v">${safeHtml(fmt(summary.registered))}</div></div>
-        <div class="finance-reset-card"><div class="k">Already claimed / reset</div><div class="v">${safeHtml(fmt(summary.paidStudents))}</div></div>
+        <div class="finance-reset-card"><div class="k">Successful student payments</div><div class="v">${safeHtml(fmt(summary.completedStudents))}</div></div>
+        <div class="finance-reset-card"><div class="k">Claims already paid</div><div class="v">${safeHtml(fmt(summary.paidStudents))}</div></div>
         <div class="finance-reset-card"><div class="k">Available now</div><div class="v">${safeHtml(fmt(summary.dueStudents))}</div></div>
       </div>
       <div class="field" style="margin-top:18px">
-        <label>Students covered by this claim</label>
+        <label>Successful payments covered by this payout</label>
         <input id="fr_claim_count" type="number" min="1" max="${escapeAttr(summary.dueStudents)}" value="${escapeAttr(summary.dueStudents)}" oninput="refreshFinanceResetPreview(${id})">
-        <div class="finance-reset-inline">Enter how many student payments this partial claim should clear from the report.</div>
+        <div class="finance-reset-inline">Enter how many successful student payments this payout should mark as paid.</div>
       </div>
       <div class="finance-reset-preview" id="fr_preview"></div>
       <div class="finance-reset-inline" id="fr_after"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" id="fr_btn" onclick="saveFinanceReset(${id})">Apply reset</button>
+      <button class="btn btn-primary" id="fr_btn" onclick="saveFinanceReset(${id})">Mark claim paid</button>
     </div>`;
   $('overlay').classList.add('show');
   refreshFinanceResetPreview(id);
@@ -1358,27 +1360,27 @@ async function saveFinanceReset(id){
   const s=sById(id); if(!s)return;
   const summary=financeSettlementForSchool(s);
   const claim=Math.max(parseInt(sval('fr_claim_count'),10)||0,0);
-  if(!claim){ toast('Enter the number of students covered by this claim.'); return; }
-  if(claim>summary.dueStudents){ toast('The claim count cannot be more than the pending revenue count.'); return; }
+  if(!claim){ toast('Enter the number of successful payments covered by this payout.'); return; }
+  if(claim>summary.dueStudents){ toast('The payout cannot cover more than the unpaid successful-payment count.'); return; }
   const btn=$('fr_btn'); if(btn) btn.textContent='Applying...';
   const {data,error}=await sb.rpc('apply_finance_claim',{p_school_id:s._id,p_claim_students:claim});
   if(error){
-    if(btn) btn.textContent='Apply reset';
+    if(btn) btn.textContent='Mark claim paid';
     const msg=/apply_finance_claim|function|schema cache/i.test(error.message||'')
       ? 'The financial hardening migration must be run in Supabase before claims can be saved.'
-      : 'Could not reset report: '+error.message;
+      : 'Could not mark claim paid: '+error.message;
     toast(msg);
     return;
   }
   if(!data||data.ok!==true){
-    if(btn) btn.textContent='Apply reset';
+    if(btn) btn.textContent='Mark claim paid';
     toast('The claim was not confirmed by Supabase.');
     return;
   }
   closeModal();
   await loadSA();
   go('finance');
-  toast('Reset saved for '+s.name+' - '+claim+' student payment(s) moved into paid history');
+  toast('Claim marked paid for '+s.name+' - '+claim+' successful student payment(s)');
 }
 function renderFinance(){
   if(financePaymentsLoadError){
@@ -1445,11 +1447,11 @@ function renderFinance(){
         </div>
         <div class="finance-action-group">
           <button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
-          <button class="btn btn-ghost btn-sm finance-request-btn" onclick="openFinanceReset(${s.id})">Reset Report After Claim</button>
+          <button class="btn btn-ghost btn-sm finance-request-btn" onclick="openFinanceReset(${s.id})">Mark Claim as Paid</button>
         </div>
       </td>
       <td><div class="finance-total mono">${safeHtml(moneyBare(f.totalGross))}</div></td>
-      <td><span class="finance-paid-flag ${f.hasHistory?'yes':'no'}">${f.hasHistory?'YES':'NO'}</span></td>
+      <td><span class="finance-paid-flag ${f.claimStatus.toLowerCase()}">${f.claimStatus}</span></td>
       <td>
         <div class="finance-paid-students mono">${safeHtml(fmt(f.paidStudents))}</div>
         <div class="finance-summary-sub">students paid</div>
