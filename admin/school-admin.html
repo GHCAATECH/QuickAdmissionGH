@@ -2012,10 +2012,14 @@ function buildExcelTableHtml(headers,rows){
 function buildExcelDocumentHtml(title,headers,rows,totalStudents){
   var schoolName=exportSchoolName(), admissionYear=exportAdmissionYear(), footerHead=exportHeadLabel();
   var total=(typeof totalStudents==='number'&&!isNaN(totalStudents))?totalStudents:rows.length;
-  var head='<div style="margin-bottom:14px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff">'
-    +'<h2 style="margin:0 0 4px;font-family:Arial,sans-serif">'+safeHtml(schoolName)+' - '+safeHtml(title)+'</h2>'
-    +'<div style="font-size:12px;color:rgba(255,255,255,.9)">'+safeHtml(admissionYear?('Admission Year: '+admissionYear):'Admission Year: -')+'</div>'
-    +'</div>';
+  var crest=(SB_SCHOOL&&SB_SCHOOL.crest_url)||'';
+  var generated=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  var head='<div class="pdf-head" style="display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff">'
+    +'<div class="pdf-brand" style="display:flex;align-items:center;gap:12px">'
+    +(crest?'<img src="'+escapeAttr(crest)+'" alt="" style="width:62px;height:62px;object-fit:contain">':'')
+    +'<div><div class="pdf-title" style="font-size:24px;font-weight:800;line-height:1.1">'+safeHtml(schoolName)+'</div><div class="pdf-sub" style="font-size:12px;color:rgba(255,255,255,.9);margin-top:4px">'+safeHtml(title)+(admissionYear?' · Admission Year '+safeHtml(admissionYear):'')+'</div></div></div>'
+    +'<div class="pdf-meta" style="text-align:right;font-size:12px;color:#ffffff"><div><b>Generated:</b> '+safeHtml(generated)+'</div><div><b>Total students:</b> '+total+'</div></div>'
+    +'</div><div class="pdf-rule" style="border-top:2px solid #111827;margin:10px 0 14px"></div>';
   var foot='<div style="margin-top:14px;font-size:12px;color:#374151;display:flex;justify-content:space-between;gap:18px">'
     +'<div>'+safeHtml(footerHead)+'</div><div>Total Students: '+total+'</div></div>';
   return '\ufeff<html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;padding:24px">'
