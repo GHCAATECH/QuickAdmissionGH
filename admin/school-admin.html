@@ -2050,8 +2050,8 @@ function buildStyledWorkbook(baseName,sheetName,headers,rows,contextTitle,totalS
     return {wch:Math.min(Math.max(width,14),32)};
   });
   var green='16A34A', white='FFFFFF';
-  applyWorksheetStyle(ws,{s:{r:0,c:0},e:{r:0,c:span-1}},excelStyle(green,white,16,true,'center'));
-  applyWorksheetStyle(ws,{s:{r:1,c:0},e:{r:1,c:span-1}},excelStyle(green,white,12,true,'center'));
+  applyWorksheetStyle(ws,{s:{r:0,c:0},e:{r:0,c:span-1}},excelStyle(green,white,16,true,'left'));
+  applyWorksheetStyle(ws,{s:{r:1,c:0},e:{r:1,c:span-1}},excelStyle(green,white,12,true,'left'));
   applyWorksheetStyle(ws,{s:{r:2,c:0},e:{r:2,c:span-1}},excelStyle(green,white,11,true,'center'));
   applyWorksheetStyle(ws,{s:{r:3,c:0},e:{r:2+rows.length,c:span-1}},excelStyle(null,null,null,false,'left'));
   applyWorksheetStyle(ws,{s:{r:4+rows.length,c:0},e:{r:5+rows.length,c:span-1}},excelStyle(null,'374151',11,false,'left'));
