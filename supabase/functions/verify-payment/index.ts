@@ -17,6 +17,18 @@ function getPublicKey(): string {
 function safeString(value: unknown): string {
   return String(value ?? "").trim();
 }
+function metadataValue(metadata: unknown, variableName: string): string {
+  if (!metadata || typeof metadata !== "object") return "";
+  const record = metadata as Record<string, unknown>;
+  const direct = safeString(record[variableName]);
+  if (direct) return direct;
+  const fields = Array.isArray(record.custom_fields) ? record.custom_fields : [];
+  const match = fields.find((field) => {
+    if (!field || typeof field !== "object") return false;
+    return safeString((field as Record<string, unknown>).variable_name) === variableName;
+  }) as Record<string, unknown> | undefined;
+  return safeString(match?.value);
+}
 function paystackMode(key: string): "live" | "test" | "unknown" {
   if (!key) return "unknown";
   if (key.startsWith("sk_live_") || key.startsWith("pk_live_")) return "live";
@@ -56,7 +68,14 @@ Deno.serve(async (req: Request) => {
   if (!reference || !index) return json({ ok: false, error: "missing" }, 400);
 
   const admin = createClient(url, service);
-  const { data: existingPay } = await admin.from("payments").select("id, student_id").eq("reference", reference).maybeSingle();
+  const { data: existingPay, error: existingPayError } = await admin
+    .from("payments")
+    .select("id, student_id, school_id")
+    .eq("reference", reference)
+    .maybeSingle();
+  if (existingPayError) {
+    return json({ ok: false, error: "reference_lookup_failed", message: existingPayError.message }, 500);
+  }
   if (existingPay?.student_id) {
     const { data: st } = await admin
       .from("students")
@@ -73,6 +92,13 @@ Deno.serve(async (req: Request) => {
       }, 409);
     }
     if (st?.admission_token) return json({ ok: true, token: st.admission_token, reused: true, reference });
+  }
+  if (existingPay) {
+    return json({
+      ok: false,
+      error: "reference_incomplete",
+      message: "This payment reference already exists but is not linked to a student. Contact support.",
+    }, 409);
   }
 
   let pres: Response;
@@ -93,6 +119,40 @@ Deno.serve(async (req: Request) => {
     }, 402);
   }
   const amount = Number(pdata.data.amount || 0);
+  const gatewayReference = safeString(pdata?.data?.reference);
+  if (gatewayReference && gatewayReference !== reference) {
+    return json({
+      ok: false,
+      error: "reference_mismatch",
+      message: "Paystack returned a different transaction reference.",
+    }, 409);
+  }
+  const currency = safeString(pdata?.data?.currency).toUpperCase();
+  if (currency && currency !== "GHS") {
+    return json({
+      ok: false,
+      error: "currency_mismatch",
+      message: "Payment currency does not match the Ghana cedi service charge.",
+      gateway_currency: currency,
+    }, 402);
+  }
+
+  const metadataIndex = metadataValue(pdata?.data?.metadata, "index");
+  const metadataSchoolId = metadataValue(pdata?.data?.metadata, "school_id");
+  if (metadataIndex && metadataIndex !== index) {
+    return json({
+      ok: false,
+      error: "metadata_mismatch",
+      message: "The payment reference belongs to a different index number.",
+    }, 409);
+  }
+  if (metadataSchoolId && school && metadataSchoolId !== school) {
+    return json({
+      ok: false,
+      error: "metadata_mismatch",
+      message: "The payment reference belongs to a different school.",
+    }, 409);
+  }
 
   // Resolve the target school. Prefer the school the student selected in the portal;
   // fall back to school_of_index only when no school was supplied.
@@ -107,6 +167,13 @@ Deno.serve(async (req: Request) => {
     sid = (s2 as string) || null;
   }
   if (!sid) return json({ ok: false, error: "not_placed", message: "Index not on any placement list." }, 400);
+  if (metadataSchoolId && metadataSchoolId !== sid) {
+    return json({
+      ok: false,
+      error: "metadata_mismatch",
+      message: "The payment reference belongs to a different school.",
+    }, 409);
+  }
 
   const { data: cfg, error: cfgError } = await admin
     .from("school_config")
@@ -141,8 +208,9 @@ Deno.serve(async (req: Request) => {
   let studentId: string; let token: string;
   if (prior?.id) {
     studentId = prior.id; token = prior.admission_token || genToken();
-    await admin.from("students").update({ admission_token: token, payment_status: "paid",
+    const { error: updateError } = await admin.from("students").update({ admission_token: token, payment_status: "paid",
       parent_phone: body.phone || null, parent_email: body.email || null }).eq("id", studentId);
+    if (updateError) return json({ ok: false, error: "student_update_failed", message: updateError.message }, 500);
   } else {
     token = genToken();
     const { data: stu, error: se } = await admin.from("students").insert({
@@ -152,9 +220,36 @@ Deno.serve(async (req: Request) => {
     if (se || !stu) return json({ ok: false, error: "save_failed", message: se?.message }, 400);
     studentId = stu.id;
   }
-  await admin.from("payments").insert({ school_id: sid, student_id: studentId, reference, channel: "paystack",
-    amount_pesewas: amount, payer_name: body.name, phone: body.phone, email: body.email,
-    status: "completed", paid_at: new Date().toISOString() });
-  await admin.from("tokens").insert({ school_id: sid, student_id: studentId, token });
+  const { error: paymentError } = await admin.from("payments").insert({
+    school_id: sid,
+    student_id: studentId,
+    reference,
+    channel: "paystack",
+    amount_pesewas: amount,
+    payer_name: body.name,
+    phone: body.phone,
+    email: body.email,
+    status: "completed",
+    paid_at: new Date().toISOString(),
+  });
+  if (paymentError) {
+    if (paymentError.code === "23505") {
+      const { data: racedPayment } = await admin
+        .from("payments")
+        .select("student_id")
+        .eq("reference", reference)
+        .maybeSingle();
+      if (safeString(racedPayment?.student_id) === studentId) {
+        return json({ ok: true, token, reused: true, reference });
+      }
+      return json({ ok: false, error: "reference_mismatch", message: "This payment reference is already in use." }, 409);
+    }
+    return json({ ok: false, error: "payment_save_failed", message: paymentError.message }, 500);
+  }
+
+  const { error: tokenError } = await admin.from("tokens").insert({ school_id: sid, student_id: studentId, token });
+  if (tokenError && tokenError.code !== "23505") {
+    console.error("Token mirror insert failed", tokenError.message);
+  }
   return json({ ok: true, token, reference });
 });

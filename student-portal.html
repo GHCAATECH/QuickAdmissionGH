@@ -1504,7 +1504,8 @@ async function payToken(method){
     metadata:{custom_fields:[
       {display_name:'Index Number',variable_name:'index',value:idx},
       {display_name:'Applicant',variable_name:'name',value:verifiedName},
-      {display_name:'School',variable_name:'school',value:sch.name}
+      {display_name:'School',variable_name:'school',value:sch.name},
+      {display_name:'School ID',variable_name:'school_id',value:sid}
     ]},
     callback:function(resp){ savePending({reference:resp.reference,index:idx,name:verifiedName,school:sid}); verifyPayment(resp.reference, idx, verifiedName, sid); },
     onClose:function(){ toast('Payment window closed'); }

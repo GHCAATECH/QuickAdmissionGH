@@ -710,7 +710,7 @@
             <tbody id="finRows"></tbody>
           </table></div>
         </div>
-        <div class="panel"><div class="panel-head"><div><h3>Recent transactions</h3><div class="sub">Cross-school payment feed</div></div><div class="finance-transactions-tools"><div class="finance-transactions-search"><input id="financePaySearch" placeholder="Search student, school, txn..." onkeydown="if(event.key==='Enter')applyFinancePaymentSearch()"><button class="btn btn-ghost btn-sm" type="button" onclick="applyFinancePaymentSearch()">Search</button></div><button class="btn btn-ghost btn-sm" onclick="toast('Exporting transactions as CSV...')">Export CSV</button></div></div>
+        <div class="panel"><div class="panel-head"><div><h3>Recent transactions</h3><div class="sub">Cross-school payment feed</div></div><div class="finance-transactions-tools"><div class="finance-transactions-search"><input id="financePaySearch" placeholder="Search student, school, txn..." onkeydown="if(event.key==='Enter')applyFinancePaymentSearch()"><button class="btn btn-ghost btn-sm" type="button" onclick="applyFinancePaymentSearch()">Search</button></div><button class="btn btn-ghost btn-sm" type="button" onclick="downloadFinancePaymentsCSV()">Export CSV</button></div></div>
           <div class="tbl-wrap"><table>
             <thead><tr><th>Date</th><th>Student</th><th>School</th><th>Amount</th><th>Method</th><th>Status</th><th>Transaction ID</th></tr></thead>
             <tbody id="payRows"></tbody>
@@ -849,6 +849,7 @@ let admins=[]; let SA_UID=null;
 })();
 function randDate(){const d=new Date();d.setDate(d.getDate()-Math.floor(Math.random()*28));return d.toISOString().slice(0,10);}
 let payments=[];
+let financePaymentsLoadError='';
 (function(){const methods=['Paystack','Hubtel','Flutterwave','Bank'];const st=['completed','completed','completed','pending','failed'];
   for(let i=0;i<28;i++){const s=schools[Math.floor(Math.random()*schools.length)];
     payments.push({date:randDate(),student:students[Math.floor(Math.random()*students.length)].name,schoolId:s.id,amount:s.charge,method:methods[Math.floor(Math.random()*methods.length)],status:st[Math.floor(Math.random()*st.length)],txn:'TXN'+(Math.floor(Math.random()*900000)+100000)});
@@ -926,13 +927,28 @@ function settledStudentCount(raw,maxCount){
   const clean=Math.max(parseInt(raw,10)||0,0);
   return typeof maxCount==='number' ? Math.min(clean,Math.max(maxCount,0)) : clean;
 }
+function completedFinancePaymentCount(source,schoolId){
+  const seen=new Set();
+  (source||[]).forEach(function(payment){
+    const status=String(payment&&payment.status||'').trim().toLowerCase();
+    if(!['completed','success','paid'].includes(status)) return;
+    if(schoolId!=null&&payment.schoolId!==schoolId) return;
+    const index=String(payment&&payment.index||'').trim();
+    const key=(payment&&payment.studentId)
+      ? 'student:'+String(payment.studentId)
+      : (index&&index!=='—'&&index!=='-')
+        ? 'school-index:'+String(payment.schoolId)+':'+index
+        : 'reference:'+String(payment&&payment.txn||'').trim();
+    if(key!=='reference:') seen.add(key);
+  });
+  return seen.size;
+}
 function financeSettlementForSchool(s){
   const schoolStudents=students.filter(function(st){ return st.schoolId===s.id; });
   const hasSubmittedFlag=schoolStudents.some(function(st){ return typeof st.submitted!=='undefined'; });
   const registered=Math.max(hasSubmittedFlag ? schoolStudents.filter(function(st){ return !!st.submitted; }).length : Number(s.students||0),0);
   const total=Math.max(Number(s.placements||0),registered);
-  const completed=payments.filter(function(p){ return p.schoolId===s.id && p.status==='completed'; });
-  const completedStudents=completed.length;
+  const completedStudents=completedFinancePaymentCount(payments,s.id);
   const paidStudents=settledStudentCount(s&&s.financeSettledStudents,completedStudents);
   const dueStudents=Math.max(completedStudents-paidStudents,0);
   const itGross=round2(dueStudents*FINANCE_IT_RATE);
@@ -1069,7 +1085,7 @@ function filteredFinancePayments(){
   if(!q) return payments.slice();
   return payments.filter(function(p){
     const school=sById(p.schoolId);
-    return [p.date,p.student,(school&&school.name)||'',(school&&school.code)||'',p.amount,p.method,p.status,p.txn].some(function(part){
+    return [p.date,p.student,p.index,(school&&school.name)||'',(school&&school.code)||'',p.amount,p.method,p.status,p.txn].some(function(part){
       return String(part==null?'':part).toLowerCase().includes(q);
     });
   });
@@ -1104,6 +1120,24 @@ function changeFinancePayPage(step){
   if(next===financePayPage) return;
   financePayPage=next;
   renderFinancePayments();
+}
+function financeCsvCell(value){
+  return '"'+String(value==null?'':value).replace(/"/g,'""')+'"';
+}
+function downloadFinancePaymentsCSV(){
+  const rows=filteredFinancePayments();
+  if(!rows.length){toast('No transactions to export.');return;}
+  const data=[['Date','Student','School','Index No','Amount (GHS)','Method','Status','Transaction ID']]
+    .concat(rows.map(function(p){
+      const school=sById(p.schoolId);
+      return [p.date,p.student,(school&&school.name)||'',p.index,Number(p.amount||0).toFixed(2),p.method,p.status,p.txn];
+    }));
+  const blob=new Blob(['\ufeff'+data.map(function(row){return row.map(financeCsvCell).join(',');}).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download='platform-financial-transactions-'+new Date().toISOString().slice(0,10)+'.csv';
+  link.click();
+  setTimeout(function(){URL.revokeObjectURL(link.href);},1000);
 }
 
 /* ============ STATS ============ */
@@ -1324,34 +1358,34 @@ async function saveFinanceReset(id){
   const claim=Math.max(parseInt(sval('fr_claim_count'),10)||0,0);
   if(!claim){ toast('Enter the number of students covered by this claim.'); return; }
   if(claim>summary.dueStudents){ toast('The claim count cannot be more than the pending revenue count.'); return; }
-  const nextSettled=summary.paidStudents+claim;
   const btn=$('fr_btn'); if(btn) btn.textContent='Applying...';
-  const stamp=new Date().toISOString();
-  const nextClaimCount=financeClaimCountValue(s.financeClaimCount)+1;
-  const patch={school_id:s._id,finance_settled_students:nextSettled,finance_settled_at:stamp,finance_claim_count:nextClaimCount};
-  let {error}=await sb.from('school_config').upsert(patch,{onConflict:'school_id'});
-  if(error && /finance_claim_count|column/i.test(error.message||'')){
-    ({error}=await sb.from('school_config').upsert({school_id:s._id,finance_settled_students:nextSettled,finance_settled_at:stamp},{onConflict:'school_id'}));
-  }
+  const {data,error}=await sb.rpc('apply_finance_claim',{p_school_id:s._id,p_claim_students:claim});
   if(error){
     if(btn) btn.textContent='Apply reset';
-    const msg=/finance_settled_students|finance_settled_at|finance_claim_count|column/i.test(error.message||'')
-      ? 'This database still needs the finance reset migration before the tool can save.'
+    const msg=/apply_finance_claim|function|schema cache/i.test(error.message||'')
+      ? 'The financial hardening migration must be run in Supabase before claims can be saved.'
       : 'Could not reset report: '+error.message;
     toast(msg);
     return;
   }
-  await sb.from('activity_log').insert({
-    school_id:s._id,
-    actor:'Super Admin',
-    action:'Financial report reset for '+claim+' student(s) - GHS '+moneyBare(round2(claim*FINANCE_TOTAL_RATE))+' - Ref '+financeReferenceNumber(s.academicYear,s.financeClaimCount)
-  });
+  if(!data||data.ok!==true){
+    if(btn) btn.textContent='Apply reset';
+    toast('The claim was not confirmed by Supabase.');
+    return;
+  }
   closeModal();
   await loadSA();
   go('finance');
   toast('Reset saved for '+s.name+' - '+claim+' student payment(s) moved into paid history');
 }
 function renderFinance(){
+  if(financePaymentsLoadError){
+    $('finStats').innerHTML='<div class="stat" style="grid-column:1/-1"><div class="top"><span class="lbl">Financial data unavailable</span></div><div class="delta flat">'+safeHtml(financePaymentsLoadError)+'</div></div>';
+    $('finRows').innerHTML=emptyRow(8,'Financial data could not be loaded. Refresh the page or check Supabase access.');
+    $('payRows').innerHTML=emptyRow(7,'Transactions could not be loaded.');
+    $('financePayMeta').textContent='Financial data unavailable';
+    return;
+  }
   const summary=schools.map(financeSettlementForSchool);
   const totalRegistered=summary.reduce((a,s)=>a+s.registered,0);
   const totalDue=summary.reduce((a,s)=>a+s.dueStudents,0);
@@ -1851,7 +1885,7 @@ async function loadSA(){
     sb.from('school_config').select('*'),
     sb.from('profiles').select('id,full_name,email,school_id,role,permissions'),
     sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,admission_no'),
-    sb.from('payments').select('amount_pesewas,channel,status,reference,school_id,paid_at,created_at,payer_name, students(full_name)'),
+    sb.from('payments').select('student_id,amount_pesewas,channel,status,reference,school_id,paid_at,created_at,payer_name, students(full_name,bece_index)'),
     fetchPlatformSmsHistory(),
     sb.from('activity_log').select('*').order('created_at',{ascending:false}),
     sb.from('programmes').select('id,name'),
@@ -1888,7 +1922,9 @@ async function loadSA(){
       parent_phone:s.parent_phone||'',records:s.records||{},sms:smsRaw||'-',smsRaw:smsRaw||'',submitted:!!s.submitted_at,adm:s.admission_no||'-'};
   });
   window._todayReg=students.filter(s=>s.reg===new Date().toISOString().slice(0,10)).length;
-  payments=(pay.data||[]).map(p=>({date:(p.paid_at||p.created_at||'').slice(0,10),student:(p.students&&p.students.full_name)||p.payer_name||'-',schoolId:sRev[p.school_id],amount:(p.amount_pesewas||0)/100,method:sa_cap(p.channel),status:p.status,txn:p.reference||'-'}));
+  financePaymentsLoadError=pay.error?(pay.error.message||'Could not load payments.'):'';
+  if(financePaymentsLoadError) console.error('Payment load failed:',financePaymentsLoadError);
+  payments=(pay.data||[]).map(p=>({studentId:p.student_id,index:(p.students&&p.students.bece_index)||'-',date:(p.paid_at||p.created_at||'').slice(0,10),student:(p.students&&p.students.full_name)||p.payer_name||'-',schoolId:sRev[p.school_id],amount:(p.amount_pesewas||0)/100,method:sa_cap(p.channel),status:p.status,txn:p.reference||'-'}));
   smsHistory=(sms.data||[]).map(s=>({date:(s.sent_at||'').slice(0,10),school:sRev[s.school_id],group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status}));
   activity=(log.data||[]).map(l=>({type:'sys',school:sRev[l.school_id],text:l.action,time:sa_time(l.created_at)}));
   smsBalance=(cfg.data||[]).reduce((a,c)=>a+(c.sms_balance||0),0);

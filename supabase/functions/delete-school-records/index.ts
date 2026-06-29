@@ -101,8 +101,25 @@ Deno.serve(async (req: Request) => {
 
     const activityLogsDeleted = await countDeleted("activity_log", "school_id", schoolId);
 
+    let financeClaimsDeleted = 0;
+    try {
+      financeClaimsDeleted = await countDeleted("finance_claims", "school_id", schoolId);
+    } catch {
+      financeClaimsDeleted = 0;
+    }
+
     const studentsDeleted = await countDeleted("students", "school_id", schoolId);
     const placementsDeleted = await countDeleted("placement_list", "school_id", schoolId);
+
+    const { error: financeResetError } = await admin
+      .from("school_config")
+      .update({
+        finance_settled_students: 0,
+        finance_settled_at: null,
+        finance_claim_count: 0,
+      })
+      .eq("school_id", schoolId);
+    if (financeResetError) throw new Error(`school_config: ${financeResetError.message}`);
 
     return json({
       ok: true,
@@ -114,6 +131,8 @@ Deno.serve(async (req: Request) => {
       sms_logs: smsLogsDeleted,
       legacy_sms_logs: legacySmsDeleted,
       activity_logs: activityLogsDeleted,
+      finance_claims: financeClaimsDeleted,
+      finance_reset: true,
       form_urls: formUrls,
     });
   } catch (error) {

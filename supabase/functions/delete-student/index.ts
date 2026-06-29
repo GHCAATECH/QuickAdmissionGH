@@ -91,6 +91,38 @@ Deno.serve(async (req: Request) => {
   };
 
   try {
+    const { data: completedPayments, error: studentPaymentsError } = await admin
+      .from("payments")
+      .select("id, student_id, reference, status, paid_at, created_at")
+      .eq("school_id", schoolId)
+      .order("paid_at", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true });
+    if (studentPaymentsError) throw new Error(`payments: ${studentPaymentsError.message}`);
+    const uniquePaymentKeys: string[] = [];
+    const seenPaymentKeys = new Set<string>();
+    for (const row of completedPayments ?? []) {
+      if (!["completed", "success", "paid"].includes(safeString(row.status).toLowerCase())) continue;
+      const key = safeString(row.student_id)
+        ? `student:${safeString(row.student_id)}`
+        : safeString(row.reference)
+          ? `reference:${safeString(row.reference)}`
+          : `payment:${safeString(row.id)}`;
+      if (!seenPaymentKeys.has(key)) {
+        seenPaymentKeys.add(key);
+        uniquePaymentKeys.push(key);
+      }
+    }
+    const { data: config, error: configError } = await admin
+      .from("school_config")
+      .select("finance_settled_students")
+      .eq("school_id", schoolId)
+      .maybeSingle();
+    if (configError) throw new Error(`school_config: ${configError.message}`);
+    const settled = Math.max(Number(config?.finance_settled_students) || 0, 0);
+    const deletedStudentWasSettled = uniquePaymentKeys
+      .slice(0, Math.min(settled, uniquePaymentKeys.length))
+      .includes(`student:${studentId}`);
+
     const [paymentsDeleted, tokensDeleted, smsLogsDeleted] = await Promise.all([
       deleteByStudent("payments"),
       deleteByStudent("tokens"),
@@ -116,6 +148,16 @@ Deno.serve(async (req: Request) => {
       .eq("school_id", schoolId);
     if (studentDeleteError) throw new Error(`students: ${studentDeleteError.message}`);
 
+    let financeSettledAdjusted = false;
+    if (deletedStudentWasSettled && settled > 0) {
+        const { error: financeError } = await admin
+          .from("school_config")
+          .update({ finance_settled_students: settled - 1 })
+          .eq("school_id", schoolId);
+        if (financeError) throw new Error(`school_config: ${financeError.message}`);
+        financeSettledAdjusted = true;
+    }
+
     return json({
       ok: true,
       student_id: studentId,
@@ -126,6 +168,7 @@ Deno.serve(async (req: Request) => {
       tokens: tokensDeleted,
       sms_logs: smsLogsDeleted,
       placements: placementsDeleted,
+      finance_settled_adjusted: financeSettledAdjusted,
     });
   } catch (error) {
     return json({

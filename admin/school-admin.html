@@ -1662,7 +1662,7 @@
           </div>
           <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table"><thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Paid</th><th><span class="finance-head-stack">No of Student<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead><tbody id="financeSettlementRows"></tbody></table></div>
         </div>
-        <div class="panel"><div class="panel-head"><div><h3>Transactions</h3><div class="sub">Token purchases</div></div><div class="finance-transactions-tools"><div class="finance-transactions-search"><input id="financePaySearch" placeholder="Search student, index, txn..." onkeydown="if(event.key==='Enter')applyFinancePaymentSearch()"><button class="btn btn-ghost btn-sm" type="button" onclick="applyFinancePaymentSearch()">Search</button></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="toast('Exporting as CSV…')">CSV</button><button class="btn btn-ghost btn-sm" onclick="toast('Exporting as PDF…')">PDF</button></div></div></div>
+        <div class="panel"><div class="panel-head"><div><h3>Transactions</h3><div class="sub">Token purchases</div></div><div class="finance-transactions-tools"><div class="finance-transactions-search"><input id="financePaySearch" placeholder="Search student, index, txn..." onkeydown="if(event.key==='Enter')applyFinancePaymentSearch()"><button class="btn btn-ghost btn-sm" type="button" onclick="applyFinancePaymentSearch()">Search</button></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" type="button" onclick="downloadFinancePaymentsCSV()">CSV</button><button class="btn btn-ghost btn-sm" type="button" onclick="printFinancePayments()">PDF</button></div></div></div>
           <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Student</th><th>Index No</th><th>Amount</th><th>Method</th><th>Status</th><th>Txn ID</th></tr></thead><tbody id="payRows"></tbody></table></div>
           <div class="finance-transactions-foot"><div class="finance-transactions-meta" id="financePayMeta">Showing 0 of 0 transactions</div><div class="finance-pager"><span class="finance-pager-status" id="financePayPageStatus">Page 1 of 1 · 25 per page</span><button class="btn btn-ghost btn-sm" type="button" onclick="changeFinancePayPage(-1)">Previous</button><button class="btn btn-ghost btn-sm" type="button" onclick="changeFinancePayPage(1)">Next</button></div></div>
         </div>
@@ -1800,7 +1800,7 @@
         <div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Activity log</h3></div><div class="tbl-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>By</th></tr></thead><tbody id="logRows"></tbody></table></div></div>
         <div class="panel panel-pad" style="margin-top:18px;border:1px solid #f3c2c2;background:#fff7f7">
           <h3 class="section-title" style="color:#b42318">Danger zone</h3>
-          <p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">Permanently delete <b>all student records for this school</b> — the entire <b>placement list</b>, <b>admission list</b>, <b>payment records</b>, <b>uploaded forms</b>, <b>SMS history</b> and <b>activity log</b>. This cannot be undone. Use it to clear data before a new academic year.</p>
+          <p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">Permanently delete <b>all student records for this school</b> — the entire <b>placement list</b>, <b>admission list</b>, <b>payment records</b>, <b>finance claim history</b>, <b>uploaded forms</b>, <b>SMS history</b> and <b>activity log</b>. This cannot be undone. Use it to clear data before a new academic year.</p>
           <button class="btn btn-sm" style="background:#b42318;color:#fff" onclick="deleteAllStudentRecords()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;vertical-align:-2px;margin-right:5px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete all student records</button>
         </div>
       </section>
@@ -1864,6 +1864,7 @@ let students=[],placement=[];
 })();
 function randDate(){const d=new Date();d.setDate(d.getDate()-Math.floor(Math.random()*26));return d.toISOString().slice(0,10);}
 let payments=[];
+let financePaymentsLoadError='';
 (function(){const m=['Paystack','Hubtel','Flutterwave','Bank'];const s=['completed','completed','completed','pending','failed'];
   students.slice(0,30).forEach((st,i)=>payments.push({date:randDate(),name:st.name,index:st.index,amount:30,method:m[i%4],status:s[i%5],txn:'TXN'+(100000+i*37)}));})();
 let smsHistory=[
@@ -2054,11 +2055,25 @@ function settledStudentCount(raw,maxCount){
   const clean=Math.max(parseInt(raw,10)||0,0);
   return typeof maxCount==='number' ? Math.min(clean,Math.max(maxCount,0)) : clean;
 }
+function completedFinancePaymentCount(source){
+  const seen=new Set();
+  (source||[]).forEach(function(payment){
+    const status=String(payment&&payment.status||'').trim().toLowerCase();
+    if(!['completed','success','paid'].includes(status)) return;
+    const index=cleanSmsText(payment&&payment.index);
+    const key=(payment&&payment.studentId)
+      ? 'student:'+String(payment.studentId)
+      : (index&&index!=='—'&&index!=='-')
+        ? 'index:'+index
+        : 'reference:'+cleanSmsText(payment&&payment.txn);
+    if(key!=='reference:') seen.add(key);
+  });
+  return seen.size;
+}
 function schoolFinanceSnapshot(){
   const registered=submittedStudents().length;
   const total=Math.max(placement.length,registered);
-  const completed=payments.filter(function(p){ return p.status==='completed'; });
-  const completedStudents=completed.length;
+  const completedStudents=completedFinancePaymentCount(payments);
   const paidStudents=settledStudentCount(SB_CFG&&SB_CFG.finance_settled_students,completedStudents);
   const dueStudents=Math.max(completedStudents-paidStudents,0);
   const itGross=round2(dueStudents*FINANCE_IT_RATE);
@@ -2225,6 +2240,32 @@ function changeFinancePayPage(step){
   if(next===financePayPage) return;
   financePayPage=next;
   renderFinancePayments();
+}
+function financeCsvCell(value){
+  return '"'+String(value==null?'':value).replace(/"/g,'""')+'"';
+}
+function downloadFinancePaymentsCSV(){
+  const rows=filteredFinancePayments();
+  if(!rows.length){toast('No transactions to export.');return;}
+  const data=[['Date','Student','Index No','Amount (GHS)','Method','Status','Transaction ID']]
+    .concat(rows.map(function(p){return [p.date,p.name,p.index,Number(p.amount||0).toFixed(2),p.method,p.status,p.txn];}));
+  const blob=new Blob(['\ufeff'+data.map(function(row){return row.map(financeCsvCell).join(',');}).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download='school-financial-transactions-'+new Date().toISOString().slice(0,10)+'.csv';
+  link.click();
+  setTimeout(function(){URL.revokeObjectURL(link.href);},1000);
+}
+function printFinancePayments(){
+  const rows=filteredFinancePayments();
+  if(!rows.length){toast('No transactions to print.');return;}
+  const schoolName=(SB_SCHOOL&&SB_SCHOOL.name)||'School';
+  const body=rows.map(function(p){return '<tr><td>'+safeHtml(p.date)+'</td><td>'+safeHtml(p.name)+'</td><td>'+safeHtml(p.index)+'</td><td>GHS '+safeHtml(moneyBare(p.amount))+'</td><td>'+safeHtml(p.method)+'</td><td>'+safeHtml(p.status)+'</td><td>'+safeHtml(p.txn)+'</td></tr>';}).join('');
+  const w=window.open('','_blank');
+  if(!w){toast('Allow pop-ups to print / save PDF');return;}
+  w.document.write('<!doctype html><html><head><title>Financial Transactions</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,sans-serif;color:#17231d}h1{font-size:20px;margin:0 0 4px}p{margin:0 0 16px;color:#52635a}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #111;padding:7px;text-align:left}th{background:#14532d;color:#fff}</style></head><body><h1>'+safeHtml(schoolName)+' Financial Transactions</h1><p>Generated '+safeHtml(new Date().toLocaleString())+'</p><table><thead><tr><th>Date</th><th>Student</th><th>Index No</th><th>Amount</th><th>Method</th><th>Status</th><th>Transaction ID</th></tr></thead><tbody>'+body+'</tbody></table></body></html>');
+  w.document.close();
+  setTimeout(function(){w.print();},250);
 }
 function studentSmsContact(s){
   if(!s) return '';
@@ -2477,6 +2518,7 @@ async function deleteAllStudentRecords(){
     }catch(e){}
   }
   placement=[]; students=[]; payments=[]; smsHistory=[]; activityLog=[]; selected&&selected.clear&&selected.clear();
+  if(SB_CFG) Object.assign(SB_CFG,{finance_settled_students:0,finance_settled_at:null,finance_claim_count:0});
   if(typeof renderPlacement==='function')renderPlacement();
   if(typeof renderStudents==='function')renderStudents();
   if(typeof renderFinance==='function')renderFinance();
@@ -2485,7 +2527,7 @@ async function deleteAllStudentRecords(){
   if(typeof renderLog==='function')renderLog();
   notifyStudentPortalRefresh('student-records-delete-all');
   const smsDeleted=Number(data.sms_logs||0)+Number(data.legacy_sms_logs||0);
-  toast('Done — deleted '+(data.students||0)+' student(s), '+(data.placements||0)+' placement(s), '+(data.payments||0)+' payment(s), '+smsDeleted+' SMS log(s) and '+(data.activity_logs||0)+' activity log(s)');
+  toast('Done — deleted '+(data.students||0)+' student(s), '+(data.placements||0)+' placement(s), '+(data.payments||0)+' payment(s), '+smsDeleted+' SMS log(s), '+(data.activity_logs||0)+' activity log(s) and '+(data.finance_claims||0)+' finance claim(s)');
 }
 function importPlacement(){
   document.getElementById('csvFileInput').click();
@@ -2680,9 +2722,12 @@ async function deleteStudent(id){
   students=students.filter(x=>x.id!==id);
   placement=placement.filter(x=>x.index!==s.index);
   payments=payments.filter(function(p){ return String(p.index||'')!==String(s.index); });
+  if(data.finance_settled_adjusted&&SB_CFG){
+    SB_CFG.finance_settled_students=Math.max((parseInt(SB_CFG.finance_settled_students,10)||0)-1,0);
+  }
   selected.delete(id);
   notifyStudentPortalRefresh('student-delete',{index:s.index});
-  closeModal(); renderStudents(); renderStats&&renderStats();
+  closeModal(); renderStudents(); renderStats&&renderStats(); renderFinance&&renderFinance();
   toast('Student deleted'+(data.payments?(' - removed '+data.payments+' payment record(s)'):''));
 }
 async function saveStudent(id){
@@ -2843,6 +2888,13 @@ function printSchoolFinanceRequest(){
   openFinanceClaimPrintWindow(((SB_SCHOOL&&SB_SCHOOL.name)||'School')+' Claim Form',pagesHTML);
 }
 function renderFinance(){
+  if(financePaymentsLoadError){
+    $('finStats').innerHTML='<div class="stat" style="grid-column:1/-1"><div class="top"><span class="lbl">Financial data unavailable</span></div><div class="delta">'+safeHtml(financePaymentsLoadError)+'</div></div>';
+    $('financeSettlementRows').innerHTML=emptyRow(8,'Financial data could not be loaded. Refresh the page or contact support.');
+    $('payRows').innerHTML=emptyRow(7,'Transactions could not be loaded.');
+    $('financePayMeta').textContent='Financial data unavailable';
+    return;
+  }
   const snap=schoolFinanceSnapshot();
   const stats=[
     {l:'Registered Students',v:fmt(snap.registered),ico:'users',d:'submitted to this school'},
@@ -4049,7 +4101,9 @@ async function loadSchoolData(prof){
     return row;
   });
   placement=(plc.data||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
-  payments=(pay.data||[]).map(p=>({date:(p.paid_at||p.created_at||'').slice(0,10),name:(p.students&&p.students.full_name)||p.payer_name||'—',index:(p.students&&p.students.bece_index)||'—',amount:(p.amount_pesewas||0)/100,method:p.channel,status:p.status,txn:p.reference}));
+  financePaymentsLoadError=pay.error?(pay.error.message||'Could not load payments.'):'';
+  if(financePaymentsLoadError) console.error('Payment load failed:',financePaymentsLoadError);
+  payments=(pay.data||[]).map(p=>({studentId:p.student_id,date:(p.paid_at||p.created_at||'').slice(0,10),name:(p.students&&p.students.full_name)||p.payer_name||'—',index:(p.students&&p.students.bece_index)||'—',amount:(p.amount_pesewas||0)/100,method:p.channel,status:p.status,txn:p.reference}));
   smsHistory=(sms.data||[]).map(s=>({date:(s.sent_at||'').slice(0,10),group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status}));
   activityLog=(log.data||[]).map(l=>({time:fmtT(l.created_at),action:l.action,by:l.actor||'—'}));
 
