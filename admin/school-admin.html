@@ -441,14 +441,7 @@
   .finance-settlement-table thead th,.finance-settlement-table tbody td{padding:12px 10px;overflow-wrap:anywhere;word-break:break-word;border:1px solid #000}
   .finance-head-stack{display:inline-block;line-height:1.35}
   .finance-settlement-table tbody td{vertical-align:top}
-  .finance-settlement-table th:nth-child(1),.finance-settlement-table td:nth-child(1){width:5%}
-  .finance-settlement-table th:nth-child(2),.finance-settlement-table td:nth-child(2){width:16%}
-  .finance-settlement-table th:nth-child(3),.finance-settlement-table td:nth-child(3){width:18%}
-  .finance-settlement-table th:nth-child(4),.finance-settlement-table td:nth-child(4){width:28%}
-  .finance-settlement-table th:nth-child(5),.finance-settlement-table td:nth-child(5){width:9%}
-  .finance-settlement-table th:nth-child(6),.finance-settlement-table td:nth-child(6){width:7%}
-  .finance-settlement-table th:nth-child(7),.finance-settlement-table td:nth-child(7){width:8%}
-  .finance-settlement-table th:nth-child(8),.finance-settlement-table td:nth-child(8){width:9%}
+  .finance-settlement-table th,.finance-settlement-table td{width:12.5%}
   .finance-index{font-size:26px;font-weight:700;color:#122648;line-height:1}
   .finance-school-cell{display:grid;gap:8px}
   .finance-school-name{font-family:'Space Grotesk';font-size:16px;font-weight:700;line-height:1.35;color:#122648}
@@ -465,7 +458,7 @@
   .finance-split-amount{font-size:15px;font-weight:700;color:#14201C}
   .finance-split-line{font-size:14px;line-height:1.45;color:#425572}
   .finance-split-line strong{color:#14201C}
-  .finance-request-btn{margin-top:14px;justify-content:center;width:100%;min-height:44px}
+  .finance-request-btn{display:inline-flex;margin-top:14px;justify-content:center;justify-self:start;width:max-content;max-width:100%;min-height:36px;padding:7px 12px;white-space:nowrap}
   .finance-total{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-flag{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.06em}
   .finance-paid-flag.yes{background:#e7f7ec;color:#0a8a2a}
@@ -548,7 +541,7 @@
     .composer,.chart-grid,.grid-2,.grid-3,.perm-grid{grid-template-columns:1fr}
     .toolbar .search,.toolbar select,.bulkbar select{width:100%;min-width:0}
     .finance-settlement-wrap{overflow-x:auto}
-    .finance-settlement-wrap table{min-width:980px;table-layout:auto}
+    .finance-settlement-wrap table{min-width:980px;table-layout:fixed}
   }
   @media(max-width:768px){
     .toolbar,.dt-toolbar,.dt-actions,.topbar-right,.panel-head,.bulkbar{flex-wrap:wrap;gap:8px}

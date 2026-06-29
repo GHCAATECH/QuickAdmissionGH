@@ -2,6 +2,13 @@
 -- Super Admin payout actions move those payments from unpaid to paid history.
 -- Rebuild counters from the auditable claim ledger so a school cannot appear
 -- paid before a Super Admin payout has actually been recorded.
+-- Keep this migration safe when it is run directly in the SQL Editor instead
+-- of through the full migration history.
+alter table public.school_config
+  add column if not exists finance_settled_students integer not null default 0,
+  add column if not exists finance_claim_count integer not null default 0,
+  add column if not exists finance_settled_at timestamptz;
+
 with claim_totals as (
   select
     sc.school_id,
