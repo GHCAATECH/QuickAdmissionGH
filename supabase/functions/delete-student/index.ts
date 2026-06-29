@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: student, error: studentError } = await admin
     .from("students")
-    .select("id, school_id, bece_index, full_name, enrolment_form_url")
+    .select("id, school_id, bece_index, full_name, enrolment_form_url, submitted_at, created_at")
     .eq("id", studentId)
     .eq("school_id", schoolId)
     .maybeSingle();
@@ -91,27 +91,14 @@ Deno.serve(async (req: Request) => {
   };
 
   try {
-    const { data: completedPayments, error: studentPaymentsError } = await admin
-      .from("payments")
-      .select("id, student_id, reference, status, paid_at, created_at")
+    const { data: submittedStudents, error: submittedStudentsError } = await admin
+      .from("students")
+      .select("id, submitted_at, created_at")
       .eq("school_id", schoolId)
-      .order("paid_at", { ascending: true, nullsFirst: false })
+      .not("submitted_at", "is", null)
+      .order("submitted_at", { ascending: true })
       .order("created_at", { ascending: true });
-    if (studentPaymentsError) throw new Error(`payments: ${studentPaymentsError.message}`);
-    const uniquePaymentKeys: string[] = [];
-    const seenPaymentKeys = new Set<string>();
-    for (const row of completedPayments ?? []) {
-      if (!["completed", "success", "paid"].includes(safeString(row.status).toLowerCase())) continue;
-      const key = safeString(row.student_id)
-        ? `student:${safeString(row.student_id)}`
-        : safeString(row.reference)
-          ? `reference:${safeString(row.reference)}`
-          : `payment:${safeString(row.id)}`;
-      if (!seenPaymentKeys.has(key)) {
-        seenPaymentKeys.add(key);
-        uniquePaymentKeys.push(key);
-      }
-    }
+    if (submittedStudentsError) throw new Error(`students: ${submittedStudentsError.message}`);
     const { data: config, error: configError } = await admin
       .from("school_config")
       .select("finance_settled_students")
@@ -119,9 +106,9 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     if (configError) throw new Error(`school_config: ${configError.message}`);
     const settled = Math.max(Number(config?.finance_settled_students) || 0, 0);
-    const deletedStudentWasSettled = uniquePaymentKeys
-      .slice(0, Math.min(settled, uniquePaymentKeys.length))
-      .includes(`student:${studentId}`);
+    const deletedStudentWasSettled = (submittedStudents ?? [])
+      .slice(0, Math.min(settled, (submittedStudents ?? []).length))
+      .some((row) => safeString(row.id) === studentId);
 
     const [paymentsDeleted, tokensDeleted, smsLogsDeleted] = await Promise.all([
       deleteByStudent("payments"),

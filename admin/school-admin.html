@@ -2074,8 +2074,8 @@ function schoolFinanceSnapshot(){
   const registered=submittedStudents().length;
   const total=Math.max(placement.length,registered);
   const completedStudents=completedFinancePaymentCount(payments);
-  const paidStudents=settledStudentCount(SB_CFG&&SB_CFG.finance_settled_students,completedStudents);
-  const dueStudents=Math.max(completedStudents-paidStudents,0);
+  const paidStudents=settledStudentCount(SB_CFG&&SB_CFG.finance_settled_students,registered);
+  const dueStudents=Math.max(registered-paidStudents,0);
   const itGross=round2(dueStudents*FINANCE_IT_RATE);
   const itCharge=round2(itGross*FINANCE_CHARGE_RATE);
   const headGross=round2(dueStudents*FINANCE_HEAD_RATE);
@@ -2088,10 +2088,10 @@ function schoolFinanceSnapshot(){
     dueStudents:dueStudents,
     itGross:itGross,
     itCharge:itCharge,
-    itNet:round2(itGross-itCharge),
+    itNet:round2(itGross*(1-FINANCE_CHARGE_RATE)),
     headGross:headGross,
     headCharge:headCharge,
-    headNet:round2(headGross-headCharge),
+    headNet:round2(headGross*(1-FINANCE_CHARGE_RATE)),
     totalGross:round2(dueStudents*FINANCE_TOTAL_RATE),
     paidAmount:round2(paidStudents*FINANCE_TOTAL_RATE),
     hasHistory:paidStudents>0
@@ -2918,7 +2918,7 @@ function renderFinance(){
         <div>
           <div class="finance-history-label">Settlement History:</div>
           <div class="finance-history-paid">Already claimed for ${safeHtml(fmt(snap.paidStudents))} students - GHC${safeHtml(moneyBare(snap.paidAmount))}</div>
-          <div class="finance-summary-sub">Completed student payments: ${safeHtml(fmt(snap.completedStudents))}</div>
+          <div class="finance-summary-sub">Completed payment records: ${safeHtml(fmt(snap.completedStudents))}</div>
         </div>
         <div>
           <div class="finance-due-label">Due for Payment Now:</div>

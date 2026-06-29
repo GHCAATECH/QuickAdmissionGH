@@ -949,8 +949,8 @@ function financeSettlementForSchool(s){
   const registered=Math.max(hasSubmittedFlag ? schoolStudents.filter(function(st){ return !!st.submitted; }).length : Number(s.students||0),0);
   const total=Math.max(Number(s.placements||0),registered);
   const completedStudents=completedFinancePaymentCount(payments,s.id);
-  const paidStudents=settledStudentCount(s&&s.financeSettledStudents,completedStudents);
-  const dueStudents=Math.max(completedStudents-paidStudents,0);
+  const paidStudents=settledStudentCount(s&&s.financeSettledStudents,registered);
+  const dueStudents=Math.max(registered-paidStudents,0);
   const itGross=round2(dueStudents*FINANCE_IT_RATE);
   const itCharge=round2(itGross*FINANCE_CHARGE_RATE);
   const headGross=round2(dueStudents*FINANCE_HEAD_RATE);
@@ -965,10 +965,10 @@ function financeSettlementForSchool(s){
     dueStudents:dueStudents,
     itGross:itGross,
     itCharge:itCharge,
-    itNet:round2(itGross-itCharge),
+    itNet:round2(itGross*(1-FINANCE_CHARGE_RATE)),
     headGross:headGross,
     headCharge:headCharge,
-    headNet:round2(headGross-headCharge),
+    headNet:round2(headGross*(1-FINANCE_CHARGE_RATE)),
     totalGross:totalGross,
     paidAmount:paidAmount,
     completedAmount:round2(completedStudents*FINANCE_TOTAL_RATE),
@@ -1299,12 +1299,14 @@ function financeResetPreviewHTML(summary,count){
   const headGross=round2(limited*FINANCE_HEAD_RATE);
   const headCharge=round2(headGross*FINANCE_CHARGE_RATE);
   const totalGross=round2(limited*FINANCE_TOTAL_RATE);
-  const totalNet=round2((itGross-itCharge)+(headGross-headCharge));
+  const itNet=round2(itGross*(1-FINANCE_CHARGE_RATE));
+  const headNet=round2(headGross*(1-FINANCE_CHARGE_RATE));
+  const totalNet=round2(itNet+headNet);
   return `
     <h4>Claim preview</h4>
     <div class="row"><span>Students in this claim</span><strong>${safeHtml(fmt(limited))}</strong></div>
-    <div class="row"><span>IT / Contact Person</span><strong>GHC${safeHtml(moneyBare(round2(itGross-itCharge)))}</strong></div>
-    <div class="row"><span>Head</span><strong>GHC${safeHtml(moneyBare(round2(headGross-headCharge)))}</strong></div>
+    <div class="row"><span>IT / Contact Person</span><strong>GHC${safeHtml(moneyBare(itNet))}</strong></div>
+    <div class="row"><span>Head</span><strong>GHC${safeHtml(moneyBare(headNet))}</strong></div>
     <div class="row"><span>Gross reset amount</span><strong>GHC${safeHtml(moneyBare(totalGross))}</strong></div>
     <div class="row"><span>Net after charges</span><strong>GHC${safeHtml(moneyBare(totalNet))}</strong></div>
   `;
@@ -1333,7 +1335,7 @@ function openFinanceReset(id){
     <div class="modal-body">
       <p class="finance-aux-copy">This does not delete payment history. It moves part of the school's pending revenue into paid history so the due balance drops after a partial claim.</p>
       <div class="finance-reset-grid">
-        <div class="finance-reset-card"><div class="k">Completed student payments</div><div class="v">${safeHtml(fmt(summary.completedStudents))}</div></div>
+        <div class="finance-reset-card"><div class="k">Submitted / registered students</div><div class="v">${safeHtml(fmt(summary.registered))}</div></div>
         <div class="finance-reset-card"><div class="k">Already claimed / reset</div><div class="v">${safeHtml(fmt(summary.paidStudents))}</div></div>
         <div class="finance-reset-card"><div class="k">Available now</div><div class="v">${safeHtml(fmt(summary.dueStudents))}</div></div>
       </div>
@@ -1418,7 +1420,7 @@ function renderFinance(){
           <div>
             <div class="finance-history-label">Settlement History:</div>
             <div class="finance-history-paid">Already claimed for ${safeHtml(fmt(f.paidStudents))} students - GHC${safeHtml(moneyBare(f.paidAmount))}</div>
-            <div class="finance-summary-sub">Completed student payments: ${safeHtml(fmt(f.completedStudents))}</div>
+            <div class="finance-summary-sub">Completed payment records: ${safeHtml(fmt(f.completedStudents))}</div>
           </div>
           <div>
             <div class="finance-due-label">Due for Payment Now:</div>
