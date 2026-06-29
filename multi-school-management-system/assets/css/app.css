@@ -1,0 +1,466 @@
+:root {
+  color-scheme: light;
+  --mss-bg: #f5f5f5;
+  --mss-surface: #ffffff;
+  --mss-border: #dddddd;
+  --mss-text: #333333;
+  --mss-muted: #666666;
+  --mss-primary: #2fa4e7;
+  --mss-primary-dark: #157ab5;
+  --mss-success: #51a351;
+  --mss-warning: #f89406;
+  --mss-danger: #bd362f;
+}
+
+.dark-mode {
+  color-scheme: dark;
+  --mss-bg: #111827;
+  --mss-surface: #1f2937;
+  --mss-border: #334155;
+  --mss-text: #e5e7eb;
+  --mss-muted: #94a3b8;
+}
+
+body {
+  background: var(--mss-bg);
+  color: var(--mss-text);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(120deg, rgba(49, 126, 172, 0.92), rgba(47, 164, 231, 0.84)),
+    url("../images/school-pattern.svg") center/cover;
+}
+
+.login-shell {
+  width: min(1040px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 0.92fr;
+  overflow: hidden;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.25);
+}
+
+.login-brand {
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+  color: #ffffff;
+  background: #317eac;
+}
+
+.brand-mark {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--mss-primary);
+  font-size: 1.6rem;
+}
+
+.login-brand h1 {
+  margin: 24px 0 16px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.login-card {
+  padding: 48px;
+}
+
+.main-header.navbar {
+  min-height: 74px;
+  border: 0;
+  border-radius: 0;
+  background-image: linear-gradient(#54b4eb, #2fa4e7 60%, #1d9ce5);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.22);
+}
+
+.main-header .nav-link,
+.main-header .btn {
+  color: #ffffff;
+}
+
+.main-header .btn-outline-secondary,
+.main-header .btn-outline-danger {
+  border-color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+}
+
+.main-header .btn-outline-secondary:hover,
+.main-header .btn-outline-danger:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.main-sidebar,
+.app-sidebar {
+  background: #ffffff !important;
+  border-right: 1px solid #cccccc;
+  box-shadow: none !important;
+}
+
+.brand-link {
+  min-height: 74px;
+  padding-top: 22px;
+  border-bottom: 1px solid #dddddd;
+  color: #317eac !important;
+  background: #ffffff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
+
+.sidebar {
+  padding: 10px;
+}
+
+.user-panel {
+  border-bottom: 1px solid #eeeeee !important;
+}
+
+.user-panel .info a,
+.user-panel small {
+  color: #333333 !important;
+}
+
+.nav-header {
+  padding: 10px 12px 6px;
+  color: #555555 !important;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nav-sidebar .nav-link {
+  margin-bottom: 2px;
+  border-radius: 4px;
+  color: #317eac !important;
+  background: #ffffff;
+}
+
+.nav-sidebar .nav-link:hover {
+  color: #ffffff !important;
+  background: #74b9e8;
+}
+
+.nav-sidebar .nav-link.active {
+  color: #ffffff !important;
+  background: #2fa4e7 !important;
+}
+
+.content-wrapper {
+  background: var(--mss-bg);
+}
+
+.content-header h1,
+.card-title,
+.info-box-text {
+  color: var(--mss-text);
+}
+
+.card,
+.info-box {
+  background: var(--mss-surface);
+  border: 1px solid var(--mss-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  min-height: 42px;
+  color: #333333;
+  border-bottom: 1px solid #dddddd;
+  background-image: linear-gradient(#ffffff, #f5f5f5);
+}
+
+.card-title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.metric-card {
+  min-height: 104px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--mss-border);
+  border-radius: 4px;
+  background: var(--mss-surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.metric-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  color: #ffffff;
+  background: #317eac;
+  flex: 0 0 auto;
+}
+
+.metric-card strong {
+  display: block;
+  font-size: 1.45rem;
+}
+
+.metric-card span {
+  color: var(--mss-muted);
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.8fr) minmax(0, 1.2fr);
+  gap: 18px;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.form-label {
+  text-transform: capitalize;
+  font-weight: 700;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 4px;
+  background: #d9edf7;
+  color: #31708f;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.waec-school-heading {
+  margin-bottom: 14px;
+  padding: 11px 14px;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  background-image: linear-gradient(#ffffff, #f5f5f5);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.waec-top-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.waec-top-block {
+  display: block;
+  min-height: 126px;
+  padding: 18px 12px;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  color: #317eac;
+  text-align: center;
+  background: #f9f9f9;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.waec-top-block:hover {
+  color: #ffffff;
+  text-decoration: none;
+  background: #2fa4e7;
+}
+
+.waec-top-block i {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 34px;
+}
+
+.waec-top-block div {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
+
+.waec-portal-title {
+  margin: 24px 0 18px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  text-align: center;
+}
+
+.waec-crest {
+  width: 220px;
+  height: 220px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 22px;
+  border: 8px solid #e6f2fb;
+  border-radius: 50%;
+  color: #317eac;
+  background: #ffffff;
+  font-size: 82px;
+  box-shadow: 0 2px 16px rgba(49, 126, 172, 0.2);
+}
+
+.waec-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.waec-stat {
+  min-height: 96px;
+  padding: 14px 8px;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.waec-stat i {
+  display: block;
+  margin-bottom: 8px;
+  color: #317eac;
+  font-size: 28px;
+}
+
+.waec-stat strong {
+  display: block;
+  font-size: 20px;
+}
+
+.waec-help {
+  margin-top: 18px;
+  padding: 12px 15px;
+  border-left: 4px solid #2fa4e7;
+  background: #eef8ff;
+}
+
+.nav-hidden .main-sidebar {
+  transform: translateX(-100%);
+}
+
+.nav-hidden .content-wrapper,
+.nav-hidden .main-header {
+  margin-left: 0 !important;
+}
+
+.nav-restore {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 1060;
+  display: none;
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.22);
+}
+
+.nav-hidden .nav-restore {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-box {
+  height: 280px;
+}
+
+@media screen and (max-width: 767px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .login-brand {
+    min-height: auto;
+    padding: 32px;
+  }
+
+  .login-card {
+    padding: 28px;
+  }
+
+  .content-wrapper {
+    margin-left: 0;
+    padding: 10px;
+  }
+
+  .metric-grid,
+  .module-grid,
+  .waec-top-grid,
+  .waec-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+  .metric-grid,
+  .waec-top-grid,
+  .waec-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .content-wrapper {
+    padding: 15px;
+  }
+}
+
+@media screen and (min-width: 1025px) and (max-width: 1440px) {
+  .metric-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (min-width: 1441px) {
+  .metric-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
