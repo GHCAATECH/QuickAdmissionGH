@@ -598,6 +598,8 @@
   .reg-detail-in{padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 22px}
   .reg-detail-in .kv{font-size:12.5px}
   .reg-detail-in .kv b{display:block;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+  .student-info-grid .kv{font-size:13px;line-height:1.5;color:var(--text)}
+  .student-info-grid .kv b{display:inline;color:var(--text);font-weight:700;font-size:13px;text-transform:none;letter-spacing:0;margin:0 4px 0 0}
   .enrol-thumb{width:42px;height:42px;border-radius:6px;object-fit:cover;border:1px solid var(--line)}
   .enrol-none{width:34px;height:42px;border-radius:5px;background:#2b3a35;color:#cdd5d1;display:grid;place-items:center;font-weight:700;font-size:14px}
   .dt-foot{padding:11px 16px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
@@ -3324,7 +3326,7 @@ function showRegisteredStudentDetails(id){
   const photo=r.passport_photo_url?`<div class="field"><label>Passport Photo</label><img src="${escapeAttr(r.passport_photo_url)}" alt="Passport photo" style="width:104px;height:124px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"></div>`:'';
   const m=$('modal');
   m.innerHTML=`<div class="modal-head"><div><h2>${safeHtml(s.name)}</h2><p><span class="code">${safeHtml(s.index)}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
-  <div class="modal-body"><div class="grid-2">${rows.map(function(row){return `<div class="kv"><b>${safeHtml(row[0])}</b>${safeHtml(row[1],'-')}</div>`;}).join('')}${photo}${form}</div></div>
+  <div class="modal-body"><div class="grid-2 student-info-grid">${rows.map(function(row){return `<div class="kv"><b>${safeHtml(row[0])}:</b>${safeHtml(row[1],'-')}</div>`;}).join('')}${photo}${form}</div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>`;
   $('overlay').classList.add('show');
 }
