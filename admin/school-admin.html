@@ -1998,7 +1998,7 @@ function exportSheetRows(headers,rows,contextTitle,totalStudents){
 function excelCellHtml(value,isHeader){
   var text=safeHtml(value==null?'':String(value),'');
   if(isHeader){
-    return '<th style="border:1px solid #1f2937;padding:7px 9px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff;text-align:left;font-weight:700">'+text+'</th>';
+    return '<th bgcolor="#16a34a" style="border:1px solid #1f2937;padding:7px 9px;background-color:#16a34a;background:#16a34a;background-image:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff;text-align:left;font-weight:700;mso-pattern:auto solid #16a34a">'+text+'</th>';
   }
   return '<td style="border:1px solid #1f2937;padding:7px 9px">'+text+'</td>';
 }
