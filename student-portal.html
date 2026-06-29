@@ -1648,17 +1648,31 @@ function buildPickers(){
   if(districtList) districtList.innerHTML=DISTRICTS.map(function(d){ return `<option value="${d}"></option>`; }).join('');
 }
 function fmtCombo(str){ return (str||'').split(',').map(x=>x.trim()).filter(Boolean).join(' - '); }
+function resolveStudentProgrammeId(){
+  const names=[
+    (STU&&STU.programme)||'',
+    ($('pf1-prog')&&$('pf1-prog').value)||'',
+    (app&&app.fields&&app.fields.programme)||''
+  ].map(function(v){ return String(v||'').trim().toLowerCase(); }).filter(Boolean);
+  if(STU&&STU.programme_id) return STU.programme_id;
+  const hit=(PROGRAMMES||[]).find(function(p){
+    return names.includes(String(p.name||'').trim().toLowerCase()) || names.includes(String(p.code||'').trim().toLowerCase());
+  });
+  return hit?hit.id:null;
+}
 function buildClassTable(){
-  const studentProgrammeId=STU.programme_id||((PROGRAMMES||[]).find(p=>String(p.name||'').trim().toLowerCase()===String(STU.programme||'').trim().toLowerCase())||{}).id||null;
+  const studentProgrammeId=resolveStudentProgrammeId();
   const progSubs=fmtCombo((progById(studentProgrammeId)||{}).subjects||'');
   let classes=(SCHOOL&&SCHOOL.classes)||[];
-  // Only show classes for this student's programme (classes without a programme are shown to all)
-  const mine=classes.filter(c=>!c.programme_id || (studentProgrammeId&&String(c.programme_id)===String(studentProgrammeId)));
+  // Only show classes linked to the student's placed programme.
+  const mine=studentProgrammeId
+    ? classes.filter(c=>String(c.programme_id||'')===String(studentProgrammeId))
+    : [];
   if(mine.length) classes=mine;
   $('clsRows').innerHTML=classes.length?classes.map(c=>{
     const combo=fmtCombo(c.subjects)||progSubs||'Standard combination';
     return `<tr class="cls-row ${c.id===app.classId?'sel':''}" data-id="${c.id}" onclick="pickClass('${c.id}','${encodeURIComponent(String(c.name||''))}')"><td><span class="cls-radio"></span>${safeHtml(c.name,'-')}</td><td class="cls-combo">${safeHtml(combo,'Standard combination')}</td><td class="cls-seats">${safeHtml(c.seats,'0')}</td></tr>`;
-  }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No classes published yet. You can still submit; a class will be assigned by the school.</td></tr>`;
+  }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No classes have been linked to your programme yet. You can still submit; a class will be assigned by the school.</td></tr>`;
 }
 function pickClass(id,name){app.classId=id;app.className=decodeURIComponent(String(name||''));document.querySelectorAll('.cls-row').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));}
 function houseMatchesStudent(h){
