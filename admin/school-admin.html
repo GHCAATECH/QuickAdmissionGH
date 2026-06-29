@@ -2012,10 +2012,11 @@ function buildExcelTableHtml(headers,rows){
 function buildExcelDocumentHtml(title,headers,rows,totalStudents){
   var schoolName=exportSchoolName(), admissionYear=exportAdmissionYear(), footerHead=exportHeadLabel();
   var total=(typeof totalStudents==='number'&&!isNaN(totalStudents))?totalStudents:rows.length;
-  var head='<div class="pdf-head" style="margin-bottom:14px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#fff">'
-    +'<h2 style="margin:0 0 4px;font-family:Arial,sans-serif">'+safeHtml(schoolName)+' - '+safeHtml(title)+'</h2>'
-    +'<div class="pdf-sub" style="font-size:12px;color:rgba(255,255,255,.9)">'+safeHtml(admissionYear?('Admission Year: '+admissionYear):'Admission Year: -')+'</div>'
-    +'</div>';
+  var span=Math.max((headers&&headers.length)||1,1);
+  var head='<table border="0" style="border-collapse:collapse;width:100%;margin-bottom:14px">'
+    +'<tr><td colspan="'+span+'" bgcolor="#16a34a" style="border:1px solid #14532d;padding:12px 14px;background-color:#16a34a;background:#16a34a;background-image:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff;font-size:18px;font-weight:700;text-align:center;mso-pattern:auto solid #16a34a">'+safeHtml(schoolName)+' - '+safeHtml(title)+'</td></tr>'
+    +'<tr><td colspan="'+span+'" bgcolor="#16a34a" style="border:1px solid #14532d;border-top:none;padding:9px 14px;background-color:#16a34a;background:#16a34a;background-image:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff;font-size:12px;font-weight:600;text-align:center;mso-pattern:auto solid #16a34a">'+safeHtml(admissionYear?('Admission Year: '+admissionYear):'Admission Year: -')+'</td></tr>'
+    +'</table>';
   var foot='<div style="margin-top:14px;font-size:12px;color:#374151;display:flex;justify-content:space-between;gap:18px">'
     +'<div>'+safeHtml(footerHead)+'</div><div>Total Students: '+total+'</div></div>';
   return '\ufeff<html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;padding:24px">'
