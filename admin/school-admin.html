@@ -1995,51 +1995,40 @@ function exportSheetRows(headers,rows,contextTitle,totalStudents){
     []
   ].concat([headers],rows,[[],[exportHeadLabel()],[`Total Students: ${studentTotal}`]]);
 }
-function styleExcelSheet(ws,headers,rows){
-  if(typeof XLSX==='undefined' || !ws || !ws['!ref']) return;
-  var range=XLSX.utils.decode_range(ws['!ref']);
-  var border={top:{style:'thin',color:{rgb:'1F2937'}},bottom:{style:'thin',color:{rgb:'1F2937'}},left:{style:'thin',color:{rgb:'1F2937'}},right:{style:'thin',color:{rgb:'1F2937'}}};
-  var metaFill={patternType:'solid',fgColor:{rgb:'F8FAFC'}};
-  var headerFill={patternType:'solid',fgColor:{rgb:'166534'}};
-  for(var R=range.s.r;R<=range.e.r;R++){
-    for(var C=range.s.c;C<=range.e.c;C++){
-      var addr=XLSX.utils.encode_cell({r:R,c:C});
-      if(!ws[addr]) ws[addr]={t:'s',v:''};
-      ws[addr].s=ws[addr].s||{};
-      ws[addr].s.border=border;
-      ws[addr].s.alignment={vertical:'center',horizontal:'left',wrapText:true};
-      if(R<4){
-        ws[addr].s.fill=metaFill;
-        ws[addr].s.font={bold:R<3,color:{rgb:'0F172A'}};
-      }else if(R===4){
-        ws[addr].s.fill=headerFill;
-        ws[addr].s.font={bold:true,color:{rgb:'FFFFFF'}};
-      }
-    }
+function excelCellHtml(value,isHeader){
+  var text=safeHtml(value==null?'':String(value),'');
+  if(isHeader){
+    return '<th style="border:1px solid #1f2937;padding:7px 9px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff;text-align:left;font-weight:700">'+text+'</th>';
   }
-  ws['!cols']=headers.map(function(h,i){
-    var max=String(h||'').length;
-    rows.forEach(function(row){ max=Math.max(max,String((row&&row[i])==null?'':row[i]).length); });
-    return {wch:Math.min(Math.max(max+3,14),34)};
-  });
+  return '<td style="border:1px solid #1f2937;padding:7px 9px">'+text+'</td>';
+}
+function buildExcelTableHtml(headers,rows){
+  return '<table border="1" style="border-collapse:collapse;width:100%"><thead><tr>'
+    +headers.map(function(h){ return excelCellHtml(h,true); }).join('')
+    +'</tr></thead><tbody>'
+    +rows.map(function(r){ return '<tr>'+r.map(function(c){ return excelCellHtml(c,false); }).join('')+'</tr>'; }).join('')
+    +'</tbody></table>';
+}
+function buildExcelDocumentHtml(title,headers,rows,totalStudents){
+  var schoolName=exportSchoolName(), admissionYear=exportAdmissionYear(), footerHead=exportHeadLabel();
+  var total=(typeof totalStudents==='number'&&!isNaN(totalStudents))?totalStudents:rows.length;
+  var head='<div style="margin-bottom:14px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff">'
+    +'<h2 style="margin:0 0 4px;font-family:Arial,sans-serif">'+safeHtml(schoolName)+' - '+safeHtml(title)+'</h2>'
+    +'<div style="font-size:12px;color:rgba(255,255,255,.9)">'+safeHtml(admissionYear?('Admission Year: '+admissionYear):'Admission Year: -')+'</div>'
+    +'</div>';
+  var foot='<div style="margin-top:14px;font-size:12px;color:#374151;display:flex;justify-content:space-between;gap:18px">'
+    +'<div>'+safeHtml(footerHead)+'</div><div>Total Students: '+total+'</div></div>';
+  return '\ufeff<html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;padding:24px">'
+    +head+buildExcelTableHtml(headers,rows)+foot+'</body></html>';
 }
 function downloadExcelRows(baseName,sheetName,headers,rows,contextTitle,totalStudents){
-  const ext=preferredExcelExtension();
-  if(typeof XLSX!=='undefined'){
-    try{
-      const sheetRows=exportSheetRows(headers,rows,contextTitle,totalStudents);
-      const ws=XLSX.utils.aoa_to_sheet(sheetRows);
-      styleExcelSheet(ws,headers,rows);
-      const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,ws,sanitizeSheetName(sheetName||baseName));
-      XLSX.writeFile(wb,excelFileName(baseName),{bookType:ext==='xls'?'xls':'xlsx'});
-      if(contextTitle) toast('Downloaded '+rows.length+' rows ('+ext.toUpperCase()+')');
-      return true;
-    }catch(e){
-      console.warn('Excel download fallback',e);
-    }
-  }
-  return false;
+  var html=buildExcelDocumentHtml(contextTitle||sheetName||baseName,headers,rows,totalStudents);
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'application/vnd.ms-excel'}));
+  a.download=String(baseName||'download').replace(/\.[^.]+$/,'')+'.xls';
+  a.click();
+  if(contextTitle) toast('Downloaded '+rows.length+' rows (Excel)');
+  return true;
 }
 const PLACEMENT_HEADER_ALIASES={
   indexnumber:'index_number',
