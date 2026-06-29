@@ -348,6 +348,7 @@
   .field label{font-size:12px;font-weight:600;color:var(--ink-soft)}
   .field .hint{font-size:11px;color:var(--muted);font-weight:400}
   input,select,textarea{font-family:inherit;font-size:13px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);width:100%;transition:.14s}
+  #c_prog{font-family:'Space Grotesk',system-ui,sans-serif;font-size:13px;font-weight:600;letter-spacing:.01em}
   textarea{resize:vertical;min-height:60px}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
   input[type=color]{padding:3px;height:38px}
@@ -4833,14 +4834,14 @@ openHouse=function(id){
 openClass=function(id){
   if(roGuard())return;
   const c=id?classes.find(x=>x.id===id):{name:'',code:'',cap:50,progId:'',subjects:''};
-  const pOpts='<option value="">— None —</option>'+programmes.map(p=>`<option value="${p.id}" ${String(c.progId)===String(p.id)?'selected':''}>${p.name}</option>`).join('');
+  const pOpts='<option value="">Select programme</option>'+programmes.map(p=>`<option value="${p.id}" ${String(c.progId)===String(p.id)?'selected':''}>${p.name}</option>`).join('');
   crudModal(id?'Edit class':'Add class',
     `<div class="grid-2"><div class="field"><label>Class name</label><input id="c_name" value="${c.name}"></div><div class="field"><label>Code</label><input id="c_code" value="${c.code||''}"></div></div>
-     <div class="field"><label>Programme</label><select id="c_prog">${pOpts}</select></div>
+     <div class="field"><label>Programme <span class="hint">— required</span></label><select id="c_prog" required>${pOpts}</select></div>
      <div class="field"><label>Subject combination <span class="hint">— comma separated; shown to students when picking this class</span></label><textarea id="c_sub" rows="3" placeholder="e.g. Core Maths, English, Integrated Science, Physics, Chemistry, Biology, Elective Maths">${(c.subjects||'').replace(/</g,'<')}</textarea></div>
      <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${c.cap}"></div>`,
     async ()=>{ const name=val('c_name'); if(!name){toast('Class name required');return;}
-      const progNum=val('c_prog'); const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
+      const progNum=val('c_prog'); if(!progNum){toast('Please select a programme'); $('c_prog')&&$('c_prog').focus(); return;} const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
       if(id){ await sb.from('classrooms').update({name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).eq('id',c._id); c.name=name;c.code=val('c_code');c.cap=+val('c_cap')||50;c.progId=progNum?+progNum:'';c.subjects=subj||''; }
       else { const {data}=await sb.from('classrooms').insert({school_id:SB_SCHOOL.id,name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).select().single(); const nid=Math.max(0,...classes.map(x=>x.id))+1; cMap[nid]=data.id; classes.push({id:nid,_id:data.id,name,code:val('c_code'),cap:+val('c_cap')||50,occ:0,progId:progNum?+progNum:'',subjects:subj||''}); }
       notifyStudentPortalRefresh('class-save');
@@ -4880,14 +4881,14 @@ openHouse=function(id){
 openClass=function(id){
   if(roGuard())return;
   const c=id?classes.find(x=>x.id===id):{name:'',code:'',cap:50,progId:'',subjects:''};
-  const pOpts='<option value="">â€” None â€”</option>'+programmes.map(p=>`<option value="${p.id}" ${String(c.progId)===String(p.id)?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  const pOpts='<option value="">Select programme</option>'+programmes.map(p=>`<option value="${p.id}" ${String(c.progId)===String(p.id)?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
   crudModal(id?'Edit class':'Add class',
     `<div class="grid-2"><div class="field"><label>Class name</label><input id="c_name" value="${escapeAttr(c.name)}"></div><div class="field"><label>Code</label><input id="c_code" value="${escapeAttr(c.code||'')}"></div></div>
-     <div class="field"><label>Programme</label><select id="c_prog">${pOpts}</select></div>
+     <div class="field"><label>Programme <span class="hint">— required</span></label><select id="c_prog" required>${pOpts}</select></div>
      <div class="field"><label>Subject combination <span class="hint">â€” comma separated; shown to students when picking this class</span></label><textarea id="c_sub" rows="3" placeholder="e.g. Core Maths, English, Integrated Science, Physics, Chemistry, Biology, Elective Maths">${escapeHtml(c.subjects||'')}</textarea></div>
      <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(c.cap)}"></div>`,
     async ()=>{ const name=val('c_name'); if(!name){toast('Class name required');return;}
-      const progNum=val('c_prog'); const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
+      const progNum=val('c_prog'); if(!progNum){toast('Please select a programme'); $('c_prog')&&$('c_prog').focus(); return;} const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
       if(id){ await sb.from('classrooms').update({name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).eq('id',c._id); c.name=name;c.code=val('c_code');c.cap=+val('c_cap')||50;c.progId=progNum?+progNum:'';c.subjects=subj||''; }
       else { const {data}=await sb.from('classrooms').insert({school_id:SB_SCHOOL.id,name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).select().single(); const nid=Math.max(0,...classes.map(x=>x.id))+1; cMap[nid]=data.id; classes.push({id:nid,_id:data.id,name,code:val('c_code'),cap:+val('c_cap')||50,occ:0,progId:progNum?+progNum:'',subjects:subj||''}); }
       notifyStudentPortalRefresh('class-save');
