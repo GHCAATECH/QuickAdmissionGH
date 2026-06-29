@@ -1571,7 +1571,7 @@
         <div class="panel">
           <div class="dt-toolbar">
             <div class="dt-actions">
-              <button onclick="exportCSV('excel')">CSV</button>
+              <button onclick="exportCSV('excel')">Excel</button>
               <button onclick="exportCSV('pdf')">PDF</button>
             </div>
             <div class="dt-search"><label>Search:</label><input id="regSearch" oninput="renderRegistered()"></div>
@@ -1983,24 +1983,81 @@ function exportHeadLabel(){
   var name=(SB_SCHOOL&&SB_SCHOOL.headmaster_name)||'';
   return title+': '+(name||'-');
 }
-function csvSafeText(value){
-  var text=value==null?'':String(value);
-  if(/^\d+$/.test(text) && (text.charAt(0)==='0' || text.length>=11)){
-    return '="'+text.replace(/"/g,'""')+'"';
-  }
-  return text;
-}
-function csvCellHtml(value){
-  return safeHtml(csvSafeText(value),'');
+function excelTextValue(value){
+  return value==null?'':String(value);
 }
 function csvBlobFromRows(rows){
   var csv=rows.map(function(row){
     return row.map(function(cell){
-      var text=csvSafeText(cell).replace(/"/g,'""');
-      return '"'+text+'"';
+      return '"'+excelTextValue(cell).replace(/"/g,'""')+'"';
     }).join(',');
   }).join('\r\n');
   return new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+}
+function excelStyle(fillColor,fontColor,fontSize,bold,align){
+  var style={};
+  if(fillColor) style.fill={patternType:'solid',fgColor:{rgb:fillColor.replace('#','').toUpperCase()}};
+  if(fontColor||fontSize||bold){
+    style.font={};
+    if(fontColor) style.font.color={rgb:fontColor.replace('#','').toUpperCase()};
+    if(fontSize) style.font.sz=fontSize;
+    if(bold) style.font.bold=true;
+  }
+  style.alignment={vertical:'center',horizontal:align||'left',wrapText:true};
+  style.border={
+    top:{style:'thin',color:{rgb:'1F2937'}},
+    bottom:{style:'thin',color:{rgb:'1F2937'}},
+    left:{style:'thin',color:{rgb:'1F2937'}},
+    right:{style:'thin',color:{rgb:'1F2937'}}
+  };
+  return style;
+}
+function applyWorksheetStyle(ws,range,style){
+  if(!range||!style||typeof XLSX==='undefined') return;
+  for(var row=range.s.r; row<=range.e.r; row++){
+    for(var col=range.s.c; col<=range.e.c; col++){
+      var ref=XLSX.utils.encode_cell({r:row,c:col});
+      if(!ws[ref]) ws[ref]={t:'s',v:''};
+      ws[ref].s=style;
+    }
+  }
+}
+function buildStyledWorkbook(baseName,sheetName,headers,rows,contextTitle,totalStudents){
+  if(typeof XLSX==='undefined') return null;
+  var schoolName=exportSchoolName(), admissionYear=exportAdmissionYear(), footerHead=exportHeadLabel();
+  var title=contextTitle||sheetName||baseName||'Export';
+  var total=(typeof totalStudents==='number'&&!isNaN(totalStudents))?totalStudents:rows.length;
+  var span=Math.max((headers&&headers.length)||1,1);
+  var aoa=[
+    [schoolName+' - '+title],
+    [admissionYear?('Admission Year: '+admissionYear):'Admission Year: -'],
+    headers.map(excelTextValue)
+  ].concat(rows.map(function(row){ return row.map(excelTextValue); }),[
+    [],
+    [footerHead],
+    ['Total Students: '+total]
+  ]);
+  var ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges']=[
+    {s:{r:0,c:0},e:{r:0,c:span-1}},
+    {s:{r:1,c:0},e:{r:1,c:span-1}},
+    {s:{r:4+rows.length,c:0},e:{r:4+rows.length,c:span-1}},
+    {s:{r:5+rows.length,c:0},e:{r:5+rows.length,c:span-1}}
+  ];
+  ws['!cols']=headers.map(function(h,idx){
+    var width=excelTextValue(h).length+6;
+    rows.forEach(function(row){ width=Math.max(width,excelTextValue(row[idx]).length+3); });
+    return {wch:Math.min(Math.max(width,14),32)};
+  });
+  var green='16A34A', white='FFFFFF';
+  applyWorksheetStyle(ws,{s:{r:0,c:0},e:{r:0,c:span-1}},excelStyle(green,white,16,true,'center'));
+  applyWorksheetStyle(ws,{s:{r:1,c:0},e:{r:1,c:span-1}},excelStyle(green,white,12,true,'center'));
+  applyWorksheetStyle(ws,{s:{r:2,c:0},e:{r:2,c:span-1}},excelStyle(green,white,11,true,'center'));
+  applyWorksheetStyle(ws,{s:{r:3,c:0},e:{r:2+rows.length,c:span-1}},excelStyle(null,null,null,false,'left'));
+  applyWorksheetStyle(ws,{s:{r:4+rows.length,c:0},e:{r:5+rows.length,c:span-1}},excelStyle(null,'374151',11,false,'left'));
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,sanitizeSheetName(sheetName||title));
+  return wb;
 }
 function exportSheetRows(headers,rows,contextTitle,totalStudents){
   var schoolName=exportSchoolName();
@@ -2042,23 +2099,10 @@ function buildExcelDocumentHtml(title,headers,rows,totalStudents){
     +head+buildExcelTableHtml(headers,rows)+foot+'</body></html>';
 }
 function downloadExcelRows(baseName,sheetName,headers,rows,contextTitle,totalStudents){
-  var a=document.createElement('a');
-  var schoolName=exportSchoolName(), admissionYear=exportAdmissionYear(), footerHead=exportHeadLabel();
-  var total=(typeof totalStudents==='number'&&!isNaN(totalStudents))?totalStudents:rows.length;
-  var csvRows=[
-    [schoolName+' - '+(contextTitle||sheetName||baseName)],
-    [admissionYear?('Admission Year: '+admissionYear):'Admission Year: -'],
-    [],
-    headers
-  ].concat(rows,[
-    [],
-    [footerHead],
-    ['Total Students: '+total]
-  ]);
-  a.href=URL.createObjectURL(csvBlobFromRows(csvRows));
-  a.download=String(baseName||'download').replace(/\.[^.]+$/,'')+'.csv';
-  a.click();
-  if(contextTitle) toast('Downloaded '+rows.length+' rows (CSV)');
+  var wb=buildStyledWorkbook(baseName,sheetName,headers,rows,contextTitle,totalStudents);
+  if(!wb) return false;
+  XLSX.writeFile(wb,String(baseName||'download').replace(/\.[^.]+$/,'')+'.xlsx',{bookType:'xlsx',cellStyles:true});
+  if(contextTitle) toast('Downloaded '+rows.length+' rows (Excel)');
   return true;
 }
 const PLACEMENT_HEADER_ALIASES={
@@ -3488,21 +3532,21 @@ function repTab(i){
   var b=document.getElementById('repBody'),h='';
   if(i===0){ h=`<div class="rep-title">Programme Report - enrolment by academic programme</div>${repDateRow()}
     <label class="rep-lbl">Programme</label><select id="rep_prog">${selOpts(programmes,'- All programmes -')}</select>${repRadios()}
-    <div class="rep-actions"><button class="btn-grn" onclick="runReport('programme')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (CSV)</button><button class="btn btn-ghost btn-sm" onclick="runReport('programme','pdf')">PDF</button></div>`; }
+    <div class="rep-actions"><button class="btn-grn" onclick="runReport('programme')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (Excel)</button><button class="btn btn-ghost btn-sm" onclick="runReport('programme','pdf')">PDF</button></div>`; }
   else if(i===1){ h=`<div class="rep-title">House Report</div>${repDateRow()}
     <label class="rep-lbl">House</label><select id="rep_house">${selOpts(houses,'- All houses -')}</select>
     <label class="rep-lbl">Boarding status</label><select id="rep_board"><option value="">All</option><option>Boarding</option><option>Day</option></select>
-    <div class="rep-actions"><button class="btn-grn" onclick="runReport('house')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (CSV)</button><button class="btn btn-ghost btn-sm" onclick="runReport('house','pdf')">PDF</button></div>`; }
+    <div class="rep-actions"><button class="btn-grn" onclick="runReport('house')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (Excel)</button><button class="btn btn-ghost btn-sm" onclick="runReport('house','pdf')">PDF</button></div>`; }
   else if(i===2){ h=`<div class="rep-title">Class List Report</div>${repDateRow()}
     <label class="rep-lbl">Class</label><select id="rep_class">${selOpts(classes,'- All classes -')}</select>
-    <div class="rep-actions"><button class="btn-grn" onclick="runReport('class')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (CSV)</button><button class="btn btn-ghost btn-sm" onclick="runReport('class','pdf')">PDF</button></div>`; }
+    <div class="rep-actions"><button class="btn-grn" onclick="runReport('class')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (Excel)</button><button class="btn btn-ghost btn-sm" onclick="runReport('class','pdf')">PDF</button></div>`; }
   else if(i===3){ h=`<div class="rep-title">CSSPS Enrolment Report</div>
     <p class="rep-note">Exports every submitted student's complete enrolment record, including programme, class, house, enrolment code, contact, parent/guardian, and personal record fields.</p>
     ${repDateRow()}
-    <div class="rep-actions"><button class="btn-grn" onclick="runReport('saprosoft')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download CSSPS Enrolment Report (CSV)</button></div>`; }
+    <div class="rep-actions"><button class="btn-grn" onclick="runReport('saprosoft')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download CSSPS Enrolment Report (Excel)</button></div>`; }
   else { h=`<div class="rep-title">Boarding Status Report</div>${repDateRow()}
     <label class="rep-lbl">Status</label><select id="rep_board"><option value="">All</option><option>Boarding</option><option>Day</option></select>
-    <div class="rep-actions"><button class="btn-grn" onclick="runReport('boarding')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (CSV)</button><button class="btn btn-ghost btn-sm" onclick="runReport('boarding','pdf')">PDF</button></div>`; }
+    <div class="rep-actions"><button class="btn-grn" onclick="runReport('boarding')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download (Excel)</button><button class="btn btn-ghost btn-sm" onclick="runReport('boarding','pdf')">PDF</button></div>`; }
   b.innerHTML=h;
 }
 function repVal(id){var e=document.getElementById(id);return e?e.value:'';}
