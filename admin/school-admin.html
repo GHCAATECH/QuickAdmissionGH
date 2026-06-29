@@ -1995,12 +1995,41 @@ function exportSheetRows(headers,rows,contextTitle,totalStudents){
     []
   ].concat([headers],rows,[[],[exportHeadLabel()],[`Total Students: ${studentTotal}`]]);
 }
+function styleExcelSheet(ws,headers,rows){
+  if(typeof XLSX==='undefined' || !ws || !ws['!ref']) return;
+  var range=XLSX.utils.decode_range(ws['!ref']);
+  var border={top:{style:'thin',color:{rgb:'1F2937'}},bottom:{style:'thin',color:{rgb:'1F2937'}},left:{style:'thin',color:{rgb:'1F2937'}},right:{style:'thin',color:{rgb:'1F2937'}}};
+  var metaFill={patternType:'solid',fgColor:{rgb:'F8FAFC'}};
+  var headerFill={patternType:'solid',fgColor:{rgb:'166534'}};
+  for(var R=range.s.r;R<=range.e.r;R++){
+    for(var C=range.s.c;C<=range.e.c;C++){
+      var addr=XLSX.utils.encode_cell({r:R,c:C});
+      if(!ws[addr]) ws[addr]={t:'s',v:''};
+      ws[addr].s=ws[addr].s||{};
+      ws[addr].s.border=border;
+      ws[addr].s.alignment={vertical:'center',horizontal:'left',wrapText:true};
+      if(R<4){
+        ws[addr].s.fill=metaFill;
+        ws[addr].s.font={bold:R<3,color:{rgb:'0F172A'}};
+      }else if(R===4){
+        ws[addr].s.fill=headerFill;
+        ws[addr].s.font={bold:true,color:{rgb:'FFFFFF'}};
+      }
+    }
+  }
+  ws['!cols']=headers.map(function(h,i){
+    var max=String(h||'').length;
+    rows.forEach(function(row){ max=Math.max(max,String((row&&row[i])==null?'':row[i]).length); });
+    return {wch:Math.min(Math.max(max+3,14),34)};
+  });
+}
 function downloadExcelRows(baseName,sheetName,headers,rows,contextTitle,totalStudents){
   const ext=preferredExcelExtension();
   if(typeof XLSX!=='undefined'){
     try{
       const sheetRows=exportSheetRows(headers,rows,contextTitle,totalStudents);
       const ws=XLSX.utils.aoa_to_sheet(sheetRows);
+      styleExcelSheet(ws,headers,rows);
       const wb=XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb,ws,sanitizeSheetName(sheetName||baseName));
       XLSX.writeFile(wb,excelFileName(baseName),{bookType:ext==='xls'?'xls':'xlsx'});
@@ -3395,13 +3424,13 @@ function exportRegisteredPdf(){
   w.document.write('<html><head><title>Registered Students</title><style>'
     +'@page{size:A4 landscape;margin:12mm}'
     +'*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#111827;padding:18px 20px 10px}'
-    +'.pdf-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:12px}'
+    +'.pdf-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff}'
     +'.pdf-brand{display:flex;align-items:center;gap:12px}.pdf-brand img{width:62px;height:62px;object-fit:contain}'
-    +'.pdf-title{font-size:24px;font-weight:800;line-height:1.1}.pdf-sub{font-size:12px;color:#4b5563;margin-top:4px}'
-    +'.pdf-meta{text-align:right;font-size:12px;color:#374151}'
+    +'.pdf-title{font-size:24px;font-weight:800;line-height:1.1}.pdf-sub{font-size:12px;color:rgba(255,255,255,.9);margin-top:4px}'
+    +'.pdf-meta{text-align:right;font-size:12px;color:#ffffff}'
     +'.pdf-rule{border-top:2px solid #111827;margin:10px 0 14px}'
     +'table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #111827;padding:6px 7px;vertical-align:top;text-align:left}'
-    +'th{background:#f3f4f6;font-weight:700}tbody tr:nth-child(even){background:#fafafa}'
+    +'th{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#fff;font-weight:700}tbody tr:nth-child(even){background:#fafafa}'
     +'.pdf-foot{margin-top:12px;font-size:11px;color:#4b5563;display:flex;justify-content:space-between;gap:18px}'
     +'</style></head><body>'
     +'<div class="pdf-head">'
@@ -3540,7 +3569,7 @@ function repExcel(title,headers,rows,totalStudents){
   if(downloadExcelRows(title.replace(/[^a-z0-9]+/gi,'_'),title,headers,rows,title,totalStudents)) return;
   var schoolName=exportSchoolName(), admissionYear=exportAdmissionYear(), footerHead=exportHeadLabel();
   var total=(typeof totalStudents==='number'&&!isNaN(totalStudents))?totalStudents:rows.length;
-  var html='<table border="1"><thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>`<td>${c==null?'':c}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+  var html='<table border="1" style="border-collapse:collapse;width:100%"><thead><tr>'+headers.map(h=>`<th style="border:1px solid #1f2937;padding:7px 9px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff;text-align:left">${h}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>`<td style="border:1px solid #1f2937;padding:7px 9px">${c==null?'':c}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
   var blob=new Blob(['\ufeff<html><head><meta charset="utf-8"></head><body><h3>'+safeHtml(schoolName)+' - '+safeHtml(title)+'</h3><p>'+(admissionYear?('Admission Year: '+safeHtml(admissionYear)):'Admission Year: -')+'</p>'+html+'<p>'+safeHtml(footerHead)+'</p><p>Total Students: '+total+'</p></body></html>'],{type:'application/vnd.ms-excel'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=title.replace(/[^a-z0-9]+/gi,'_')+'.xls';a.click();
   toast('Downloaded '+rows.length+' rows (Excel)');
@@ -3549,7 +3578,7 @@ function repPrint(title,headers,rows,totalStudents){
   var w=window.open('','_blank'); if(!w){toast('Allow pop-ups to print / save PDF');return;}
   var schoolName=exportSchoolName(), admissionYear=exportAdmissionYear(), footerHead=exportHeadLabel();
   var total=(typeof totalStudents==='number'&&!isNaN(totalStudents))?totalStudents:rows.length;
-  w.document.write('<html><head><title>'+title+'</title><style>body{font-family:Arial,sans-serif;padding:24px}.pdf-head{margin-bottom:14px}.pdf-head h2{margin:0 0 4px}.pdf-sub{font-size:12px;color:#4b5563}.pdf-foot{margin-top:14px;font-size:12px;color:#374151;display:flex;justify-content:space-between;gap:18px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}th{background:#1557B0;color:#fff}</style></head><body><div class="pdf-head"><h2>'+safeHtml(schoolName)+' - '+safeHtml(title)+'</h2><div class="pdf-sub">'+(admissionYear?('Admission Year: '+safeHtml(admissionYear)):'Admission Year: -')+'</div></div><table><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+(c==null?'':c)+'</td>').join('')+'</tr>').join('')+'</tbody></table><div class="pdf-foot"><div>'+safeHtml(footerHead)+'</div><div>Total Students: '+total+'</div></div></body></html>');
+  w.document.write('<html><head><title>'+title+'</title><style>body{font-family:Arial,sans-serif;padding:24px}.pdf-head{margin-bottom:14px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#fff}.pdf-head h2{margin:0 0 4px}.pdf-sub{font-size:12px;color:rgba(255,255,255,.9)}.pdf-foot{margin-top:14px;font-size:12px;color:#374151;display:flex;justify-content:space-between;gap:18px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}th{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#fff}</style></head><body><div class="pdf-head"><h2>'+safeHtml(schoolName)+' - '+safeHtml(title)+'</h2><div class="pdf-sub">'+(admissionYear?('Admission Year: '+safeHtml(admissionYear)):'Admission Year: -')+'</div></div><table><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+(c==null?'':c)+'</td>').join('')+'</tr>').join('')+'</tbody></table><div class="pdf-foot"><div>'+safeHtml(footerHead)+'</div><div>Total Students: '+total+'</div></div></body></html>');
   w.document.close(); setTimeout(function(){w.print();},300);
 }
 
