@@ -3238,10 +3238,10 @@ async function savePortalSetup(){
   const lines=docLines.slice(0,5).map(x=>(x||'').trim());
   while(lines.length<5)lines.push('');
   const patch={req_doc_line1:lines[0],req_doc_line2:lines[1],req_doc_line3:lines[2],req_doc_line4:lines[3],req_doc_line5:lines[4]};
-  const {error}=await sb.from('school_config').update(patch).eq('school_id',SB_SCHOOL.id);
-  if(error){toast('Could not save portal setup: '+error.message);return;}
+  const {data,error}=await invokeFnDetailed('manage-school-settings',{action:'portal_setup',school_id:SB_SCHOOL.id,patch});
+  if(error||(data&&data.ok===false)){toast('Could not save portal setup: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   docLines=lines;
-  if(SB_CFG) Object.assign(SB_CFG,patch);
+  if(SB_CFG&&data&&data.config) Object.assign(SB_CFG,data.config);
   notifyStudentPortalRefresh('portal-setup');
   toast('Student portal configuration saved');
 }
@@ -3259,9 +3259,9 @@ async function saveSchoolProfile(){
     helpdesk:val('sp_helpdesk').trim(),
     theme_color:(document.getElementById('sp_theme')&&document.getElementById('sp_theme').value)||SB_SCHOOL.theme_color||'#1557B0'
   };
-  const {error}=await sb.from('schools').update(patch).eq('id',SB_SCHOOL.id);
-  if(error){toast('Could not save school profile: '+error.message);return;}
-  Object.assign(SB_SCHOOL,patch);
+  const {data,error}=await invokeFnDetailed('manage-school-settings',{action:'profile',school_id:SB_SCHOOL.id,patch});
+  if(error||(data&&data.ok===false)){toast('Could not save school profile: '+((data&&data.message)||(error&&error.message)||'error'));return;}
+  Object.assign(SB_SCHOOL,(data&&data.school)||patch);
   const nm=$('brandName'); if(nm) nm.textContent=SB_SCHOOL.name||'School Name';
   cachePublicSchoolProfile();
   notifyStudentPortalRefresh('school-profile');
@@ -3273,10 +3273,10 @@ async function saveSmsSettings(){
   if(!SB_SCHOOL){toast('School not loaded');return;}
   const template=(val('smsset_template')||'').trim()||DEFAULT_SUBMISSION_SMS_TEMPLATE;
   const smsEnabled=(val('smsset_enabled')||'yes')!=='no';
-  const payload={school_id:SB_SCHOOL.id,submission_message:template,sms_enabled:smsEnabled};
-  const {error}=await sb.from('school_sms_templates').upsert(payload,{onConflict:'school_id'});
-  if(error){toast('Could not save SMS settings: '+error.message);return;}
-  SB_SMS_SETTINGS=Object.assign({},SB_SMS_SETTINGS||{},payload);
+  const patch={submission_message:template,sms_enabled:smsEnabled};
+  const {data,error}=await invokeFnDetailed('manage-school-settings',{action:'sms_settings',school_id:SB_SCHOOL.id,patch});
+  if(error||(data&&data.ok===false)){toast('Could not save SMS settings: '+((data&&data.message)||(error&&error.message)||'error'));return;}
+  SB_SMS_SETTINGS=Object.assign({},SB_SMS_SETTINGS||{},(data&&data.settings)||patch,{school_id:SB_SCHOOL.id});
   fillSmsSettingsForm();
   toast('SMS settings saved');
 }
@@ -3317,8 +3317,8 @@ async function uploadSchoolDoc(kind,inp){
   if(error){toast('Upload failed: '+error.message);return;}
   const {data:pub}=sb.storage.from('school-docs').getPublicUrl(path);
   const col=DOC_COL[kind];
-  const {error:e2}=await sb.from('school_config').update({[col]:pub.publicUrl}).eq('school_id',SB_SCHOOL.id);
-  if(e2){toast('Saved file but could not record: '+e2.message);return;}
+  const docRes=await invokeFnDetailed('manage-school-settings',{action:'doc_url',school_id:SB_SCHOOL.id,patch:{kind,url:pub.publicUrl}});
+  if(docRes.error||(docRes.data&&docRes.data.ok===false)){toast('Saved file but could not record: '+((docRes.data&&docRes.data.message)||(docRes.error&&docRes.error.message)||'error'));return;}
   if(SB_CFG) SB_CFG[col]=pub.publicUrl;
   showSchoolDocLink(kind,pub.publicUrl);
   notifyStudentPortalRefresh('school-doc');
@@ -3984,34 +3984,18 @@ async function persistStudentFeatureSettings(options){
   clearTimeout(studentFeatureSaveTimer);
   const patch=studentFeaturePatch();
   setStudentFeatureStatus('Saving changes...');
-  let saved=null;
-  let rpcError=null;
-  try{
-    const result=await sb.rpc('update_student_feature_settings',{
-      p_school:SB_SCHOOL.id,
-      p_allow_passport_photo:patch.allow_passport_photo,
-      p_allow_house_selection:patch.allow_house_selection,
-      p_allow_class_selection:patch.allow_class_selection,
-      p_force_enrolment_upload:patch.force_enrolment_upload
-    });
-    rpcError=result.error;
-    if(!rpcError&&result.data&&result.data.ok!==false) saved=result.data.config||patch;
-  }catch(e){rpcError=e;}
-  if(!saved){
-    const fallback=await sb.from('school_config').update(patch).eq('school_id',SB_SCHOOL.id).select('school_id,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload').maybeSingle();
-    if(fallback.error||!fallback.data){
-      const message=(fallback.error&&fallback.error.message)||(rpcError&&rpcError.message)||'No school configuration row was updated.';
-      setStudentFeatureStatus('Could not save: '+message,true);
-      toast('Could not save student features: '+message);
-      fillStudentFeatureToggles();
-      return false;
-    }
-    saved=fallback.data;
+  const result=await invokeFnDetailed('manage-school-settings',{action:'student_features',school_id:SB_SCHOOL.id,patch});
+  const saved=result&&result.data&&result.data.config;
+  if(result.error||!saved||result.data.ok===false){
+    const message=(result&&result.data&&result.data.message)||(result&&result.error&&result.error.message)||'No school configuration row was updated.';
+    setStudentFeatureStatus('Could not save: '+message,true);
+    toast('Could not save student features: '+message);
+    fillStudentFeatureToggles();
+    return false;
   }
   if(SB_CFG)Object.assign(SB_CFG,saved);
   fillStudentFeatureToggles();
   cachePublicSchoolProfile(saved);
-  notifyStudentPortalRefresh('student-features');
   setStudentFeatureStatus('Saved. New student logins will use these settings.');
   if(options&&options.showToast)toast('Student features saved');
   return true;
@@ -4313,13 +4297,20 @@ async function notifyStudentPortalRefresh(reason,details){
 /* ---- PERSISTING ACTION OVERRIDES ---- */
 toggleAdmission=async function(){
   if(roGuard())return;
-  admissionOpen=!admissionOpen;
+  if(!SB_SCHOOL||!SB_SCHOOL.id){toast('School not loaded');return;}
+  const nextOpen=!admissionOpen;
+  const nextStatus=nextOpen?'OPENED':'CLOSED';
+  const result=await invokeFnDetailed('manage-school-settings',{action:'admission_status',school_id:SB_SCHOOL.id,patch:{admission_status:nextStatus}});
+  if(result.error||(result.data&&result.data.ok===false)){
+    toast('Could not update admission status: '+((result.data&&result.data.message)||(result.error&&result.error.message)||'error'));
+    return;
+  }
+  admissionOpen=nextOpen;
   const b=document.getElementById('admBadge'); b.className='adm-badge '+(admissionOpen?'open':'closed');
   document.getElementById('admText').textContent='Admission '+(admissionOpen?'OPEN':'CLOSED');
   const qa=document.getElementById('qaToggle'); if(qa) qa.innerHTML=(admissionOpen?'Close admission':'Open admission')+'<small>'+(admissionOpen?'Currently accepting':'Not accepting')+'</small>';
-  await sb.from('school_config').update({admission_status:admissionOpen?'OPENED':'CLOSED'}).eq('school_id',SB_SCHOOL.id);
-  if(SB_CFG) SB_CFG.admission_status=admissionOpen?'OPENED':'CLOSED';
-  cachePublicSchoolProfile({admission_status:admissionOpen?'OPENED':'CLOSED'});
+  if(SB_CFG&&result.data&&result.data.config) Object.assign(SB_CFG,result.data.config); else if(SB_CFG) SB_CFG.admission_status=nextStatus;
+  cachePublicSchoolProfile({admission_status:nextStatus});
   notifyStudentPortalRefresh('admission-status');
   activityLog.unshift({time:'Just now',action:'Admission '+(admissionOpen?'opened':'closed'),by:(SB_ADMIN_NAME||'Admin')});
   toast('Admission '+(admissionOpen?'opened':'closed'));
@@ -4360,7 +4351,9 @@ async function saveAcademicConfig(){
     const {data,error}=await sb.rpc('switch_academic_year',{p_school:SB_SCHOOL.id,p_new_year:newYear});
     if(error){toast('Switch failed: '+error.message);return;}
     if(!data||!data.ok){toast('Switch failed: '+((data&&data.error)||'unknown'));return;}
-    await sb.from('school_config').update({admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}).eq('school_id',SB_SCHOOL.id);
+    const cfgRes=await invokeFnDetailed('manage-school-settings',{action:'academic_config',school_id:SB_SCHOOL.id,patch:{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}});
+    if(cfgRes.error||(cfgRes.data&&cfgRes.data.ok===false)){toast('Could not save configuration: '+((cfgRes.data&&cfgRes.data.message)||(cfgRes.error&&cfgRes.error.message)||'error'));return;}
+    if(SB_CFG&&cfgRes.data&&cfgRes.data.config) Object.assign(SB_CFG,cfgRes.data.config);
     await persistStudentFeatureSettings();
     notifyStudentPortalRefresh('academic-year-switch');
     alert('Academic year is now '+newYear+'.\n\n'+(data.restored
@@ -4372,8 +4365,9 @@ async function saveAcademicConfig(){
     return;
   }
   // No year change — just persist year/admission-year
-  const {error}=await sb.from('school_config').update({academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}).eq('school_id',SB_SCHOOL.id);
-  if(error){toast('Could not save: '+error.message);return;}
+  const cfgRes=await invokeFnDetailed('manage-school-settings',{action:'academic_config',school_id:SB_SCHOOL.id,patch:{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}});
+  if(cfgRes.error||(cfgRes.data&&cfgRes.data.ok===false)){toast('Could not save: '+((cfgRes.data&&cfgRes.data.message)||(cfgRes.error&&cfgRes.error.message)||'error'));return;}
+  if(SB_CFG&&cfgRes.data&&cfgRes.data.config) Object.assign(SB_CFG,cfgRes.data.config);
   if(!await persistStudentFeatureSettings())return;
   if(SB_CFG){Object.assign(SB_CFG,{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge},featurePatch);}
   cachePublicSchoolProfile(Object.assign({service_charge:serviceCharge},featurePatch));
@@ -4769,8 +4763,8 @@ async function tplSave(){
   TPL[tplCur]=tplEditorHTML();
   TPL.letter=resolveTemplateDraft('letter',TPL.letter);
   TPL.records=resolveTemplateDraft('records',TPL.records);
-  const {error}=await sb.from('school_config').update({letter_template:TPL.letter,records_template:TPL.records}).eq('school_id',SB_SCHOOL.id);
-  if(error){toast('Could not save: '+error.message);return;}
+  const tplRes=await invokeFnDetailed('manage-school-settings',{action:'templates',school_id:SB_SCHOOL.id,patch:{letter_template:TPL.letter,records_template:TPL.records}});
+  if(tplRes.error||(tplRes.data&&tplRes.data.ok===false)){toast('Could not save: '+((tplRes.data&&tplRes.data.message)||(tplRes.error&&tplRes.error.message)||'error'));return;}
   if(SB_CFG){SB_CFG.letter_template=TPL.letter;SB_CFG.records_template=TPL.records;}
   notifyStudentPortalRefresh('template-save');
   toast('Template saved · students will see it on their printouts');
@@ -4940,61 +4934,21 @@ async function deleteUser(id){
   renderUsers(); toast('User deleted');
 }
 
-openProg=function(id){
-  if(roGuard())return;
-  const p=id?programmes.find(x=>x.id===id):{code:'',name:'',subjects:'',cap:100};
-  crudModal(id?'Edit programme':'Add programme',
-    `<div class="grid-2"><div class="field"><label>Code</label><input id="c_code" value="${p.code}"></div><div class="field"><label>Capacity</label><input id="c_cap" type="number" value="${p.cap}"></div></div>
-     <div class="field"><label>Programme name</label><input id="c_name" value="${p.name}"></div>
-     <div class="field"><label>Subjects <span class="hint">— comma separated</span></label><textarea id="c_sub">${p.subjects}</textarea></div>`,
-    async ()=>{ const code=val('c_code').toUpperCase(),name=val('c_name'); if(!code||!name){toast('Code and name required');return;}
-      if(id){ await sb.from('programmes').update({code,name,subjects:val('c_sub'),capacity:+val('c_cap')||100}).eq('id',p._id); p.code=code;p.name=name;p.subjects=val('c_sub');p.cap=+val('c_cap')||100; }
-      else { const {data}=await sb.from('programmes').insert({school_id:SB_SCHOOL.id,code,name,subjects:val('c_sub'),capacity:+val('c_cap')||100}).select().single(); const nid=Math.max(0,...programmes.map(x=>x.id))+1; pMap[nid]=data.id; programmes.push({id:nid,_id:data.id,code,name,subjects:val('c_sub'),cap:+val('c_cap')||100,enr:0}); }
-      notifyStudentPortalRefresh('programme-save');
-      closeModal(); renderProg(); fillSelects(); toast('Programme saved'); });
-};
-openHouse=function(id){
-  if(roGuard())return;
-  const h=id?houses.find(x=>x.id===id):{name:'',color:'#1557B0',motto:'',cap:100,gender:'',rtype:''};
-  const gOpt=v=>((h.gender||'')===v?'selected':''); const rOpt=v=>((h.rtype||'')===v?'selected':'');
-  crudModal(id?'Edit house':'Add house',
-    `<div class="grid-2"><div class="field"><label>House name</label><input id="c_name" value="${h.name}"></div><div class="field"><label>Colour</label><input id="c_color" type="color" value="${h.color}"></div></div>
-     <div class="grid-2"><div class="field"><label>Gender</label><select id="c_gender"><option value="" ${gOpt('')}>Any</option><option value="Male" ${gOpt('Male')}>Male</option><option value="Female" ${gOpt('Female')}>Female</option></select></div><div class="field"><label>Residential type</label><select id="c_rtype"><option value="" ${rOpt('')}>Any</option><option value="Boarding" ${rOpt('Boarding')}>Boarding</option><option value="Day" ${rOpt('Day')}>Day</option></select></div></div>
-     <div class="field"><label>Motto</label><input id="c_motto" value="${h.motto||''}"></div>
-     <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${h.cap}"></div>`,
-    async ()=>{ const name=val('c_name'); if(!name){toast('House name required');return;}
-      const gender=val('c_gender'), rtype=val('c_rtype');
-      if(id){ await sb.from('houses').update({name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,gender,residential_type:rtype}).eq('id',h._id); h.name=name;h.color=val('c_color');h.motto=val('c_motto');h.cap=+val('c_cap')||100;h.gender=gender;h.rtype=rtype; }
-      else { const {data}=await sb.from('houses').insert({school_id:SB_SCHOOL.id,name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,gender,residential_type:rtype}).select().single(); const nid=Math.max(0,...houses.map(x=>x.id))+1; hMap[nid]=data.id; houses.push({id:nid,_id:data.id,name,color:val('c_color'),motto:val('c_motto'),cap:+val('c_cap')||100,occ:0,gender,rtype}); }
-      notifyStudentPortalRefresh('house-save');
-      closeModal(); renderHouses(); fillSelects&&fillSelects(); toast('House saved'); });
-};
-openClass=function(id){
-  if(roGuard())return;
-  const c=id?classes.find(x=>x.id===id):{name:'',code:'',cap:50,progId:'',subjects:''};
-  const pOpts='<option value="">Select programme</option>'+programmes.map(p=>`<option value="${p.id}" ${String(c.progId)===String(p.id)?'selected':''}>${p.name}</option>`).join('');
-  crudModal(id?'Edit class':'Add class',
-    `<div class="grid-2"><div class="field"><label>Class name</label><input id="c_name" value="${c.name}"></div><div class="field"><label>Code</label><input id="c_code" value="${c.code||''}"></div></div>
-     <div class="field"><label>Programme <span class="hint">— required</span></label><select id="c_prog" required>${pOpts}</select></div>
-     <div class="field"><label>Subject combination <span class="hint">— comma separated; shown to students when picking this class</span></label><textarea id="c_sub" rows="3" placeholder="e.g. Core Maths, English, Integrated Science, Physics, Chemistry, Biology, Elective Maths">${(c.subjects||'').replace(/</g,'<')}</textarea></div>
-     <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${c.cap}"></div>`,
-    async ()=>{ const name=val('c_name'); if(!name){toast('Class name required');return;}
-      const progNum=val('c_prog'); if(!progNum){toast('Please select a programme'); $('c_prog')&&$('c_prog').focus(); return;} const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
-      if(id){ await sb.from('classrooms').update({name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).eq('id',c._id); c.name=name;c.code=val('c_code');c.cap=+val('c_cap')||50;c.progId=progNum?+progNum:'';c.subjects=subj||''; }
-      else { const {data}=await sb.from('classrooms').insert({school_id:SB_SCHOOL.id,name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).select().single(); const nid=Math.max(0,...classes.map(x=>x.id))+1; cMap[nid]=data.id; classes.push({id:nid,_id:data.id,name,code:val('c_code'),cap:+val('c_cap')||50,occ:0,progId:progNum?+progNum:'',subjects:subj||''}); }
-      notifyStudentPortalRefresh('class-save');
-      closeModal(); renderClasses(); fillSelects&&fillSelects(); toast('Class saved'); });
-};
+/* legacy duplicate programme/house/class CRUD block removed; active handlers are defined below and route through manage-school-structure */
 openProg=function(id){
   if(roGuard())return;
   const p=id?programmes.find(x=>x.id===id):{code:'',name:'',subjects:'',cap:100};
   crudModal(id?'Edit programme':'Add programme',
     `<div class="grid-2"><div class="field"><label>Code</label><input id="c_code" value="${escapeAttr(p.code)}"></div><div class="field"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(p.cap)}"></div></div>
      <div class="field"><label>Programme name</label><input id="c_name" value="${escapeAttr(p.name)}"></div>
-     <div class="field"><label>Subjects <span class="hint">â€” comma separated</span></label><textarea id="c_sub">${escapeHtml(p.subjects)}</textarea></div>`,
+     <div class="field"><label>Subjects <span class="hint">— comma separated</span></label><textarea id="c_sub">${escapeHtml(p.subjects)}</textarea></div>`,
     async ()=>{ const code=val('c_code').toUpperCase(),name=val('c_name'); if(!code||!name){toast('Code and name required');return;}
-      if(id){ await sb.from('programmes').update({code,name,subjects:val('c_sub'),capacity:+val('c_cap')||100}).eq('id',p._id); p.code=code;p.name=name;p.subjects=val('c_sub');p.cap=+val('c_cap')||100; }
-      else { const {data}=await sb.from('programmes').insert({school_id:SB_SCHOOL.id,code,name,subjects:val('c_sub'),capacity:+val('c_cap')||100}).select().single(); const nid=Math.max(0,...programmes.map(x=>x.id))+1; pMap[nid]=data.id; programmes.push({id:nid,_id:data.id,code,name,subjects:val('c_sub'),cap:+val('c_cap')||100,enr:0}); }
+      const patch={code,name,subjects:val('c_sub'),capacity:+val('c_cap')||100};
+      const {data,error}=await invokeFnDetailed('manage-school-structure',{action:'programme_save',school_id:SB_SCHOOL.id,id:id?p._id:null,patch});
+      if(error||(data&&data.ok===false)){toast('Could not save programme: '+((data&&data.message)||(error&&error.message)||'error'));return;}
+      const item=(data&&data.item)||null; if(!item){toast('Programme save returned no record');return;}
+      if(id){ p.code=patch.code;p.name=patch.name;p.subjects=patch.subjects;p.cap=patch.capacity; }
+      else { const nid=Math.max(0,...programmes.map(x=>x.id))+1; pMap[nid]=item.id; programmes.push({id:nid,_id:item.id,code:item.code,name:item.name,subjects:item.subjects||'',cap:item.capacity||100,enr:0}); }
       notifyStudentPortalRefresh('programme-save');
       closeModal(); renderProg(); fillSelects(); toast('Programme saved'); });
 };
@@ -5011,8 +4965,12 @@ openHouse=function(id){
     async ()=>{ const name=val('c_name'); if(!name){toast('House name required');return;}
       const gender=val('c_gender'), rtype=val('c_rtype');
       const priorityVal=Math.max(1,+val('c_priority')||0); if(!priorityVal){toast('Priority order must be 1 or higher');return;}
-      if(id){ await sb.from('houses').update({name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,priority:priorityVal,gender,residential_type:rtype}).eq('id',h._id); h.name=name;h.color=val('c_color');h.motto=val('c_motto');h.cap=+val('c_cap')||100;h.priority=priorityVal;h.gender=gender;h.rtype=rtype; }
-      else { const {data}=await sb.from('houses').insert({school_id:SB_SCHOOL.id,name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,priority:priorityVal,gender,residential_type:rtype}).select().single(); const nid=Math.max(0,...houses.map(x=>x.id))+1; hMap[nid]=data.id; houses.push({id:nid,_id:data.id,name,color:val('c_color'),motto:val('c_motto'),cap:+val('c_cap')||100,priority:priorityVal,occ:0,gender,rtype}); }
+      const patch={name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,priority:priorityVal,gender,residential_type:rtype};
+      const {data,error}=await invokeFnDetailed('manage-school-structure',{action:'house_save',school_id:SB_SCHOOL.id,id:id?h._id:null,patch});
+      if(error||(data&&data.ok===false)){toast('Could not save house: '+((data&&data.message)||(error&&error.message)||'error'));return;}
+      const item=(data&&data.item)||null; if(!item){toast('House save returned no record');return;}
+      if(id){ h.name=name;h.color=patch.color;h.motto=patch.motto;h.cap=patch.capacity;h.priority=patch.priority;h.gender=patch.gender;h.rtype=patch.residential_type; }
+      else { const nid=Math.max(0,...houses.map(x=>x.id))+1; hMap[nid]=item.id; houses.push({id:nid,_id:item.id,name:item.name,color:item.color,motto:item.motto,cap:item.capacity||100,priority:item.priority||priorityVal,occ:0,gender:item.gender||'',rtype:item.residential_type||''}); }
       notifyStudentPortalRefresh('house-save');
       closeModal(); renderHouses(); fillSelects&&fillSelects(); toast('House saved'); });
 };
@@ -5023,20 +4981,26 @@ openClass=function(id){
   crudModal(id?'Edit class':'Add class',
     `<div class="grid-2"><div class="field"><label>Class name</label><input id="c_name" value="${escapeAttr(c.name)}"></div><div class="field"><label>Code</label><input id="c_code" value="${escapeAttr(c.code||'')}"></div></div>
      <div class="field"><label>Programme <span class="hint">— required</span></label><select id="c_prog" required>${pOpts}</select></div>
-     <div class="field"><label>Subject combination <span class="hint">â€” comma separated; shown to students when picking this class</span></label><textarea id="c_sub" rows="3" placeholder="e.g. Core Maths, English, Integrated Science, Physics, Chemistry, Biology, Elective Maths">${escapeHtml(c.subjects||'')}</textarea></div>
+     <div class="field"><label>Subject combination <span class="hint">— comma separated; shown to students when picking this class</span></label><textarea id="c_sub" rows="3" placeholder="e.g. Core Maths, English, Integrated Science, Physics, Chemistry, Biology, Elective Maths">${escapeHtml(c.subjects||'')}</textarea></div>
      <div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(c.cap)}"></div>`,
     async ()=>{ const name=val('c_name'); if(!name){toast('Class name required');return;}
       const progNum=val('c_prog'); if(!progNum){toast('Please select a programme'); $('c_prog')&&$('c_prog').focus(); return;} const progUuid=progNum?pMap[progNum]:null; const subj=val('c_sub')||null;
-      if(id){ await sb.from('classrooms').update({name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).eq('id',c._id); c.name=name;c.code=val('c_code');c.cap=+val('c_cap')||50;c.progId=progNum?+progNum:'';c.subjects=subj||''; }
-      else { const {data}=await sb.from('classrooms').insert({school_id:SB_SCHOOL.id,name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj}).select().single(); const nid=Math.max(0,...classes.map(x=>x.id))+1; cMap[nid]=data.id; classes.push({id:nid,_id:data.id,name,code:val('c_code'),cap:+val('c_cap')||50,occ:0,progId:progNum?+progNum:'',subjects:subj||''}); }
+      const patch={name,code:val('c_code'),capacity:+val('c_cap')||50,programme_id:progUuid,subjects:subj};
+      const {data,error}=await invokeFnDetailed('manage-school-structure',{action:'class_save',school_id:SB_SCHOOL.id,id:id?c._id:null,patch});
+      if(error||(data&&data.ok===false)){toast('Could not save class: '+((data&&data.message)||(error&&error.message)||'error'));return;}
+      const item=(data&&data.item)||null; if(!item){toast('Class save returned no record');return;}
+      if(id){ c.name=name;c.code=patch.code;c.cap=patch.capacity;c.progId=progNum?+progNum:'';c.subjects=subj||''; }
+      else { const nid=Math.max(0,...classes.map(x=>x.id))+1; cMap[nid]=item.id; classes.push({id:nid,_id:item.id,name:item.name,code:item.code,cap:item.capacity||50,occ:0,progId:progNum?+progNum:'',subjects:item.subjects||''}); }
       notifyStudentPortalRefresh('class-save');
       closeModal(); renderClasses(); fillSelects&&fillSelects(); toast('Class saved'); });
 };
 delItem=async function(type,id){
-  const map={prog:[programmes,'programmes','Programme'],house:[houses,'houses','House'],class:[classes,'classrooms','Class']};
-  const [arr,table,label]=map[type]; const item=arr.find(x=>x.id===id);
+  const map={prog:[programmes,'Programme'],house:[houses,'House'],class:[classes,'Class']};
+  const entry=map[type]; if(!entry)return;
+  const [arr,label]=entry; const item=arr.find(x=>x.id===id); if(!item)return;
   if(!confirm('Delete '+(item.name||item.code)+'?'))return;
-  await sb.from(table).delete().eq('id',item._id);
+  const {data,error}=await invokeFnDetailed('manage-school-structure',{action:'delete',school_id:SB_SCHOOL.id,type,id:item._id});
+  if(error||(data&&data.ok===false)){toast('Could not delete '+label.toLowerCase()+': '+((data&&data.message)||(error&&error.message)||'error'));return;}
   arr.splice(arr.indexOf(item),1);
   notifyStudentPortalRefresh(type+'-delete');
   if(type==='prog')renderProg(); if(type==='house')renderHouses(); if(type==='class')renderClasses();

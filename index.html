@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1134,12 +1134,25 @@ async function studentLoginRequest(payload){
     const data=await r.json().catch(()=>null);
     if(data&&(typeof data.ok==='boolean'||data.student||data.error)) return {data,error:null};
     if(!r.ok) return {data:null,error:{message:(data&&data.message)||('Login service returned '+r.status)}};
-  }catch(e){}
-  try{
-    const {data,error}=await sb.rpc('student_login',body);
-    return {data,error};
+    return {data:null,error:{message:'Login service unavailable'}};
   }catch(e){
     return {data:null,error:{message:(e&&e.message)||'Login service unavailable'}};
+  }
+}
+async function studentPortalRequest(action,payload){
+  const body=Object.assign({action},payload||{});
+  try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/student-portal',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
+      body:JSON.stringify(body)
+    });
+    const data=await r.json().catch(()=>null);
+    if(data&&(typeof data.ok==='boolean'||data.error||data.token||data.name)) return {data,error:null};
+    if(!r.ok) return {data:null,error:{message:(data&&data.message)||('Portal service returned '+r.status)}};
+    return {data:null,error:{message:'Portal service unavailable'}};
+  }catch(e){
+    return {data:null,error:{message:(e&&e.message)||'Portal service unavailable'}};
   }
 }
 const progById=id=>PROGRAMMES.find(p=>p.id===id);
@@ -1216,7 +1229,7 @@ async function lookupPlacementName(idx,school){
     }
   }catch(e){}
   try{
-    const {data}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:school||null});
+    const {data}=await studentPortalRequest('lookup',{p_index:idx,p_school:school||null});
     const nm=nameFromLookup(data);
     if(nm)return nm;
   }catch(e){}
@@ -1231,7 +1244,7 @@ async function lookupPlacementSms(idx,school){
     }
   }catch(e){}
   try{
-    const {data}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:school||null});
+    const {data}=await studentPortalRequest('lookup',{p_index:idx,p_school:school||null});
     return placementSmsFromLookup(data);
   }catch(e){}
   return '';
@@ -1241,13 +1254,6 @@ async function applySchool(data){
   // data carries school + config + programmes + houses + classes from login
   SCHOOL={school:data.school,config:data.config,houses:data.houses||[],classes:data.classes||[]};
   PROGRAMMES=data.programmes||[];
-  try{
-    const sid=(data.school&&data.school.id)||(session&&session.school);
-    if(sid){
-      const {data:cfg}=await sb.from('school_config').select('*').eq('school_id',sid).single();
-      if(cfg) SCHOOL.config=Object.assign({},SCHOOL.config||{},cfg);
-    }
-  }catch(e){}
   try{
     normalizeStudent(STU);
     const sid=(data.school&&data.school.id)||(session&&session.school);
@@ -1486,9 +1492,9 @@ async function payToken(method){
   const pend=getPending();
   if(pend&&pend.index===idx&&pend.reference){ toast('Found an unconfirmed payment - verifying instead of charging again'); return verifyPayment(pend.reference, idx, name); }
   // already paid? then don't charge again
-  const {data:has}=await sb.rpc('index_has_token',{p_index:idx,p_school:sid});
+  const {data:has}=await studentPortalRequest('has_token',{p_index:idx,p_school:sid});
   if(has&&has.ok&&has.paid){ toast('This index has already paid. Use "Retrieve token" to get your token.','warn'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
-  const {data:sch}=await sb.rpc('find_school_by_index',{p_index:idx,p_school:sid});
+  const {data:sch}=await studentPortalRequest('lookup',{p_index:idx,p_school:sid});
   if(!sch||!sch.ok){toast('This index is not on any participating school\u2019s placement list','warn');return;}
   const verifiedName=nameFromLookup(sch)||await lookupPlacementName(idx,sid)||name;
   const amount=Math.round(Number(sch.charge||0)*100);
@@ -1558,7 +1564,7 @@ $('r-by').addEventListener('change',e=>$('r-label').textContent=e.target.value==
 async function retrieveToken(){
   const by=$('r-by').value,v=$('r-value').value.trim(); if(!v){toast('Enter a value to search','warn');return;}
   const rsid=$('r-school').value; if(!rsid){toast('Please select your school first','warn');return;}
-  const {data,error}=await sb.rpc('retrieve_token',{p_by:by,p_value:v,p_school:rsid});
+  const {data,error}=await studentPortalRequest('retrieve',{p_by:by,p_value:v,p_school:rsid});
   if(error||!data.ok){toast(data&&data.error?data.error:'No token found');return;}
   $('ret-token').textContent=data.token;$('retrieve-result').style.display='block';window._retRec={idx:data.index,tk:data.token};
 }
@@ -1907,7 +1913,7 @@ async function submitApp(){
   submitBtn.textContent='Submitting...';
   submitBtn.disabled=true;
   try{
-    const {data,error}=await sb.rpc('submit_application',{p_index:session.index,p_token:session.token,payload,p_school:session.school||null});
+    const {data,error}=await studentPortalRequest('submit',{p_index:session.index,p_token:session.token,payload,p_school:session.school||null});
     if(error||!data.ok){
       if(data&&data.error==='closed'){toast('Admission is closed for this school - submission not allowed.');return;}
       toast('Submission failed - please try again');return;
@@ -2420,40 +2426,13 @@ function updateBlueBannerHelpdesk(){
 async function loadSchools(){
   const ids=['login-school','p-school-sel','r-school'];
   const selected=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)?document.getElementById(id).value:'']));
-  let rpcList=[],schools=[],configs=[];
-  try{ const {data}=await sb.rpc('list_schools'); rpcList=Array.isArray(data)?data:[]; }catch(e){}
-  try{ const {data}=await sb.from('schools').select('*'); schools=Array.isArray(data)?data:[]; }catch(e){}
-  try{ const {data}=await sb.from('school_config').select('*'); configs=Array.isArray(data)?data:[]; }catch(e){}
-  const merged=new Map();
-  [rpcList,schools].forEach(rows=>{
-    rows.forEach(row=>{
-      const id=row&&(row.id||row.school_id);
-      if(!id) return;
-      const key=String(id);
-      const current=merged.get(key)||{};
-      merged.set(key,Object.assign({},current,row,{id:row.id||current.id||row.school_id}));
-    });
-  });
-  configs.forEach(row=>{
-    const id=row&&row.school_id;
-    if(!id) return;
-    const key=String(id);
-    const current=merged.get(key)||{id:id};
-    const preserved={
-      id:id,
-      name:firstNonEmpty(current.name,current.school_name,row.name,row.school_name),
-      school_name:firstNonEmpty(current.school_name,current.name,row.school_name,row.name),
-      code:firstNonEmpty(current.code,row.code),
-      school_code:firstNonEmpty(current.school_code,current.code,row.school_code,row.code),
-      phone:firstNonEmpty(current.phone,row.phone),
-      email:firstNonEmpty(current.email,row.email),
-      helpdesk:firstNonEmpty(current.helpdesk,row.helpdesk),
-      helpdesk_line:firstNonEmpty(current.helpdesk_line,current.helpdesk,row.helpdesk_line,row.helpdesk),
-      crest_url:firstNonEmpty(current.crest_url,row.crest_url)
-    };
-    merged.set(key,Object.assign({},current,row,preserved));
-  });
-  SCHOOLS_LIST=Array.from(merged.values()).sort((a,b)=>{
+  let rows=[];
+  try{
+    const {data,error}=await studentPortalRequest('directory',{});
+    if(error) throw error;
+    rows=Array.isArray(data&&data.schools)?data.schools:[];
+  }catch(e){}
+  SCHOOLS_LIST=rows.slice().sort((a,b)=>{
     const an=String(schoolField(a,['name','school_name'],'')||'');
     const bn=String(schoolField(b,['name','school_name'],'')||'');
     return an.localeCompare(bn);
@@ -2577,7 +2556,7 @@ window.addEventListener('storage',function(evt){
     if(!v){box.style.display='none';return;}
     try{
       var psid=document.getElementById('p-school-sel'); var sidv=psid?psid.value:null;
-      var {data}=await sb.rpc('find_school_by_index',{p_index:v,p_school:sidv||null});
+      var {data}=await studentPortalRequest('lookup',{p_index:v,p_school:sidv||null});
       if(data&&data.ok){ box.innerHTML='Applying to <b>'+safeHtml(data.name)+'</b> - service charge GHS '+Number(data.charge||0).toFixed(2); box.className='notice info'; box.style.display='block'; }
       else { box.innerHTML='We could not match this index to a participating school. Check the number, or contact your school office.'; box.className='notice warn'; box.style.display='block'; }
     }catch(e){}
@@ -2588,6 +2567,9 @@ window.addEventListener('storage',function(evt){
 <footer class="portal-footer">Copyright &copy; 2026 AXIOMBYTE HUB. All rights reserved. - Version 1.0</footer>
 </body>
 </html>
+
+
+
 
 
 
