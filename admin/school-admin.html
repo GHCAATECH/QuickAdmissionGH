@@ -152,6 +152,27 @@
   .nav-sub:hover .bullet{border-color:#6F86A8}
   .nav-sub.active{background:var(--sb-active);color:#fff}
   .nav-sub.active .bullet{border-color:var(--accent);background:var(--accent)}
+  .verify-fab{
+    position:fixed;
+    right:22px;
+    bottom:70px;
+    z-index:55;
+    display:none;
+    align-items:center;
+    gap:9px;
+    min-height:44px;
+    padding:11px 15px;
+    border-radius:8px;
+    background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);
+    color:#fff;
+    border:1px solid rgba(34,197,94,.35);
+    box-shadow:0 14px 30px -14px rgba(20,83,45,.75),0 0 18px rgba(34,197,94,.28);
+    font-weight:700;
+    font-size:13px;
+    line-height:1;
+  }
+  .verify-fab svg{width:17px;height:17px;flex:none}
+  .verify-fab:hover{background:linear-gradient(135deg,#166534 0%,#22c55e 100%);transform:translateY(-1px)}
   .sb-foot{padding:13px 16px;border-top:1px solid #22314A;display:flex;align-items:center;gap:10px}
   .sb-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#3a2906;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
   .sb-foot small{display:block;color:#6F86A8;font-size:11px}
@@ -323,6 +344,25 @@
   tbody tr:last-child td{border-bottom:none}
   tbody tr{transition:background .12s}tbody tr:hover{background:var(--surface-2)}
   .nm{font-weight:600;font-size:13px}
+  .verify-shell{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+  .verify-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .verify-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:13px 14px;box-shadow:0 8px 20px -14px rgba(18,38,72,.26)}
+  .verify-card .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+  .verify-card .val{font-family:'Space Grotesk';font-size:24px;font-weight:700;color:var(--ink);line-height:1;margin-top:7px}
+  .verify-search-box{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:9px;align-items:center}
+  .verify-search-box input{min-width:0}
+  .verify-meta{font-size:12px;color:var(--muted)}
+  .verify-student-photo{width:42px;height:50px;border-radius:7px;object-fit:cover;border:1px solid var(--line);background:var(--surface-2)}
+  .verify-modal-photo{width:112px;height:132px;border-radius:10px;object-fit:cover;border:1px solid var(--line);background:var(--surface-2)}
+  .verify-status{display:inline-flex;align-items:center;white-space:nowrap;border-radius:20px;padding:4px 9px;font-size:11px;font-weight:700}
+  .verify-status.pending{background:#fff7ed;color:#9a3412}
+  .verify-status.verified{background:#ecfdf5;color:#166534}
+  .verify-status.documents_incomplete{background:#fef3c7;color:#92400e}
+  .verify-status.rejected{background:#fee2e2;color:#991b1b}
+  .verify-active-filters{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;min-height:2px}
+  .verify-active-filters span{border-radius:999px;background:var(--primary-soft);color:var(--primary);padding:5px 9px;font-size:11px;font-weight:700}
+  .verify-empty{text-align:center;color:var(--muted);padding:24px!important}
+  .verify-slip-grid{display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;align-items:start}
   .code{font-family:'JetBrains Mono';font-size:12px;color:var(--ink-soft);background:var(--surface-2);padding:2px 7px;border-radius:5px;border:1px solid var(--line)}
   .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px}
   .pill::before{content:"";width:6px;height:6px;border-radius:50%}
@@ -543,6 +583,8 @@
     .toolbar .search,.toolbar select,.bulkbar select{width:100%;min-width:0}
     .finance-settlement-wrap{overflow-x:auto}
     .finance-settlement-wrap table{min-width:980px;table-layout:fixed}
+    .verify-shell{grid-template-columns:1fr}
+    .verify-fab{right:16px;bottom:76px}
   }
   @media(max-width:768px){
     .toolbar,.dt-toolbar,.dt-actions,.topbar-right,.panel-head,.bulkbar{flex-wrap:wrap;gap:8px}
@@ -552,6 +594,9 @@
     .finance-total,.finance-paid-students{font-size:20px}
     .finance-transactions-tools,.finance-transactions-search{width:100%}
     .finance-transactions-search input,.finance-transactions-search .btn{width:100%}
+    .verify-search-box{grid-template-columns:1fr}
+    .verify-search-box .btn{width:100%;justify-content:center}
+    .verify-slip-grid{grid-template-columns:1fr}
   }
   @media(max-width:480px){
     .stat-grid,.adm-cards{grid-template-columns:1fr!important}
@@ -560,6 +605,7 @@
     .content{padding:14px 12px 24px}
     .toolbar .btn,.toolbar .search,.toolbar select,.dt-toolbar > *, .bulkbar > *, .panel-head .btn{width:100%}
     table{font-size:12px}
+    .verify-fab{left:12px;right:12px;bottom:70px;justify-content:center}
   }
   @media(max-width:360px){
     .brand{padding:16px 12px 12px}
