@@ -13,6 +13,33 @@ ServerSignature Off
   Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://js.paystack.co; connect-src 'self' https://*.supabase.co https://api.paystack.co https://sms.arkesel.com; frame-src 'self' https://js.paystack.co https://checkout.paystack.com; upgrade-insecure-requests"
 </IfModule>
 
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml application/xml application/json application/javascript text/javascript image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/x-icon "access plus 30 days"
+  ExpiresByType font/woff2 "access plus 30 days"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType text/javascript "access plus 7 days"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(?:png|jpe?g|webp|svg|ico|woff2?)$">
+    Header set Cache-Control "public, max-age=2592000, stale-while-revalidate=86400"
+  </FilesMatch>
+  <FilesMatch "\.(?:css|js)$">
+    Header set Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
+  </FilesMatch>
+  Header merge Vary "Accept-Encoding"
+</IfModule>
+
 # Block source/control files from web access.
 RewriteEngine On
 RewriteRule ^(?:\.git|\.codex|\.agents)(?:/|$) - [F,L,NC]
