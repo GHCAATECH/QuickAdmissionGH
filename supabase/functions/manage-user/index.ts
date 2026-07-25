@@ -18,6 +18,12 @@ const ALLOWED_PERMISSION_KEYS = new Set([
   "portal",
   "utilities",
   "users",
+  "verify_students",
+  "view_verified_students",
+  "export_verified_students",
+  "edit_verification_notes",
+  "print_verification_slip",
+  "reverse_student_verification",
   "students_house_view",
   "student_house_view",
 ]);
