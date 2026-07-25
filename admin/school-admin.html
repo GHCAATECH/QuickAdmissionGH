@@ -3940,14 +3940,20 @@ const CAPS=[
   ['users','Manage users & privileges']
 ];
 const STUDENT_SUBCAPS=[
-  ['students_house_view','Admissions -> View student house']
+  ['students_house_view','Admissions -> View student house'],
+  ['verify_students','Admissions -> Verify students'],
+  ['view_verified_students','Admissions -> View verified students'],
+  ['export_verified_students','Admissions -> Export verified students'],
+  ['edit_verification_notes','Admissions -> Edit verification notes'],
+  ['print_verification_slip','Admissions -> Print verification slip'],
+  ['reverse_student_verification','Admissions -> Reverse student verification']
 ];
 const ALL_CAPS=CAPS.concat(STUDENT_SUBCAPS);
 const CAP_LABEL=Object.fromEntries(ALL_CAPS);
 // nav data-view -> required capability (null/undefined => always allowed, e.g. dashboard)
 const VIEW_CAP={dashboard:null, setup:'setup', portal:'portal',
   programmes:'structure', houses:'structure', classes:'structure',
-  placement:'placement', students:'students','manage-students':'students','house-alloc':'students','class-alloc':'students',
+  placement:'placement', students:'students','verify-students':'verify_students','verified-students':'view_verified_students','manage-students':'students','house-alloc':'students','class-alloc':'students',
   finance:'finance', sms:'sms','sms-settings':'sms', reports:'reports', templates:'templates', users:'users', utilities:'utilities'};
 function isOwner(){ return SB_PERMS==null; }                 // NULL permissions = full access
 function isCoAdmin(){ return !!(SB_PERMS&&SB_PERMS.co_admin); }
@@ -3977,7 +3983,7 @@ function buildNavSelect(){
 }
 function applyPermissions(){
   document.querySelectorAll('.nav-item[data-view],.nav-sub[data-view]').forEach(n=>{ const cap=VIEW_CAP[n.dataset.view]; n.style.display=can(cap)?'':'none'; });
-  const ap=document.getElementById('admParent'); if(ap) ap.style.display=can('students')?'':'none';
+  const ap=document.getElementById('admParent'); if(ap) ap.style.display=(can('students')||can('verify_students')||can('view_verified_students'))?'':'none';
   const verifyFab=document.getElementById('verifyFab'); if(verifyFab) verifyFab.style.display=can('verify_students')?'inline-flex':'none';
   const stuHouseHead=document.getElementById('stuHouseHead'); if(stuHouseHead) stuHouseHead.style.display=canViewStudentHouse()?'':'none';
   buildNavSelect();
