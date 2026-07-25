@@ -1358,10 +1358,12 @@
           <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="submenu" id="admMenu">
-          <button class="nav-sub" data-view="students"><span class="bullet"></span>View Students</button>
+          <button class="nav-sub" data-view="students"><span class="bullet"></span>Admission List</button>
+          <button class="nav-sub" data-view="verify-students"><span class="bullet"></span>Verify Student <span class="nav-badge" id="badge-verify-pending">0</span></button>
+          <button class="nav-sub" data-view="verified-students"><span class="bullet"></span>Verified Students <span class="nav-badge" id="badge-verified-total">0</span></button>
           <button class="nav-sub" data-view="manage-students"><span class="bullet"></span>Manage Students</button>
-          <button class="nav-sub" data-view="house-alloc"><span class="bullet"></span>Manage House Allocation</button>
-          <button class="nav-sub" data-view="class-alloc"><span class="bullet"></span>Manage Class Allocation</button>
+          <button class="nav-sub" data-view="house-alloc"><span class="bullet"></span>House Allocation</button>
+          <button class="nav-sub" data-view="class-alloc"><span class="bullet"></span>Class Allocation</button>
         </div>
       </div>
       <div class="sb-foot">
@@ -1371,6 +1373,10 @@
       </div>
     </nav>
   </aside>
+  <button class="verify-fab" id="verifyFab" onclick="go('verify-students')" type="button" title="Verify Student">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+    <span>Verify Student</span>
+  </button>
   <div class="backdrop" id="backdrop"></div>
 
   <!-- MAIN -->
