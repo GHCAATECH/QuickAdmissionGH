@@ -302,7 +302,7 @@
   .finance-paid-flag.yes,.finance-paid-flag.paid{background:#e7f7ec;color:#0a8a2a}
   .finance-paid-flag.paid-to-date{background:#e8f4ff;color:#075985}
   .finance-paid-flag.partial{background:#fff4d6;color:#9a6700}
-  .finance-paid-flag.no,.finance-paid-flag.unpaid,.finance-paid-flag.no-payment{background:#f1f3f7;color:#63748a}
+  .finance-paid-flag.no,.finance-paid-flag.unpaid,.finance-paid-flag.no-payment,.finance-paid-flag.no-submitted{background:#f1f3f7;color:#63748a}
   .finance-paid-students{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-amount{font-size:16px;font-weight:800;color:#122648;line-height:1.4}
   .finance-summary-sub{font-size:11.5px;color:var(--muted);margin-top:6px}
@@ -769,7 +769,7 @@
             <div class="finance-rate-note">Request form comes next. Transaction charge estimated at 1%.</div>
           </div>
           <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table">
-            <thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">Submitted /<br>Placement</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Amount Due</th><th>Claim Status</th><th><span class="finance-head-stack">Claim Payments<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead>
+            <thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">Claims Paid /<br>Submitted</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Amount Due</th><th>Claim Status</th><th><span class="finance-head-stack">Claim Payments<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead>
             <tbody id="finRows"></tbody>
           </table></div>
         </div>
@@ -1040,6 +1040,7 @@ function financeSettlementForSchool(s){
   const headCharge=round2(headGross*FINANCE_CHARGE_RATE);
   const totalGross=round2(dueStudents*FINANCE_TOTAL_RATE);
   const paidAmount=round2(paidStudents*FINANCE_TOTAL_RATE);
+  const unpaidSubmittedClaims=Math.max(registered-paidStudents,0);
   return {
     registered:registered,
     total:total,
@@ -1057,7 +1058,8 @@ function financeSettlementForSchool(s){
     completedAmount:round2(completedStudents*FINANCE_TOTAL_RATE),
     hasHistory:paidStudents>0,
     pendingPlacements:pendingPlacements,
-    claimStatus:completedStudents<=0?'NO PAYMENT':(paidStudents<=0?'UNPAID':(dueStudents<=0?(pendingPlacements>0?'PAID TO DATE':'PAID'):'PARTIAL'))
+    unpaidSubmittedClaims:unpaidSubmittedClaims,
+    claimStatus:registered<=0?'NO SUBMITTED':(paidStudents<=0?'UNPAID':(unpaidSubmittedClaims<=0?'PAID':'PARTIAL'))
   };
 }
 function financeClaimStatusClass(status){
@@ -1499,15 +1501,16 @@ function renderFinance(){
   }).join('');
   $('finRows').innerHTML=schools.length?schools.map(function(s,idx){
     const f=financeSettlementForSchool(s);
-    const registeredLabel=f.total?fmt(f.registered)+' Out of '+fmt(f.total):fmt(f.registered);
+    const registeredLabel=fmt(f.paidStudents)+' Out of '+fmt(f.registered);
     const placementGapHtml=f.pendingPlacements>0
       ? `<div class="finance-summary-sub">${safeHtml(fmt(f.pendingPlacements))} placement student(s) not submitted yet</div>`
       : '';
+    const submittedClaimsHtml=`<div class="finance-summary-sub">${safeHtml(fmt(f.registered))} admission form(s) submitted</div>`;
     const actionHtml=f.dueStudents>0
       ? `<div class="finance-action-note">${safeHtml(fmt(f.dueStudents))} remaining</div>
           <button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
           <button class="btn btn-ghost btn-sm finance-request-btn" onclick="openFinanceReset(${s.id})">${f.paidStudents>0?'Mark Remaining Paid':'Mark Claim as Paid'}</button>`
-      : `<div class="finance-summary-sub">${f.paidStudents>0?(f.pendingPlacements>0?'Paid to date':'Paid in full'):'No successful payments to claim'}</div>`;
+      : `<div class="finance-summary-sub">${f.paidStudents>0?(f.unpaidSubmittedClaims>0?'No successful payments pending':'Paid in full'):'No successful payments to claim'}</div>`;
     return `<tr>
       <td><div class="finance-index mono">${idx+1}</div></td>
       <td>
@@ -1519,6 +1522,7 @@ function renderFinance(){
       <td>
         <div class="finance-registered-block">
           <div class="finance-registered-count">${safeHtml(registeredLabel)}</div>
+          ${submittedClaimsHtml}
           ${placementGapHtml}
           <div>
             <div class="finance-history-label">Settlement History:</div>
