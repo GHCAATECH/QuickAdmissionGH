@@ -17,8 +17,8 @@
   --accent-light:rgba(245,158,113,.22)!important;
 
   /* Backgrounds */
-  --page-bg:#ffffff!important;
-  --body-bg:#ffffff!important;
+  --page-bg:#c0ebff!important;
+  --body-bg:#c0ebff!important;
   --sidebar-bg:#002b4c!important;
   --sidebar-hover:#002b4c!important;
   --card-bg:rgba(192,235,255,.5)!important;
@@ -47,7 +47,7 @@
   --info-light:rgba(192,235,255,.55)!important;
 
   /* Existing app variable aliases */
-  --bg:#ffffff!important;
+  --bg:#c0ebff!important;
   --surface:rgba(192,235,255,.5)!important;
   --surface-2:rgba(192,235,255,.25)!important;
   --ink:#002b4c!important;
