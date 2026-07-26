@@ -990,11 +990,21 @@ function settledStudentCount(raw,maxCount){
 }
 function completedFinancePaymentCount(source,schoolId){
   const seen=new Set();
+  const eligible=students.filter(function(st){ return (schoolId==null||st.schoolId===schoolId)&&hasSubmittedPersonalRecord(st); });
+  const eligibleIds=new Set(eligible.map(function(st){ return st&&st._id?String(st._id):''; }).filter(Boolean));
+  const eligibleIndexes=new Set(eligible.map(function(st){ return String(st&&st.index||'').trim(); }).filter(Boolean));
   (source||[]).forEach(function(payment){
     const status=String(payment&&payment.status||'').trim().toLowerCase();
     if(!['completed','success','paid'].includes(status)) return;
     if(schoolId!=null&&payment.schoolId!==schoolId) return;
     const index=String(payment&&payment.index||'').trim();
+    if(payment&&payment.studentId){
+      if(!eligibleIds.has(String(payment.studentId))) return;
+    } else if(index&&index!=='—'&&index!=='-'){
+      if(!eligibleIndexes.has(index)) return;
+    } else {
+      return;
+    }
     const key=(payment&&payment.studentId)
       ? 'student:'+String(payment.studentId)
       : (index&&index!=='—'&&index!=='-')
@@ -1052,6 +1062,12 @@ function financeClaimStatusClass(status){
 function financeAcademicYearValue(raw){
   const text=String(raw==null?'':raw).trim();
   if(!text) return String(new Date().getFullYear());
+  const years=text.match(/20\d{2}/g);
+  return years&&years.length ? years[years.length-1] : text;
+}
+function financeClaimAcademicYearValue(raw){
+  const text=String(raw==null?'':raw).trim();
+  if(!text) return '';
   const years=text.match(/20\d{2}/g);
   return years&&years.length ? years[years.length-1] : text;
 }
@@ -1975,7 +1991,7 @@ async function loadSA(){
     sb.from('programmes').select('id,name'),
     sb.from('placement_list').select('school_id,index_number,sms_contact'),
     sb.from('school_sms_templates').select('school_id,sms_enabled'),
-    sb.from('finance_claims').select('school_id,claim_number,students_claimed,created_at'),
+    sb.from('finance_claims').select('school_id,claim_number,students_claimed,created_at,academic_year'),
   ]);
   const cfgBy={}; (cfg.data||[]).forEach(c=>cfgBy[c.school_id]=c);
   const claimBy={};
@@ -1983,6 +1999,9 @@ async function loadSA(){
     (claims.data||[]).forEach(function(row){
       const sid=row.school_id;
       if(!sid) return;
+      const cfgYear=financeAcademicYearValue((cfgBy[sid]||{}).academic_year||'');
+      const claimYear=financeClaimAcademicYearValue(row.academic_year||'');
+      if(!claimYear||claimYear!==cfgYear) return;
       const item=claimBy[sid]||(claimBy[sid]={settled:0,count:0,settledAt:''});
       item.settled+=(parseInt(row.students_claimed,10)||0);
       item.count=Math.max(item.count,parseInt(row.claim_number,10)||0);

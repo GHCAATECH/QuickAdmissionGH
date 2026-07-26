@@ -2362,10 +2362,20 @@ function settledStudentCount(raw,maxCount){
 }
 function completedFinancePaymentCount(source){
   const seen=new Set();
+  const eligible=submittedStudents();
+  const eligibleIds=new Set(eligible.map(function(s){ return s&&s._id?String(s._id):''; }).filter(Boolean));
+  const eligibleIndexes=new Set(eligible.map(function(s){ return cleanSmsText(s&&s.index); }).filter(Boolean));
   (source||[]).forEach(function(payment){
     const status=String(payment&&payment.status||'').trim().toLowerCase();
     if(!['completed','success','paid'].includes(status)) return;
     const index=cleanSmsText(payment&&payment.index);
+    if(payment&&payment.studentId){
+      if(!eligibleIds.has(String(payment.studentId))) return;
+    } else if(index&&index!=='—'&&index!=='-'&&index!=='â€”'){
+      if(!eligibleIndexes.has(index)) return;
+    } else {
+      return;
+    }
     const key=(payment&&payment.studentId)
       ? 'student:'+String(payment.studentId)
       : (index&&index!=='—'&&index!=='-')
@@ -2406,6 +2416,12 @@ function schoolFinanceSnapshot(){
 function financeAcademicYearValue(raw){
   const text=cleanSmsText(raw);
   if(!text) return String(new Date().getFullYear());
+  const years=text.match(/20\d{2}/g);
+  return years&&years.length ? years[years.length-1] : text;
+}
+function financeClaimAcademicYearValue(raw){
+  const text=cleanSmsText(raw);
+  if(!text) return '';
   const years=text.match(/20\d{2}/g);
   return years&&years.length ? years[years.length-1] : text;
 }
@@ -4427,15 +4443,18 @@ async function loadSchoolData(prof){
     fetchSchoolSmsHistory(myId),
     sb.from('activity_log').select('*').eq('school_id',myId).order('created_at',{ascending:false}),
     sb.from('school_sms_templates').select('*').eq('school_id',myId),
-    sb.from('finance_claims').select('claim_number,students_claimed,created_at').eq('school_id',myId),
+    sb.from('finance_claims').select('claim_number,students_claimed,created_at,academic_year').eq('school_id',myId),
   ]);
   SB_SCHOOL=(sch.data||[])[0]; SB_CFG=(cfg.data||[])[0]||{};
   if(!claims.error&&Array.isArray(claims.data)){
-    const claimRows=claims.data||[];
+    const cfgYear=financeAcademicYearValue(SB_CFG&&SB_CFG.academic_year);
+    const claimRows=(claims.data||[]).filter(function(row){ return financeClaimAcademicYearValue(row.academic_year)===cfgYear; });
     const settled=claimRows.reduce(function(total,row){ return total+(parseInt(row.students_claimed,10)||0); },0);
     const claimCount=claimRows.reduce(function(max,row){ return Math.max(max,parseInt(row.claim_number,10)||0); },0);
     const settledAt=claimRows.reduce(function(latest,row){ const at=row.created_at||''; return at>latest?at:latest; },'');
     Object.assign(SB_CFG,{finance_settled_students:settled,finance_claim_count:claimCount,finance_settled_at:settledAt||null});
+  } else {
+    Object.assign(SB_CFG,{finance_settled_students:0,finance_claim_count:0,finance_settled_at:null});
   }
   SB_SMS_SETTINGS=(smsCfg.data||[])[0]||{submission_message:DEFAULT_SUBMISSION_SMS_TEMPLATE,sms_enabled:true};
   if(SB_SCHOOL){ const nm=$('brandName'); if(nm) nm.textContent=SB_SCHOOL.name||'School Name'; }
