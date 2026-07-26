@@ -558,3 +558,16 @@ main > section:last-child:empty,
     min-height: -webkit-fill-available;
   }
 }
+
+/* The login page owns its full content flow. Do not force the document to
+   remain viewport-height after its footer, especially on mobile Safari where
+   -webkit-fill-available can recreate the empty scroll area. */
+@media screen and (max-width: 768px) {
+  html.qa-login-screen-active,
+  body.qa-login-screen-active,
+  html:has(body #s-login.screen.active),
+  body:has(#s-login.screen.active) {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+}
