@@ -36,6 +36,7 @@ Use this before opening the system to live schools and students.
 ## Supabase Storage
 
 - Do not keep student enrolment forms or passport photos in a public bucket for live production.
+- New uploads now save both public URL and storage object path; run `supabase/private_storage_cutover.sql` only after the deployed app supports signed/private file viewing.
 - Move `enrolment-forms` to private storage and serve files through signed URLs or authenticated Edge Functions.
 - Confirm upload limits and MIME-type restrictions for JPG/PNG documents.
 

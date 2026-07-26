@@ -2859,12 +2859,14 @@ async function deleteAllStudentRecords(){
     const e=data&&data.error;
     toast('Delete failed: '+(e==='owner_only'?'only the school owner can do this':(e||'unknown')));return;
   }
-  if(Array.isArray(data.form_urls) && data.form_urls.length){
+  if((Array.isArray(data.form_paths) && data.form_paths.length) || (Array.isArray(data.form_urls) && data.form_urls.length)){
     try{
-      const paths=data.form_urls.map(function(url){
+      const pathSet=new Set((data.form_paths||[]).map(function(path){return String(path||'').trim();}).filter(Boolean));
+      (data.form_urls||[]).forEach(function(url){
         const m=String(url||'').match(/enrolment-forms\/(.+)$/);
-        return m?decodeURIComponent(m[1]):'';
-      }).filter(Boolean);
+        if(m) pathSet.add(decodeURIComponent(m[1]));
+      });
+      const paths=Array.from(pathSet);
       if(paths.length) await sb.storage.from('enrolment-forms').remove(paths);
     }catch(e){}
   }
@@ -3069,7 +3071,7 @@ async function deleteStudent(id){
   if(error){toast('Delete failed: '+error.message);return;}
   if(!data||!data.ok){toast('Delete failed: '+((data&&data.error)||'unknown'));return;}
   // best-effort: remove the uploaded enrolment-form file from storage
-  if(data.form_url){ try{ const m=String(data.form_url).match(/enrolment-forms\/(.+)$/); if(m) await sb.storage.from('enrolment-forms').remove([decodeURIComponent(m[1])]); }catch(e){} }
+  if(data.form_url || (Array.isArray(data.form_paths)&&data.form_paths.length)){ try{ const pathSet=new Set((data.form_paths||[]).map(function(path){return String(path||'').trim();}).filter(Boolean)); const m=String(data.form_url||'').match(/enrolment-forms\/(.+)$/); if(m) pathSet.add(decodeURIComponent(m[1])); const paths=Array.from(pathSet); if(paths.length) await sb.storage.from('enrolment-forms').remove(paths); }catch(e){} }
   students=students.filter(x=>x.id!==id);
   placement=placement.filter(x=>x.index!==s.index);
   payments=payments.filter(function(p){ return String(p.index||'')!==String(s.index); });

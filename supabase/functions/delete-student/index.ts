@@ -9,6 +9,31 @@ function safeString(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function storageObjectPath(value: unknown) {
+  const text = safeString(value);
+  if (!text) return "";
+  const directBucket = text.match(/^enrolment-forms\/(.+)$/i);
+  if (directBucket) return decodeURIComponent(directBucket[1]);
+  const publicMatch = text.match(/\/storage\/v1\/object\/public\/enrolment-forms\/(.+)$/i)
+    ?? text.match(/enrolment-forms\/(.+)$/i);
+  if (publicMatch) return decodeURIComponent(publicMatch[1]);
+  if (/^(passport-photos\/)?[^?#]+\.(?:jpe?g|png)$/i.test(text)) return text;
+  return "";
+}
+
+function studentStoragePaths(student: Record<string, unknown>) {
+  const records = student.records && typeof student.records === "object"
+    ? student.records as Record<string, unknown>
+    : {};
+  return Array.from(new Set([
+    storageObjectPath(student.enrolment_form_url),
+    storageObjectPath(records.enrolment_form_url),
+    storageObjectPath(records.enrolment_form_path),
+    storageObjectPath(records.passport_photo_url),
+    storageObjectPath(records.passport_photo_path),
+  ].filter(Boolean)));
+}
+
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
@@ -70,7 +95,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: student, error: studentError } = await admin
     .from("students")
-    .select("id, school_id, bece_index, full_name, enrolment_form_url")
+    .select("id, school_id, bece_index, full_name, enrolment_form_url, records")
     .eq("id", studentId)
     .eq("school_id", schoolId)
     .maybeSingle();
@@ -164,6 +189,7 @@ Deno.serve(async (req: Request) => {
       student_index: studentIndex,
       student_name: safeString(student.full_name),
       form_url: safeString(student.enrolment_form_url) || null,
+      form_paths: studentStoragePaths(student as Record<string, unknown>),
       payments: paymentsDeleted,
       tokens: tokensDeleted,
       sms_logs: smsLogsDeleted,

@@ -9,6 +9,31 @@ function safeString(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function storageObjectPath(value: unknown) {
+  const text = safeString(value);
+  if (!text) return "";
+  const directBucket = text.match(/^enrolment-forms\/(.+)$/i);
+  if (directBucket) return decodeURIComponent(directBucket[1]);
+  const publicMatch = text.match(/\/storage\/v1\/object\/public\/enrolment-forms\/(.+)$/i)
+    ?? text.match(/enrolment-forms\/(.+)$/i);
+  if (publicMatch) return decodeURIComponent(publicMatch[1]);
+  if (/^(passport-photos\/)?[^?#]+\.(?:jpe?g|png)$/i.test(text)) return text;
+  return "";
+}
+
+function studentStoragePaths(student: Record<string, unknown>) {
+  const records = student.records && typeof student.records === "object"
+    ? student.records as Record<string, unknown>
+    : {};
+  return [
+    storageObjectPath(student.enrolment_form_url),
+    storageObjectPath(records.enrolment_form_url),
+    storageObjectPath(records.enrolment_form_path),
+    storageObjectPath(records.passport_photo_url),
+    storageObjectPath(records.passport_photo_path),
+  ].filter(Boolean);
+}
+
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
@@ -66,7 +91,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: students, error: studentsError } = await admin
     .from("students")
-    .select("id, bece_index, enrolment_form_url")
+    .select("id, bece_index, enrolment_form_url, records")
     .eq("school_id", schoolId);
 
   if (studentsError) {
@@ -76,6 +101,8 @@ Deno.serve(async (req: Request) => {
   const formUrls = (students ?? [])
     .map((row) => safeString((row as Record<string, unknown>).enrolment_form_url))
     .filter(Boolean);
+  const formPaths = Array.from(new Set((students ?? [])
+    .flatMap((row) => studentStoragePaths(row as Record<string, unknown>))));
 
   const countDeleted = async (table: string, column: string, value: string) => {
     const { data, error } = await admin
@@ -134,6 +161,7 @@ Deno.serve(async (req: Request) => {
       finance_claims: financeClaimsDeleted,
       finance_reset: true,
       form_urls: formUrls,
+      form_paths: formPaths,
     });
   } catch (error) {
     return json({
