@@ -260,6 +260,93 @@ table {
   padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
 }
 
+/* Public buy-token and retrieve-token pages: keep the card layout intact after
+   the global theme overrides, and make the custom school dropdown full width. */
+body #s-purchase .auth,
+body #s-retrieve .auth {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  padding: clamp(18px, 4vw, 36px) 16px !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+body #s-purchase .auth-card,
+body #s-retrieve .auth-card {
+  display: block !important;
+  width: min(100%, 560px) !important;
+  max-width: 560px !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+body #s-purchase .card,
+body #s-retrieve .card {
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: clamp(18px, 3.4vw, 26px) !important;
+  overflow: visible !important;
+}
+
+body #s-purchase .login-input-shell.login-school-shell.no-icon,
+body #s-retrieve .login-input-shell.login-school-shell.no-icon {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+body #s-purchase .login-school-picker,
+body #s-retrieve .login-school-picker,
+body #s-purchase .login-school-trigger,
+body #s-retrieve .login-school-trigger,
+body #s-purchase .login-school-panel,
+body #s-retrieve .login-school-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body #s-purchase .login-school-panel,
+body #s-retrieve .login-school-panel {
+  z-index: 99999 !important;
+}
+
+body #s-purchase .grid-2,
+body #s-retrieve .grid-2 {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 13px !important;
+}
+
+body #s-purchase .pay-methods {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+body #s-purchase .pay-opt {
+  width: 100% !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+}
+
+@media screen and (max-width: 560px) {
+  body #s-purchase .grid-2,
+  body #s-retrieve .grid-2,
+  body #s-purchase .pay-methods {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* Homepage login split layout: avoid a second scrollbar inside the peach/cream hero panel. */
 body #s-login .qa-page-shell,
 body #s-login .qa-hero-panel,

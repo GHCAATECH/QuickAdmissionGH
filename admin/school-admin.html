@@ -1421,9 +1421,9 @@
   @media(max-width:520px){#authGate.gate-screen{padding:10px!important}#authGate .qa-login-shell{border-radius:18px}#authGate .qa-brand-panel,#authGate .qa-login-panel{padding:24px}#authGate .qa-brand-panel h1{font-size:36px}#authGate .qa-login-card h2{font-size:28px}}
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
-<link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260726-layout-fix-8">
+<link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260726-layout-fix-9">
 <link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260726-admin-responsive-3">
-<script src="../assets/js/global-layout-fix.js?v=20260726-layout-fix-8" defer></script>
+<script src="../assets/js/global-layout-fix.js?v=20260726-layout-fix-9" defer></script>
 <script src="../assets/js/admin-responsive.js?v=20260726-admin-responsive-3" defer></script>
 </head>
 <body class="auth-booting">
@@ -1518,10 +1518,6 @@
       </div>
     </nav>
   </aside>
-  <button class="verify-fab" id="verifyFab" onclick="go('verify-students')" type="button" title="Verify Student">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
-    <span>Verify Student</span>
-  </button>
   <div class="backdrop" id="backdrop"></div>
 
   <!-- MAIN -->
@@ -4173,7 +4169,6 @@ function buildNavSelect(){
 function applyPermissions(){
   document.querySelectorAll('.nav-item[data-view],.nav-sub[data-view]').forEach(n=>{ const cap=VIEW_CAP[n.dataset.view]; n.style.display=can(cap)?'':'none'; });
   const ap=document.getElementById('admParent'); if(ap) ap.style.display=(can('students')||can('verify_students')||can('view_verified_students'))?'':'none';
-  const verifyFab=document.getElementById('verifyFab'); if(verifyFab) verifyFab.style.display=can('verify_students')?'inline-flex':'none';
   const stuHouseHead=document.getElementById('stuHouseHead'); if(stuHouseHead) stuHouseHead.style.display=canViewStudentHouse()?'':'none';
   buildNavSelect();
   // School users are read-only. Owner and co-admin accounts can write.
