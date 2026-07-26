@@ -2603,10 +2603,11 @@ function renderStats(){
       if(rr==='D')t.day++;if(rr==='B')t.boarding++;if(g==='M')t.male++;if(g==='F')t.female++;
       if(g==='M'&&rr==='D')t.md++;if(g==='F'&&rr==='D')t.fd++;if(g==='M'&&rr==='B')t.mb++;if(g==='F'&&rr==='B')t.fb++;});
     return t;};
-  const subIdx=new Set((students||[]).filter(s=>s.submitted).map(s=>String(s.index)));
+  const submitted=submittedStudents();
+  const subIdx=new Set(submitted.map(s=>String(s.index)));
   const completedRows=plc.filter(p=>subIdx.has(String(p.index)));
   const pendingRows=plc.filter(p=>!subIdx.has(String(p.index)));
-  const placed=plc.length, completed=completedRows.length, pending=pendingRows.length;
+  const placed=plc.length, completed=submitted.length, pending=pendingRows.length;
   const pc=placed?Math.round(completed/placed*1000)/10:0, pp=placed?Math.round(pending/placed*1000)/10:0;
   const seen={}; let dup=0; plc.forEach(p=>{const k=String(p.index);if(seen[k])dup++;else seen[k]=1;});
   const P=tally(plc), C=tally(completedRows), N=tally(pendingRows);
@@ -2631,7 +2632,7 @@ function renderStats(){
       ${rowsBlk(N)}
       <div class="mi"><button onclick="go('placement')">View Placement →</button></div>
     </div>`;
-  var bp=$('badge-pending'); if(bp) bp.textContent=pending;
+  var bp=$('badge-pending'); if(bp) bp.textContent=completed;
 }
 function renderRecent(){
   const rows=[...students].sort((a,b)=>b.reg.localeCompare(a.reg)).slice(0,8);
