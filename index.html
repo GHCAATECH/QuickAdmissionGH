@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -692,8 +692,8 @@
     --primary-soft:rgba(0,43,76,.12)!important;
     --accent:#002B4C!important;
     --accent-soft:rgba(0,43,76,.12)!important;
-    --sb:#F59E71!important;
-    --sb-text:#002B4C!important;
+    --sb:#002B4C!important;
+    --sb-text:#C0EBFF!important;
     --sb-active:rgba(0,43,76,.12)!important;
     --muted-green:#002B4C!important;
     --shadow:0 10px 25px rgba(0,43,76,.16)!important;
@@ -743,7 +743,184 @@
   thead th,.sec-h{background:#002B4C!important;color:#C0EBFF!important;border-color:#002B4C!important}
   thead th *,.sec-h *{color:#C0EBFF!important;-webkit-text-fill-color:#C0EBFF!important}
 </style>
-<link rel="stylesheet" href="professional-theme.css?v=20260726-index-theme">
+<link rel="stylesheet" href="professional-theme.css?v=20260726-homepage-build">
+<style id="quick-homepage-theme">
+  body #s-login{
+    min-height:100vh!important;
+    background:
+      radial-gradient(circle at top right,rgba(245,158,113,.25),transparent 35%),
+      linear-gradient(180deg,#ffffff 0%,#f8fcff 100%)!important;
+    color:#002B4C!important;
+  }
+  body.modal-open{overflow:hidden!important}
+  body #s-login .qa-site-header{
+    position:sticky;top:0;z-index:1000;
+    background:rgba(255,255,255,.94)!important;
+    border-bottom:1px solid #001619!important;
+    backdrop-filter:blur(12px);
+  }
+  body #s-login .qa-header-inner{
+    width:min(1200px,calc(100% - 32px));margin:0 auto;min-height:74px;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+  }
+  body #s-login .qa-brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#002B4C!important;font-weight:800}
+  body #s-login .qa-brand-icon{
+    width:46px;height:46px;display:grid;place-items:center;
+    background:#002B4C!important;color:#C0EBFF!important;border:1px solid #001619!important;border-radius:14px;
+  }
+  body #s-login .qa-brand-icon img{width:100%;height:100%;object-fit:contain;border-radius:12px;padding:5px;background:#fff}
+  body #s-login .qa-brand-text{display:flex;flex-direction:column;line-height:1.05}
+  body #s-login .qa-brand-text strong{font-size:18px;color:#002B4C!important;-webkit-text-fill-color:#002B4C!important}
+  body #s-login .qa-brand-text span{margin-top:4px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#002B4C!important;opacity:.72}
+  body #s-login .qa-header-actions{display:flex;align-items:center;gap:12px}
+  body #s-login .qa-btn,
+  body #s-login .btn,
+  body #s-login #loginBtn,
+  body #s-login #buyTokenBtn,
+  body #s-login .portal-link-btn{
+    min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    padding:0 18px;background:#002B4C!important;background-image:none!important;color:#C0EBFF!important;
+    -webkit-text-fill-color:#C0EBFF!important;border:1px solid #001619!important;border-radius:10px!important;
+    font-weight:800;box-shadow:none!important;text-decoration:none!important;
+  }
+  body #s-login .qa-btn-outline{
+    background:transparent!important;color:#002B4C!important;-webkit-text-fill-color:#002B4C!important;
+  }
+  body #s-login .qa-btn-outline:hover{background:#002B4C!important;color:#C0EBFF!important;-webkit-text-fill-color:#C0EBFF!important}
+  body #s-login .qa-btn-block,
+  body #s-login #loginBtn{width:100%}
+  body #s-login .qa-page-shell{
+    width:min(1200px,calc(100% - 32px));margin:44px auto;
+    display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);gap:28px;align-items:stretch;
+  }
+  body #s-login .qa-hero-panel{
+    position:relative;overflow:hidden;min-height:640px;padding:52px;
+    display:flex;flex-direction:column;justify-content:space-between;
+    background:#F59E71!important;color:#002B4C!important;border:1px solid #001619!important;border-radius:24px!important;
+    box-shadow:0 18px 45px rgba(0,43,76,.14)!important;
+  }
+  body #s-login .qa-hero-panel::before,
+  body #s-login .qa-hero-panel::after{content:"";position:absolute;border:1px solid rgba(0,22,25,.2);border-radius:50%}
+  body #s-login .qa-hero-panel::before{width:320px;height:320px;top:-180px;right:-130px}
+  body #s-login .qa-hero-panel::after{width:220px;height:220px;bottom:-100px;left:-80px}
+  body #s-login .qa-hero-content,
+  body #s-login .qa-hero-footer{position:relative;z-index:1}
+  body #s-login .qa-eyebrow{
+    display:inline-flex;align-items:center;gap:8px;width:fit-content;margin-bottom:24px;padding:8px 12px;
+    background:rgba(255,255,255,.45)!important;border:1px solid #001619!important;border-radius:999px;
+    font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#002B4C!important;
+  }
+  body #s-login .qa-hero-panel h1{
+    max-width:650px;font-size:clamp(40px,5vw,68px);line-height:.98;letter-spacing:-.045em;
+    color:#002B4C!important;-webkit-text-fill-color:#002B4C!important;
+  }
+  body #s-login .qa-hero-panel p{color:#002B4C!important;-webkit-text-fill-color:#002B4C!important}
+  body #s-login .qa-hero-lead{max-width:620px;margin-top:24px;font-size:18px;line-height:1.75}
+  body #s-login .qa-steps{margin-top:36px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  body #s-login .qa-step{
+    display:flex;align-items:flex-start;gap:12px;padding:16px;background:rgba(255,255,255,.42)!important;
+    border:1px solid #001619!important;border-radius:14px!important;color:#002B4C!important;
+  }
+  body #s-login .qa-step-number{
+    width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;
+    background:#002B4C!important;color:#C0EBFF!important;border:1px solid #001619!important;border-radius:10px;font-size:13px;font-weight:800;
+  }
+  body #s-login .qa-step h3{font-size:15px;margin-bottom:5px;color:#002B4C!important}
+  body #s-login .qa-step p{font-size:13px;line-height:1.5}
+  body #s-login .qa-hero-footer{margin-top:32px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+  body #s-login .qa-admission-card{
+    padding:32px;background:rgba(192,235,255,.5)!important;color:#002B4C!important;
+    border:1px solid #001619!important;border-radius:24px!important;box-shadow:0 18px 45px rgba(0,43,76,.14)!important;backdrop-filter:blur(14px);
+  }
+  body #s-login .qa-card-header{margin-bottom:24px}
+  body #s-login .qa-card-header span{display:block;margin-bottom:8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#002B4C!important}
+  body #s-login .qa-card-header h2{font-size:32px;line-height:1.1;color:#002B4C!important;-webkit-text-fill-color:#002B4C!important}
+  body #s-login .qa-card-header p{margin-top:10px;line-height:1.65;color:#002B4C!important}
+  body #s-login .field{margin-bottom:18px}
+  body #s-login .field label{display:block;margin-bottom:8px;font-size:14px;font-weight:800;color:#002B4C!important;-webkit-text-fill-color:#002B4C!important}
+  body #s-login .login-input-shell{
+    display:grid;grid-template-columns:46px minmax(0,1fr);align-items:center;min-height:50px;
+    background:#fff!important;color:#002B4C!important;border:1px solid #001619!important;border-radius:10px!important;box-shadow:none!important;overflow:visible;
+  }
+  body #s-login .login-input-icon{display:grid;place-items:center;align-self:stretch;background:transparent!important;color:#002B4C!important;border-right:0!important}
+  body #s-login .login-input-icon svg{width:18px;height:18px}
+  body #s-login input,
+  body #s-login select,
+  body #s-login .login-school-trigger,
+  body #s-login .login-school-search{
+    width:100%;min-height:48px;background:#fff!important;background-image:none!important;color:#002B4C!important;
+    -webkit-text-fill-color:#002B4C!important;border:0!important;box-shadow:none!important;padding:0 14px!important;
+  }
+  body #s-login #f-token .login-input-shell{grid-template-columns:46px minmax(0,1fr) auto}
+  body #s-login .toggle-password{
+    min-height:38px!important;margin-right:6px;padding:0 10px!important;
+    background:transparent!important;background-image:none!important;color:#002B4C!important;-webkit-text-fill-color:#002B4C!important;
+    border:0!important;border-left:1px solid #001619!important;border-radius:0!important;box-shadow:none!important;font-weight:800;
+  }
+  body #s-login .login-school-trigger{display:flex;justify-content:space-between;text-align:left}
+  body #s-login .login-school-panel{
+    position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:30;background:#fff!important;color:#002B4C!important;
+    border:1px solid #001619!important;border-radius:16px!important;box-shadow:0 24px 42px -28px rgba(0,43,76,.45)!important;padding:10px;
+  }
+  body #s-login .login-school-option{
+    width:100%;padding:12px 14px;border-radius:12px!important;background:#fff!important;color:#002B4C!important;
+    border:1px solid transparent!important;text-align:left;justify-content:space-between;
+  }
+  body #s-login .login-school-option:hover,
+  body #s-login .login-school-option.active{background:#C0EBFF!important;color:#002B4C!important;border-color:#001619!important}
+  body #s-login .hint,
+  body #s-login .form-help{margin-top:8px;font-size:12px;line-height:1.5;color:#002B4C!important}
+  body #s-login .login-token-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:stretch}
+  body #s-login .qa-form-links{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  body #s-login .qa-mini-link{
+    min-height:46px;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;background:#fff!important;
+    border:1px solid #001619!important;border-radius:10px!important;font-size:13px;font-weight:800;color:#002B4C!important;text-decoration:none!important;
+  }
+  body #s-login .qa-mini-link:hover{background:#002B4C!important;color:#C0EBFF!important;-webkit-text-fill-color:#C0EBFF!important}
+  body #s-login .qa-support-box{
+    margin-top:22px;padding:16px;display:flex;align-items:center;gap:12px;background:rgba(245,158,113,.35)!important;
+    border:1px solid #001619!important;border-radius:14px!important;color:#002B4C!important;
+  }
+  body #s-login .qa-support-icon{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;background:#002B4C!important;color:#C0EBFF!important;border-radius:12px}
+  body #s-login .qa-tutorial-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:24px}
+  body #s-login .qa-tutorial-modal.is-open{display:flex}
+  body #s-login .qa-tutorial-modal-overlay{position:absolute;inset:0;background:rgba(0,22,25,.8)!important;backdrop-filter:blur(8px)}
+  body #s-login .qa-tutorial-modal-content{
+    position:relative;z-index:1;width:min(1120px,100%);max-height:90vh;overflow-y:auto;padding:28px;
+    background:#fff!important;color:#002B4C!important;border:1px solid #001619!important;border-radius:22px!important;box-shadow:0 30px 90px rgba(0,22,25,.42)!important;
+  }
+  body #s-login .qa-tutorial-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:24px}
+  body #s-login .qa-tutorial-label{display:inline-block;padding:6px 10px;background:rgba(192,235,255,.5)!important;border:1px solid #001619!important;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+  body #s-login .qa-tutorial-close-btn{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;background:#002B4C!important;color:#C0EBFF!important;border:1px solid #001619!important;border-radius:50%;font-size:24px}
+  body #s-login .qa-tutorial-video-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+  body #s-login .qa-tutorial-video-card{overflow:hidden;background:rgba(192,235,255,.5)!important;border:1px solid #001619!important;border-radius:16px!important}
+  body #s-login .qa-tutorial-video-frame{aspect-ratio:16/9;background:#002B4C!important;color:#C0EBFF!important;display:grid;place-items:center;font-weight:800}
+  body #s-login .qa-tutorial-video-details{padding:18px}
+  body #s-login .qa-site-footer{border-top:1px solid #001619!important;background:#fff!important}
+  body #s-login .qa-footer-inner{width:min(1200px,calc(100% - 32px));margin:0 auto;padding:24px 0;display:flex;align-items:center;justify-content:space-between;gap:20px;font-size:13px}
+  body #s-login .admission-closed-view{margin:44px auto;width:min(760px,calc(100% - 32px))}
+  @media(max-width:980px){
+    body #s-login .qa-page-shell{grid-template-columns:1fr}
+    body #s-login .qa-hero-panel{min-height:auto}
+    body #s-login .qa-tutorial-video-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media(max-width:700px){
+    body #s-login .qa-header-inner{min-height:68px}
+    body #s-login .qa-brand-text span{display:none}
+    body #s-login .qa-header-actions .qa-btn-outline{display:none}
+    body #s-login .qa-page-shell{width:min(100% - 20px,1200px);margin:20px auto;gap:18px}
+    body #s-login .qa-hero-panel,
+    body #s-login .qa-admission-card{padding:24px;border-radius:18px!important}
+    body #s-login .qa-hero-panel h1{font-size:42px}
+    body #s-login .qa-steps,
+    body #s-login .qa-form-links,
+    body #s-login .qa-tutorial-video-grid{grid-template-columns:1fr}
+    body #s-login .qa-hero-footer{flex-direction:column;align-items:stretch}
+    body #s-login .qa-hero-footer .qa-btn{width:100%}
+    body #s-login .login-token-row{grid-template-columns:1fr}
+    body #s-login .qa-footer-inner{flex-direction:column;text-align:center}
+  }
+</style>
 </head>
 <body class="booting">
 <div class="env-badge" id="envBadge">LIVE</div>
@@ -751,142 +928,189 @@
 
 <!-- ===== LOGIN ===== -->
 <div class="screen active" id="s-login">
-  <div class="auth"><div class="portal-login-wrap">
-    <div class="portal-login-brand">
-      <div class="portal-brand-crest" id="schCrest">
-        <span id="schCrestText" style="display:none">AB</span>
-        <img id="schLogo" src="logo-icon.svg" alt="School or platform logo" onerror="this.style.display='none';var t=document.getElementById('schCrestText');if(t){t.style.display='';t.textContent='AB';}">
-      </div>
-      <div class="portal-brand-copy">
-        <h1 id="schTitle">QuickAdmissionGH</h1>
-        <div class="portal-brand-helpdesk">
-          <div class="portal-brand-helpdesk-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 13a8 8 0 0 1 16 0"/><path d="M4 13v4a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2Z"/><path d="M20 13v4a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2Z"/><path d="M9 19h6"/></svg>
-            <span>Helpdesk:</span>
-          </div>
-          <div class="portal-brand-helpdesk-links">
-            <a id="blueBannerHelpdeskPhoneLink" href="tel:0256744028" class="mono">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.9l-1.3 1.3a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 1.9-.6l3 .5a2 2 0 0 1 1.7 2Z"/></svg>
-              <span id="blueBannerHelpdeskPhone">0256744028</span>
-            </a>
-            <span class="portal-brand-helpdesk-sep" aria-hidden="true">|</span>
-            <a id="blueBannerHelpdeskEmailLink" href="mailto:admissions@quickadmissiongh.com">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
-              <span id="blueBannerHelpdeskEmail">admissions@quickadmissiongh.com</span>
-            </a>
-          </div>
+  <header class="qa-site-header">
+    <div class="qa-header-inner">
+      <a href="#admission-form" class="qa-brand">
+        <div class="qa-brand-icon" id="schCrest">
+          <span id="schCrestText" style="display:none">AB</span>
+          <img id="schLogo" src="logo-icon.svg" alt="School or platform logo" onerror="this.style.display='none';var t=document.getElementById('schCrestText');if(t){t.style.display='';t.textContent='AB';}">
         </div>
+        <div class="qa-brand-text">
+          <strong id="schTitle">QuickAdmissionGH</strong>
+          <span>Ghana School Admission Portal</span>
+        </div>
+      </a>
+      <div class="qa-header-actions">
+        <button type="button" class="qa-btn qa-btn-outline open-tutorial">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/></svg>
+          Video Tutorials
+        </button>
+        <a href="#admission-form" class="qa-btn">Start Admission <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
       </div>
     </div>
+  </header>
 
-    <div class="portal-login-shell" id="studentLoginPanel">
-      <section class="portal-login-info" aria-labelledby="loginWelcomeTitle">
-        <div class="portal-info-head">
-          <h2 id="loginWelcomeTitle">Welcome to QuickAdmissionGH</h2>
-          <p id="loginWelcomeSubtitle">Online Admission Portal</p>
+  <main class="qa-page-shell">
+    <section class="qa-hero-panel">
+      <div class="qa-hero-content">
+        <div class="qa-eyebrow">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 5 6v5c0 4.3 2.6 8.3 7 10 4.4-1.7 7-5.7 7-10V6l-7-3Z"/><path d="m9.4 11.8 1.9 1.9 3.8-3.8"/></svg>
+          Secure Online Admission
         </div>
-        <div class="portal-info-copy">To complete your application, keep your CSSPS placement form and admission details ready before signing in.</div>
-        <div class="portal-info-list">
-          <div class="portal-info-item">
-            <div class="portal-info-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h6l5 5v13H5V3h3Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></div>
-            <div><b>CSSPS placement form</b><span>Make sure your placement form is available before you continue.</span></div>
-          </div>
-          <div class="portal-info-item">
-            <div class="portal-info-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.8v8.4"/><path d="M15.1 9.9a3.2 3.2 0 0 0-6.2.9c0 1.8 1.4 2.5 3.1 2.9 1.7.4 3.1 1.1 3.1 2.9a3.2 3.2 0 0 1-6.2.9"/></svg></div>
-            <div><b>Service charge</b><span id="loginCharge">A service charge of GHS 30.00 is required.</span></div>
-          </div>
-          <div class="portal-info-item">
-            <div class="portal-info-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.7V20h13V9.7"/><path d="M9 20v-5h6v5"/></svg></div>
-            <div><b>Select your school</b><span>Choose the school you were placed in before entering your login details.</span></div>
-          </div>
-          <div class="portal-info-item">
-            <div class="portal-info-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/><path d="M12 14v2"/></svg></div>
-            <div><b>Enter your credentials</b><span>Provide your BECE index number and 8-character admission token to sign in.</span></div>
-          </div>
+        <h1>Complete your school admission online.</h1>
+        <p class="qa-hero-lead">Select your school, enter your BECE index number and admission token, then continue to complete and print your admission documents.</p>
+        <div class="qa-steps">
+          <article class="qa-step"><div class="qa-step-number">1</div><div><h3>Select your school</h3><p>Choose the school where you have been placed.</p></div></article>
+          <article class="qa-step"><div class="qa-step-number">2</div><div><h3>Enter your index number</h3><p>Provide your correct BECE index number.</p></div></article>
+          <article class="qa-step"><div class="qa-step-number">3</div><div><h3>Enter your token</h3><p>Use your purchased admission token to continue.</p></div></article>
+          <article class="qa-step"><div class="qa-step-number">4</div><div><h3>Complete your admission</h3><p>Fill the form and print all required documents.</p></div></article>
         </div>
-        <div class="portal-token-note">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3 5 6v5c0 4.3 2.6 8.3 7 10 4.4-1.7 7-5.7 7-10V6l-7-3Z"/><path d="m9.4 11.8 1.9 1.9 3.8-3.8"/></svg>
-          <div><b>Important:</b> Keep your admission token safe and do not share it with anyone.</div>
-        </div>
-      </section>
-
-      <section class="portal-login-form" aria-labelledby="portalLoginFormTitle">
-        <div class="portal-form-head">
-          <h2 id="portalLoginFormTitle">Access Your Admission Portal</h2>
-          <p id="loginFormSub">Select your school and enter your details to continue.</p>
-        </div>
-
-        <div class="field" id="f-school">
-          <label for="login-school">Select your school</label>
-          <div class="login-input-shell login-school-shell">
-            <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.7V20h13V9.7"/><path d="M9 20v-5h6v5"/></svg></div>
-            <div class="login-school-picker" id="loginSchoolPicker">
-              <button class="login-school-trigger" id="loginSchoolTrigger" type="button" onclick="toggleLoginSchoolPicker()">
-                <span class="login-school-trigger-text" id="loginSchoolTriggerText">Loading schools...</span>
-                <svg class="login-school-trigger-caret" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 7 5 6 5-6"/></svg>
-              </button>
-              <div class="login-school-panel" id="loginSchoolPanel" hidden>
-                <span class="login-school-search-title">Search school</span>
-                <input id="loginSchoolSearch" class="login-school-search" type="text" placeholder="Search school..." oninput="filterLoginSchoolOptions(this.value)" onkeydown="handleLoginSchoolSearchKey(event)" autocomplete="off">
-                <div class="login-school-options" id="loginSchoolOptions"></div>
-              </div>
-              <select id="login-school" onchange="onLoginSchoolChange()" hidden aria-hidden="true" tabindex="-1"><option value="">Loading schools...</option></select>
-            </div>
-          </div>
-          <span class="err-msg" id="err-school">Please select your school.</span>
-        </div>
-
-        <div class="notice warn" id="admClosedBanner" style="display:none"><b>Admission closed.</b> This school is not accepting applications at the moment. Please contact the school office for details.</div>
-
-        <div class="field" id="f-index">
-          <label for="login-index">BECE index number</label>
-          <div class="login-input-shell">
-            <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h8"/><path d="M8 14h3"/></svg></div>
-            <input class="input-mono" id="login-index" placeholder="100000000026" value="100000000026" maxlength="14" autocomplete="username">
-          </div>
-          <span class="err-msg" id="err-index">We couldn't find this index number on the placement list.</span>
-        </div>
-
-        <div class="field" id="f-token">
-          <label for="login-token">Admission token <span class="hint">(8 characters)</span></label>
-          <div class="login-token-row">
-            <div class="login-input-shell">
-              <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></svg></div>
-              <input class="input-mono" id="login-token" placeholder="XXXXXXXX" maxlength="8" value="AS7K9X2Q" autocomplete="current-password">
-            </div>
-            <button class="btn btn-accent" id="buyTokenBtn" type="button" onclick="showScreen('s-purchase')">Buy token</button>
-          </div>
-          <span class="err-msg" id="err-token">That token doesn't match this index number. Check it, or retrieve it below.</span>
-        </div>
-
-        <button class="btn btn-primary btn-block" id="loginBtn" type="button" onclick="doLogin()">Log in<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-
-        <div class="portal-form-divider" aria-hidden="true"><span>Need help?</span></div>
-
-        <div class="portal-quick-links">
-          <button class="portal-link-btn" type="button" onclick="showScreen('s-retrieve')">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M15 7h2a4 4 0 0 1 0 8h-2"/><path d="M9 17H7a4 4 0 1 1 0-8h2"/><path d="m8 12 8-8"/></svg></span>
-            <span>Retrieve token using index number or receipt</span>
-            <span class="arrow" aria-hidden="true">›</span>
-          </button>
-          <button class="portal-link-btn" type="button" onclick="showScreen('s-purchase')">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M4 4h2l2.2 10.3a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L21 8H8.4"/></svg></span>
-            <span>Purchase a new admission token</span>
-            <span class="arrow" aria-hidden="true">›</span>
-          </button>
-        </div>
-      </section>
-    </div>
-
-    <section class="admission-closed-view" id="admissionClosedView" aria-label="Admission closed" hidden>
-      <img class="admission-closed-image" src="admission-closed.png" alt="Admission closed. Thank you to all applicants and parents for your interest and support.">
-      <button class="btn btn-primary admission-closed-change" type="button" onclick="chooseAnotherLoginSchool()">Choose another school</button>
+      </div>
+      <div class="qa-hero-footer">
+        <a href="#admission-form" class="qa-btn"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/></svg>Check Admission</a>
+        <button type="button" class="qa-btn qa-btn-outline open-tutorial"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/></svg>Watch Video Tutorial</button>
+      </div>
     </section>
 
-    <div class="auth-foot portal-login-foot">Powered by AXIOMBYTE HUB</div>
-  </div></div>
-</div>
+    <section class="qa-admission-card" id="studentLoginPanel" aria-labelledby="portalLoginFormTitle">
+      <div class="qa-card-header" id="admission-form">
+        <span>Admission Portal</span>
+        <h2 id="portalLoginFormTitle">Check your admission</h2>
+        <p id="loginFormSub">Select your school and enter your details to continue.</p>
+      </div>
 
+      <div class="field" id="f-school">
+        <label for="login-school">Select School</label>
+        <div class="login-input-shell login-school-shell">
+          <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.7V20h13V9.7"/><path d="M9 20v-5h6v5"/></svg></div>
+          <div class="login-school-picker" id="loginSchoolPicker">
+            <button class="login-school-trigger" id="loginSchoolTrigger" type="button" onclick="toggleLoginSchoolPicker()">
+              <span class="login-school-trigger-text" id="loginSchoolTriggerText">Loading schools...</span>
+              <svg class="login-school-trigger-caret" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 7 5 6 5-6"/></svg>
+            </button>
+            <div class="login-school-panel" id="loginSchoolPanel" hidden>
+              <span class="login-school-search-title">Search school</span>
+              <input id="loginSchoolSearch" class="login-school-search" type="text" placeholder="Search school..." oninput="filterLoginSchoolOptions(this.value)" onkeydown="handleLoginSchoolSearchKey(event)" autocomplete="off">
+              <div class="login-school-options" id="loginSchoolOptions"></div>
+            </div>
+            <select id="login-school" onchange="onLoginSchoolChange()" hidden aria-hidden="true" tabindex="-1"><option value="">Loading schools...</option></select>
+          </div>
+        </div>
+        <span class="err-msg" id="err-school">Please select your school.</span>
+      </div>
+
+      <div class="notice warn" id="admClosedBanner" style="display:none"><b>Admission closed.</b> This school is not accepting applications at the moment. Please contact the school office for details.</div>
+
+      <div class="field" id="f-index">
+        <label for="login-index">BECE Index Number</label>
+        <div class="login-input-shell">
+          <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h8"/><path d="M8 14h3"/></svg></div>
+          <input class="input-mono" id="login-index" placeholder="Example: 0101010101" maxlength="14" autocomplete="username">
+        </div>
+        <p class="form-help">Enter the index number exactly as it appears on your placement form.</p>
+        <span class="err-msg" id="err-index">We couldn't find this index number on the placement list.</span>
+      </div>
+
+      <div class="field" id="f-token">
+        <label for="login-token">Admission Token <span class="hint">(8 characters)</span></label>
+        <div class="login-token-row">
+          <div class="login-input-shell">
+            <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></svg></div>
+            <input class="input-mono" id="login-token" type="password" placeholder="Enter admission token" maxlength="8" autocomplete="current-password">
+            <button type="button" class="toggle-password" id="togglePassword" aria-label="Show admission token">Show</button>
+          </div>
+          <button class="btn btn-accent" id="buyTokenBtn" type="button" onclick="showScreen('s-purchase')">Buy token</button>
+        </div>
+        <span class="err-msg" id="err-token">That token doesn't match this index number. Check it, or retrieve it below.</span>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="loginBtn" type="button" onclick="doLogin()">Continue Admission <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+
+      <div class="qa-form-links">
+        <button class="qa-mini-link" type="button" onclick="showScreen('s-purchase')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M4 4h2l2.2 10.3a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L21 8H8.4"/></svg>Buy Token</button>
+        <button class="qa-mini-link" type="button" onclick="showScreen('s-retrieve')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 7h2a4 4 0 0 1 0 8h-2"/><path d="M9 17H7a4 4 0 1 1 0-8h2"/><path d="m8 12 8-8"/></svg>Retrieve Token</button>
+      </div>
+
+      <div class="qa-support-box">
+        <div class="qa-support-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 13a8 8 0 0 1 16 0"/><path d="M4 13v4a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2Z"/><path d="M20 13v4a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2Z"/><path d="M9 19h6"/></svg></div>
+        <div>
+          <strong>Need help?</strong>
+          <span>Call <a id="blueBannerHelpdeskPhoneLink" href="tel:0256744028" class="mono"><span id="blueBannerHelpdeskPhone">0256744028</span></a> or email <a id="blueBannerHelpdeskEmailLink" href="mailto:admissions@quickadmissiongh.com"><span id="blueBannerHelpdeskEmail">admissions@quickadmissiongh.com</span></a>.</span>
+          <span id="loginCharge" style="display:block;margin-top:4px">A service charge of GHS 30.00 is required.</span>
+          <span id="loginWelcomeTitle" style="display:none">Welcome to QuickAdmissionGH</span>
+          <span id="loginWelcomeSubtitle" style="display:none">Online Admission Portal</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <section class="admission-closed-view" id="admissionClosedView" aria-label="Admission closed" hidden>
+    <img class="admission-closed-image" src="admission-closed.png" alt="Admission closed. Thank you to all applicants and parents for your interest and support.">
+    <button class="btn btn-primary admission-closed-change" type="button" onclick="chooseAnotherLoginSchool()">Choose another school</button>
+  </section>
+
+  <div class="qa-tutorial-modal" id="tutorialModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
+    <div class="qa-tutorial-modal-overlay" data-close-tutorial></div>
+    <div class="qa-tutorial-modal-content">
+      <div class="qa-tutorial-modal-header">
+        <div><span class="qa-tutorial-label">Help Centre</span><h2 id="tutorialModalTitle">Admission Video Tutorials</h2><p>Watch the videos below to learn how to complete your online admission. Video files will be added later.</p></div>
+        <button type="button" class="qa-tutorial-close-btn" id="closeTutorialModal" aria-label="Close video tutorials">×</button>
+      </div>
+      <div class="qa-tutorial-video-grid">
+        <article class="qa-tutorial-video-card"><div class="qa-tutorial-video-frame">Video coming soon</div><div class="qa-tutorial-video-details"><span>Step 1</span><h3>How to Buy a Token</h3><p>Learn how to purchase an admission token before starting your application.</p></div></article>
+        <article class="qa-tutorial-video-card"><div class="qa-tutorial-video-frame">Video coming soon</div><div class="qa-tutorial-video-details"><span>Step 2</span><h3>How to Check Admission</h3><p>Learn how to select your school and verify your admission details.</p></div></article>
+        <article class="qa-tutorial-video-card"><div class="qa-tutorial-video-frame">Video coming soon</div><div class="qa-tutorial-video-details"><span>Step 3</span><h3>Complete and Print</h3><p>Learn how to complete the admission form and print your documents.</p></div></article>
+      </div>
+    </div>
+  </div>
+
+  <footer class="qa-site-footer">
+    <div class="qa-footer-inner"><p>© <span id="currentYear">2026</span> Quick Admission Ghana. All rights reserved.</p><p>Secure school admission portal</p></div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var currentYear=document.getElementById('currentYear');
+      if(currentYear) currentYear.textContent=new Date().getFullYear();
+      var tokenInput=document.getElementById('login-token');
+      var togglePassword=document.getElementById('togglePassword');
+      if(tokenInput&&togglePassword){
+        togglePassword.addEventListener('click',function(){
+          var isPassword=tokenInput.type==='password';
+          tokenInput.type=isPassword?'text':'password';
+          togglePassword.textContent=isPassword?'Hide':'Show';
+          togglePassword.setAttribute('aria-label',isPassword?'Hide admission token':'Show admission token');
+        });
+      }
+      var tutorialModal=document.getElementById('tutorialModal');
+      var openButtons=document.querySelectorAll('.open-tutorial');
+      var closeButton=document.getElementById('closeTutorialModal');
+      var overlay=tutorialModal?tutorialModal.querySelector('[data-close-tutorial]'):null;
+      var lastFocusedElement=null;
+      function openTutorialModal(){
+        if(!tutorialModal)return;
+        lastFocusedElement=document.activeElement;
+        tutorialModal.classList.add('is-open');
+        tutorialModal.setAttribute('aria-hidden','false');
+        document.body.classList.add('modal-open');
+        if(closeButton) closeButton.focus();
+      }
+      function closeTutorialModal(){
+        if(!tutorialModal)return;
+        tutorialModal.classList.remove('is-open');
+        tutorialModal.setAttribute('aria-hidden','true');
+        document.body.classList.remove('modal-open');
+        if(lastFocusedElement) lastFocusedElement.focus();
+      }
+      openButtons.forEach(function(button){button.addEventListener('click',openTutorialModal);});
+      if(closeButton) closeButton.addEventListener('click',closeTutorialModal);
+      if(overlay) overlay.addEventListener('click',closeTutorialModal);
+      document.addEventListener('keydown',function(event){
+        if(event.key==='Escape'&&tutorialModal&&tutorialModal.classList.contains('is-open')) closeTutorialModal();
+      });
+    });
+  </script>
+</div>
 <!-- ===== PURCHASE ===== -->
 <div class="screen" id="s-purchase">
   <div class="auth"><div class="auth-card">
@@ -2208,7 +2432,7 @@ function docProspectus(){
 }
 
 function gotoSuper(){ try{ if(window.parent&&window.parent!==window&&window.parent.qaShow){ window.parent.qaShow('super'); return; } }catch(e){} location.href='super-admin.html'; }
-function logout(){stopWatchDeletion();session=null;STU=null;activeStudentSessionKey='';clearStudentSession();writeSubmissionSuccess(null); showScreen('s-login');$('login-token').value='AS7K9X2Q';$('login-index').value='100000000026';}
+function logout(){stopWatchDeletion();session=null;STU=null;activeStudentSessionKey='';clearStudentSession();writeSubmissionSuccess(null); showScreen('s-login');$('login-token').value='';$('login-index').value='';}
 
 buildSteps();
 // Phone/contact fields: digits only, max 10
@@ -2632,9 +2856,4 @@ window.addEventListener('storage',function(evt){
 <footer class="portal-footer">Copyright &copy; 2026 AXIOMBYTE HUB. All rights reserved. - Version 1.0</footer>
 </body>
 </html>
-
-
-
-
-
 

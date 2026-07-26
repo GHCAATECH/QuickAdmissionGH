@@ -1671,3 +1671,158 @@ body .tpl-editor h2 {
     min-height:38px!important;
   }
 }
+
+/* =========================================================
+   Index/student portal hard override
+   Beats older #s-login rules embedded inside index.html.
+   ========================================================= */
+body,
+body #s-login,
+body #s-dashboard,
+body #s-login .auth,
+body #s-login .screen,
+body #s-login .portal-login-wrap,
+body #s-login .portal-login-shell,
+body #s-login .portal-login-info,
+body #s-login .portal-login-form,
+body #s-login .portal-info-item,
+body #s-login .portal-token-note,
+body #s-login .login-input-shell,
+body #s-login .login-school-panel,
+body #s-login .login-school-option,
+body #s-login .card,
+body #s-login .card2,
+body #s-login .hero-feat,
+body #s-login .submit-success,
+body #s-login .disc-modal {
+  background:#c0ebff!important;
+  background-image:none!important;
+  color:#002b4c!important;
+  border-color:#002b4c!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+
+body #s-login .portal-login-brand,
+body #s-login .ptopbar,
+body #s-login .welcome .wh {
+  background:#002b4c!important;
+  background-image:none!important;
+  color:#c0ebff!important;
+  border-color:#002b4c!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+
+body #s-login .portal-login-brand *,
+body #s-login .ptopbar *,
+body #s-login .welcome .wh *,
+body #s-login .portal-brand-helpdesk-label,
+body #s-login .portal-brand-helpdesk-links a,
+body #s-login .portal-brand-helpdesk-sep {
+  color:#c0ebff!important;
+  -webkit-text-fill-color:#c0ebff!important;
+}
+
+body #s-login h1,
+body #s-login h2,
+body #s-login h3,
+body #s-login p,
+body #s-login small,
+body #s-login label,
+body #s-login .portal-info-head h2,
+body #s-login .portal-form-head h2,
+body #s-login .portal-info-head p,
+body #s-login .portal-info-copy,
+body #s-login .portal-info-item b,
+body #s-login .portal-info-item span,
+body #s-login .portal-form-head p,
+body #s-login .portal-login-form .field label,
+body #s-login .portal-login-form .hint,
+body #s-login .portal-charge,
+body #s-login .portal-token-note,
+body #s-login .portal-login-foot,
+body #s-login .login-school-trigger,
+body #s-login .login-school-trigger-caret,
+body #s-login .login-school-option,
+body #s-login .login-school-option small,
+body #s-login .login-school-empty {
+  color:#002b4c!important;
+  -webkit-text-fill-color:#002b4c!important;
+  text-shadow:none!important;
+}
+
+body #s-login input,
+body #s-login select,
+body #s-login textarea,
+body #s-login .login-school-search {
+  background:#c0ebff!important;
+  background-image:none!important;
+  color:#002b4c!important;
+  border:1px solid #002b4c!important;
+  box-shadow:none!important;
+}
+
+body #s-login button,
+body #s-login .btn,
+body #s-login .btn-primary,
+body #s-login .btn-accent,
+body #s-login .btn-ghost,
+body #s-login #loginBtn,
+body #s-login #buyTokenBtn,
+body #s-login .portal-link-btn,
+body #s-login .pay-opt,
+body #s-login .corner-nav a,
+body #s-login .ptopbar .out,
+body #s-login .ptopbar .ham {
+  background:#002b4c!important;
+  background-image:none!important;
+  color:#c0ebff!important;
+  border:1px solid #002b4c!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+  transform:none!important;
+}
+
+body #s-login button *,
+body #s-login button svg,
+body #s-login .btn *,
+body #s-login .btn svg,
+body #s-login #loginBtn *,
+body #s-login #buyTokenBtn *,
+body #s-login .portal-link-btn *,
+body #s-login .portal-link-btn svg,
+body #s-login .pay-opt *,
+body #s-login .ptopbar .out *,
+body #s-login .ptopbar .ham * {
+  color:#c0ebff!important;
+  -webkit-text-fill-color:#c0ebff!important;
+  fill:currentColor!important;
+  stroke:currentColor!important;
+}
+
+body #s-login .psidebar,
+body #s-login .sidebar,
+body #s-login .pnav,
+body #s-login .sb-foot {
+  background:#002b4c!important;
+  background-image:none!important;
+  color:#c0ebff!important;
+  border-color:#002b4c!important;
+  box-shadow:none!important;
+}
+
+body #s-login .psidebar *,
+body #s-login .sidebar *,
+body #s-login .pnav button,
+body #s-login .pnav button * {
+  color:#c0ebff!important;
+  -webkit-text-fill-color:#c0ebff!important;
+}
+
+body #s-login .pnav button {
+  background:rgba(192,235,255,.08)!important;
+  background-image:none!important;
+  border:1px solid rgba(192,235,255,.35)!important;
+  box-shadow:none!important;
+}
