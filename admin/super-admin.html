@@ -1958,7 +1958,7 @@ async function fetchPlatformSmsHistory(){
 }
 
 async function loadSA(){
-  const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl]=await Promise.all([
+  const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl,claims]=await Promise.all([
     sb.from('schools').select('*').order('created_at'),
     sb.from('school_config').select('*'),
     sb.from('profiles').select('id,full_name,email,school_id,role,permissions'),
@@ -1969,8 +1969,20 @@ async function loadSA(){
     sb.from('programmes').select('id,name'),
     sb.from('placement_list').select('school_id,index_number,sms_contact'),
     sb.from('school_sms_templates').select('school_id,sms_enabled'),
+    sb.from('finance_claims').select('school_id,claim_number,students_claimed,created_at'),
   ]);
   const cfgBy={}; (cfg.data||[]).forEach(c=>cfgBy[c.school_id]=c);
+  const claimBy={};
+  if(!claims.error&&Array.isArray(claims.data)){
+    (claims.data||[]).forEach(function(row){
+      const sid=row.school_id;
+      if(!sid) return;
+      const item=claimBy[sid]||(claimBy[sid]={settled:0,count:0,settledAt:''});
+      item.settled+=(parseInt(row.students_claimed,10)||0);
+      item.count=Math.max(item.count,parseInt(row.claim_number,10)||0);
+      if((row.created_at||'')>item.settledAt) item.settledAt=row.created_at||'';
+    });
+  }
   const tplBy={}; (tmpl.data||[]).forEach(t=>tplBy[t.school_id]=t);
   const plcSmsBy={}; const plcCountBy={}; (plc.data||[]).forEach(function(row){ plcSmsBy[String(row.school_id)+'::'+String(row.index_number)]=row.sms_contact||''; plcCountBy[row.school_id]=(plcCountBy[row.school_id]||0)+1; });
   const adminBy={}; (prof.data||[]).forEach(p=>{ if(p.role==='school_admin'&&p.school_id) adminBy[p.school_id]=p.full_name; });
@@ -1985,9 +1997,9 @@ async function loadSA(){
     return {id,_id:s.id,code:s.code,school_code:schoolCode,schoolCode:schoolCode,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
       plan:sa_cap(s.subscription_plan||'standard'),students:(stu.data||[]).filter(x=>x.school_id===s.id).length,placements:plcCountBy[s.id]||0,
       admission:c.admission_status||'CLOSED',status:s.status,charge:Number(c.service_charge||0),
-      financeSettledStudents:settledStudentCount(c.finance_settled_students),
-      financeSettledAt:c.finance_settled_at||'',
-      financeClaimCount:financeClaimCountValue(c.finance_claim_count),
+      financeSettledStudents:settledStudentCount((claimBy[s.id]&&claimBy[s.id].settled)||0),
+      financeSettledAt:(claimBy[s.id]&&claimBy[s.id].settledAt)||'',
+      financeClaimCount:financeClaimCountValue((claimBy[s.id]&&claimBy[s.id].count)||0),
       academicYear:c.academic_year||'',
       headmasterTitle:s.headmaster_title||'Head of School',
       expiry:s.subscription_expiry||'-',email:s.email||'',phone:s.phone||'',smsEnabled:smsCfg.sms_enabled!==false,color:i%crestColors.length}; });

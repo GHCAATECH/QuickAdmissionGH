@@ -4410,7 +4410,7 @@ async function loadSchoolData(prof){
       : 'This account is not linked to a school — contact your administrator.');
     return;
   }
-  const [sch,cfg,progs,hs,cls,stu,plc,pay,sms,log,smsCfg]=await Promise.all([
+  const [sch,cfg,progs,hs,cls,stu,plc,pay,sms,log,smsCfg,claims]=await Promise.all([
     sb.from('schools').select('*').eq('id',myId),
     sb.from('school_config').select('*').eq('school_id',myId),
     sb.from('programmes').select('*').eq('school_id',myId).order('code'),
@@ -4422,8 +4422,16 @@ async function loadSchoolData(prof){
     fetchSchoolSmsHistory(myId),
     sb.from('activity_log').select('*').eq('school_id',myId).order('created_at',{ascending:false}),
     sb.from('school_sms_templates').select('*').eq('school_id',myId),
+    sb.from('finance_claims').select('claim_number,students_claimed,created_at').eq('school_id',myId),
   ]);
   SB_SCHOOL=(sch.data||[])[0]; SB_CFG=(cfg.data||[])[0]||{};
+  if(!claims.error&&Array.isArray(claims.data)){
+    const claimRows=claims.data||[];
+    const settled=claimRows.reduce(function(total,row){ return total+(parseInt(row.students_claimed,10)||0); },0);
+    const claimCount=claimRows.reduce(function(max,row){ return Math.max(max,parseInt(row.claim_number,10)||0); },0);
+    const settledAt=claimRows.reduce(function(latest,row){ const at=row.created_at||''; return at>latest?at:latest; },'');
+    Object.assign(SB_CFG,{finance_settled_students:settled,finance_claim_count:claimCount,finance_settled_at:settledAt||null});
+  }
   SB_SMS_SETTINGS=(smsCfg.data||[])[0]||{submission_message:DEFAULT_SUBMISSION_SMS_TEMPLATE,sms_enabled:true};
   if(SB_SCHOOL){ const nm=$('brandName'); if(nm) nm.textContent=SB_SCHOOL.name||'School Name'; }
   if(SB_SCHOOL&&SB_SCHOOL.crest_url){ SCHOOL_CREST=SB_SCHOOL.crest_url; const bm=$('brandCrest'); if(bm){bm.src=SCHOOL_CREST;bm.style.display='block';} const dl=$('brandDefaultLogo'); if(dl) dl.style.display='none'; const lt=$('brandLogoText'); if(lt) lt.style.display='none'; const pv=$('s_crest_prev'); if(pv){pv.src=SCHOOL_CREST;pv.style.display='block';} }
