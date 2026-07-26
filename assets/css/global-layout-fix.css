@@ -443,6 +443,7 @@ main > section:last-child:empty,
   body #s-login.screen.active {
     min-height: 0 !important;
     height: auto !important;
+    overscroll-behavior-y: none !important;
   }
 
   #app,
@@ -569,5 +570,6 @@ main > section:last-child:empty,
   body:has(#s-login.screen.active) {
     height: auto !important;
     min-height: 0 !important;
+    overscroll-behavior-y: none !important;
   }
 }
