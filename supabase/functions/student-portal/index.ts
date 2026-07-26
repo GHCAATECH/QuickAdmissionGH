@@ -155,21 +155,21 @@ async function submitApplication(
 }
 
 async function listDirectory(admin: ReturnType<typeof createClient>) {
-  const [schoolsRes, configsRes] = await Promise.all([
-    admin
-      .from("schools")
-      .select("id,name,school_code,code,phone,email,helpdesk,crest_url")
-      .order("name", { ascending: true }),
-    admin
-      .from("school_config")
-      .select("school_id,admission_status,academic_year,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload"),
-  ]);
+  const schoolsRes = await admin
+    .from("schools")
+    .select("id,name,school_code,code")
+    .order("name", { ascending: true });
 
   if (schoolsRes.error) throw new Error(schoolsRes.error.message || "Could not load schools.");
-  if (configsRes.error) throw new Error(configsRes.error.message || "Could not load school configuration.");
+
+  const configsRes = await admin
+    .from("school_config")
+    .select("school_id,admission_status,academic_year,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload");
+
+  const configs = configsRes.error ? [] : (configsRes.data ?? []);
 
   const configBySchool = new Map<string, JsonRecord>();
-  for (const row of configsRes.data ?? []) {
+  for (const row of configs) {
     const record = row as JsonRecord;
     const schoolId = safeText(record.school_id);
     if (!schoolId) continue;

@@ -2719,15 +2719,67 @@ function updateBlueBannerHelpdesk(){
   if(emailText) emailText.textContent=finalEmail;
   if(emailLink) emailLink.href='mailto:'+finalEmail;
 }
+async function loadSchoolsFromPublicTables(){
+  const schoolsRes=await sb
+    .from('schools')
+    .select('id,name,school_code,code')
+    .order('name',{ascending:true});
+  if(schoolsRes.error) throw schoolsRes.error;
+  let configs=[];
+  try{
+    const configsRes=await sb
+      .from('school_config')
+      .select('school_id,admission_status,academic_year,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload');
+    if(!configsRes.error) configs=configsRes.data||[];
+  }catch(e){}
+  const configBySchool={};
+  (configs||[]).forEach(function(cfg){
+    if(cfg&&cfg.school_id) configBySchool[String(cfg.school_id)]=cfg;
+  });
+  return (schoolsRes.data||[]).map(function(school){
+    const cfg=configBySchool[String(school.id)]||{};
+    return {
+      id:school.id,
+      school_id:school.id,
+      name:firstNonEmpty(school.name),
+      school_name:firstNonEmpty(school.name),
+      school_code:firstNonEmpty(school.school_code,school.code),
+      code:firstNonEmpty(school.code,school.school_code),
+      phone:firstNonEmpty(school.phone),
+      email:firstNonEmpty(school.email),
+      helpdesk:firstNonEmpty(school.helpdesk,cfg.helpdesk_line),
+      helpdesk_line:firstNonEmpty(cfg.helpdesk_line,school.helpdesk),
+      crest_url:firstNonEmpty(school.crest_url),
+      admission_status:firstNonEmpty(cfg.admission_status),
+      academic_year:firstNonEmpty(cfg.academic_year),
+      service_charge:Number(cfg.service_charge||0),
+      allow_passport_photo:Boolean(cfg.allow_passport_photo||false),
+      allow_house_selection:Boolean(cfg.allow_house_selection||false),
+      allow_class_selection:cfg.allow_class_selection!==false,
+      force_enrolment_upload:cfg.force_enrolment_upload!==false
+    };
+  });
+}
 async function loadSchools(){
   const ids=['login-school','p-school-sel','r-school'];
   const selected=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)?document.getElementById(id).value:'']));
   let rows=[];
+  let loadError=null;
   try{
     const {data,error}=await studentPortalRequest('directory',{});
     if(error) throw error;
     rows=Array.isArray(data&&data.schools)?data.schools:[];
-  }catch(e){}
+  }catch(e){
+    loadError=e;
+  }
+  if(!rows.length){
+    try{
+      rows=await loadSchoolsFromPublicTables();
+      loadError=null;
+    }catch(e){
+      loadError=loadError||e;
+    }
+  }
   SCHOOLS_LIST=rows.slice().sort((a,b)=>{
     const an=String(schoolField(a,['name','school_name'],'')||'');
     const bn=String(schoolField(b,['name','school_name'],'')||'');
@@ -2744,6 +2796,14 @@ async function loadSchools(){
     buildSchoolPickerOptions(key,'');
     syncSchoolPicker(key);
   });
+  if(loadError&&!SCHOOLS_LIST.length){
+    const msg='Could not load schools. Check your internet connection and refresh.';
+    ['loginSchoolOptions','purchaseSchoolOptions','retrieveSchoolOptions'].forEach(function(id){
+      const host=$(id);
+      if(host) host.innerHTML='<div class="login-school-empty">'+safeHtml(msg)+'</div>';
+    });
+    console.warn('School directory load failed',loadError);
+  }
   onLoginSchoolChange();
 }
 function schoolStatus(id){
