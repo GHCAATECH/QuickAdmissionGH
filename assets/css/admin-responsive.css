@@ -1,0 +1,658 @@
+/* =====================================================
+   QUICK ADMISSION GH
+   SHARED ADMIN RESPONSIVE LAYOUT PATCH
+   Applies to the existing .app/.sidebar/.main admin shell.
+===================================================== */
+
+:root {
+  --admin-primary: #002b4c;
+  --admin-primary-dark: #001619;
+  --admin-light: #c0ebff;
+  --admin-accent: #f59e71;
+  --admin-background: #c0ebff;
+  --admin-card: rgba(192, 235, 255, 0.5);
+  --admin-white: #ffffff;
+  --admin-border: #001619;
+  --sidebar-width: 280px;
+  --header-height: 76px;
+}
+
+html {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  color: var(--admin-primary);
+  background: var(--admin-background);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Main admin shell: supports both pasted class names and current project names. */
+.admin-layout,
+.app {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden !important;
+}
+
+.app {
+  grid-template-columns: minmax(220px, var(--sidebar-width)) minmax(0, 1fr);
+}
+
+.admin-main,
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  min-height: 100dvh;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+/* Sidebar */
+.admin-sidebar,
+.sidebar {
+  color: var(--admin-light);
+  background: var(--admin-primary) !important;
+  border-right: 2px solid var(--admin-border);
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-brand,
+.brand {
+  min-width: 0;
+  border-bottom: 2px solid var(--admin-border);
+}
+
+.brand-text,
+.brand > div:last-child {
+  min-width: 0;
+}
+
+.brand-text strong,
+.brand-text span,
+.brand-name,
+.brand-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-logo,
+.brand-mark {
+  color: var(--admin-light);
+  background: var(--admin-primary);
+  border: 1px solid rgba(192, 235, 255, 0.3);
+}
+
+.sidebar-close {
+  display: none;
+}
+
+.sidebar-link,
+.nav-item,
+.nav-parent,
+.nav-sub {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+}
+
+.sidebar-link span:last-child,
+.nav-item,
+.nav-parent,
+.nav-sub {
+  overflow-wrap: anywhere;
+}
+
+.sidebar-icon,
+.nav-item svg,
+.nav-parent svg,
+.nav-sub .bullet {
+  flex: 0 0 auto;
+}
+
+/* Header */
+.admin-header,
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  width: 100%;
+  min-height: var(--header-height);
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--admin-border);
+}
+
+.header-left,
+.header-actions,
+.topbar-right {
+  min-width: 0;
+}
+
+.page-heading,
+.pagetitle {
+  min-width: 0;
+}
+
+.page-heading h1,
+.pagetitle {
+  overflow-wrap: anywhere;
+}
+
+.page-heading p,
+.pagetitle small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-menu-button,
+.hamburger {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+}
+
+/* Content, cards, and grids */
+.admin-content,
+.content {
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+.admin-content > *,
+.content > *,
+.view,
+.panel,
+.stat,
+.metric,
+.admin-card,
+.dashboard-card,
+.content-card,
+.settings-card,
+.form-card,
+.table-card,
+.stat-card,
+.admin-section {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.panel,
+.stat,
+.metric,
+.admin-card,
+.dashboard-card,
+.content-card,
+.settings-card,
+.form-card,
+.table-card,
+.stat-card,
+.admin-section {
+  height: auto;
+}
+
+.admin-grid,
+.dashboard-grid,
+.stats-grid,
+.stat-grid,
+.form-grid,
+.settings-grid,
+.action-grid,
+.adm-cards,
+.qa-row,
+.cols,
+.chart-grid,
+.grid-2,
+.grid-3 {
+  width: 100%;
+  min-width: 0;
+}
+
+.grid-full {
+  grid-column: 1 / -1;
+}
+
+.grid-half {
+  grid-column: span 6;
+}
+
+.grid-third {
+  grid-column: span 4;
+}
+
+.grid-quarter {
+  grid-column: span 3;
+}
+
+/* Forms and toolbars */
+.form-row,
+.filter-row,
+.search-row,
+.toolbar,
+.action-toolbar,
+.card-header,
+.panel-head,
+.topbar,
+.topbar-right,
+.row-actions,
+.button-group,
+.action-buttons,
+.export-buttons,
+.filter-buttons {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.form-group,
+.field-group,
+.field {
+  min-width: 0;
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
+  min-height: 44px;
+}
+
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+button,
+.button,
+.btn,
+.action-button,
+.act,
+.qa,
+.tab,
+.rep-tab,
+.exp-btn {
+  max-width: 100%;
+  white-space: normal;
+}
+
+.button-group,
+.action-buttons,
+.export-buttons,
+.filter-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Responsive tables */
+.table-responsive,
+.table-wrapper,
+.data-table-wrapper,
+.tbl-wrap,
+.cls-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table,
+.table-wrapper table,
+.data-table-wrapper table,
+.tbl-wrap table,
+.cls-wrap table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+table th,
+table td {
+  white-space: nowrap;
+}
+
+.finance-settlement-table {
+  min-width: 1120px !important;
+}
+
+/* Footer */
+.admin-footer,
+body > footer {
+  width: 100%;
+  margin-top: auto;
+  text-align: center;
+}
+
+@media screen and (max-width: 1100px) {
+  .grid-quarter {
+    grid-column: span 6;
+  }
+
+  .content,
+  .admin-content {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .stat-grid,
+  .stats-grid,
+  .adm-cards,
+  .chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .cols,
+  .qa-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  :root {
+    --header-height: 68px;
+  }
+
+  html,
+  body {
+    width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  body.sidebar-open {
+    overflow: hidden !important;
+  }
+
+  .admin-layout,
+  .app {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100%;
+    min-height: 100dvh;
+  }
+
+  .admin-sidebar,
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 1100 !important;
+    width: min(86vw, 310px) !important;
+    max-width: calc(100vw - 24px);
+    height: 100vh !important;
+    height: 100dvh !important;
+    transform: translateX(-105%) !important;
+    transition: transform 0.25s ease !important;
+    box-shadow: 12px 0 30px rgba(0, 22, 25, 0.24);
+  }
+
+  .admin-sidebar.open,
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .sidebar-close {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sidebar-overlay,
+  .backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1050 !important;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 22, 25, 0.55) !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+  }
+
+  .sidebar-overlay.show,
+  .backdrop.show {
+    display: block !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .admin-main,
+  .main {
+    width: 100% !important;
+    margin-left: 0 !important;
+    min-width: 0;
+  }
+
+  .admin-header,
+  .topbar {
+    min-height: var(--header-height);
+    padding: 10px 12px !important;
+    gap: 10px;
+  }
+
+  .mobile-menu-button,
+  .hamburger {
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .page-heading h1,
+  .pagetitle {
+    font-size: 17px !important;
+  }
+
+  .page-heading p,
+  .pagetitle small {
+    max-width: 185px;
+    font-size: 11px !important;
+  }
+
+  .status-badge,
+  .clock {
+    display: none !important;
+  }
+
+  .topbar-right {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .topbar-right .btn,
+  .header-button {
+    min-height: 40px;
+    padding: 8px 11px !important;
+    font-size: 12px !important;
+  }
+
+  .content,
+  .admin-content {
+    padding: 14px 10px 22px !important;
+  }
+
+  .panel,
+  .stat,
+  .metric,
+  .admin-card,
+  .dashboard-card,
+  .content-card,
+  .settings-card,
+  .form-card,
+  .table-card,
+  .stat-card,
+  .admin-section {
+    padding: 15px 12px;
+    border-radius: 15px;
+  }
+
+  .admin-grid,
+  .dashboard-grid,
+  .stats-grid,
+  .stat-grid,
+  .form-grid,
+  .settings-grid,
+  .action-grid,
+  .adm-cards,
+  .chart-grid,
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px;
+  }
+
+  .grid-full,
+  .grid-half,
+  .grid-third,
+  .grid-quarter {
+    grid-column: 1 / -1;
+  }
+
+  .form-row,
+  .filter-row,
+  .search-row,
+  .toolbar,
+  .action-toolbar,
+  .card-header,
+  .panel-head {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .form-group,
+  .field-group,
+  .field {
+    width: 100%;
+    flex: none;
+  }
+
+  .button-group,
+  .action-buttons,
+  .export-buttons,
+  .filter-buttons {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .button-group button,
+  .action-buttons button,
+  .export-buttons button,
+  .filter-buttons button,
+  .button-group .btn,
+  .action-buttons .btn,
+  .row-actions .btn,
+  .row-actions .act {
+    width: 100%;
+  }
+
+  .row-actions {
+    flex-wrap: wrap;
+    justify-content: stretch !important;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .table-responsive,
+  .table-wrapper,
+  .data-table-wrapper,
+  .tbl-wrap,
+  .cls-wrap {
+    width: 100%;
+    overflow-x: auto !important;
+  }
+
+  .table-responsive table,
+  .table-wrapper table,
+  .data-table-wrapper table,
+  .tbl-wrap table,
+  .cls-wrap table {
+    min-width: 720px;
+  }
+
+  .admin-footer,
+  body > footer {
+    padding: 16px 12px max(16px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .admin-header,
+  .topbar {
+    gap: 8px;
+  }
+
+  .header-left,
+  .topbar-left {
+    gap: 8px;
+  }
+
+  .mobile-menu-button,
+  .hamburger {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .page-heading h1,
+  .pagetitle {
+    font-size: 15px !important;
+  }
+
+  .page-heading p,
+  .pagetitle small {
+    max-width: 135px;
+  }
+
+  .topbar-right .btn,
+  .header-button {
+    padding: 8px 9px !important;
+    font-size: 11px !important;
+  }
+
+  .content,
+  .admin-content {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}

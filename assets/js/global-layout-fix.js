@@ -83,7 +83,7 @@ function removeInvalidInlineHeights() {
  * This protects against legacy page CSS like html,body{overflow:hidden}.
  */
 function forceScrollableLayout() {
-  document.documentElement.dataset.qaLayoutFix = "20260726-layout-fix-3";
+  document.documentElement.dataset.qaLayoutFix = "20260726-layout-fix-4";
 
   document.documentElement.style.setProperty("height", "auto", "important");
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");

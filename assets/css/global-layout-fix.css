@@ -210,6 +210,8 @@ body > footer {
 .table-wrapper,
 .data-table-wrapper,
 .table-wrap,
+.tbl-wrap,
+.cls-wrap,
 .panel:has(table) {
   display: block;
   width: 100%;
