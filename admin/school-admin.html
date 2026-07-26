@@ -5082,7 +5082,7 @@ async function renderUsers(){
     const me=u.id===SB_UID; const owner=u.permissions==null; const coAdmin=isPermCoAdmin(u.permissions); const locked=owner||coAdmin;
     const acts=me?'<span style="color:var(--muted);font-size:12px">You</span>':
       `<div class="row-actions"><button class="act" onclick="openUserPerms('${u.id}')" ${locked?'disabled title="'+(owner?'Owner has full access':'Co-admin access is managed from the owner account')+'"':''}>Privileges</button><button class="act" onclick="resetUserPwd('${u.id}')">Reset</button><button class="act danger" onclick="deleteUser('${u.id}')">Delete</button></div>`;
-    return `<tr><td class="nm">${safeHtml(u.full_name,'&mdash;')}${me?' <span class="pill" style="background:var(--surface-2);color:var(--ink-soft)">me</span>':''}</td><td class="mono">${safeHtml(u.email,'&mdash;')}</td><td>${permSummary(u.permissions)}</td><td class="mono">${safeHtml((u.created_at||'').slice(0,10))}</td><td>${acts}</td></tr>`;
+    return `<tr><td class="nm">${safeHtml(u.full_name,'&mdash;')}${me?' <span class="pill" style="background:#002B4C!important;color:#C0EBFF!important;border:1px solid #002B4C!important">me</span>':''}</td><td class="mono">${safeHtml(u.email,'&mdash;')}</td><td>${permSummary(u.permissions)}</td><td class="mono">${safeHtml((u.created_at||'').slice(0,10))}</td><td>${acts}</td></tr>`;
   }).join(''):emptyRow(5,'No users yet. Add one to let staff sign in.');
 }
 function toggleUserCreateMode(){
