@@ -79,6 +79,55 @@ function removeInvalidInlineHeights() {
 }
 
 /**
+ * Force the document roots and app shells to allow page scrolling.
+ * This protects against legacy page CSS like html,body{overflow:hidden}.
+ */
+function forceScrollableLayout() {
+  document.documentElement.dataset.qaLayoutFix = "20260726-layout-fix-3";
+
+  document.documentElement.style.setProperty("height", "auto", "important");
+  document.documentElement.style.setProperty("overflow-x", "hidden", "important");
+  document.documentElement.style.setProperty("overflow-y", "auto", "important");
+
+  if (document.body && !document.body.classList.contains("modal-open")) {
+    document.body.style.setProperty("height", "auto", "important");
+    document.body.style.setProperty("overflow-x", "hidden", "important");
+    document.body.style.setProperty("overflow-y", "auto", "important");
+  }
+
+  const shellSelectors = [
+    "#app",
+    ".app",
+    ".app-shell",
+    ".app-wrapper",
+    ".page-wrapper",
+    ".layout-wrapper",
+    ".main-wrapper",
+    ".dashboard-wrapper",
+    ".portal-wrapper",
+    ".admin-wrapper",
+    ".student-wrapper",
+    "main",
+    ".main",
+    ".main-content",
+    ".page-content",
+    ".content",
+    ".content-wrapper",
+    ".dashboard-content",
+    ".portal-content",
+    ".admin-content",
+    ".student-content",
+  ];
+
+  document.querySelectorAll(shellSelectors.join(",")).forEach((element) => {
+    element.style.setProperty("height", "auto", "important");
+    element.style.setProperty("max-height", "none", "important");
+    element.style.setProperty("overflow-x", "hidden", "important");
+    element.style.setProperty("overflow-y", "visible", "important");
+  });
+}
+
+/**
  * Hide empty elements that may be adding large space.
  */
 function removeEmptyLayoutBlocks() {
@@ -102,12 +151,13 @@ function removeEmptyLayoutBlocks() {
 function initialiseLayoutFix() {
   removeInvalidInlineHeights();
   removeEmptyLayoutBlocks();
+  forceScrollableLayout();
 
   document.documentElement.style.removeProperty("height");
   if (document.body) {
-    document.body.style.removeProperty("height");
     document.body.style.removeProperty("min-height");
   }
+  forceScrollableLayout();
 }
 
 document.addEventListener("DOMContentLoaded", initialiseLayoutFix);
