@@ -83,7 +83,7 @@ function removeInvalidInlineHeights() {
  * This protects against legacy page CSS like html,body{overflow:hidden}.
  */
 function forceScrollableLayout() {
-  document.documentElement.dataset.qaLayoutFix = "20260726-layout-fix-5";
+  document.documentElement.dataset.qaLayoutFix = "20260726-layout-fix-6";
 
   document.documentElement.style.setProperty("height", "auto", "important");
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");
@@ -127,11 +127,21 @@ function forceScrollableLayout() {
   });
 
   document
-    .querySelectorAll("#s-login .qa-page-shell, #s-login .qa-hero-panel")
+    .querySelectorAll("#s-login .qa-page-shell")
     .forEach((element) => {
+      element.style.setProperty("align-items", "start", "important");
       element.style.setProperty("max-height", "none", "important");
       element.style.setProperty("overflow-y", "visible", "important");
     });
+
+  document.querySelectorAll("#s-login .qa-hero-panel").forEach((element) => {
+    element.style.setProperty("align-self", "start", "important");
+    element.style.setProperty("height", "auto", "important");
+    element.style.setProperty("max-height", "none", "important");
+    element.style.setProperty("overflow-x", "hidden", "important");
+    element.style.setProperty("overflow-y", "hidden", "important");
+    element.style.setProperty("scrollbar-width", "none", "important");
+  });
 }
 
 /**

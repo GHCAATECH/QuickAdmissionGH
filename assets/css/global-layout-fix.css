@@ -261,19 +261,30 @@ table {
 }
 
 /* Homepage login split layout: avoid a second scrollbar inside the peach/cream hero panel. */
-#s-login .qa-page-shell,
-#s-login .qa-hero-panel,
-#s-login .qa-admission-card {
+body #s-login .qa-page-shell,
+body #s-login .qa-hero-panel,
+body #s-login .qa-admission-card {
+  height: auto !important;
   max-height: none !important;
 }
 
-#s-login .qa-page-shell,
-#s-login .qa-hero-panel {
+body #s-login .qa-page-shell {
+  align-items: start !important;
   overflow-y: visible !important;
 }
 
-#s-login .qa-hero-panel {
+body #s-login .qa-hero-panel {
   overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  align-self: start !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+body #s-login .qa-hero-panel::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
 }
 
 .empty-section:empty,
