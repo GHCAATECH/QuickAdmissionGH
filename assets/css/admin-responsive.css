@@ -151,6 +151,23 @@ iframe {
   border-bottom: 2px solid var(--admin-border);
 }
 
+/* Login/auth screens must sit above the admin shell.
+   This prevents the dashboard topbar from floating over the mobile login page. */
+body.auth-booting .app,
+body.auth-gate-visible .app,
+body:has(#authGate) .app {
+  display: none !important;
+}
+
+#authGate,
+#authGate.gate-screen {
+  z-index: 5000 !important;
+}
+
+#bootSplash {
+  z-index: 5010 !important;
+}
+
 .header-left,
 .header-actions,
 .topbar-right {
