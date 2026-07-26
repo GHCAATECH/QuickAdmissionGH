@@ -3834,11 +3834,11 @@ function isDesktopSidebar(){return window.matchMedia('(min-width: 1025px)').matc
 function closeSidebar(collapseDesktop){
   $('sidebar').classList.remove('open');$('backdrop').classList.remove('show');
   const app=document.querySelector('.app');
-  if(collapseDesktop&&app&&isDesktopSidebar()) app.classList.add('sidebar-collapsed');
+  if(collapseDesktop&&app&&isDesktopSidebar()){app.classList.add('sidebar-hidden');app.classList.remove('sidebar-collapsed');}
 }
 $('hamburger').addEventListener('click',()=>{
   const app=document.querySelector('.app');
-  if(app&&isDesktopSidebar()){app.classList.toggle('sidebar-collapsed');return;}
+  if(app&&isDesktopSidebar()){app.classList.toggle('sidebar-hidden');app.classList.remove('sidebar-collapsed');return;}
   $('sidebar').classList.add('open');$('backdrop').classList.add('show');
 });
 $('backdrop').addEventListener('click',closeSidebar);
@@ -5723,11 +5723,11 @@ function isDesktopSidebar(){return window.matchMedia('(min-width: 1025px)').matc
 function closeSidebar(collapseDesktop){
   $('sidebar').classList.remove('open');$('backdrop').classList.remove('show');
   const app=document.querySelector('.app');
-  if(collapseDesktop&&app&&isDesktopSidebar()) app.classList.add('sidebar-collapsed');
+  if(collapseDesktop&&app&&isDesktopSidebar()){app.classList.add('sidebar-hidden');app.classList.remove('sidebar-collapsed');}
 }
 $('hamburger').addEventListener('click',()=>{
   const app=document.querySelector('.app');
-  if(app&&isDesktopSidebar()){app.classList.toggle('sidebar-collapsed');return;}
+  if(app&&isDesktopSidebar()){app.classList.toggle('sidebar-hidden');app.classList.remove('sidebar-collapsed');return;}
   $('sidebar').classList.add('open');$('backdrop').classList.add('show');
 });
 $('backdrop').addEventListener('click',closeSidebar);
@@ -6273,6 +6273,6 @@ function qaShow(t){
   .qa-disc-mark{background:#002B4C!important;color:#C0EBFF!important;border-color:#002B4C!important}
   .qa-disc-overlay::before,.qa-disc-overlay::after{display:none!important;content:none!important}
 </style>
-<link rel="stylesheet" href="professional-theme.css?v=20260726-sidebar-hide">
+<link rel="stylesheet" href="professional-theme.css?v=20260726-sidebar-fullhide">
 </body>
 </html>

@@ -462,6 +462,8 @@
   @media(min-width:1025px){
     .hamburger{display:flex}
     .app{transition:grid-template-columns .25s ease}
+    .app.sidebar-hidden{grid-template-columns:minmax(0,1fr)}
+    .app.sidebar-hidden .sidebar{display:none!important}
     .app.sidebar-collapsed{grid-template-columns:88px minmax(0,1fr)}
     .app.sidebar-collapsed .sidebar{overflow-x:hidden}
     .app.sidebar-collapsed .brand{justify-content:center;padding-left:12px;padding-right:12px}
@@ -609,7 +611,7 @@
   thead th,.sec-h{background:#002B4C!important;color:#C0EBFF!important;border-color:#002B4C!important}
   thead th *,.sec-h *{color:#C0EBFF!important;-webkit-text-fill-color:#C0EBFF!important}
 </style>
-<link rel="stylesheet" href="../professional-theme.css?v=20260726-sidebar-hide">
+<link rel="stylesheet" href="../professional-theme.css?v=20260726-sidebar-fullhide">
 </head>
 <body class="auth-booting">
 <div class="app">
@@ -1710,14 +1712,15 @@ document.addEventListener('input',function(e){
 function closeSidebar(collapseDesktop){
   $('sidebar').classList.remove('open');$('backdrop').classList.remove('show');
   const app=document.querySelector('.app');
-  if(collapseDesktop&&app&&isDesktopSidebar()) app.classList.add('sidebar-collapsed');
+  if(collapseDesktop&&app&&isDesktopSidebar()){app.classList.add('sidebar-hidden');app.classList.remove('sidebar-collapsed');}
 }
 function isDesktopSidebar(){return window.matchMedia('(min-width: 1025px)').matches;}
 function toggleSidebar(){
   const app=document.querySelector('.app');
   if(!app) return;
   if(isDesktopSidebar()){
-    app.classList.toggle('sidebar-collapsed');
+    app.classList.toggle('sidebar-hidden');
+    app.classList.remove('sidebar-collapsed');
     return;
   }
   $('sidebar').classList.toggle('open');
@@ -1730,7 +1733,7 @@ window.addEventListener('resize',function(){
     closeSidebar(false);
   }else{
     const app=document.querySelector('.app');
-    if(app) app.classList.remove('sidebar-collapsed');
+    if(app){app.classList.remove('sidebar-collapsed');app.classList.remove('sidebar-hidden');}
   }
 });
 

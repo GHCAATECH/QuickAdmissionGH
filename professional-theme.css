@@ -1484,6 +1484,26 @@ body .side-menu {
   color:var(--text-light)!important;
 }
 
+@media (min-width:1025px) {
+  body .app.sidebar-hidden {
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+
+  body .app.sidebar-hidden .sidebar,
+  body .app.sidebar-hidden .psidebar,
+  body .app.sidebar-hidden .main-sidebar,
+  body .app.sidebar-hidden .side-menu {
+    display:none!important;
+  }
+
+  body .app.sidebar-hidden .main,
+  body .app.sidebar-hidden .content,
+  body .app.sidebar-hidden .dashboard-content {
+    width:100%!important;
+    max-width:none!important;
+  }
+}
+
 body .sidebar *,
 body .psidebar *,
 body .main-sidebar *,
