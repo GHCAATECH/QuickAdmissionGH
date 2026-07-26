@@ -58,7 +58,7 @@
   --primary-soft:rgba(192,235,255,.55)!important;
   --accent-soft:rgba(245,158,113,.22)!important;
   --sb:#f59e71!important;
-  --sb-text:#002b4c!important;
+  --sb-text:#c0ebff!important;
   --sb-active:#002b4c!important;
   --muted-green:#002b4c!important;
 
@@ -139,8 +139,8 @@ aside,
 .sidebar-section-title,
 .sidebar-menu-label,
 .sb-foot small {
-  color:var(--text-primary)!important;
-  -webkit-text-fill-color:var(--text-primary)!important;
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
 }
 
 .sidebar a,
@@ -153,7 +153,7 @@ aside,
 .psidebar .pnav button,
 .pnav button {
   background:transparent!important;
-  color:var(--text-primary)!important;
+  color:var(--text-light)!important;
   border:1px solid transparent!important;
   border-radius:var(--radius-md)!important;
   box-shadow:none!important;
@@ -169,8 +169,8 @@ aside,
 .side-menu a *,
 .psidebar .pnav button *,
 .pnav button * {
-  color:var(--text-primary)!important;
-  -webkit-text-fill-color:var(--text-primary)!important;
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
 }
 
 .sidebar a:hover,
@@ -228,8 +228,8 @@ aside,
 .sidebar-section-title,
 .sidebar-menu-label,
 .nav-label {
-  color:var(--text-primary)!important;
-  -webkit-text-fill-color:var(--text-primary)!important;
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
 }
 
 /* Top navigation */
@@ -837,7 +837,7 @@ aside {
 .side-menu a,
 .pnav button {
   background:transparent!important;
-  color:var(--text-primary)!important;
+  color:var(--text-light)!important;
   border-color:transparent!important;
   border-radius:var(--radius-md)!important;
   font-weight:600!important;
@@ -852,8 +852,8 @@ aside {
 .main-sidebar a *,
 .side-menu a *,
 .pnav button * {
-  color:var(--text-primary)!important;
-  -webkit-text-fill-color:var(--text-primary)!important;
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
 }
 
 .sidebar a:hover,
@@ -1262,6 +1262,353 @@ body>footer,
   background:#ffffff!important;
   color:var(--text-primary)!important;
   border-top:1px solid var(--border)!important;
+}
+
+/* =========================================================
+   Final button cleanup: remove old per-button colours
+   ========================================================= */
+body button,
+body .btn,
+body .btn.btn-primary,
+body .btn.btn-secondary,
+body .btn.btn-success,
+body .btn.btn-info,
+body .btn.btn-warning,
+body .btn.btn-danger,
+body .btn.btn-dark,
+body .btn.btn-ghost,
+body .btn.btn-accent,
+body .btn.btn-grn,
+body .btn.btn-verify,
+body .btn.btn-save,
+body .btn.btn-delete,
+body .icon-btn,
+body .icon-btn.btn-ghost,
+body .hamburger,
+body .act,
+body .act.danger,
+body .qa,
+body .modal-x,
+body .sb-logout,
+body .exp-btn,
+body .verify-fab,
+body .pay-opt,
+body .corner-nav a,
+body .qa-tab,
+body .qa-disc-btn,
+body .admin-login-button,
+body .admin-login-button.btn,
+body .finance-request-btn,
+body input[type="button"],
+body input[type="submit"],
+body input[type="reset"],
+body #loginBtn,
+body #buyTokenBtn,
+body #s-login #loginBtn,
+body #s-login #buyTokenBtn,
+body #s-login .portal-link-btn,
+body .ptopbar .out,
+body .ptopbar .ham,
+body .sms-vars button,
+body .rep-actions button {
+  background:var(--primary)!important;
+  background-image:none!important;
+  color:var(--text-light)!important;
+  border:1px solid var(--border)!important;
+  border-radius:var(--radius-md)!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+  filter:none!important;
+  transform:none!important;
+}
+
+body button *,
+body button svg,
+body .btn *,
+body .btn svg,
+body .btn.btn-primary *,
+body .btn.btn-secondary *,
+body .btn.btn-success *,
+body .btn.btn-info *,
+body .btn.btn-warning *,
+body .btn.btn-danger *,
+body .btn.btn-dark *,
+body .btn.btn-ghost *,
+body .btn.btn-accent *,
+body .btn.btn-grn *,
+body .btn.btn-verify *,
+body .btn.btn-save *,
+body .btn.btn-delete *,
+body .icon-btn *,
+body .icon-btn svg,
+body .hamburger *,
+body .hamburger svg,
+body .act *,
+body .qa *,
+body .modal-x *,
+body .sb-logout *,
+body .sb-logout svg,
+body .exp-btn *,
+body .verify-fab *,
+body .pay-opt *,
+body .corner-nav a *,
+body .qa-tab *,
+body .qa-disc-btn *,
+body .admin-login-button *,
+body .finance-request-btn *,
+body #loginBtn *,
+body #buyTokenBtn *,
+body #s-login #loginBtn *,
+body #s-login #buyTokenBtn *,
+body #s-login .portal-link-btn *,
+body .ptopbar .out *,
+body .ptopbar .ham *,
+body .sms-vars button *,
+body .rep-actions button * {
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
+  fill:currentColor!important;
+  stroke:currentColor!important;
+}
+
+body button:hover,
+body .btn:hover,
+body .btn.btn-primary:hover,
+body .btn.btn-secondary:hover,
+body .btn.btn-success:hover,
+body .btn.btn-info:hover,
+body .btn.btn-warning:hover,
+body .btn.btn-danger:hover,
+body .btn.btn-dark:hover,
+body .btn.btn-ghost:hover,
+body .btn.btn-accent:hover,
+body .btn.btn-grn:hover,
+body .btn.btn-verify:hover,
+body .btn.btn-save:hover,
+body .btn.btn-delete:hover,
+body .icon-btn:hover,
+body .icon-btn.btn-ghost:hover,
+body .hamburger:hover,
+body .act:hover,
+body .act.danger:hover,
+body .qa:hover,
+body .modal-x:hover,
+body .sb-logout:hover,
+body .exp-btn:hover,
+body .verify-fab:hover,
+body .pay-opt:hover,
+body .corner-nav a:hover,
+body .qa-tab:hover,
+body .qa-disc-btn:hover,
+body .admin-login-button:hover,
+body .finance-request-btn:hover,
+body input[type="button"]:hover,
+body input[type="submit"]:hover,
+body input[type="reset"]:hover,
+body #loginBtn:hover,
+body #buyTokenBtn:hover,
+body #s-login #loginBtn:hover,
+body #s-login #buyTokenBtn:hover,
+body #s-login .portal-link-btn:hover,
+body .ptopbar .out:hover,
+body .ptopbar .ham:hover,
+body .sms-vars button:hover,
+body .rep-actions button:hover {
+  background:var(--primary-hover)!important;
+  background-image:none!important;
+  color:var(--text-white)!important;
+  border-color:var(--border)!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+  filter:none!important;
+  transform:none!important;
+}
+
+/* Sidebar menu buttons are navigation, not normal action buttons. */
+body .sidebar .nav-item,
+body .sidebar .nav-parent,
+body .sidebar .nav-sub,
+body .psidebar .pnav button,
+body .pnav button {
+  background:transparent!important;
+  background-image:none!important;
+  color:var(--text-light)!important;
+  border:1px solid transparent!important;
+  box-shadow:none!important;
+}
+
+body .sidebar .nav-item *,
+body .sidebar .nav-parent *,
+body .sidebar .nav-sub *,
+body .psidebar .pnav button *,
+body .pnav button * {
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
+}
+
+body .sidebar .nav-item:hover,
+body .sidebar .nav-parent:hover,
+body .sidebar .nav-sub:hover,
+body .sidebar .nav-item.active,
+body .sidebar .nav-parent.active,
+body .sidebar .nav-sub.active,
+body .psidebar .pnav button:hover,
+body .psidebar .pnav button.active,
+body .pnav button:hover,
+body .pnav button.active {
+  background:var(--primary)!important;
+  background-image:none!important;
+  color:var(--text-light)!important;
+  border-color:var(--border)!important;
+}
+
+body .sidebar .nav-item:hover *,
+body .sidebar .nav-parent:hover *,
+body .sidebar .nav-sub:hover *,
+body .sidebar .nav-item.active *,
+body .sidebar .nav-parent.active *,
+body .sidebar .nav-sub.active *,
+body .psidebar .pnav button:hover *,
+body .psidebar .pnav button.active *,
+body .pnav button:hover *,
+body .pnav button.active * {
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
+}
+
+/* Sidebar text, admin logo, admission badge and template page fixes */
+body .sidebar,
+body .psidebar,
+body .main-sidebar,
+body .side-menu {
+  color:var(--text-light)!important;
+}
+
+body .sidebar *,
+body .psidebar *,
+body .main-sidebar *,
+body .side-menu *,
+body .brand-name,
+body .brand-sub,
+body .nav-label,
+body .sidebar-section-title,
+body .sidebar-menu-label,
+body .sb-foot small {
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
+}
+
+body .sidebar .brand-mark,
+body .brand-mark,
+body .sidebar-logo,
+body .sidebar .brand-default-logo {
+  background:#ffffff!important;
+  color:var(--primary)!important;
+  border:1px solid var(--border)!important;
+  box-shadow:none!important;
+}
+
+body .sidebar .brand-mark *,
+body .brand-mark *,
+body .brand-logo-text,
+body .sidebar .brand-logo-text {
+  color:var(--primary)!important;
+  -webkit-text-fill-color:var(--primary)!important;
+}
+
+body .brand-mark img,
+body .brand-default-logo {
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+}
+
+body .adm-badge,
+body .adm-badge.open,
+body .adm-badge.closed {
+  background:var(--primary)!important;
+  background-image:none!important;
+  color:var(--text-light)!important;
+  border:1px solid var(--border)!important;
+  box-shadow:none!important;
+}
+
+body .adm-badge *,
+body .adm-badge.open *,
+body .adm-badge.closed * {
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
+}
+
+body .adm-badge .d,
+body .adm-badge.open .d,
+body .adm-badge.closed .d {
+  background:var(--text-light)!important;
+  box-shadow:none!important;
+}
+
+body #tplCard,
+body .tpl-toolbar,
+body .tpl-fieldbar {
+  background:var(--card-bg)!important;
+  color:var(--text-primary)!important;
+  border-color:var(--border)!important;
+}
+
+body .tpl-toolbar button,
+body .tpl-fieldbar button,
+body .tpl-vars button {
+  background:var(--primary)!important;
+  background-image:none!important;
+  color:var(--text-light)!important;
+  border:1px solid var(--border)!important;
+  box-shadow:none!important;
+}
+
+body .tpl-toolbar button *,
+body .tpl-fieldbar button *,
+body .tpl-vars button * {
+  color:var(--text-light)!important;
+  -webkit-text-fill-color:var(--text-light)!important;
+}
+
+body .tpl-toolbar button:hover,
+body .tpl-fieldbar button:hover,
+body .tpl-vars button:hover {
+  background:var(--primary-hover)!important;
+  color:var(--text-white)!important;
+}
+
+body .tpl-toolbar select {
+  background:#ffffff!important;
+  color:var(--text-primary)!important;
+  border:1px solid var(--border)!important;
+}
+
+body .tpl-page {
+  background:var(--body-bg)!important;
+  border-color:var(--border)!important;
+}
+
+body .tpl-editor {
+  background:#ffffff!important;
+  color:var(--text-primary)!important;
+  border:1px solid var(--border)!important;
+  box-shadow:var(--shadow)!important;
+}
+
+body .tpl-editor h1,
+body .tpl-editor h2,
+body .tpl-editor h3,
+body .tpl-editor p,
+body .tpl-editor td,
+body .tpl-editor li {
+  color:var(--text-primary)!important;
+}
+
+body .tpl-editor h2 {
+  border-bottom-color:var(--primary)!important;
 }
 
 /* Remove decorative animation layers */
