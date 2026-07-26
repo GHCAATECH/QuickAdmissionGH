@@ -437,6 +437,14 @@ main > section:last-child:empty,
     touch-action: pan-y;
   }
 
+  /* The public login screen contains its own footer. Keeping the generic
+     viewport-sized screen min-height here leaves a large empty panel below
+     that footer on short mobile pages and makes scrolling appear endless. */
+  body #s-login.screen.active {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
   #app,
   .app,
   .app-shell,
