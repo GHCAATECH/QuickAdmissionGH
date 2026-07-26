@@ -106,17 +106,27 @@ function studentMatchesQuery(student: JsonRecord, query: string) {
   return haystack.includes(q);
 }
 
-function residentialStatus(student: JsonRecord) {
+function residentialStatus(student: JsonRecord, placement: JsonRecord) {
   const records = student.records && typeof student.records === "object" && !Array.isArray(student.records)
     ? student.records as JsonRecord
     : {};
-  return safeText(student.residential_status || records.residential_status || records.boarding_status);
+  return safeText(
+    student.residential_status ||
+    records.residential_status ||
+    records.residential ||
+    records.residentialStatus ||
+    records.boarding_status ||
+    placement.residential_status ||
+    placement.residential ||
+    placement.boarding_status
+  );
 }
 
-function toStudentSummary(student: JsonRecord, maps: { programmes: Map<string,string>; classes: Map<string,string>; houses: Map<string,string>; users: Map<string,string>; schoolName: string; schoolCrest: string; academicYear: string; schoolCode: string; }) {
+function toStudentSummary(student: JsonRecord, maps: { programmes: Map<string,string>; classes: Map<string,string>; houses: Map<string,string>; users: Map<string,string>; placements: Map<string,JsonRecord>; schoolName: string; schoolCrest: string; academicYear: string; schoolCode: string; }) {
   const records = student.records && typeof student.records === "object" && !Array.isArray(student.records)
     ? student.records as JsonRecord
     : {};
+  const placement = maps.placements.get(safeText(student.bece_index)) ?? {};
   const verifiedById = safeText(student.verified_by);
   return {
     id: safeText(student.id),
@@ -128,12 +138,19 @@ function toStudentSummary(student: JsonRecord, maps: { programmes: Map<string,st
     bece_index: safeText(student.bece_index),
     application_number: safeText(student.admission_no),
     permanent_admission_number: safeText(student.permanent_admission_number),
-    gender: safeText(student.gender),
-    programme: maps.programmes.get(safeText(student.programme_id)) ?? safeText(records.programme),
+    gender: safeText(student.gender || records.gender || placement.gender),
+    programme: maps.programmes.get(safeText(student.programme_id)) ?? safeText(
+      student.programme ||
+      records.programme ||
+      records.programme_name ||
+      records.placed_programme ||
+      placement.programme ||
+      placement.programme_name
+    ),
     class_name: maps.classes.get(safeText(student.class_id)) ?? safeText(records.class_name),
-    residential_status: residentialStatus(student),
+    residential_status: residentialStatus(student, placement),
     house_name: maps.houses.get(safeText(student.house_id)),
-    student_phone: studentText(records,["student_phone","phone_number","sms_contact"]),
+    student_phone: studentText(records,["student_phone","phone_number","sms_contact"]) || safeText(placement.sms_contact),
     guardian_contact: studentText(records,["guardian_phone","guardian_contact","father_phone","mother_phone"]) || safeText(student.parent_phone),
     registration_date: safeText(student.submitted_at || student.created_at).slice(0,10),
     verification_status: safeText(student.verification_status || "pending") || "pending",
@@ -152,13 +169,14 @@ function toStudentSummary(student: JsonRecord, maps: { programmes: Map<string,st
 }
 
 async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolId: string) {
-  const [schoolRes, cfgRes, programmesRes, classesRes, housesRes, usersRes] = await Promise.all([
+  const [schoolRes, cfgRes, programmesRes, classesRes, housesRes, usersRes, placementsRes] = await Promise.all([
     admin.from("schools").select("id,name,school_code,code,crest_url").eq("id", schoolId).maybeSingle(),
     admin.from("school_config").select("academic_year,admission_year").eq("school_id", schoolId).maybeSingle(),
     admin.from("programmes").select("id,name,code").eq("school_id", schoolId),
     admin.from("classrooms").select("id,name").eq("school_id", schoolId),
     admin.from("houses").select("id,name").eq("school_id", schoolId),
     admin.from("profiles").select("id,full_name,email").eq("school_id", schoolId),
+    admin.from("placement_list").select("index_number,student_name,gender,residential_status,programme,sms_contact").eq("school_id", schoolId),
   ]);
   const school = (schoolRes.data ?? {}) as JsonRecord;
   const cfg = (cfgRes.data ?? {}) as JsonRecord;
@@ -169,11 +187,19 @@ async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolI
     const rec = row as JsonRecord;
     return [safeText(rec.id), safeText(rec.full_name || rec.email)];
   }));
+  const placementEntries: Array<[string, JsonRecord]> = [];
+  (placementsRes.data ?? []).forEach((row) => {
+    const rec = row as JsonRecord;
+    const index = safeText(rec.index_number);
+    if (index) placementEntries.push([index, rec]);
+  });
+  const placementMap = new Map<string,JsonRecord>(placementEntries);
   return {
     programmes: programmeMap,
     classes: classMap,
     houses: houseMap,
     users: userMap,
+    placements: placementMap,
     schoolName: safeText(school.name),
     schoolCrest: safeText(school.crest_url),
     academicYear: safeText(cfg.admission_year) || pickFirstYear(cfg.academic_year),
