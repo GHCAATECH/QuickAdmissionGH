@@ -998,12 +998,16 @@
     fill:currentColor!important;
     stroke:currentColor!important;
   }
+  body #s-login .login-school-trigger.has-placeholder,
+  body #s-login .login-school-trigger.has-placeholder *,
   body #s-login .login-school-trigger-text.is-placeholder,
   body #s-login #loginSchoolTriggerText.is-placeholder,
   body #s-login #purchaseSchoolTriggerText.is-placeholder,
   body #s-login #retrieveSchoolTriggerText.is-placeholder{
     color:#C0EBFF!important;
     -webkit-text-fill-color:#C0EBFF!important;
+    fill:#C0EBFF!important;
+    stroke:#C0EBFF!important;
   }
 </style>
 </head>
@@ -2620,12 +2624,17 @@ function selectedSchoolPickerLabel(key){
 }
 function syncSchoolPicker(key){
   const cfg=schoolPickerConfig(key);
+  const trigger=cfg?$(cfg.trigger):null;
   const triggerText=cfg?$(cfg.triggerText):null;
   const select=cfg?$(cfg.select):null;
   const isPlaceholder=!(select&&String(select.value||''));
+  if(trigger) trigger.classList.toggle('has-placeholder',isPlaceholder);
   if(triggerText){
     triggerText.textContent=selectedSchoolPickerLabel(key);
     triggerText.classList.toggle('is-placeholder',isPlaceholder);
+    const color=isPlaceholder?'#C0EBFF':'#002B4C';
+    triggerText.style.setProperty('color',color,'important');
+    triggerText.style.setProperty('-webkit-text-fill-color',color,'important');
   }
 }
 function buildSchoolPickerOptions(key,filterText){
