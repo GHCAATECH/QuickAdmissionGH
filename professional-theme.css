@@ -1826,3 +1826,188 @@ body #s-login .pnav button {
   border:1px solid rgba(192,235,255,.35)!important;
   box-shadow:none!important;
 }
+
+/* =========================================================
+   Final dropdown, field and icon colour enforcement
+   ========================================================= */
+body select,
+body option,
+body optgroup,
+body .dropdown-menu,
+body .dropdown-list,
+body .dropdown-content,
+body .select-menu,
+body .select-options,
+body .choices,
+body .choices__inner,
+body .choices__list,
+body .choices__list--dropdown,
+body .choices__item,
+body .login-school-panel,
+body .login-school-search,
+body .login-school-option,
+body .colvis-menu,
+body .nav-select {
+  background:#ffffff!important;
+  background-image:none!important;
+  color:#002b4c!important;
+  -webkit-text-fill-color:#002b4c!important;
+  border-color:#002b4c!important;
+}
+
+body select *,
+body option *,
+body .dropdown-menu *,
+body .dropdown-list *,
+body .dropdown-content *,
+body .select-menu *,
+body .select-options *,
+body .choices *,
+body .login-school-panel *,
+body .login-school-option *,
+body .colvis-menu * {
+  color:#002b4c!important;
+  -webkit-text-fill-color:#002b4c!important;
+}
+
+body input,
+body select,
+body textarea,
+body button,
+body .login-school-picker,
+body .login-school-trigger,
+body .login-school-panel,
+body .login-school-search,
+body .login-school-option {
+  pointer-events:auto!important;
+}
+
+body .login-school-picker {
+  position:relative!important;
+  z-index:100!important;
+}
+
+body .login-school-panel {
+  z-index:9999!important;
+}
+
+body #s-app .field,
+body #s-app .stepcard,
+body #s-app #classRows,
+body #s-app #houseRows {
+  position:relative!important;
+  z-index:1!important;
+}
+
+body #s-app input,
+body #s-app select,
+body #s-app textarea,
+body #s-app datalist,
+body #s-app .cls-row,
+body #s-app .house-row {
+  background:#ffffff!important;
+  background-image:none!important;
+  color:#002b4c!important;
+  -webkit-text-fill-color:#002b4c!important;
+  border-color:#002b4c!important;
+  pointer-events:auto!important;
+  position:relative!important;
+  z-index:2!important;
+}
+
+body .login-input-icon,
+body .portal-info-icon,
+body .qa-brand-icon,
+body .qa-support-icon,
+body .brand-icon,
+body .brand-mark,
+body .crest,
+body .sch-crest,
+body .admin-login-icon,
+body .admin-login-input-icon,
+body .stat-icon,
+body .stat .ico,
+body .feed-ico,
+body .qa .ico,
+body .portal-link-btn .ico,
+body .icon,
+body .ico,
+body .icon-btn,
+body .disc-ico,
+body .file-done .fi,
+body .step-number,
+body .qa-step-number,
+body .checklist .n,
+body .step.done .dot,
+body .progress-line i,
+body .checkbox.on,
+body .prog-card .pc-code,
+body .prog-card.sel .radio-tick,
+body .verify-status,
+body .verify-active-filters span,
+body .env-badge,
+body .nav-badge,
+body .sb-avatar {
+  background:#f59e71!important;
+  background-image:none!important;
+  color:#002b4c!important;
+  -webkit-text-fill-color:#002b4c!important;
+  border-color:#002b4c!important;
+  box-shadow:none!important;
+}
+
+body .login-input-icon *,
+body .login-input-icon svg,
+body .portal-info-icon *,
+body .portal-info-icon svg,
+body .qa-brand-icon *,
+body .qa-brand-icon svg,
+body .qa-support-icon *,
+body .qa-support-icon svg,
+body .brand-icon *,
+body .brand-icon svg,
+body .brand-mark *,
+body .brand-mark svg,
+body .crest *,
+body .sch-crest *,
+body .admin-login-icon *,
+body .admin-login-icon svg,
+body .admin-login-input-icon *,
+body .admin-login-input-icon svg,
+body .stat-icon *,
+body .stat-icon svg,
+body .stat .ico *,
+body .stat .ico svg,
+body .feed-ico *,
+body .feed-ico svg,
+body .qa .ico *,
+body .qa .ico svg,
+body .portal-link-btn .ico *,
+body .portal-link-btn .ico svg,
+body .icon *,
+body .icon svg,
+body .ico *,
+body .ico svg,
+body .icon-btn *,
+body .icon-btn svg,
+body .disc-ico *,
+body .disc-ico svg,
+body .file-done .fi *,
+body .file-done .fi svg,
+body .step-number *,
+body .qa-step-number *,
+body .checklist .n *,
+body .step.done .dot *,
+body .checkbox.on *,
+body .prog-card .pc-code *,
+body .prog-card.sel .radio-tick *,
+body .verify-status *,
+body .verify-active-filters span *,
+body .env-badge *,
+body .nav-badge *,
+body .sb-avatar * {
+  color:#002b4c!important;
+  -webkit-text-fill-color:#002b4c!important;
+  fill:currentColor!important;
+  stroke:currentColor!important;
+}
