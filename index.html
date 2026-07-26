@@ -998,6 +998,13 @@
     fill:currentColor!important;
     stroke:currentColor!important;
   }
+  body #s-login .login-school-trigger-text.is-placeholder,
+  body #s-login #loginSchoolTriggerText.is-placeholder,
+  body #s-login #purchaseSchoolTriggerText.is-placeholder,
+  body #s-login #retrieveSchoolTriggerText.is-placeholder{
+    color:#C0EBFF!important;
+    -webkit-text-fill-color:#C0EBFF!important;
+  }
 </style>
 </head>
 <body class="booting">
@@ -2614,7 +2621,12 @@ function selectedSchoolPickerLabel(key){
 function syncSchoolPicker(key){
   const cfg=schoolPickerConfig(key);
   const triggerText=cfg?$(cfg.triggerText):null;
-  if(triggerText) triggerText.textContent=selectedSchoolPickerLabel(key);
+  const select=cfg?$(cfg.select):null;
+  const isPlaceholder=!(select&&String(select.value||''));
+  if(triggerText){
+    triggerText.textContent=selectedSchoolPickerLabel(key);
+    triggerText.classList.toggle('is-placeholder',isPlaceholder);
+  }
 }
 function buildSchoolPickerOptions(key,filterText){
   const cfg=schoolPickerConfig(key);
