@@ -79,11 +79,30 @@ function removeInvalidInlineHeights() {
 }
 
 /**
+ * Mark when the public login screen is active so its outer scrollbar can be
+ * visually hidden without disabling page scrolling.
+ */
+function updateLoginScreenScrollbarMode() {
+  const loginScreenActive = Boolean(
+    document.querySelector("#s-login.screen.active")
+  );
+
+  document.documentElement.classList.toggle(
+    "qa-login-screen-active",
+    loginScreenActive
+  );
+
+  if (document.body) {
+    document.body.classList.toggle("qa-login-screen-active", loginScreenActive);
+  }
+}
+
+/**
  * Force the document roots and app shells to allow page scrolling.
  * This protects against legacy page CSS like html,body{overflow:hidden}.
  */
 function forceScrollableLayout() {
-  document.documentElement.dataset.qaLayoutFix = "20260726-layout-fix-6";
+  document.documentElement.dataset.qaLayoutFix = "20260726-layout-fix-8";
 
   document.documentElement.style.setProperty("height", "auto", "important");
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");
@@ -142,6 +161,12 @@ function forceScrollableLayout() {
     element.style.setProperty("overflow-y", "hidden", "important");
     element.style.setProperty("scrollbar-width", "none", "important");
   });
+
+  document.querySelectorAll("#s-login.screen.active").forEach((element) => {
+    element.style.setProperty("scrollbar-width", "none", "important");
+  });
+
+  updateLoginScreenScrollbarMode();
 }
 
 /**
@@ -178,6 +203,20 @@ function initialiseLayoutFix() {
 }
 
 document.addEventListener("DOMContentLoaded", initialiseLayoutFix);
+
+const layoutMutationObserver = new MutationObserver(() => {
+  updateLoginScreenScrollbarMode();
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.body) {
+    layoutMutationObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+      subtree: true,
+    });
+  }
+});
 
 window.addEventListener("orientationchange", () => {
   window.setTimeout(initialiseLayoutFix, 150);

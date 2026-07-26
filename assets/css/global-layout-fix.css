@@ -281,7 +281,39 @@ body #s-login .qa-hero-panel {
   -ms-overflow-style: none !important;
 }
 
+body #s-login.screen.active,
+body #s-login.screen.active .qa-page-shell {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
 body #s-login .qa-hero-panel::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+body #s-login.screen.active::-webkit-scrollbar,
+body #s-login.screen.active .qa-page-shell::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+/* On the public login page, keep scrolling available but hide the extra browser
+   scrollbar that appears on the cream background beside the admission card. */
+html.qa-login-screen-active,
+body.qa-login-screen-active,
+html:has(body #s-login.screen.active),
+body:has(#s-login.screen.active) {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html.qa-login-screen-active::-webkit-scrollbar,
+body.qa-login-screen-active::-webkit-scrollbar,
+html:has(body #s-login.screen.active)::-webkit-scrollbar,
+body:has(#s-login.screen.active)::-webkit-scrollbar {
   width: 0 !important;
   height: 0 !important;
   display: none !important;
