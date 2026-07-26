@@ -361,8 +361,17 @@ table td {
   white-space: nowrap;
 }
 
+.finance-settlement-table th,
+.finance-settlement-table td,
+.finance-settlement-table th *,
+.finance-settlement-table td * {
+  white-space: normal !important;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
 .finance-settlement-table {
-  min-width: 1120px !important;
+  min-width: 1180px !important;
 }
 
 /* Footer */
