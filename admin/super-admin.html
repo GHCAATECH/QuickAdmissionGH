@@ -298,9 +298,9 @@
   .finance-action-group .finance-request-btn{margin-top:0}
   .finance-total{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-flag{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.06em}
-  .finance-paid-flag.yes{background:#e7f7ec;color:#0a8a2a}
+  .finance-paid-flag.yes,.finance-paid-flag.paid{background:#e7f7ec;color:#0a8a2a}
   .finance-paid-flag.partial{background:#fff4d6;color:#9a6700}
-  .finance-paid-flag.no{background:#f1f3f7;color:#63748a}
+  .finance-paid-flag.no,.finance-paid-flag.unpaid,.finance-paid-flag.no-payment{background:#f1f3f7;color:#63748a}
   .finance-paid-students{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-amount{font-size:16px;font-weight:800;color:#122648;line-height:1.4}
   .finance-summary-sub{font-size:11.5px;color:var(--muted);margin-top:6px}
@@ -1043,8 +1043,11 @@ function financeSettlementForSchool(s){
     paidAmount:paidAmount,
     completedAmount:round2(completedStudents*FINANCE_TOTAL_RATE),
     hasHistory:paidStudents>0,
-    claimStatus:paidStudents<=0?'NO':(dueStudents<=0?'YES':'PARTIAL')
+    claimStatus:completedStudents<=0?'NO PAYMENT':(paidStudents<=0?'UNPAID':(dueStudents<=0?'PAID':'PARTIAL'))
   };
+}
+function financeClaimStatusClass(status){
+  return String(status||'').trim().toLowerCase().replace(/\s+/g,'-');
 }
 function financeAcademicYearValue(raw){
   const text=String(raw==null?'':raw).trim();
@@ -1477,6 +1480,10 @@ function renderFinance(){
   $('finRows').innerHTML=schools.length?schools.map(function(s,idx){
     const f=financeSettlementForSchool(s);
     const registeredLabel=f.total?fmt(f.registered)+' Out of '+fmt(f.total):fmt(f.registered);
+    const actionHtml=f.dueStudents>0
+      ? `<button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
+          <button class="btn btn-ghost btn-sm finance-request-btn" onclick="openFinanceReset(${s.id})">Mark Claim as Paid</button>`
+      : `<div class="finance-summary-sub">${f.paidStudents>0?'Paid in full':'No successful payments to claim'}</div>`;
     return `<tr>
       <td><div class="finance-index mono">${idx+1}</div></td>
       <td>
@@ -1490,7 +1497,7 @@ function renderFinance(){
           <div class="finance-registered-count">${safeHtml(registeredLabel)}</div>
           <div>
             <div class="finance-history-label">Settlement History:</div>
-            <div class="finance-history-paid">Already claimed for ${safeHtml(fmt(f.paidStudents))} students - GHC${safeHtml(moneyBare(f.paidAmount))}</div>
+            <div class="finance-history-paid">Already paid for ${safeHtml(fmt(f.paidStudents))} successful payment(s) - GHC${safeHtml(moneyBare(f.paidAmount))}</div>
             <div class="finance-summary-sub">Completed payment records: ${safeHtml(fmt(f.completedStudents))}</div>
           </div>
           <div>
@@ -1515,12 +1522,11 @@ function renderFinance(){
           </div>
         </div>
         <div class="finance-action-group">
-          <button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
-          <button class="btn btn-ghost btn-sm finance-request-btn" onclick="openFinanceReset(${s.id})">Mark Claim as Paid</button>
+          ${actionHtml}
         </div>
       </td>
       <td><div class="finance-total mono">${safeHtml(moneyBare(f.totalGross))}</div></td>
-      <td><span class="finance-paid-flag ${f.claimStatus.toLowerCase()}">${f.claimStatus}</span></td>
+      <td><span class="finance-paid-flag ${financeClaimStatusClass(f.claimStatus)}">${safeHtml(f.claimStatus)}</span></td>
       <td>
         <div class="finance-paid-students mono">${safeHtml(fmt(f.paidStudents))}</div>
         <div class="finance-summary-sub">successful payments paid</div>
