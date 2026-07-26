@@ -2124,6 +2124,9 @@ function studentProgrammeIdByName(name){
   });
   return hit?hit.id:null;
 }
+function programmeMatchText(value){
+  return cleanSmsText(value).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+}
 function sanitizeExcelExtension(value){
   const ext=String(value||'').trim().toLowerCase();
   return ext==='xls'?'xls':'xlsx';
@@ -4442,11 +4445,20 @@ async function loadSchoolData(prof){
   if(SB_HOUSE){ stu.data=(stu.data||[]).filter(s=>s.house_id===SB_HOUSE); hs.data=(hs.data||[]).filter(h=>h.id===SB_HOUSE); }
 
   const pRev={},hRev={},cRev={},progNameByUuid={}; pMap={};hMap={};cMap={};
+  const plcByIdx={}; (plc.data||[]).forEach(p=>plcByIdx[p.index_number]=p);
   const submittedRawStudents=(stu.data||[]).filter(hasSubmittedPersonalRecord);
-  programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;progNameByUuid[p.id]=p.name||'';return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:submittedRawStudents.filter(s=>s.programme_id===p.id).length};});
+  function rawStudentMatchesProgramme(s,p){
+    if(!s||!p) return false;
+    if(s.programme_id&&String(s.programme_id)===String(p.id)) return true;
+    const rec=s.records||{};
+    const pl=plcByIdx[s.bece_index]||{};
+    const targets=[rec.programme,rec.programme_name,s.programme,s.programme_name,pl.programme].map(programmeMatchText).filter(Boolean);
+    const progName=programmeMatchText(p.name), progCode=programmeMatchText(p.code);
+    return targets.some(function(text){ return text===progName || text===progCode; });
+  }
+  programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;progNameByUuid[p.id]=p.name||'';return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:submittedRawStudents.filter(s=>rawStudentMatchesProgramme(s,p)).length};});
   houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,priority:h.priority||'',gender:h.gender||'',rtype:h.residential_type||'',occ:(stu.data||[]).filter(s=>s.house_id===h.id).length};});
   classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:(stu.data||[]).filter(s=>s.class_id===c.id).length};});
-  const plcByIdx={}; (plc.data||[]).forEach(p=>plcByIdx[p.index_number]=p);
   students=(stu.data||[]).map((s,i)=>{ const pl=plcByIdx[s.bece_index]||{}; const rec=s.records||{}; const regAt=s.submitted_at||s.created_at||''; const dt=regAt?new Date(regAt):null; const sms=preferredStudentSms(s,pl);
     return {id:i+1,_id:s.id,index:s.bece_index,name:s.full_name||'(no name)',gender:s.gender||'M',
       progId:pRev[s.programme_id]||null,classId:cRev[s.class_id]||null,houseId:hRev[s.house_id]||null,
