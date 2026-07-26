@@ -1863,8 +1863,15 @@ body .dropdown-content *,
 body .select-menu *,
 body .select-options *,
 body .choices *,
+body .login-school-trigger,
+body .login-school-trigger *,
+body .login-school-trigger-text,
+body .login-school-trigger-caret,
 body .login-school-panel *,
 body .login-school-option *,
+body .login-school-option span,
+body .login-school-option strong,
+body .login-school-option small,
 body .colvis-menu * {
   color:#002b4c!important;
   -webkit-text-fill-color:#002b4c!important;
