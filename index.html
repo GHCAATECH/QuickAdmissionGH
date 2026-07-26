@@ -829,9 +829,16 @@
   body #s-login .qa-step p{font-size:13px;line-height:1.5}
   body #s-login .qa-hero-footer{margin-top:32px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
   body #s-login .qa-admission-card{
+    position:relative;
+    overflow:visible!important;
+    z-index:5;
     padding:32px;background:rgba(192,235,255,.5)!important;color:#002B4C!important;
     border:1px solid #001619!important;border-radius:24px!important;box-shadow:0 18px 45px rgba(0,43,76,.14)!important;backdrop-filter:blur(14px);
   }
+  body #s-login .field{position:relative;z-index:1}
+  body #s-login #f-school{z-index:80}
+  body #s-login #f-index,
+  body #s-login #f-token{z-index:1}
   body #s-login .qa-card-header{margin-bottom:24px}
   body #s-login .qa-card-header span{display:block;margin-bottom:8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#002B4C!important}
   body #s-login .qa-card-header h2{font-size:32px;line-height:1.1;color:#002B4C!important;-webkit-text-fill-color:#002B4C!important}
@@ -859,7 +866,7 @@
   }
   body #s-login .login-school-trigger{display:flex;justify-content:space-between;text-align:left}
   body #s-login .login-school-panel{
-    position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:30;background:#fff!important;color:#002B4C!important;
+    position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:999;background:#fff!important;color:#002B4C!important;
     border:1px solid #001619!important;border-radius:16px!important;box-shadow:0 24px 42px -28px rgba(0,43,76,.45)!important;padding:10px;
   }
   body #s-login .login-school-option{
