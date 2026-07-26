@@ -767,7 +767,7 @@
             <div class="finance-rate-note">Request form comes next. Transaction charge estimated at 1%.</div>
           </div>
           <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table">
-            <thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Claim Status</th><th><span class="finance-head-stack">No of Student<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead>
+            <thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Claim Status</th><th><span class="finance-head-stack">Successful Payments<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead>
             <tbody id="finRows"></tbody>
           </table></div>
         </div>
@@ -1004,10 +1004,19 @@ function completedFinancePaymentCount(source,schoolId){
   });
   return seen.size;
 }
+function hasSubmittedPersonalRecord(st){
+  return !!(st&&(
+    st.submitted ||
+    (st.personalDone&&st.programmeDone&&st.undertakingDone) ||
+    st.submittedAt
+  ));
+}
 function financeSettlementForSchool(s){
   const schoolStudents=students.filter(function(st){ return st.schoolId===s.id; });
-  const hasSubmittedFlag=schoolStudents.some(function(st){ return typeof st.submitted!=='undefined'; });
-  const registered=Math.max(hasSubmittedFlag ? schoolStudents.filter(function(st){ return !!st.submitted; }).length : Number(s.students||0),0);
+  const hasCompletionFlag=schoolStudents.some(function(st){
+    return ['submitted','personalDone','programmeDone','undertakingDone','submittedAt'].some(function(k){ return typeof st[k]!=='undefined'; });
+  });
+  const registered=Math.max(hasCompletionFlag ? schoolStudents.filter(hasSubmittedPersonalRecord).length : Number(s.students||0),0);
   const total=Math.max(Number(s.placements||0),registered);
   const completedStudents=completedFinancePaymentCount(payments,s.id);
   const paidStudents=settledStudentCount(s&&s.financeSettledStudents,completedStudents);
@@ -1457,9 +1466,9 @@ function renderFinance(){
   const totalPaidAmount=round2(summary.reduce((a,s)=>a+s.paidAmount,0));
   const stats=[
     {lbl:'Registered Students',val:fmt(totalRegistered),ico:'users',delta:'submitted across all schools',flat:true},
-    {lbl:'Due For Payment Now',val:fmt(totalDue),ico:'door',delta:'students pending settlement',flat:true},
-    {lbl:'No Of Student Paid',val:fmt(totalPaidStudents),ico:'school',delta:'already settled',flat:true},
-    {lbl:'Amount Paid',val:totalPaidAmount,cur:true,ico:'cash',delta:'IT + Head share paid so far',flat:true},
+    {lbl:'Due Successful Payments',val:fmt(totalDue),ico:'door',delta:'unclaimed paid-token records',flat:true},
+    {lbl:'Successful Payments Paid',val:fmt(totalPaidStudents),ico:'school',delta:'already settled',flat:true},
+    {lbl:'Amount Paid',val:totalPaidAmount,cur:true,ico:'cash',delta:'IT + Head successful-payment share paid so far',flat:true},
   ];
   $('finStats').innerHTML=stats.map(function(c){
     const icons={school:'<path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>',users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',door:'<path d="M13 3v18M3 21h18M6 21V5a2 2 0 0 1 2-2h7"/>',cash:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'};
@@ -1485,8 +1494,8 @@ function renderFinance(){
             <div class="finance-summary-sub">Completed payment records: ${safeHtml(fmt(f.completedStudents))}</div>
           </div>
           <div>
-            <div class="finance-due-label">Due for Payment Now:</div>
-            <div class="finance-due-count">No of students: ${safeHtml(fmt(f.dueStudents))}</div>
+            <div class="finance-due-label">Due Successful Payments:</div>
+            <div class="finance-due-count">No of payments: ${safeHtml(fmt(f.dueStudents))}</div>
           </div>
         </div>
       </td>
@@ -1514,7 +1523,7 @@ function renderFinance(){
       <td><span class="finance-paid-flag ${f.claimStatus.toLowerCase()}">${f.claimStatus}</span></td>
       <td>
         <div class="finance-paid-students mono">${safeHtml(fmt(f.paidStudents))}</div>
-        <div class="finance-summary-sub">students paid</div>
+        <div class="finance-summary-sub">successful payments paid</div>
       </td>
       <td>
         <div class="finance-paid-amount mono">GHC${safeHtml(moneyBare(f.paidAmount))}</div>
@@ -1953,7 +1962,7 @@ async function loadSA(){
     sb.from('schools').select('*').order('created_at'),
     sb.from('school_config').select('*'),
     sb.from('profiles').select('id,full_name,email,school_id,role,permissions'),
-    sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,admission_no'),
+    sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,personal_done,programme_done,undertaking_done,admission_no'),
     sb.from('payments').select('student_id,amount_pesewas,channel,status,reference,school_id,paid_at,created_at,payer_name, students(full_name,bece_index)'),
     fetchPlatformSmsHistory(),
     sb.from('activity_log').select('*').order('created_at',{ascending:false}),
@@ -1988,7 +1997,7 @@ async function loadSA(){
     const smsRaw=saNormalizePhone((((s.records&&typeof s.records==='object')?s.records.sms_contact:'')||s.parent_phone||placementSms||''));
     return {_id:s.id,name:s.full_name||'(no name)',index:s.bece_index,schoolId:sRev[s.school_id],schoolUuid:s.school_id,
       programme:pName[s.programme_id]||'-',status:s.status,reg:(s.created_at||'').slice(0,10),
-      parent_phone:s.parent_phone||'',records:s.records||{},sms:smsRaw||'-',smsRaw:smsRaw||'',submitted:!!s.submitted_at,adm:s.admission_no||'-'};
+      parent_phone:s.parent_phone||'',records:s.records||{},sms:smsRaw||'-',smsRaw:smsRaw||'',submitted:!!s.submitted_at,submittedAt:s.submitted_at||'',personalDone:!!s.personal_done,programmeDone:!!s.programme_done,undertakingDone:!!s.undertaking_done,adm:s.admission_no||'-'};
   });
   window._todayReg=students.filter(s=>s.reg===new Date().toISOString().slice(0,10)).length;
   financePaymentsLoadError=pay.error?(pay.error.message||'Could not load payments.'):'';

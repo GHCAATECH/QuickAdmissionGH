@@ -1836,7 +1836,7 @@
             </div>
             <div class="finance-rate-note">Request form comes next. Transaction charge estimated at 1%.</div>
           </div>
-          <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table"><thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Claim Status</th><th><span class="finance-head-stack">No of Student<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead><tbody id="financeSettlementRows"></tbody></table></div>
+          <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table"><thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">No of Registered<br>Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Claim Status</th><th><span class="finance-head-stack">Successful Payments<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead><tbody id="financeSettlementRows"></tbody></table></div>
         </div>
         <div class="panel"><div class="panel-head"><div><h3>Transactions</h3><div class="sub">Token purchases</div></div><div class="finance-transactions-tools"><div class="finance-transactions-search"><input id="financePaySearch" placeholder="Search student, index, txn..." onkeydown="if(event.key==='Enter')applyFinancePaymentSearch()"><button class="btn btn-ghost btn-sm" type="button" onclick="applyFinancePaymentSearch()">Search</button></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" type="button" onclick="downloadFinancePaymentsCSV()">CSV</button><button class="btn btn-ghost btn-sm" type="button" onclick="printFinancePayments()">PDF</button></div></div></div>
           <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Student</th><th>Index No</th><th>Amount</th><th>Method</th><th>Status</th><th>Txn ID</th></tr></thead><tbody id="payRows"></tbody></table></div>
@@ -3200,9 +3200,9 @@ function renderFinance(){
   const snap=schoolFinanceSnapshot();
   const stats=[
     {l:'Registered Students',v:fmt(snap.registered),ico:'users',d:'submitted to this school'},
-    {l:'Due For Payment Now',v:fmt(snap.dueStudents),ico:'door',d:'students pending settlement'},
-    {l:'No Of Student Paid',v:fmt(snap.paidStudents),ico:'school',d:'already settled'},
-    {l:'Amount Paid',v:snap.paidAmount,cur:1,ico:'cash',d:'IT + Head share paid so far'},
+    {l:'Due Successful Payments',v:fmt(snap.dueStudents),ico:'door',d:'unclaimed paid-token records'},
+    {l:'Successful Payments Paid',v:fmt(snap.paidStudents),ico:'school',d:'already settled'},
+    {l:'Amount Paid',v:snap.paidAmount,cur:1,ico:'cash',d:'IT + Head successful-payment share paid so far'},
   ];
   const icons={school:'<path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>',users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',door:'<path d="M13 3v18M3 21h18M6 21V5a2 2 0 0 1 2-2h7"/>',cash:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'};
   $('finStats').innerHTML=stats.map(function(c){ return `<div class="stat"><div class="top"><span class="lbl">${c.l}</span><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[c.ico]}</svg></span></div><div class="val">${c.cur?'<span class="cur">GHS</span>'+moneyBare(c.v):c.v}</div><div class="delta">${c.d}</div></div>`; }).join('');
@@ -3223,8 +3223,8 @@ function renderFinance(){
           <div class="finance-summary-sub">Completed payment records: ${safeHtml(fmt(snap.completedStudents))}</div>
         </div>
         <div>
-          <div class="finance-due-label">Due for Payment Now:</div>
-          <div class="finance-due-count">No of students: ${safeHtml(fmt(snap.dueStudents))}</div>
+          <div class="finance-due-label">Due Successful Payments:</div>
+          <div class="finance-due-count">No of payments: ${safeHtml(fmt(snap.dueStudents))}</div>
         </div>
       </div>
     </td>
@@ -3248,7 +3248,7 @@ function renderFinance(){
     </td>
     <td><div class="finance-total mono">${safeHtml(moneyBare(snap.totalGross))}</div></td>
     <td><span class="finance-paid-flag ${snap.claimStatus.toLowerCase()}">${snap.claimStatus}</span></td>
-    <td><div class="finance-paid-students mono">${safeHtml(fmt(snap.paidStudents))}</div><div class="finance-summary-sub">students paid</div></td>
+    <td><div class="finance-paid-students mono">${safeHtml(fmt(snap.paidStudents))}</div><div class="finance-summary-sub">successful payments paid</div></td>
     <td><div class="finance-paid-amount mono">GHC${safeHtml(moneyBare(snap.paidAmount))}</div></td>
   </tr>`;
   renderFinancePayments();
