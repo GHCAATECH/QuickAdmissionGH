@@ -45,6 +45,7 @@ RewriteEngine On
 RewriteRule ^(?:\.git|\.codex|\.agents)(?:/|$) - [F,L,NC]
 RewriteRule ^supabase(?:/|$) - [F,L,NC]
 RewriteRule \.(?:sql|ps1|md|toml)$ - [F,L,NC]
+RewriteRule ^full(?:\.html)?$ - [F,L,NC]
 
 # Redirect direct .html requests to clean canonical URLs.
 RewriteCond %{THE_REQUEST} \s/+index\.html(?:[\s?]|$) [NC]
