@@ -609,7 +609,7 @@
   thead th,.sec-h{background:#002B4C!important;color:#C0EBFF!important;border-color:#002B4C!important}
   thead th *,.sec-h *{color:#C0EBFF!important;-webkit-text-fill-color:#C0EBFF!important}
 </style>
-<link rel="stylesheet" href="../professional-theme.css?v=20260726-sidebar-template">
+<link rel="stylesheet" href="../professional-theme.css?v=20260726-sidebar-hide">
 </head>
 <body class="auth-booting">
 <div class="app">
@@ -1694,7 +1694,7 @@ function go(view){
   if(view==='students')renderStudents();
   if(view==='finance')renderFinance();
   if(view==='sms')renderSms();
-  closeSidebar();window.scrollTo(0,0);
+  closeSidebar(true);window.scrollTo(0,0);
 }
 $('nav').addEventListener('click',e=>{const b=e.target.closest('.nav-item');if(b)go(b.dataset.view);});
 // Phone/contact fields: digits only, max 10
@@ -1707,7 +1707,11 @@ document.addEventListener('input',function(e){
 });
 
 /* ============ MOBILE SIDEBAR ============ */
-function closeSidebar(){$('sidebar').classList.remove('open');$('backdrop').classList.remove('show');}
+function closeSidebar(collapseDesktop){
+  $('sidebar').classList.remove('open');$('backdrop').classList.remove('show');
+  const app=document.querySelector('.app');
+  if(collapseDesktop&&app&&isDesktopSidebar()) app.classList.add('sidebar-collapsed');
+}
 function isDesktopSidebar(){return window.matchMedia('(min-width: 1025px)').matches;}
 function toggleSidebar(){
   const app=document.querySelector('.app');
@@ -1723,7 +1727,7 @@ $('hamburger').addEventListener('click',toggleSidebar);
 $('backdrop').addEventListener('click',closeSidebar);
 window.addEventListener('resize',function(){
   if(isDesktopSidebar()){
-    closeSidebar();
+    closeSidebar(false);
   }else{
     const app=document.querySelector('.app');
     if(app) app.classList.remove('sidebar-collapsed');

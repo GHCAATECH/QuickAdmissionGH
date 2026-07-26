@@ -19,7 +19,7 @@
   /* Backgrounds */
   --page-bg:#ffffff!important;
   --body-bg:#ffffff!important;
-  --sidebar-bg:#f59e71!important;
+  --sidebar-bg:rgba(245,158,113,.5)!important;
   --sidebar-hover:#002b4c!important;
   --card-bg:rgba(192,235,255,.5)!important;
   --input-bg:#ffffff!important;
@@ -57,7 +57,7 @@
   --primary-deep:#002b4c!important;
   --primary-soft:rgba(192,235,255,.55)!important;
   --accent-soft:rgba(245,158,113,.22)!important;
-  --sb:#f59e71!important;
+  --sb:rgba(245,158,113,.5)!important;
   --sb-text:#c0ebff!important;
   --sb-active:#002b4c!important;
   --muted-green:#002b4c!important;

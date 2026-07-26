@@ -3807,7 +3807,7 @@ function go(view){
   const inAdm=admViews.indexOf(view)>-1;
   document.getElementById('admParent').classList.toggle('active',inAdm);
   if(inAdm) setAdmMenu(true);
-  closeSidebar();window.scrollTo(0,0);
+  closeSidebar(true);window.scrollTo(0,0);
 }
 function setAdmMenu(open){document.getElementById('admMenu').classList.toggle('open',open);document.getElementById('admParent').classList.toggle('open',open);}
 function toggleAdmMenu(){const m=document.getElementById('admMenu');setAdmMenu(!m.classList.contains('open'));}
@@ -3830,8 +3830,17 @@ document.addEventListener('input',function(e){
 /* ===== MODAL / SIDEBAR ===== */
 function closeModal(){$('overlay').classList.remove('show');}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
-function closeSidebar(){$('sidebar').classList.remove('open');$('backdrop').classList.remove('show');}
-$('hamburger').addEventListener('click',()=>{$('sidebar').classList.add('open');$('backdrop').classList.add('show');});
+function isDesktopSidebar(){return window.matchMedia('(min-width: 1025px)').matches;}
+function closeSidebar(collapseDesktop){
+  $('sidebar').classList.remove('open');$('backdrop').classList.remove('show');
+  const app=document.querySelector('.app');
+  if(collapseDesktop&&app&&isDesktopSidebar()) app.classList.add('sidebar-collapsed');
+}
+$('hamburger').addEventListener('click',()=>{
+  const app=document.querySelector('.app');
+  if(app&&isDesktopSidebar()){app.classList.toggle('sidebar-collapsed');return;}
+  $('sidebar').classList.add('open');$('backdrop').classList.add('show');
+});
 $('backdrop').addEventListener('click',closeSidebar);
 
 /* ===== LIVE ===== */
@@ -5697,7 +5706,7 @@ function go(view){
   if(view==='students')renderStudents();
   if(view==='finance')renderFinance();
   if(view==='sms')renderSms();
-  closeSidebar();window.scrollTo(0,0);
+  closeSidebar(true);window.scrollTo(0,0);
 }
 $('nav').addEventListener('click',e=>{const b=e.target.closest('.nav-item');if(b)go(b.dataset.view);});
 // Phone/contact fields: digits only, max 10
@@ -5710,8 +5719,17 @@ document.addEventListener('input',function(e){
 });
 
 /* ============ MOBILE SIDEBAR ============ */
-function closeSidebar(){$('sidebar').classList.remove('open');$('backdrop').classList.remove('show');}
-$('hamburger').addEventListener('click',()=>{$('sidebar').classList.add('open');$('backdrop').classList.add('show');});
+function isDesktopSidebar(){return window.matchMedia('(min-width: 1025px)').matches;}
+function closeSidebar(collapseDesktop){
+  $('sidebar').classList.remove('open');$('backdrop').classList.remove('show');
+  const app=document.querySelector('.app');
+  if(collapseDesktop&&app&&isDesktopSidebar()) app.classList.add('sidebar-collapsed');
+}
+$('hamburger').addEventListener('click',()=>{
+  const app=document.querySelector('.app');
+  if(app&&isDesktopSidebar()){app.classList.toggle('sidebar-collapsed');return;}
+  $('sidebar').classList.add('open');$('backdrop').classList.add('show');
+});
 $('backdrop').addEventListener('click',closeSidebar);
 
 /* ============ CLOCK + LIVE ============ */
@@ -6255,6 +6273,6 @@ function qaShow(t){
   .qa-disc-mark{background:#002B4C!important;color:#C0EBFF!important;border-color:#002B4C!important}
   .qa-disc-overlay::before,.qa-disc-overlay::after{display:none!important;content:none!important}
 </style>
-<link rel="stylesheet" href="professional-theme.css?v=20260726-sidebar-template">
+<link rel="stylesheet" href="professional-theme.css?v=20260726-sidebar-hide">
 </body>
 </html>

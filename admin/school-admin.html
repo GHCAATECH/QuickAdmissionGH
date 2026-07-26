@@ -1383,7 +1383,7 @@
   thead th,.sec-h{background:#002B4C!important;color:#C0EBFF!important;border-color:#002B4C!important}
   thead th *,.sec-h *{color:#C0EBFF!important;-webkit-text-fill-color:#C0EBFF!important}
 </style>
-<link rel="stylesheet" href="../professional-theme.css?v=20260726-sidebar-template">
+<link rel="stylesheet" href="../professional-theme.css?v=20260726-sidebar-hide">
 </head>
 <body class="auth-booting">
 <div id="bootSplash"><div class="boot-splash-card"><span class="boot-splash-spinner"></span><span>Restoring your secure school session...</span></div></div>
@@ -3905,7 +3905,7 @@ function go(view){
   const inAdm=admViews.indexOf(view)>-1;
   document.getElementById('admParent').classList.toggle('active',inAdm);
   if(inAdm) setAdmMenu(true);
-  closeSidebar();window.scrollTo(0,0);
+  closeSidebar(true);window.scrollTo(0,0);
 }
 function setAdmMenu(open){document.getElementById('admMenu').classList.toggle('open',open);document.getElementById('admParent').classList.toggle('open',open);}
 function toggleAdmMenu(){const m=document.getElementById('admMenu');setAdmMenu(!m.classList.contains('open'));}
@@ -3928,7 +3928,11 @@ document.addEventListener('input',function(e){
 /* ===== MODAL / SIDEBAR ===== */
 function closeModal(){$('overlay').classList.remove('show');}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
-function closeSidebar(){$('sidebar').classList.remove('open');$('backdrop').classList.remove('show');}
+function closeSidebar(collapseDesktop){
+  $('sidebar').classList.remove('open');$('backdrop').classList.remove('show');
+  const app=document.querySelector('.app');
+  if(collapseDesktop&&app&&isDesktopSidebar()) app.classList.add('sidebar-collapsed');
+}
 function isDesktopSidebar(){return window.matchMedia('(min-width: 1025px)').matches;}
 function toggleSidebar(){
   const app=document.querySelector('.app');
@@ -3944,7 +3948,7 @@ $('hamburger').addEventListener('click',toggleSidebar);
 $('backdrop').addEventListener('click',closeSidebar);
 window.addEventListener('resize',function(){
   if(isDesktopSidebar()){
-    closeSidebar();
+    closeSidebar(false);
   }else{
     const app=document.querySelector('.app');
     if(app) app.classList.remove('sidebar-collapsed');
