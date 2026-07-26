@@ -28,8 +28,8 @@ body {
   min-height: 100dvh;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   position: relative;
   color: #002b4c;
   background: #c0ebff;
@@ -77,6 +77,7 @@ a {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  overflow-y: visible !important;
 }
 
 header,
@@ -114,6 +115,7 @@ main,
   max-height: none !important;
   margin-bottom: 0 !important;
   overflow-x: hidden;
+  overflow-y: visible !important;
 }
 
 section,
@@ -134,6 +136,7 @@ section,
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
+  overflow-y: visible !important;
 }
 
 .card,
@@ -148,6 +151,7 @@ section,
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
+  overflow-y: visible !important;
 }
 
 footer,
@@ -277,8 +281,8 @@ main > section:last-child:empty,
     height: auto !important;
     min-height: 100vh;
     min-height: 100dvh;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     overscroll-behavior-x: none;
     touch-action: pan-y;
   }
@@ -299,6 +303,7 @@ main > section:last-child:empty,
     min-height: 100dvh;
     height: auto !important;
     overflow-x: hidden;
+    overflow-y: visible !important;
   }
 
   main,
@@ -321,6 +326,7 @@ main > section:last-child:empty,
     max-height: none !important;
     margin-bottom: 0 !important;
     overflow-x: hidden;
+    overflow-y: visible !important;
   }
 
   section,
@@ -340,6 +346,7 @@ main > section:last-child:empty,
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
+    overflow-y: visible !important;
   }
 
   footer,
