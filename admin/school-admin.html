@@ -2338,9 +2338,18 @@ function preferredStudentSms(rawStudent,placementRow){
   const rec=(rawStudent&&rawStudent.records)||{};
   return cleanSmsText(rec.sms_contact||rawStudent.parent_phone||rawStudent.sms_contact||(placementRow&&placementRow.sms_contact)||'');
 }
+function hasSubmittedPersonalRecord(s){
+  return !!(s&&(
+    s.submitted ||
+    (s.personalDone&&s.programmeDone&&s.undertakingDone) ||
+    s.submittedAt
+  ));
+}
 function submittedStudents(){
-  const hasSubmittedFlag=students.some(function(s){ return typeof s.submitted!=='undefined'; });
-  return hasSubmittedFlag ? students.filter(function(s){ return !!s.submitted; }) : students.slice();
+  const hasCompletionFlag=students.some(function(s){
+    return ['submitted','personalDone','programmeDone','undertakingDone','submittedAt'].some(function(k){ return typeof s[k]!=='undefined'; });
+  });
+  return hasCompletionFlag ? students.filter(hasSubmittedPersonalRecord) : students.slice();
 }
 function settledStudentCount(raw,maxCount){
   const clean=Math.max(parseInt(raw,10)||0,0);
@@ -4429,7 +4438,7 @@ async function loadSchoolData(prof){
   students=(stu.data||[]).map((s,i)=>{ const pl=plcByIdx[s.bece_index]||{}; const rec=s.records||{}; const regAt=s.submitted_at||s.created_at||''; const dt=regAt?new Date(regAt):null; const sms=preferredStudentSms(s,pl);
     return {id:i+1,_id:s.id,index:s.bece_index,name:s.full_name||'(no name)',gender:s.gender||'M',
       progId:pRev[s.programme_id]||null,classId:cRev[s.class_id]||null,houseId:hRev[s.house_id]||null,
-      status:s.status,adm:s.admission_no||'-',permAdm:s.permanent_admission_number||'',verificationStatus:s.verification_status||'pending',verifiedAt:s.verified_at||'',verifiedBy:s.verified_by||'',verificationNotes:s.verification_notes||'',passportPhoto:(rec.passport_photo_url||s.passport_photo_url||''),reg:(regAt||'').slice(0,10),
+      status:s.status,adm:s.admission_no||'-',permAdm:s.permanent_admission_number||'',verificationStatus:s.verification_status||'pending',verifiedAt:s.verified_at||'',verifiedBy:s.verified_by||'',verificationNotes:s.verification_notes||'',passportPhoto:(rec.passport_photo_url||s.passport_photo_url||''),reg:(regAt||'').slice(0,10),submittedAt:s.submitted_at||'',personalDone:!!s.personal_done,programmeDone:!!s.programme_done,undertakingDone:!!s.undertaking_done,
       time: dt?dt.toTimeString().slice(0,8):'-',
       sms: sms||'-',
       prog: cleanSmsText(progNameByUuid[s.programme_id])||cleanSmsText(pl.programme)||cleanSmsText(rec.programme)||'',

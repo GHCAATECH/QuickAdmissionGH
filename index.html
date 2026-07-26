@@ -2484,27 +2484,45 @@ function fillTemplate(tpl){
   out=out.replace(/\{([A-Z_]+)\}/g,(m,k)=> (k in v)? (v[k]==null?'':String(v[k])) : m);
   return out;
 }
+function personalRecordComplete(){
+  return !!(STU&&(
+    STU.submitted ||
+    (STU.personal_done&&STU.programme_done&&STU.undertaking_done) ||
+    (app&&app.done&&app.done[0]&&app.done[1]&&app.done[2])
+  ));
+}
+function requirePersonalRecordComplete(){
+  if(personalRecordComplete()) return true;
+  toast('Complete personal record','warn');
+  showPanel('form');
+  return false;
+}
 function docAdmissionLetter(){
+  if(!requirePersonalRecordComplete()) return;
   const tpl=(SCHOOL&&SCHOOL.config&&SCHOOL.config.letter_template);
   printDoc('Admission Letter', fillTemplate(resolveDocTemplate('letter',tpl)), true);
 }
 function docRecords(){
+  if(!requirePersonalRecordComplete()) return;
   const tpl=(SCHOOL&&SCHOOL.config&&SCHOOL.config.records_template);
   printDoc('Personal Records Form', fillTemplate(resolveDocTemplate('records',tpl)), true);
 }
 function schoolDocUrl(k){ const c=(SCHOOL&&SCHOOL.config)||{}; return c[k]||''; }
 function openUploadedDoc(url){ const w=window.open(url,'_blank'); if(!w)toast('Allow pop-ups to open the document'); }
 function docUndertaking(){
+  if(!requirePersonalRecordComplete()) return;
   const u=schoolDocUrl('undertaking_url'); if(u){return openUploadedDoc(u);}
   printDoc('Undertaking','<h2>Undertaking</h2><p>I, <b>'+(STU.full_name||'')+'</b> (Index No. '+(STU.index||'')+'), hereby undertake to abide by all the rules and regulations of '+((SCHOOL&&SCHOOL.school.name)||'the school')+'. I understand that any breach may lead to disciplinary action.</p><p style="margin-top:30px">Signature of Student: _______________________</p><p>Signature of Parent / Guardian: _______________________</p><p>Date: _______________________</p>');
 }
 function docSubjects(){
+  if(!requirePersonalRecordComplete()) return;
   const u=schoolDocUrl('subjects_url'); if(u){return openUploadedDoc(u);}
   const p=progById(STU.programme_id);
   const subs=p?(p.subjects||'').split(',').map(x=>'<li>'+x.trim()+'</li>').join(''):'<li>To be assigned</li>';
   printDoc('Programme / Subject Combination','<h2>'+(p?p.name:(STU.programme||'Programme'))+'</h2><p>Subject combination for '+(STU.full_name||'')+':</p><ol>'+subs+'</ol>');
 }
 function docProspectus(){
+  if(!requirePersonalRecordComplete()) return;
   const u=schoolDocUrl('prospectus_url'); if(u){return openUploadedDoc(u);}
   printDoc('Prospectus','<h2>School Prospectus</h2><p>Welcome to '+((SCHOOL&&SCHOOL.school.name)||'our school')+'. This prospectus outlines what you need to know as a fresh student - academic programmes, school rules, boarding arrangements and the items to bring on reporting day.</p><p>For the full printed prospectus, please collect a copy at the administration office on reporting day.</p>');
 }
