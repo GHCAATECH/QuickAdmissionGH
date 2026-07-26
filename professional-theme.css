@@ -1915,6 +1915,50 @@ body #s-app .house-row {
   z-index:2!important;
 }
 
+body #s-app .rail h4,
+body #s-app .step .lbl,
+body #s-app .step.active .lbl,
+body #s-app .step.done .lbl,
+body #s-app .stepcard .card2-head h2,
+body #s-app .stepcard .sub-h,
+body #s-app .rev-head .t {
+  color:#f59e71!important;
+  -webkit-text-fill-color:#f59e71!important;
+}
+
+body #s-app .steps::before {
+  background:rgba(245,158,113,.45)!important;
+}
+
+body #s-app .step .dot {
+  background:#ffffff!important;
+  background-image:none!important;
+  border-color:#f59e71!important;
+  color:#f59e71!important;
+  -webkit-text-fill-color:#f59e71!important;
+  box-shadow:none!important;
+}
+
+body #s-app .step.active .dot,
+body #s-app .step.done .dot,
+body #s-app .progress-line i {
+  background:#f59e71!important;
+  background-image:none!important;
+  border-color:#f59e71!important;
+  color:#002b4c!important;
+  -webkit-text-fill-color:#002b4c!important;
+}
+
+body #s-app .step.active .dot *,
+body #s-app .step.done .dot *,
+body #s-app .step.active .dot svg,
+body #s-app .step.done .dot svg {
+  color:#002b4c!important;
+  -webkit-text-fill-color:#002b4c!important;
+  fill:currentColor!important;
+  stroke:currentColor!important;
+}
+
 body .login-input-icon,
 body .portal-info-icon,
 body .qa-brand-icon,
