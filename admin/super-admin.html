@@ -293,9 +293,10 @@
   .finance-split-amount{font-size:15px;font-weight:700;color:#14201C}
   .finance-split-line{font-size:14px;line-height:1.45;color:#425572}
   .finance-split-line strong{color:#14201C}
-  .finance-action-group{display:grid;gap:10px;margin-top:14px}
-  .finance-request-btn{display:inline-flex!important;align-items:center;font-size:11px;line-height:1.2;margin-top:14px;justify-content:center;justify-self:start;width:fit-content;max-width:100%;min-height:30px;padding:5px 9px;white-space:nowrap}
+  .finance-action-group{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:14px;max-width:160px}
+  .finance-request-btn{display:inline-flex!important;align-items:center;font-size:10.5px;line-height:1.2;margin-top:14px;justify-content:center;justify-self:start;width:auto!important;max-width:150px;min-height:28px;padding:5px 8px;white-space:normal;text-align:center}
   .finance-action-group .finance-request-btn{margin-top:0}
+  .finance-action-note{display:inline-flex;align-items:center;max-width:150px;padding:5px 8px;border-radius:999px;border:1px solid var(--line);font-size:10.5px;font-weight:800;line-height:1.2;color:var(--primary);background:var(--surface-2)}
   .finance-total{font-size:24px;font-weight:800;color:#122648;line-height:1.1}
   .finance-paid-flag{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.06em}
   .finance-paid-flag.yes,.finance-paid-flag.paid{background:#e7f7ec;color:#0a8a2a}
@@ -1497,8 +1498,9 @@ function renderFinance(){
     const f=financeSettlementForSchool(s);
     const registeredLabel=f.total?fmt(f.registered)+' Out of '+fmt(f.total):fmt(f.registered);
     const actionHtml=f.dueStudents>0
-      ? `<button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
-          <button class="btn btn-ghost btn-sm finance-request-btn" onclick="openFinanceReset(${s.id})">Mark Claim as Paid</button>`
+      ? `<div class="finance-action-note">${safeHtml(fmt(f.dueStudents))} remaining</div>
+          <button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
+          <button class="btn btn-ghost btn-sm finance-request-btn" onclick="openFinanceReset(${s.id})">${f.paidStudents>0?'Mark Remaining Paid':'Mark Claim as Paid'}</button>`
       : `<div class="finance-summary-sub">${f.paidStudents>0?'Paid in full':'No successful payments to claim'}</div>`;
     return `<tr>
       <td><div class="finance-index mono">${idx+1}</div></td>
