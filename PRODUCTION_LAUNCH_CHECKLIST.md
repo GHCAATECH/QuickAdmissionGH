@@ -17,6 +17,7 @@ Use this before opening the system to live schools and students.
 ## Supabase Database
 
 - Apply all migrations in `supabase/migrations`.
+- Run `supabase/production_rls_audit.sql` in the Supabase SQL Editor and fix every `FAIL_RLS_DISABLED` result before launch.
 - Confirm core tables have Row Level Security enabled before live traffic:
   - `students`
   - `placement_list`
