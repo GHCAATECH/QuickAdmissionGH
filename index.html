@@ -2487,8 +2487,7 @@ function fillTemplate(tpl){
 function personalRecordComplete(){
   return !!(STU&&(
     STU.submitted ||
-    (STU.personal_done&&STU.programme_done&&STU.undertaking_done) ||
-    (app&&app.done&&app.done[0]&&app.done[1]&&app.done[2])
+    (STU.personal_done&&STU.programme_done&&STU.undertaking_done)
   ));
 }
 function requirePersonalRecordComplete(){
