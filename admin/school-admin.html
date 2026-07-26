@@ -2341,7 +2341,9 @@ function preferredStudentSms(rawStudent,placementRow){
 function hasSubmittedPersonalRecord(s){
   return !!(s&&(
     s.submitted ||
+    s.submitted_at ||
     (s.personalDone&&s.programmeDone&&s.undertakingDone) ||
+    (s.personal_done&&s.programme_done&&s.undertaking_done) ||
     s.submittedAt
   ));
 }
@@ -2641,7 +2643,7 @@ function renderRecent(){
 
 /* ===== PROGRAMMES / HOUSES / CLASSES ===== */
 function renderProg(){
-  $('progRows').innerHTML=programmes.map(p=>{const pct=Math.round(p.enr/p.cap*100);return `<tr><td><span class="code">${safeHtml(p.code)}</span></td><td class="nm">${safeHtml(p.name)}</td><td style="max-width:260px;color:var(--ink-soft);font-size:12.5px">${safeHtml(p.subjects)}</td><td class="mono">${safeHtml(p.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(p.enr)}</span></td><td><div class="row-actions"><button class="act" onclick="openProg(${p.id})">Edit</button><button class="act danger" onclick="delItem('prog',${p.id})">Delete</button></div></td></tr>`;}).join('');
+  $('progRows').innerHTML=programmes.map(p=>{const cap=Math.max(parseInt(p.cap,10)||0,0);const pct=cap?Math.round(p.enr/cap*100):0;return `<tr><td><span class="code">${safeHtml(p.code)}</span></td><td class="nm">${safeHtml(p.name)}</td><td style="max-width:260px;color:var(--ink-soft);font-size:12.5px">${safeHtml(p.subjects)}</td><td class="mono">${safeHtml(p.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(p.enr)}</span></td><td><div class="row-actions"><button class="act" onclick="openProg(${p.id})">Edit</button><button class="act danger" onclick="delItem('prog',${p.id})">Delete</button></div></td></tr>`;}).join('');
 }
 function housePriorityValue(h,fallback){
   const num=Number(h&&h.priority);
@@ -4440,7 +4442,8 @@ async function loadSchoolData(prof){
   if(SB_HOUSE){ stu.data=(stu.data||[]).filter(s=>s.house_id===SB_HOUSE); hs.data=(hs.data||[]).filter(h=>h.id===SB_HOUSE); }
 
   const pRev={},hRev={},cRev={},progNameByUuid={}; pMap={};hMap={};cMap={};
-  programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;progNameByUuid[p.id]=p.name||'';return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:(stu.data||[]).filter(s=>s.programme_id===p.id).length};});
+  const submittedRawStudents=(stu.data||[]).filter(hasSubmittedPersonalRecord);
+  programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;progNameByUuid[p.id]=p.name||'';return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:submittedRawStudents.filter(s=>s.programme_id===p.id).length};});
   houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,priority:h.priority||'',gender:h.gender||'',rtype:h.residential_type||'',occ:(stu.data||[]).filter(s=>s.house_id===h.id).length};});
   classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:(stu.data||[]).filter(s=>s.class_id===c.id).length};});
   const plcByIdx={}; (plc.data||[]).forEach(p=>plcByIdx[p.index_number]=p);
