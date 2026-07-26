@@ -1,0 +1,395 @@
+/* =========================================================
+   QUICK ADMISSION GHANA
+   GLOBAL MOBILE LAYOUT AND INFINITE-SCROLL FIX
+   Loaded after page-level styles so it can correct old layout rules.
+========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  width: 100%;
+  height: auto !important;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  color: #002b4c;
+  background: #c0ebff;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+  font: inherit;
+}
+
+a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#app,
+.app,
+.app-shell,
+.app-wrapper,
+.page-wrapper,
+.layout-wrapper,
+.main-wrapper,
+.dashboard-wrapper,
+.portal-wrapper,
+.admin-wrapper,
+.student-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: auto !important;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+header,
+.header,
+.site-header,
+.main-header,
+.app-header,
+.dashboard-header {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+}
+
+main,
+.main,
+.main-content,
+.page-content,
+.content,
+.content-wrapper,
+.dashboard-content,
+.portal-content,
+.admin-content,
+.student-content,
+.auth-page,
+.login-page,
+.register-page,
+.token-page {
+  width: 100%;
+  max-width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin-bottom: 0 !important;
+  overflow-x: hidden;
+}
+
+section,
+.container,
+.container-fluid,
+.page-container,
+.content-container,
+.card-container,
+.form-container,
+.login-container,
+.auth-container,
+.dashboard-container,
+.portal-container,
+.token-container,
+.school-container {
+  width: 100%;
+  max-width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+.card,
+.form-card,
+.login-card,
+.auth-card,
+.token-card,
+.help-card,
+.dashboard-card,
+.portal-card {
+  max-width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+footer,
+.footer,
+.site-footer,
+.main-footer,
+.app-footer,
+.dashboard-footer,
+.portal-footer,
+.developer-footer,
+body > footer {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  inset: auto !important;
+  transform: none !important;
+  width: 100%;
+  max-width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+}
+
+[hidden],
+.d-none,
+.hidden,
+.screen-hidden,
+.page-hidden,
+.view-hidden,
+.portal-screen:not(.active),
+.app-view:not(.active),
+.page-view:not(.active),
+.system-view:not(.active),
+.tab-content:not(.active),
+.screen:not(.active),
+.offcanvas:not(.show),
+.sidebar-overlay:not(.active),
+.mobile-menu:not(.active) {
+  display: none !important;
+}
+
+.portal-screen.active,
+.app-view.active,
+.page-view.active,
+.system-view.active,
+.tab-content.active,
+.screen.active {
+  display: block;
+}
+
+.table-responsive,
+.table-wrapper,
+.data-table-wrapper,
+.table-wrap,
+.panel:has(table) {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  max-width: 100%;
+}
+
+.sidebar,
+.main-sidebar,
+.admin-sidebar,
+.dashboard-sidebar {
+  max-height: 100dvh;
+}
+
+/* App-specific corrections for the current QuickAdmissionGH pages. */
+.screen {
+  min-height: 0 !important;
+}
+
+.auth {
+  min-height: 100dvh !important;
+  height: auto !important;
+}
+
+.app {
+  min-height: 100dvh !important;
+  height: auto !important;
+}
+
+.main {
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.content {
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.portal-footer {
+  padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+}
+
+.empty-section:empty,
+.empty-container:empty,
+.empty-footer:empty,
+.placeholder:empty,
+body > div:last-child:empty,
+main > section:last-child:empty,
+.main-content > div:last-child:empty,
+.page-content > div:last-child:empty {
+  display: none !important;
+}
+
+@media screen and (max-width: 768px) {
+  html {
+    width: 100%;
+    height: auto !important;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    width: 100%;
+    height: auto !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
+  }
+
+  #app,
+  .app,
+  .app-shell,
+  .app-wrapper,
+  .page-wrapper,
+  .layout-wrapper,
+  .main-wrapper,
+  .dashboard-wrapper,
+  .portal-wrapper,
+  .admin-wrapper,
+  .student-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto !important;
+    overflow-x: hidden;
+  }
+
+  main,
+  .main,
+  .main-content,
+  .page-content,
+  .content,
+  .content-wrapper,
+  .dashboard-content,
+  .portal-content,
+  .admin-content,
+  .student-content,
+  .auth-page,
+  .login-page,
+  .register-page,
+  .token-page {
+    width: 100%;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-bottom: 0 !important;
+    overflow-x: hidden;
+  }
+
+  section,
+  .container,
+  .container-fluid,
+  .page-container,
+  .content-container,
+  .card-container,
+  .form-container,
+  .login-container,
+  .auth-container,
+  .dashboard-container,
+  .portal-container,
+  .token-container,
+  .school-container {
+    width: 100%;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  footer,
+  .footer,
+  .site-footer,
+  .main-footer,
+  .app-footer,
+  .dashboard-footer,
+  .portal-footer,
+  .developer-footer,
+  body > footer {
+    position: static !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    transform: none !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  body {
+    font-size: 16px;
+  }
+
+  main,
+  .main-content,
+  .page-content,
+  .content-wrapper,
+  .dashboard-content,
+  .portal-content {
+    padding-bottom: 16px;
+  }
+
+  .container,
+  .container-fluid,
+  .page-container,
+  .content-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  body,
+  #app,
+  .app-wrapper,
+  .page-wrapper,
+  .layout-wrapper {
+    min-height: -webkit-fill-available;
+  }
+}
