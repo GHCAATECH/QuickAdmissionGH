@@ -20,6 +20,18 @@ function safeText(value: unknown): string {
   return value == null ? "" : String(value).trim();
 }
 
+function storageObjectPath(value: unknown) {
+  const text = safeText(value);
+  if (!text) return "";
+  const directBucket = text.match(/^enrolment-forms\/(.+)$/i);
+  if (directBucket) return decodeURIComponent(directBucket[1]);
+  const publicMatch = text.match(/\/storage\/v1\/object\/public\/enrolment-forms\/(.+)$/i)
+    ?? text.match(/enrolment-forms\/(.+)$/i);
+  if (publicMatch) return decodeURIComponent(publicMatch[1]);
+  if (/^(passport-photos\/)?[^?#]+\.(?:jpe?g|png)$/i.test(text)) return text;
+  return "";
+}
+
 function pickFirstYear(value: unknown): string {
   const text = safeText(value);
   const match = text.match(/(\d{4})/);
@@ -159,6 +171,7 @@ function toStudentSummary(student: JsonRecord, maps: { programmes: Map<string,st
     verified_by_name: maps.users.get(verifiedById) ?? "",
     verification_notes: safeText(student.verification_notes),
     passport_photo_url: studentText(records,["passport_photo_url","photo_url"]) || safeText(student.passport_photo_url),
+    passport_photo_path: studentText(records,["passport_photo_path"]) || storageObjectPath(studentText(records,["passport_photo_url","photo_url"]) || safeText(student.passport_photo_url)),
     enrolment_code: safeText(records.enrolment_code),
     registration_number: safeText(records.registration_number),
     school_name: maps.schoolName,
@@ -166,6 +179,14 @@ function toStudentSummary(student: JsonRecord, maps: { programmes: Map<string,st
     academic_year: maps.academicYear,
     school_code: maps.schoolCode,
   };
+}
+
+async function signStudentFiles(admin: ReturnType<typeof createClient>, row: JsonRecord) {
+  const path = storageObjectPath(row.passport_photo_path || row.passport_photo_url);
+  if (!path) return row;
+  const { data } = await admin.storage.from("enrolment-forms").createSignedUrl(path, 60 * 10);
+  if (data?.signedUrl) row.passport_photo_url = data.signedUrl;
+  return row;
 }
 
 async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolId: string) {
@@ -222,7 +243,7 @@ async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId
     .map((row) => row as JsonRecord)
     .filter((row) => studentMatchesQuery(row, query))
     .map((row) => toStudentSummary(row, context));
-  return { ok: true, rows: rows.slice(0, 60) };
+  return { ok: true, rows: await Promise.all(rows.slice(0, 60).map((row) => signStudentFiles(admin, row))) };
 }
 
 async function listVerified(admin: ReturnType<typeof createClient>, schoolId: string, filters: JsonRecord) {
@@ -234,7 +255,7 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
     .order("verified_at", { ascending: false });
   if (error) throw new Error("Could not load verified students.");
   const context = await loadSchoolContext(admin, schoolId);
-  let rows = (data ?? []).map((row) => toStudentSummary(row as JsonRecord, context));
+  let rows = await Promise.all((data ?? []).map((row) => signStudentFiles(admin, toStudentSummary(row as JsonRecord, context))));
   const search = safeText(filters.search);
   const gender = safeText(filters.gender).toUpperCase();
   const programme = safeText(filters.programme_id);

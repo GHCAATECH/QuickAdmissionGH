@@ -1220,6 +1220,22 @@ async function studentPortalRequest(action,payload){
     return {data:null,error:{message:(e&&e.message)||'Portal service unavailable'}};
   }
 }
+function storageObjectPath(value){
+  const text=String(value||'').trim();
+  if(!text)return '';
+  let m=text.match(/^enrolment-forms\/(.+)$/i);
+  if(m)return decodeURIComponent(m[1]);
+  m=text.match(/\/storage\/v1\/object\/public\/enrolment-forms\/(.+)$/i)||text.match(/enrolment-forms\/(.+)$/i);
+  if(m)return decodeURIComponent(m[1]);
+  if(/^(passport-photos\/)?[^?#]+\.(jpe?g|png)$/i.test(text))return text;
+  return '';
+}
+async function studentSignedFileUrl(pathOrUrl){
+  const path=storageObjectPath(pathOrUrl);
+  if(!path||!session||!session.index||!session.token)return String(pathOrUrl||'');
+  const {data}=await studentPortalRequest('file_url',{p_index:session.index,p_token:session.token,p_school:session.school||null,path});
+  return data&&data.ok&&data.url?data.url:String(pathOrUrl||'');
+}
 const progById=id=>PROGRAMMES.find(p=>p.id===id);
 const initials=n=>{const w=(n||'').trim().split(' ').filter(Boolean);return ((w[0]&&w[0][0]||'?')+(w[1]&&w[1][0]||'')).toUpperCase();};
 function qagTabScope(){
@@ -1829,11 +1845,12 @@ async function handlePassportFile(inp){
   const {error}=await sb.storage.from('enrolment-forms').upload(path,file,{contentType:file.type||'image/jpeg',upsert:true});
   if(error){ toast('Passport upload failed - '+error.message); resetPassportUploadUi(); return; }
   const {data:pub}=sb.storage.from('enrolment-forms').getPublicUrl(path);
+  const previewUrl=URL.createObjectURL(file);
   app.photoUploaded=true;
   app.fields.passport_photo_url=pub.publicUrl;
   app.fields.passport_photo_path=path;
   app.fields.passport_photo_uploaded=true;
-  $('photoWrap').innerHTML=`<div class="file-done"><span class="fi"><img src="${escapeHtml(pub.publicUrl)}" alt="" style="width:48px;height:54px;object-fit:cover;border-radius:6px"></span><div><b>${escapeHtml(file.name)}</b><small>Passport photo uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
+  $('photoWrap').innerHTML=`<div class="file-done"><span class="fi"><img src="${escapeHtml(previewUrl)}" alt="" style="width:48px;height:54px;object-fit:cover;border-radius:6px"></span><div><b>${escapeHtml(file.name)}</b><small>Passport photo uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
   toast('Passport photo uploaded');
 }
 
@@ -1878,12 +1895,19 @@ function prefillRecords(r){
   set('pf-fname',r.father_name);set('pf-focc',r.father_occupation);set('pf-fphone',r.father_phone);set('pf-mname',r.mother_name);set('pf-mocc',r.mother_occupation);set('pf-mphone',r.mother_phone);
   set('pf-guard',r.guardian);set('pf-gphone',r.guardian_phone);set('pf-digital',r.digital_address);
   if(r.enrolment_uploaded){app.enrUploaded=true;$('enrWrap').innerHTML=`<div class="file-done"><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div><b>enrolment-form.jpg</b><small>Uploaded</small></div><button class="x" onclick="removeEnr()">Remove</button></div>`;}
-  if(r.passport_photo_url){app.photoUploaded=true;$('photoWrap').innerHTML=`<div class="file-done"><span class="fi"><img src="${escapeHtml(r.passport_photo_url)}" alt="" style="width:48px;height:54px;object-fit:cover;border-radius:6px"></span><div><b>passport-photo</b><small>Uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;}
+  if(r.passport_photo_url||r.passport_photo_path){app.photoUploaded=true;$('photoWrap').innerHTML=`<div class="file-done"><span class="fi"><span style="font-size:11px">Loading</span></span><div><b>passport-photo</b><small>Uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`; refreshPassportPreview(r);}
   if(r.class_name)app.className=r.class_name;
   if(r.house_id)app.houseId=r.house_id;
   if(r.house_name)app.houseName=r.house_name;
   Object.assign(app.fields,r);
   onReligionChange();
+}
+async function refreshPassportPreview(r){
+  const wrap=$('photoWrap');
+  if(!wrap||!r)return;
+  const src=await studentSignedFileUrl(r.passport_photo_path||r.passport_photo_url);
+  if(!src)return;
+  wrap.innerHTML=`<div class="file-done"><span class="fi"><img src="${escapeHtml(src)}" alt="" style="width:48px;height:54px;object-fit:cover;border-radius:6px"></span><div><b>passport-photo</b><small>Uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
 }
 function rev(t,rows,step){return `<div class="rev-block"><div class="rev-head"><span class="t">${safeHtml(t)}</span><a onclick="goStep(${step})" style="font-size:11.5px">edit</a></div><dl class="rev-body">${rows.map(r=>`<dt>${safeHtml(r[0])}</dt><dd>${safeHtml(r[1],'-')}</dd>`).join('')}</dl></div>`;}
 function buildReview(){

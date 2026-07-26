@@ -154,6 +154,54 @@ async function submitApplication(
   return { ok: false, error: "server", message: "Unexpected submission response." };
 }
 
+function storageObjectPath(value: unknown) {
+  const text = safeText(value);
+  if (!text) return "";
+  const directBucket = text.match(/^enrolment-forms\/(.+)$/i);
+  if (directBucket) return decodeURIComponent(directBucket[1]);
+  const publicMatch = text.match(/\/storage\/v1\/object\/public\/enrolment-forms\/(.+)$/i)
+    ?? text.match(/enrolment-forms\/(.+)$/i);
+  if (publicMatch) return decodeURIComponent(publicMatch[1]);
+  if (/^(passport-photos\/)?[^?#]+\.(?:jpe?g|png)$/i.test(text)) return text;
+  return "";
+}
+
+async function studentFileUrl(
+  admin: ReturnType<typeof createClient>,
+  index: string,
+  token: string,
+  schoolId: string,
+  pathInput: string,
+) {
+  const path = storageObjectPath(pathInput);
+  if (!path) return { ok: false, error: "path", message: "File path is required." };
+  let query = admin
+    .from("students")
+    .select("id, school_id, bece_index, admission_token, enrolment_form_url, records")
+    .eq("bece_index", index);
+  if (schoolId) query = query.eq("school_id", schoolId);
+  const { data: rows, error } = await query;
+  if (error) throw new Error(error.message || "Could not verify file access.");
+  const matches = (rows ?? []).filter((row) => upperText((row as JsonRecord).admission_token) === upperText(token));
+  if (!matches.length) return { ok: false, error: "token", message: "Admission token is invalid." };
+  if (matches.length > 1 && !schoolId) return { ok: false, error: "ambiguous", message: "Select your school first." };
+  const student = (matches[0] ?? {}) as JsonRecord;
+  const records = student.records && typeof student.records === "object" ? student.records as JsonRecord : {};
+  const allowed = new Set([
+    storageObjectPath(student.enrolment_form_url),
+    storageObjectPath(records.enrolment_form_url),
+    storageObjectPath(records.enrolment_form_path),
+    storageObjectPath(records.passport_photo_url),
+    storageObjectPath(records.passport_photo_path),
+  ].filter(Boolean));
+  if (!allowed.has(path)) return { ok: false, error: "forbidden", message: "You cannot open this file." };
+  const { data, error: signError } = await admin.storage.from("enrolment-forms").createSignedUrl(path, 60 * 10);
+  if (signError || !data?.signedUrl) {
+    return { ok: false, error: "sign_failed", message: signError?.message || "Could not create file link." };
+  }
+  return { ok: true, url: data.signedUrl, expires_in: 600 };
+}
+
 async function listDirectory(admin: ReturnType<typeof createClient>) {
   const schoolsRes = await admin
     .from("schools")
@@ -273,6 +321,14 @@ Deno.serve(async (req: Request) => {
       if (!index) return json({ ok: false, error: "index", message: "Index number is required." }, 400);
       if (!token) return json({ ok: false, error: "token", message: "Admission token is required." }, 400);
       return json(await submitApplication(admin, index, token, schoolId, payload));
+    }
+
+    if (action === "file_url") {
+      const token = safeText(body.p_token ?? body.token);
+      const path = safeText(body.path ?? body.file_path ?? body.url);
+      if (!index) return json({ ok: false, error: "index", message: "Index number is required." }, 400);
+      if (!token) return json({ ok: false, error: "token", message: "Admission token is required." }, 400);
+      return json(await studentFileUrl(admin, index, token, schoolId, path));
     }
 
     return json({ ok: false, error: "action", message: "Unknown action." }, 400);
