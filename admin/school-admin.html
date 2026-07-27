@@ -2086,6 +2086,7 @@ let PLACEMENT_STATE={loaded:false,loading:false};
 function randDate(){const d=new Date();d.setDate(d.getDate()-Math.floor(Math.random()*26));return d.toISOString().slice(0,10);}
 let payments=[];
 let financePaymentsLoadError='';
+let FINANCE_PAYMENTS_STATE={loaded:false,loading:false,total:0};
 (function(){const m=['Paystack','Hubtel','Flutterwave','Bank'];const s=['completed','completed','completed','pending','failed'];
   students.slice(0,30).forEach((st,i)=>payments.push({date:randDate(),name:st.name,index:st.index,amount:30,method:m[i%4],status:s[i%5],txn:'TXN'+(100000+i*37)}));})();
 let smsHistory=[
@@ -2804,6 +2805,17 @@ async function loadPlacementRecords(){
   if(error){toast('Could not load placement list: '+error.message);return;}
   placement=(data||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
   placementTotalCount=placement.length;PLACEMENT_STATE.loaded=true;
+}
+async function loadFinancePayments(){
+  if(!SB_SCHOOL||!SB_SCHOOL.id||FINANCE_PAYMENTS_STATE.loaded||FINANCE_PAYMENTS_STATE.loading)return;
+  FINANCE_PAYMENTS_STATE.loading=true;
+  const {data,count,error}=await sb.from('payments').select('student_id,paid_at,created_at,payer_name,amount_pesewas,channel,status,reference, students(bece_index, full_name)',{count:'exact'}).eq('school_id',SB_SCHOOL.id).order('created_at',{ascending:false}).range(0,499);
+  FINANCE_PAYMENTS_STATE.loading=false;
+  if(error){financePaymentsLoadError=error.message||'Could not load payments.';renderFinancePayments();return;}
+  payments=(data||[]).map(function(p){return {studentId:p.student_id,date:(p.paid_at||p.created_at||'').slice(0,10),name:(p.students&&p.students.full_name)||p.payer_name||'—',index:(p.students&&p.students.bece_index)||'—',amount:(p.amount_pesewas||0)/100,method:p.channel,status:p.status,txn:p.reference};});
+  FINANCE_PAYMENTS_STATE.total=Number(count)||payments.length; FINANCE_PAYMENTS_STATE.loaded=true;
+  if(FINANCE_PAYMENTS_STATE.total>payments.length) toast('Showing the latest '+payments.length+' transactions. Exporting the complete history will be added to the paginated finance API.');
+  renderFinancePayments();
 }
 function renderPlacement(){
   const qEl=$('placeSearch'); const q=(qEl&&qEl.value||'').trim().toLowerCase();
@@ -4076,7 +4088,7 @@ function go(view){
   if(view==='manage-students')renderStudents();
   if(view==='house-alloc'){renderHouseAlloc();ensureStudentCache().then(renderHouseAlloc);}
   if(view==='class-alloc'){renderClassAlloc();ensureStudentCache().then(renderClassAlloc);}
-  if(view==='finance')renderFinance();
+  if(view==='finance'){renderFinance();loadFinancePayments().then(renderFinance);}
   if(view==='sms'){renderSms();ensureStudentCache().then(renderSms);}
   if(view==='sms-settings') fillSmsSettingsForm();
   if(view==='users')renderUsers();
@@ -4591,7 +4603,7 @@ async function loadSchoolData(prof){
     sb.from('classrooms').select('*').eq('school_id',myId).order('name'),
     Promise.resolve({data:[],error:null}),
     sb.from('placement_list').select('id',{count:'exact',head:true}).eq('school_id',myId),
-    sb.from('payments').select('*, students(bece_index, full_name)').eq('school_id',myId).order('created_at',{ascending:false}),
+    Promise.resolve({data:[],error:null}),
     fetchSchoolSmsHistory(myId),
     sb.from('activity_log').select('*').eq('school_id',myId).order('created_at',{ascending:false}),
     sb.from('school_sms_templates').select('*').eq('school_id',myId),
@@ -4666,9 +4678,9 @@ async function loadSchoolData(prof){
     return row;
   });
   placement=(plc.data||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
-  financePaymentsLoadError=pay.error?(pay.error.message||'Could not load payments.'):'';
-  if(financePaymentsLoadError) console.error('Payment load failed:',financePaymentsLoadError);
-  payments=(pay.data||[]).map(p=>({studentId:p.student_id,date:(p.paid_at||p.created_at||'').slice(0,10),name:(p.students&&p.students.full_name)||p.payer_name||'—',index:(p.students&&p.students.bece_index)||'—',amount:(p.amount_pesewas||0)/100,method:p.channel,status:p.status,txn:p.reference}));
+  financePaymentsLoadError='';
+  payments=[];
+  FINANCE_PAYMENTS_STATE={loaded:false,loading:false,total:0};
   smsHistory=(sms.data||[]).map(s=>({date:(s.sent_at||'').slice(0,10),group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status}));
   activityLog=(log.data||[]).map(l=>({time:fmtT(l.created_at),action:l.action,by:l.actor||'—'}));
 
