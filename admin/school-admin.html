@@ -1736,6 +1736,7 @@
             <div class="dt-actions">
               <button onclick="exportCSV('excel')">Excel</button>
               <button onclick="exportCSV('pdf')">PDF</button>
+              <button onclick="exportLargeAdmissionCsv()">Large CSV</button>
             </div>
             <div class="dt-search"><label>Search:</label><input id="regSearch" oninput="queueRegisteredSearch()"></div>
           </div>
@@ -3839,6 +3840,22 @@ function showRegisteredStudentDetails(id){
   <div class="modal-body"><div class="grid-2 student-info-grid">${rows.map(function(row){return `<div class="kv"><b>${safeHtml(row[0])}:</b>${safeHtml(row[1],'-')}</div>`;}).join('')}${photo}${form}</div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>`;
   $('overlay').classList.add('show');
+}
+async function exportLargeAdmissionCsv(){
+  if(!SB_SCHOOL||!SB_SCHOOL.id){toast('School is still loading.');return;}
+  toast('Preparing server-side CSV export…');
+  const tok=await freshToken();
+  if(!tok){toast('Your session expired — please sign in again.');return;}
+  try{
+    const res=await fetch(SB_URL+'/functions/v1/admin-students-export',{
+      method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+tok},
+      body:JSON.stringify({school_id:SB_SCHOOL.id,search:(document.getElementById('regSearch')||{}).value||''})
+    });
+    if(!res.ok){let body=null;try{body=await res.json();}catch(e){};toast((body&&body.message)||'Could not create the CSV export.');return;}
+    const blob=await res.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='admission-list-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);toast('Server-side CSV export downloaded.');
+  }catch(err){toast((err&&err.message)||'Could not create the CSV export.');}
 }
 async function exportCSV(kind){
   if(SB_SCHOOL&&SB_SCHOOL.id&&!STUDENT_CACHE_STATE.loaded){ toast('Preparing all submitted student records…'); await ensureStudentCache(); }
