@@ -2065,6 +2065,8 @@ const fn=['Kofi','Ama','Yaw','Akua','Kwame','Esi','Kojo','Adwoa','Kwabena','Aben
 const ln=['Mensah','Owusu','Asante','Boateng','Addo','Sarpong','Agyei','Darko','Appiah','Ofori'];
 const stArr=['pending','approved','enrolled','rejected'];
 let students=[],placement=[];
+let placementTotalCount=0;
+let PLACEMENT_STATE={loaded:false,loading:false};
 (function seed(){
   let idx=100000000026;
   for(let i=0;i<46;i++){
@@ -2435,7 +2437,7 @@ function completedFinancePaymentCount(source){
 }
 function schoolFinanceSnapshot(){
   const registered=submittedStudentTotal();
-  const total=Math.max(placement.length,registered);
+  const total=Math.max(placementTotalCount||placement.length,registered);
   const completedStudents=completedFinancePaymentCount(payments);
   const paidStudents=settledStudentCount(SB_CFG&&SB_CFG.finance_settled_students,completedStudents);
   const dueStudents=Math.max(completedStudents-paidStudents,0);
@@ -2665,6 +2667,7 @@ function toggleAdmission(){
 function renderStats(){
   const host=$('admCards'); if(!host)return;
   const plc=(typeof placement!=='undefined'?placement:[])||[];
+  const placementTotal=Math.max(Number(placementTotalCount)||0,plc.length);
   const norm=g=>{g=(g||'').toString().trim().toLowerCase();if(g==='m'||g==='male')return 'M';if(g==='f'||g==='female')return 'F';return '';};
   const resOf=r=>{r=(r||'').toString().trim().toLowerCase();if(r.indexOf('board')===0)return 'B';if(r==='day')return 'D';return '';};
   const tally=rows=>{const t={n:rows.length,day:0,boarding:0,male:0,female:0,md:0,fd:0,mb:0,fb:0};
@@ -2678,10 +2681,11 @@ function renderStats(){
   const subIdx=new Set(submitted.map(s=>String(s.index)));
   const completedRows=hasLocal?plc.filter(p=>subIdx.has(String(p.index))):[];
   const pendingRows=hasLocal?plc.filter(p=>!subIdx.has(String(p.index))):plc.slice(Math.min(submittedCount,plc.length));
-  const placed=plc.length, completed=Math.min(submittedCount,placed||submittedCount), pending=Math.max(placed-completed,0);
+  const placed=placementTotal, completed=Math.min(submittedCount,placed||submittedCount), pending=Math.max(placed-completed,0);
   const pc=placed?Math.round(completed/placed*1000)/10:0, pp=placed?Math.round(pending/placed*1000)/10:0;
   const seen={}; let dup=0; plc.forEach(p=>{const k=String(p.index);if(seen[k])dup++;else seen[k]=1;});
-  const P=tally(plc);
+  const emptyPlacementTally={n:placed,day:0,boarding:0,male:0,female:0,md:0,fd:0,mb:0,fb:0};
+  const P=(plc.length||PLACEMENT_STATE.loaded)?tally(plc):emptyPlacementTally;
   const summaryTally={n:completed,day:summaryNumber('day',0),boarding:summaryNumber('boarding',0),male:summaryNumber('male',0),female:summaryNumber('female',0),md:0,fd:0,mb:0,fb:0};
   const emptyTally={n:pending,day:0,boarding:0,male:0,female:0,md:0,fd:0,mb:0,fb:0};
   const C=hasLocal?tally(completedRows):summaryTally, N=hasLocal?tally(pendingRows):emptyTally;
@@ -2792,6 +2796,15 @@ function openClass(id){
 }
 
 /* ===== PLACEMENT ===== */
+async function loadPlacementRecords(){
+  if(!SB_SCHOOL||!SB_SCHOOL.id||PLACEMENT_STATE.loaded||PLACEMENT_STATE.loading)return;
+  PLACEMENT_STATE.loading=true;
+  const {data,error}=await sb.from('placement_list').select('index_number,student_name,gender,residential_status,programme,aggregate,jhs_attended,dob,sms_contact,enrolment_code,logged_in').eq('school_id',SB_SCHOOL.id).order('created_at',{ascending:false});
+  PLACEMENT_STATE.loading=false;
+  if(error){toast('Could not load placement list: '+error.message);return;}
+  placement=(data||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  placementTotalCount=placement.length;PLACEMENT_STATE.loaded=true;
+}
 function renderPlacement(){
   const qEl=$('placeSearch'); const q=(qEl&&qEl.value||'').trim().toLowerCase();
   const list=q?placement.filter(p=>((p.name||'').toLowerCase().includes(q)||String(p.index||'').toLowerCase().includes(q))):placement;
@@ -2867,7 +2880,7 @@ async function deletePlacementBatch(scope){
   if(error){toast('Delete failed: '+error.message);return;}
   if(!data||!data.ok){toast('Delete failed: '+((data&&data.error)||'unknown'));return;}
   const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
-  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in})); placementTotalCount=placement.length; PLACEMENT_STATE.loaded=true;
   notifyStudentPortalRefresh('placement-batch-delete');
   renderPlacement();
   toast('Deleted '+data.deleted+' record(s)'+(data.skipped_submitted?' · '+data.skipped_submitted+' kept (submitted)':''));
@@ -3001,7 +3014,7 @@ async function handlePlacementFile(inp){
   toast('Done — added: '+(res.inserted||0)+(res.updated?' · '+res.updated+' updated':'')+((res.invalid||0)?' · '+res.invalid+' invalid':''));
   closePop('importPop');
   const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
-  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in})); placementTotalCount=placement.length; PLACEMENT_STATE.loaded=true;
   notifyStudentPortalRefresh('placement-import');
   renderPlacement();
 }
@@ -4056,7 +4069,7 @@ function go(view){
   if(view==='programmes')renderProg();
   if(view==='houses')renderHouses();
   if(view==='classes')renderClasses();
-  if(view==='placement')renderPlacement();
+  if(view==='placement'){renderPlacement();loadPlacementRecords().then(renderPlacement);}
   if(view==='students')renderRegistered();
   if(view==='verify-students')loadVerificationSearch(true);
   if(view==='verified-students')loadVerifiedStudents(1);
@@ -4577,7 +4590,7 @@ async function loadSchoolData(prof){
     sb.from('houses').select('*').eq('school_id',myId).order('name'),
     sb.from('classrooms').select('*').eq('school_id',myId).order('name'),
     Promise.resolve({data:[],error:null}),
-    sb.from('placement_list').select('*').eq('school_id',myId),
+    sb.from('placement_list').select('id',{count:'exact',head:true}).eq('school_id',myId),
     sb.from('payments').select('*, students(bece_index, full_name)').eq('school_id',myId).order('created_at',{ascending:false}),
     fetchSchoolSmsHistory(myId),
     sb.from('activity_log').select('*').eq('school_id',myId).order('created_at',{ascending:false}),
@@ -4585,6 +4598,7 @@ async function loadSchoolData(prof){
     sb.from('finance_claims').select('claim_number,students_claimed,created_at,academic_year').eq('school_id',myId),
   ]);
   SB_SCHOOL=(sch.data||[])[0]; SB_CFG=(cfg.data||[])[0]||{};
+  placementTotalCount=Number(plc.count)||0; PLACEMENT_STATE={loaded:false,loading:false};
   const summaryResult=await invokeFnDetailed('admin-school-summary',{school_id:myId});
   SB_STUDENT_SUMMARY=(summaryResult.data&&summaryResult.data.summary)||{};
   if(!claims.error&&Array.isArray(claims.data)){
@@ -5457,7 +5471,7 @@ addPlacement=async function(){
   if(error){toast('Could not save: '+error.message);return;}
   if(!data||!data.ok){toast('Could not save: '+((data&&data.error)||'unknown'));return;}
   const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
-  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in})); placementTotalCount=placement.length; PLACEMENT_STATE.loaded=true;
   ['pl_index','pl_name','pl_gender','pl_res','pl_agg','pl_dob','pl_sms'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   notifyStudentPortalRefresh('placement-save',{index:i});
   renderPlacement(); closePop('manualPop');
