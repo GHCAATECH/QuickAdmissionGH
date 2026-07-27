@@ -34,6 +34,7 @@ Status in repo:
 
 - `.htaccess` now blocks source/control files.
 - `.htaccess` now adds compression and static asset cache headers.
+- `supabase/functions/admin-students-list` provides an authenticated, school-scoped, paginated student-list API with server-side filtering.
 
 ## Phase 2: Backend API layer
 
@@ -56,6 +57,10 @@ Highest impact file:
 Main current hotspot:
 
 - `loadSchoolData()` fetches many full tables at once.
+
+Migration note:
+
+- The legacy admin page still has direct table reads for compatibility. The next UI migration should call `admin-students-list` when opening the Admission List and Manage Students views, then fetch detail records only when a row is opened.
 
 ## Phase 3: Database scaling
 
