@@ -2093,6 +2093,7 @@ let smsHistory=[
   {date:'2026-06-08',group:'Approved',recip:18,msg:'Your admission is approved. Report on 18 Oct 2025.',status:'pending'},
   {date:'2026-06-06',group:'All',recip:46,msg:'Complete your application before 15 June.',status:'pending'},
 ];
+let SMS_HISTORY_STATE={loaded:false,loading:false};
 const FINANCE_IT_RATE=5;
 const FINANCE_HEAD_RATE=7.5;
 const FINANCE_CHARGE_RATE=.01;
@@ -2135,6 +2136,7 @@ let activityLog=[
   {time:'Yesterday 16:30',action:'Updated service charge to GHS 30',by:'Isaac Addo'},
   {time:'Yesterday 14:05',action:'Sent reporting reminder to 12 students',by:'Isaac Addo'},
 ];
+let ACTIVITY_LOG_STATE={loaded:false,loading:false};
 let selected=new Set();
 let financePayQuery='';
 let financePayPage=1;
@@ -3516,6 +3518,16 @@ function renderSms(){
   fillSmsSettingsForm();
   updateSms();
 }
+async function loadSmsHistory(){
+  if(!SB_SCHOOL||!SB_SCHOOL.id||SMS_HISTORY_STATE.loaded||SMS_HISTORY_STATE.loading)return;
+  SMS_HISTORY_STATE.loading=true;
+  const res=await fetchSchoolSmsHistory(SB_SCHOOL.id);
+  SMS_HISTORY_STATE.loading=false;
+  if(res&&res.error){toast('Could not load SMS history: '+res.error.message);return;}
+  smsHistory=(res&&res.data||[]).map(function(s){return {date:(s.sent_at||'').slice(0,10),group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status};});
+  SMS_HISTORY_STATE.loaded=true;
+  renderSms();
+}
 
 
 /* ===== REPORTS ===== */
@@ -3600,6 +3612,16 @@ async function sendTestSms(){
   }
 }
 function renderLog(){$('logRows').innerHTML=activityLog.length?activityLog.map(l=>`<tr><td class="mono" style="font-size:12px">${safeHtml(l.time)}</td><td>${safeHtml(l.action)}</td><td>${safeHtml(l.by)}</td></tr>`).join(''):emptyRow(3,'No activity logged yet.');renderArchives();}
+async function loadActivityLog(){
+  if(!SB_SCHOOL||!SB_SCHOOL.id||ACTIVITY_LOG_STATE.loaded||ACTIVITY_LOG_STATE.loading)return;
+  ACTIVITY_LOG_STATE.loading=true;
+  const {data,error}=await sb.from('activity_log').select('created_at,action,actor').eq('school_id',SB_SCHOOL.id).order('created_at',{ascending:false}).range(0,499);
+  ACTIVITY_LOG_STATE.loading=false;
+  if(error){toast('Could not load activity log: '+error.message);return;}
+  activityLog=(data||[]).map(function(row){return {time:fmtT(row.created_at),action:row.action,by:row.actor||'—'};});
+  ACTIVITY_LOG_STATE.loaded=true;
+  renderLog();
+}
 const DOC_COL={prospectus:'prospectus_url',undertaking:'undertaking_url',subjects:'subjects_url'};
 function showSchoolDocLink(kind,url){
   const a=document.getElementById('doc_'+kind+'_link'); if(!a)return;
@@ -4089,13 +4111,13 @@ function go(view){
   if(view==='house-alloc'){renderHouseAlloc();ensureStudentCache().then(renderHouseAlloc);}
   if(view==='class-alloc'){renderClassAlloc();ensureStudentCache().then(renderClassAlloc);}
   if(view==='finance'){renderFinance();loadFinancePayments().then(renderFinance);}
-  if(view==='sms'){renderSms();ensureStudentCache().then(renderSms);}
+  if(view==='sms'){renderSms();Promise.all([loadPlacementRecords(),ensureStudentCache(),loadSmsHistory()]).then(renderSms);}
   if(view==='sms-settings') fillSmsSettingsForm();
   if(view==='users')renderUsers();
   if(view==='templates')renderTemplates();
   if(view==='reports')buildCharts();
   if(view==='portal')renderDocLines();
-  if(view==='utilities')renderLog();
+  if(view==='utilities'){renderLog();loadActivityLog().then(renderLog);}
   const admViews=['students','verify-students','verified-students','manage-students','house-alloc','class-alloc'];
   const inAdm=admViews.indexOf(view)>-1;
   document.getElementById('admParent').classList.toggle('active',inAdm);
@@ -4445,9 +4467,9 @@ function fillSchoolProfileForm(){
   fillStudentFeatureToggles();
 }
 async function fetchSchoolSmsHistory(schoolId){
-  let res=await sb.from('sms_logs').select('*').eq('school_id',schoolId).is('external_id',null).order('sent_at',{ascending:false});
+  let res=await sb.from('sms_logs').select('*').eq('school_id',schoolId).is('external_id',null).order('sent_at',{ascending:false}).range(0,499);
   if(res&&res.error){
-    res=await sb.from('sms_log').select('*').eq('school_id',schoolId).order('sent_at',{ascending:false});
+    res=await sb.from('sms_log').select('*').eq('school_id',schoolId).order('sent_at',{ascending:false}).range(0,499);
   }
   return res;
 }
@@ -4604,8 +4626,8 @@ async function loadSchoolData(prof){
     Promise.resolve({data:[],error:null}),
     sb.from('placement_list').select('id',{count:'exact',head:true}).eq('school_id',myId),
     Promise.resolve({data:[],error:null}),
-    fetchSchoolSmsHistory(myId),
-    sb.from('activity_log').select('*').eq('school_id',myId).order('created_at',{ascending:false}),
+    Promise.resolve({data:[],error:null}),
+    Promise.resolve({data:[],error:null}),
     sb.from('school_sms_templates').select('*').eq('school_id',myId),
     sb.from('finance_claims').select('claim_number,students_claimed,created_at,academic_year').eq('school_id',myId),
   ]);
@@ -4681,8 +4703,8 @@ async function loadSchoolData(prof){
   financePaymentsLoadError='';
   payments=[];
   FINANCE_PAYMENTS_STATE={loaded:false,loading:false,total:0};
-  smsHistory=(sms.data||[]).map(s=>({date:(s.sent_at||'').slice(0,10),group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status}));
-  activityLog=(log.data||[]).map(l=>({time:fmtT(l.created_at),action:l.action,by:l.actor||'—'}));
+  smsHistory=[]; SMS_HISTORY_STATE={loaded:false,loading:false};
+  activityLog=[]; ACTIVITY_LOG_STATE={loaded:false,loading:false};
 
   admissionOpen=(SB_CFG.admission_status==='OPENED');
   smsBalance=SB_CFG.sms_balance||0;
