@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
 
   let query = admin
     .from("students")
-    .select("id,school_id,full_name,bece_index,admission_no,permanent_admission_number,gender,programme_id,class_id,house_id,status,verification_status,verified_at,verified_by,verification_notes,passport_photo_url,enrolment_form_url,parent_name,payment_status,submitted_at,created_at,personal_done,programme_done,undertaking_done", { count: "exact" })
+    .select("id,school_id,full_name,bece_index,admission_no,permanent_admission_number,gender,programme_id,class_id,house_id,status,verification_status,verified_at,verified_by,verification_notes,passport_photo_url,enrolment_form_url,parent_name,payment_status,submitted_at,created_at,personal_done,programme_done,undertaking_done,records", { count: "exact" })
     .eq("school_id", schoolId)
     .order("created_at", { ascending: false });
 

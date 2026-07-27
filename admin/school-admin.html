@@ -3728,8 +3728,8 @@ function mapAdminStudentRow(row,index){
     progId:progId,classId:classId,houseId:houseId,status:row.status||'pending',adm:row.admission_no||'-',permAdm:row.permanent_admission_number||'',
     verificationStatus:row.verification_status||'pending',verifiedAt:row.verified_at||'',verifiedBy:row.verified_by||'',verificationNotes:row.verification_notes||'',
     passportPhoto:row.passport_photo_url||'',reg:created.slice(0,10),submittedAt:row.submitted_at||'',personalDone:!!row.personal_done,programmeDone:!!row.programme_done,undertakingDone:!!row.undertaking_done,
-    time:dt&&!isNaN(dt.getTime())?dt.toTimeString().slice(0,8):'-',sms:'-',smsRaw:'',prog:row.programme_name||'',enrol:'-',form:row.enrolment_form_url||null,
-    dob:'',parent:row.parent_name||'-',res:'-',rec:{},pay:row.payment_status||'unpaid',submitted:!!row.submitted_at,loggedIn:false};
+    time:dt&&!isNaN(dt.getTime())?dt.toTimeString().slice(0,8):'-',sms:(row.records&&row.records.sms_contact)||row.parent_phone||'-',smsRaw:(row.records&&row.records.sms_contact)||row.parent_phone||'',prog:row.programme_name||'',enrol:(row.records&&row.records.enrolment_code)||'-',form:row.enrolment_form_url||null,
+    dob:(row.records&&row.records.dob)||'',parent:row.parent_name||(row.records&&row.records.guardian)||'-',res:(row.records&&((row.records.residential_status||row.records.residential)))||'-',rec:row.records||{},pay:row.payment_status||'unpaid',submitted:!!row.submitted_at,loggedIn:false};
 }
 async function loadRegisteredPage(reset){
   if(!SB_SCHOOL||!SB_SCHOOL.id) return;
@@ -3840,11 +3840,12 @@ function showRegisteredStudentDetails(id){
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>`;
   $('overlay').classList.add('show');
 }
-function exportCSV(kind){
+async function exportCSV(kind){
+  if(SB_SCHOOL&&SB_SCHOOL.id&&!STUDENT_CACHE_STATE.loaded){ toast('Preparing all submitted student records…'); await ensureStudentCache(); }
   var cols=regCols.filter(k=>!regHidden.has(k));
-  var rows=regFiltered();
+  var rows=STUDENT_CACHE_STATE.loaded?students.slice():regFiltered();
   if(kind==='pdf'){
-    exportRegisteredPdf();
+    exportRegisteredPdf(rows);
     return;
   }
   if(kind==='excel'){
@@ -3860,8 +3861,8 @@ function exportCSV(kind){
   a.href=URL.createObjectURL(blob); a.download='registered-students.csv'; a.click();
   toast('Exported '+rows.length+' rows');
 }
-function exportRegisteredPdf(){
-  var rows=regFiltered();
+function exportRegisteredPdf(rowsOverride){
+  var rows=Array.isArray(rowsOverride)?rowsOverride:regFiltered();
   if(!rows.length){ toast('No registered students to export'); return; }
   var showHouse=canViewStudentHouse();
   var headers=['JHS Index No','Admission #','Student Name','Programme','Class'];
@@ -3949,7 +3950,8 @@ function inRange(s){var f=repVal('rep_from'),t=repVal('rep_to');if(f&&s.reg<f)re
 function pN(s){return studentProgrammeName(s);}
 function cN(s){return (classById(s.classId)||{}).name||'—';}
 function hN(s){return (houseById(s.houseId)||{}).name||'—';}
-function runReport(type,fmt){
+async function runReport(type,fmt){
+  if(SB_SCHOOL&&SB_SCHOOL.id&&!STUDENT_CACHE_STATE.loaded){ toast('Preparing submitted student records…'); await ensureStudentCache(); }
   var rows=[],headers=[],title='',data=submittedStudents();
   if(['programme','cssps','house','class','boarding','saprosoft'].indexOf(type)>-1) data=data.filter(inRange);
   if(type==='programme'||type==='cssps'){
@@ -3990,7 +3992,8 @@ function analyticsRows(kind){
   });
   return Object.keys(by).sort().map(function(k){return [k,by[k]];});
 }
-function exportEnrolmentAnalytics(){
+async function exportEnrolmentAnalytics(){
+  if(SB_SCHOOL&&SB_SCHOOL.id&&!STUDENT_CACHE_STATE.loaded){ toast('Preparing submitted student records…'); await ensureStudentCache(); }
   var totalStudents=submittedStudents().length;
   var sheets=[
     {name:'Programme',headers:['Programme','Students'],rows:analyticsRows('programme')},
