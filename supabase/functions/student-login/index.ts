@@ -21,6 +21,11 @@ function firstText(...values: unknown[]): string {
   return "";
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
+
 function normalizeGender(studentGender: unknown, placementGender: unknown): string {
   const student = upperText(studentGender);
   const placement = upperText(placementGender);
@@ -55,6 +60,12 @@ Deno.serve(async (req: Request) => {
   const index = safeText(body.p_index ?? body.index);
   const token = upperText(body.p_token ?? body.token);
   const schoolId = safeText(body.p_school ?? body.school) || null;
+
+  const forwarded = safeText(req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip"));
+  const ip = (forwarded.split(",")[0] || "unknown").trim().slice(0, 80);
+  const ipAllowed = await rateAllowed(admin, `student-login:ip:${ip}`, 120, 60);
+  const attemptAllowed = await rateAllowed(admin, `student-login:attempt:${ip}:${schoolId || "all"}:${index.slice(0, 80)}`, 12, 60);
+  if (!ipAllowed || !attemptAllowed) return json({ ok: false, error: "rate_limited", message: "Too many login attempts. Please wait a minute and try again." }, 429);
 
   if (!index) return json({ ok: false, error: "index" });
   if (!token) return json({ ok: false, error: "token" });

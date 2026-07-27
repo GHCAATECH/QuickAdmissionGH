@@ -29,6 +29,11 @@ function allowed(profile: JsonRecord | null, schoolId: string) {
   return values.students === true || values.students === "true" || values.co_admin === true || values.co_admin === "true";
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
+
 Deno.serve(async (req: Request) => {
   const blocked = guardRequest(req, { methods: ["POST", "OPTIONS"], maxBodyBytes: 16_384 });
   if (blocked) return blocked;
@@ -41,6 +46,8 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json(); } catch { return json({ ok: false, error: "validation", message: "A JSON request body is required." }, 400); }
   const schoolId = text(body.school_id || profile.school_id);
   if (!schoolId || !allowed(profile, schoolId)) return json({ ok: false, error: "forbidden", message: "You cannot export students for this school." }, 403);
+  const actorKey = text(profile.id) || text(req.headers.get("x-forwarded-for")) || "unknown";
+  if (!await rateAllowed(admin, `student-export:${actorKey}:${schoolId}`, 5, 60)) return json({ ok: false, error: "rate_limited", message: "Too many exports requested. Please wait a minute and try again." }, 429);
   let query = admin.from("students").select("bece_index,admission_no,full_name,gender,programme_id,class_id,house_id,submitted_at,records", { count: "exact" }).eq("school_id", schoolId).not("submitted_at", "is", null).order("created_at", { ascending: false });
   const search = cleanSearch(body.search);
   if (search) {
