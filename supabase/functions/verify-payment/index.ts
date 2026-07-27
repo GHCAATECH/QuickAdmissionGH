@@ -35,6 +35,10 @@ function paystackMode(key: string): "live" | "test" | "unknown" {
   if (key.startsWith("sk_test_") || key.startsWith("pk_test_")) return "test";
   return "unknown";
 }
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
 
 Deno.serve(async (req: Request) => {
   const blocked = guardRequest(req, { maxBodyBytes: 12_288 });
@@ -68,6 +72,11 @@ Deno.serve(async (req: Request) => {
   if (!reference || !index) return json({ ok: false, error: "missing" }, 400);
 
   const admin = createClient(url, service);
+  const forwarded = safeString(req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip"));
+  const ip = (forwarded.split(",")[0] || "unknown").trim().slice(0, 80);
+  if (!await rateAllowed(admin, `payment-verify:ip:${ip}`, 60, 60) || !await rateAllowed(admin, `payment-verify:reference:${reference}`, 8, 60)) {
+    return json({ ok: false, error: "rate_limited", message: "Too many payment verification attempts. Please wait a minute and try again." }, 429);
+  }
   const { data: existingPay, error: existingPayError } = await admin
     .from("payments")
     .select("id, student_id, school_id")

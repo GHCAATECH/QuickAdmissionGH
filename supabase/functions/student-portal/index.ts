@@ -30,6 +30,10 @@ function pickRecord(source: JsonRecord, keys: string[]) {
   }
   return output;
 }
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
 
 async function resolveSchool(admin: ReturnType<typeof createClient>, index: string, schoolId: string) {
   if (schoolId) {
@@ -320,6 +324,11 @@ Deno.serve(async (req: Request) => {
         : {};
       if (!index) return json({ ok: false, error: "index", message: "Index number is required." }, 400);
       if (!token) return json({ ok: false, error: "token", message: "Admission token is required." }, 400);
+      const forwarded = safeText(req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip"));
+      const ip = (forwarded.split(",")[0] || "unknown").trim().slice(0, 80);
+      if (!await rateAllowed(admin, `admission-submit:ip:${ip}`, 30, 60) || !await rateAllowed(admin, `admission-submit:student:${schoolId || "all"}:${index}`, 8, 60)) {
+        return json({ ok: false, error: "rate_limited", message: "Too many submission attempts. Please wait a minute and try again." }, 429);
+      }
       return json(await submitApplication(admin, index, token, schoolId, payload));
     }
 
