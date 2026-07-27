@@ -35,6 +35,7 @@ Status in repo:
 - `.htaccess` now blocks source/control files.
 - `.htaccess` now adds compression and static asset cache headers.
 - `supabase/functions/admin-students-list` provides an authenticated, school-scoped, paginated student-list API with server-side filtering.
+- The Admission List and Manage Students views now use that API for 50-row pages, server-side search, and programme filtering.
 
 ## Phase 2: Backend API layer
 
@@ -60,7 +61,7 @@ Main current hotspot:
 
 Migration note:
 
-- The legacy admin page still has direct table reads for compatibility. The next UI migration should call `admin-students-list` when opening the Admission List and Manage Students views, then fetch detail records only when a row is opened.
+- The legacy admin page still has direct table reads for dashboard charts, allocations, SMS, and exports. Those reads are the next migration targets; detail records should be fetched only when a row is opened.
 
 ## Phase 3: Database scaling
 
