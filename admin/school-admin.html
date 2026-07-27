@@ -2147,7 +2147,11 @@ const money=n=>'GHS '+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumF
 const moneyBare=n=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const round2=n=>Math.round((Number(n)||0)*100)/100;
 function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
-const pendingCount=()=>students.filter(s=>s.status==='pending').length;
+function summaryNumber(key,fallback){
+  const n=Number(SB_STUDENT_SUMMARY&&SB_STUDENT_SUMMARY[key]);
+  return Number.isFinite(n)?Math.max(n,0):fallback;
+}
+const pendingCount=()=>summaryNumber('pending',students.filter(s=>s.status==='pending').length);
 const totalRevenue=()=>payments.filter(p=>p.status==='completed').reduce((a,p)=>a+p.amount,0);
 function cleanSmsText(v){ return v==null?'':String(v).trim(); }
 const HTML_ESCAPE_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'};
@@ -2406,6 +2410,7 @@ function settledStudentCount(raw,maxCount){
 function completedFinancePaymentCount(source){
   const seen=new Set();
   const eligible=submittedStudents();
+  if(!eligible.length && Object.prototype.hasOwnProperty.call(SB_STUDENT_SUMMARY||{},'paid')) return summaryNumber('paid',0);
   const eligibleIds=new Set(eligible.map(function(s){ return s&&s._id?String(s._id):''; }).filter(Boolean));
   const eligibleIndexes=new Set(eligible.map(function(s){ return cleanSmsText(s&&s.index); }).filter(Boolean));
   (source||[]).forEach(function(payment){
@@ -2429,7 +2434,7 @@ function completedFinancePaymentCount(source){
   return seen.size;
 }
 function schoolFinanceSnapshot(){
-  const registered=submittedStudents().length;
+  const registered=submittedStudentTotal();
   const total=Math.max(placement.length,registered);
   const completedStudents=completedFinancePaymentCount(payments);
   const paidStudents=settledStudentCount(SB_CFG&&SB_CFG.finance_settled_students,completedStudents);
@@ -2668,13 +2673,18 @@ function renderStats(){
       if(g==='M'&&rr==='D')t.md++;if(g==='F'&&rr==='D')t.fd++;if(g==='M'&&rr==='B')t.mb++;if(g==='F'&&rr==='B')t.fb++;});
     return t;};
   const submitted=submittedStudents();
+  const hasLocal=submitted.length>0;
+  const submittedCount=summaryNumber('submitted',submitted.length);
   const subIdx=new Set(submitted.map(s=>String(s.index)));
-  const completedRows=plc.filter(p=>subIdx.has(String(p.index)));
-  const pendingRows=plc.filter(p=>!subIdx.has(String(p.index)));
-  const placed=plc.length, completed=submitted.length, pending=pendingRows.length;
+  const completedRows=hasLocal?plc.filter(p=>subIdx.has(String(p.index))):[];
+  const pendingRows=hasLocal?plc.filter(p=>!subIdx.has(String(p.index))):plc.slice(Math.min(submittedCount,plc.length));
+  const placed=plc.length, completed=Math.min(submittedCount,placed||submittedCount), pending=Math.max(placed-completed,0);
   const pc=placed?Math.round(completed/placed*1000)/10:0, pp=placed?Math.round(pending/placed*1000)/10:0;
   const seen={}; let dup=0; plc.forEach(p=>{const k=String(p.index);if(seen[k])dup++;else seen[k]=1;});
-  const P=tally(plc), C=tally(completedRows), N=tally(pendingRows);
+  const P=tally(plc);
+  const summaryTally={n:completed,day:summaryNumber('day',0),boarding:summaryNumber('boarding',0),male:summaryNumber('male',0),female:summaryNumber('female',0),md:0,fd:0,mb:0,fb:0};
+  const emptyTally={n:pending,day:0,boarding:0,male:0,female:0,md:0,fd:0,mb:0,fb:0};
+  const C=hasLocal?tally(completedRows):summaryTally, N=hasLocal?tally(pendingRows):emptyTally;
   const rowsBlk=t=>`<div class="rows"><div><b>DAY:</b> ${t.day} &nbsp;|&nbsp; <b>BOARDING:</b> ${t.boarding}</div><div><b>MALE:</b> ${t.male} &nbsp;|&nbsp; <b>FEMALE:</b> ${t.female}</div></div>`+
     `<div class="rows sub"><div><b>MALE DAY:</b> ${t.md} &nbsp;|&nbsp; <b>FEMALE DAY:</b> ${t.fd}</div><div><b>MALE BOARDING:</b> ${t.mb} &nbsp;|&nbsp; <b>FEMALE BOARDING:</b> ${t.fb}</div></div>`;
   host.innerHTML=
@@ -2699,8 +2709,9 @@ function renderStats(){
   var bp=$('badge-pending'); if(bp) bp.textContent=completed;
 }
 function renderRecent(){
-  const rows=[...students].sort((a,b)=>b.reg.localeCompare(a.reg)).slice(0,8);
-  $('recentRows').innerHTML=rows.map(s=>`<tr><td class="mono">${safeHtml(s.reg)}</td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(studentProgrammeName(s),'-')}</td><td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">View</button></div></td></tr>`).join('');
+  const local=[...students].sort((a,b)=>b.reg.localeCompare(a.reg)).slice(0,8);
+  const rows=local.length?local:(Array.isArray(SB_STUDENT_SUMMARY&&SB_STUDENT_SUMMARY.recent)?SB_STUDENT_SUMMARY.recent:[]).map((r,i)=>({id:1000000+i,index:r.bece_index||'',name:r.full_name||'(no name)',reg:(r.submitted_at||r.created_at||'').slice(0,10),prog:''}));
+  $('recentRows').innerHTML=rows.map(s=>`<tr><td class="mono">${safeHtml(s.reg)}</td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(studentProgrammeName(s),'-')}</td><td><div class="row-actions"><button class="act" onclick="${s.id>=1000000?'go(\'students\')':'viewStudent('+s.id+')'}">${s.id>=1000000?'Open list':'View'}</button></div></td></tr>`).join('');
 }
 
 /* ===== PROGRAMMES / HOUSES / CLASSES ===== */
@@ -3002,6 +3013,7 @@ function filteredStudents(){
   const source=MANAGE_STATE.rows.length?MANAGE_STATE.rows:submittedStudents();
   return source.filter(s=>(s.name.toLowerCase().includes(q)||s.index.includes(q))&&(pr==='all'||s.progId==pr));
 }
+function submittedStudentTotal(){ return summaryNumber('submitted',submittedStudents().length); }
 function renderStudentsRows(){
   const rows=filteredStudents();
   const showHouse=canViewStudentHouse();
@@ -3486,10 +3498,12 @@ let charts={};
 function buildCharts(){
   Object.values(charts).forEach(c=>c&&c.destroy());
   Chart.defaults.font.family="'Inter',sans-serif";Chart.defaults.font.size=11;Chart.defaults.color='#8A9893';
-  const m=students.filter(s=>s.gender==='M').length,f=students.length-m;
+  const hasLocal=students.length>0;
+  const m=hasLocal?students.filter(s=>s.gender==='M').length:summaryNumber('male',0),f=hasLocal?students.length-m:summaryNumber('female',0);
+  const programmeCounts=SB_STUDENT_SUMMARY.programmes||{},houseCounts=SB_STUDENT_SUMMARY.houses||{};
   charts.g=new Chart($('genderChart'),{type:'doughnut',data:{labels:['Male','Female'],datasets:[{data:[m,f],backgroundColor:['#1557B0','#D2941A'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:12}}}}});
-  charts.p=new Chart($('progChart'),{type:'bar',data:{labels:programmes.map(p=>p.code),datasets:[{data:programmes.map(p=>students.filter(s=>s.progId===p.id).length),backgroundColor:'#1557B0',borderRadius:6,barThickness:30}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#EEF1EF'},beginAtZero:true}}}});
-  charts.h=new Chart($('houseChart'),{type:'bar',data:{labels:houses.map(h=>h.name),datasets:[{data:houses.map(h=>students.filter(s=>s.houseId===h.id).length),backgroundColor:houses.map(h=>h.color),borderRadius:6,barThickness:30}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EEF1EF'},beginAtZero:true},y:{grid:{display:false}}}}});
+  charts.p=new Chart($('progChart'),{type:'bar',data:{labels:programmes.map(p=>p.code),datasets:[{data:programmes.map(p=>hasLocal?students.filter(s=>s.progId===p.id).length:Number(programmeCounts[p._id]||0)),backgroundColor:'#1557B0',borderRadius:6,barThickness:30}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#EEF1EF'},beginAtZero:true}}}});
+  charts.h=new Chart($('houseChart'),{type:'bar',data:{labels:houses.map(h=>h.name),datasets:[{data:houses.map(h=>hasLocal?students.filter(s=>s.houseId===h.id).length:Number(houseCounts[h._id]||0)),backgroundColor:houses.map(h=>h.color),borderRadius:6,barThickness:30}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EEF1EF'},beginAtZero:true},y:{grid:{display:false}}}}});
 }
 
 /* ===== DOC LINES + LOG ===== */
@@ -3645,6 +3659,7 @@ var REG_STATE={page:1,pageSize:50,total:0,totalPages:1,rows:[],loading:false};
 var regSearchTimer=0;
 var MANAGE_STATE={page:1,pageSize:50,total:0,totalPages:1,rows:[],loading:false};
 var manageSearchTimer=0;
+var STUDENT_CACHE_STATE={loaded:false,loading:false};
 function buildColvis(){
   var m=document.getElementById('colvisMenu'); if(!m)return;
   m.onclick=function(e){e.stopPropagation();};
@@ -3695,6 +3710,25 @@ async function loadManageStudentsPage(reset){
   MANAGE_STATE.total=Number(data.total)||0; MANAGE_STATE.totalPages=Math.max(Number(data.total_pages)||1,1); MANAGE_STATE.page=Number(data.page)||1;
   MANAGE_STATE.rows=(Array.isArray(data.rows)?data.rows:[]).map(mapAdminStudentRow);
   renderStudentsRows();
+}
+async function ensureStudentCache(){
+  if(!SB_SCHOOL||!SB_SCHOOL.id||STUDENT_CACHE_STATE.loaded||STUDENT_CACHE_STATE.loading) return;
+  STUDENT_CACHE_STATE.loading=true;
+  try{
+    var first=await invokeFnDetailed('admin-students-list',{school_id:SB_SCHOOL.id,page:1,page_size:100,submitted_only:true});
+    if(first.error||!first.data||first.data.ok===false) throw new Error((first.data&&first.data.message)||(first.error&&first.error.message)||'Could not load student records');
+    var rows=Array.isArray(first.data.rows)?first.data.rows:[], total=Math.min(Number(first.data.total)||rows.length,10000);
+    var pages=Math.ceil(total/100);
+    for(var page=2;page<=pages;page++){
+      var next=await invokeFnDetailed('admin-students-list',{school_id:SB_SCHOOL.id,page:page,page_size:100,submitted_only:true});
+      if(next.error||!next.data||next.data.ok===false) throw new Error((next.data&&next.data.message)||(next.error&&next.error.message)||'Could not load student records');
+      rows=rows.concat(Array.isArray(next.data.rows)?next.data.rows:[]);
+    }
+    students=rows.map(mapAdminStudentRow);
+    STUDENT_CACHE_STATE.loaded=true;
+    if(Number(first.data.total)>10000) toast('Showing the first 10,000 students in this workspace view. Use search and pagination for larger schools.');
+  }catch(err){ toast(err&&err.message||'Could not load student records'); }
+  STUDENT_CACHE_STATE.loading=false;
 }
 function queueManageSearch(){ clearTimeout(manageSearchTimer); manageSearchTimer=setTimeout(function(){ loadManageStudentsPage(true); },250); }
 function changeManagePage(delta){ var next=Math.min(Math.max((MANAGE_STATE.page||1)+delta,1),MANAGE_STATE.totalPages||1); if(next===MANAGE_STATE.page)return; MANAGE_STATE.page=next; loadManageStudentsPage(false); }
@@ -4027,10 +4061,10 @@ function go(view){
   if(view==='verify-students')loadVerificationSearch(true);
   if(view==='verified-students')loadVerifiedStudents(1);
   if(view==='manage-students')renderStudents();
-  if(view==='house-alloc')renderHouseAlloc();
-  if(view==='class-alloc')renderClassAlloc();
+  if(view==='house-alloc'){renderHouseAlloc();ensureStudentCache().then(renderHouseAlloc);}
+  if(view==='class-alloc'){renderClassAlloc();ensureStudentCache().then(renderClassAlloc);}
   if(view==='finance')renderFinance();
-  if(view==='sms')renderSms();
+  if(view==='sms'){renderSms();ensureStudentCache().then(renderSms);}
   if(view==='sms-settings') fillSmsSettingsForm();
   if(view==='users')renderUsers();
   if(view==='templates')renderTemplates();
@@ -4182,7 +4216,7 @@ async function invokeFnDetailed(name,body){
   }
 }
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'PRODUCTION':'DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
-var SB_SCHOOL=null, SB_CFG=null, SB_ADMIN_NAME='Admin', SB_PERMS=null, SB_UID=null, SB_HOUSE=null, READONLY=false;
+var SB_SCHOOL=null, SB_CFG=null, SB_STUDENT_SUMMARY={}, SB_ADMIN_NAME='Admin', SB_PERMS=null, SB_UID=null, SB_HOUSE=null, READONLY=false;
 // Capability catalogue (key -> friendly label)
 const CAPS=[
   ['students','Admissions & students'],
@@ -4524,6 +4558,7 @@ async function loadSchoolData(prof){
   // IMPORTANT: never fall back to an arbitrary school — that would show the wrong
   // school's data to an account that isn't linked to one (e.g. a super admin).
   let myId=(prof&&prof.school_id)||null;
+  STUDENT_CACHE_STATE={loaded:false,loading:false};
   if(!myId){
     SB_SCHOOL=null; SB_CFG={};
     const nm=$('brandName'); if(nm) nm.textContent='No school linked';
@@ -4541,7 +4576,7 @@ async function loadSchoolData(prof){
     sb.from('programmes').select('*').eq('school_id',myId).order('code'),
     sb.from('houses').select('*').eq('school_id',myId).order('name'),
     sb.from('classrooms').select('*').eq('school_id',myId).order('name'),
-    sb.from('students').select('*').eq('school_id',myId).order('created_at',{ascending:false}),
+    Promise.resolve({data:[],error:null}),
     sb.from('placement_list').select('*').eq('school_id',myId),
     sb.from('payments').select('*, students(bece_index, full_name)').eq('school_id',myId).order('created_at',{ascending:false}),
     fetchSchoolSmsHistory(myId),
@@ -4550,6 +4585,8 @@ async function loadSchoolData(prof){
     sb.from('finance_claims').select('claim_number,students_claimed,created_at,academic_year').eq('school_id',myId),
   ]);
   SB_SCHOOL=(sch.data||[])[0]; SB_CFG=(cfg.data||[])[0]||{};
+  const summaryResult=await invokeFnDetailed('admin-school-summary',{school_id:myId});
+  SB_STUDENT_SUMMARY=(summaryResult.data&&summaryResult.data.summary)||{};
   if(!claims.error&&Array.isArray(claims.data)){
     const cfgYear=financeAcademicYearValue(SB_CFG&&SB_CFG.academic_year);
     const claimRows=(claims.data||[]).filter(function(row){ return financeClaimAcademicYearValue(row.academic_year)===cfgYear; });
@@ -4579,9 +4616,10 @@ async function loadSchoolData(prof){
     const progName=programmeMatchText(p.name), progCode=programmeMatchText(p.code);
     return targets.some(function(text){ return text===progName || text===progCode; });
   }
-  programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;progNameByUuid[p.id]=p.name||'';return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:submittedRawStudents.filter(s=>rawStudentMatchesProgramme(s,p)).length};});
-  houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,priority:h.priority||'',gender:h.gender||'',rtype:h.residential_type||'',occ:(stu.data||[]).filter(s=>s.house_id===h.id).length};});
-  classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:(stu.data||[]).filter(s=>s.class_id===c.id).length};});
+  const programmeCounts=SB_STUDENT_SUMMARY.programmes||{}, houseCounts=SB_STUDENT_SUMMARY.houses||{}, classCounts=SB_STUDENT_SUMMARY.classes||{};
+  programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;progNameByUuid[p.id]=p.name||'';return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:Number(programmeCounts[p.id]||0)};});
+  houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,priority:h.priority||'',gender:h.gender||'',rtype:h.residential_type||'',occ:Number(houseCounts[h.id]||0)};});
+  classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:Number(classCounts[c.id]||0)};});
   students=(stu.data||[]).map((s,i)=>{ const pl=plcByIdx[s.bece_index]||{}; const rec=s.records||{}; const regAt=s.submitted_at||s.created_at||''; const dt=regAt?new Date(regAt):null; const sms=preferredStudentSms(s,pl);
     return {id:i+1,_id:s.id,index:s.bece_index,name:s.full_name||'(no name)',gender:s.gender||'M',
       progId:pRev[s.programme_id]||null,classId:cRev[s.class_id]||null,houseId:hRev[s.house_id]||null,
