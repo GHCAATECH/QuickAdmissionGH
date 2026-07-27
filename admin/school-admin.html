@@ -1819,14 +1819,14 @@
       <!-- MANAGE STUDENTS -->
       <section class="view" id="view-manage-students">
         <div class="toolbar">
-          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="stuSearch" placeholder="Search by name or index…" oninput="renderStudents()"></div>
-          <select id="stuProg" onchange="renderStudents()"></select>
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="stuSearch" placeholder="Search by name or index…" oninput="queueManageSearch()"></div>
+          <select id="stuProg" onchange="loadManageStudentsPage(true)"></select>
         </div>
         <div id="bulkHost"></div>
         <div class="panel"><div class="tbl-wrap"><table>
           <thead><tr><th style="width:36px"><span class="checkbox" id="selAll" onclick="toggleAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></th><th>Admission No</th><th>Index No</th><th>Student</th><th>Programme</th><th>Class</th><th id="stuHouseHead">House</th><th></th></tr></thead>
           <tbody id="stuRows"></tbody>
-        </table></div></div>
+        </table></div><div class="dt-foot" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><span id="manageCount">0 students</span><div style="display:flex;gap:8px;align-items:center"><span id="managePagerMeta">Page 1 of 1</span><button class="btn btn-ghost btn-sm" type="button" onclick="changeManagePage(-1)">Previous</button><button class="btn btn-ghost btn-sm" type="button" onclick="changeManagePage(1)">Next</button></div></div></div>
       </section>
 
       <!-- MANAGE HOUSE ALLOCATION -->
@@ -2999,9 +2999,10 @@ async function handlePlacementFile(inp){
 /* ===== STUDENTS + BULK ===== */
 function filteredStudents(){
   const q=($('stuSearch').value||'').toLowerCase();const pr=$('stuProg').value;
-  return submittedStudents().filter(s=>(s.name.toLowerCase().includes(q)||s.index.includes(q))&&(pr==='all'||s.progId==pr));
+  const source=MANAGE_STATE.rows.length?MANAGE_STATE.rows:submittedStudents();
+  return source.filter(s=>(s.name.toLowerCase().includes(q)||s.index.includes(q))&&(pr==='all'||s.progId==pr));
 }
-function renderStudents(){
+function renderStudentsRows(){
   const rows=filteredStudents();
   const showHouse=canViewStudentHouse();
   $('stuRows').innerHTML=rows.length?rows.map(s=>{
@@ -3013,9 +3014,15 @@ function renderStudents(){
     <td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">Edit</button></div></td></tr>`;
   }).join(''):emptyRow(showHouse?8:7,'No students match your filters.');
   updateBulk();updateSelAll();
+  const count=document.getElementById('manageCount'); if(count)count.textContent=(MANAGE_STATE.total||rows.length)+' student'+((MANAGE_STATE.total||rows.length)===1?'':'s');
+  const pager=document.getElementById('managePagerMeta'); if(pager)pager.textContent='Page '+(MANAGE_STATE.page||1)+' of '+(MANAGE_STATE.totalPages||1);
 }
-function toggleSel(id){selected.has(id)?selected.delete(id):selected.add(id);renderStudents();}
-function toggleAll(){const rows=filteredStudents();const allSel=rows.every(s=>selected.has(s.id));rows.forEach(s=>allSel?selected.delete(s.id):selected.add(s.id));renderStudents();}
+function renderStudents(){
+  if(SB_SCHOOL&&SB_SCHOOL.id){ loadManageStudentsPage(false); return; }
+  renderStudentsRows();
+}
+function toggleSel(id){selected.has(id)?selected.delete(id):selected.add(id);renderStudentsRows();}
+function toggleAll(){const rows=filteredStudents();const allSel=rows.every(s=>selected.has(s.id));rows.forEach(s=>allSel?selected.delete(s.id):selected.add(s.id));renderStudentsRows();}
 function updateSelAll(){const rows=filteredStudents();const el=$('selAll');el.classList.toggle('on',rows.length>0&&rows.every(s=>selected.has(s.id)));}
 function updateBulk(){
   if(selected.size===0){$('bulkHost').innerHTML='';return;}
@@ -3045,7 +3052,7 @@ function bulkSms(){
   if(programmeNames.length===1) toast('SMS composer filtered to '+programmeNames[0]);
   else toast('SMS composer is grouped by programme. Pick a programme to continue.');
 }
-function clearSel(){selected.clear();renderStudents();}
+function clearSel(){selected.clear();renderStudentsRows();}
 function studentClassOptionsForProgramme(progId,selectedClassId){
   const pid=progId?String(progId):'';
   const filtered=classes.filter(function(c){ return !c.progId || !pid || String(c.progId)===pid; });
@@ -3636,6 +3643,8 @@ var regColLabels={index:'JHS Index No',adm:'Admission #',name:'Student Name',reg
 var regHidden=new Set();
 var REG_STATE={page:1,pageSize:50,total:0,totalPages:1,rows:[],loading:false};
 var regSearchTimer=0;
+var MANAGE_STATE={page:1,pageSize:50,total:0,totalPages:1,rows:[],loading:false};
+var manageSearchTimer=0;
 function buildColvis(){
   var m=document.getElementById('colvisMenu'); if(!m)return;
   m.onclick=function(e){e.stopPropagation();};
@@ -3652,7 +3661,8 @@ function mapAdminStudentRow(row,index){
   var created=row.submitted_at||row.created_at||'';
   var dt=created?new Date(created):null;
   var progId=pRev[row.programme_id]||null, classId=cRev[row.class_id]||null, houseId=hRev[row.house_id]||null;
-  return {id:1000000+index,_id:row.id,index:row.bece_index||'',name:row.full_name||'(no name)',gender:row.gender||'',
+  var local=students.find(function(item){ return String(item._id)===String(row.id); });
+  return {id:local?local.id:1000000+index,_id:row.id,index:row.bece_index||'',name:row.full_name||'(no name)',gender:row.gender||'',
     progId:progId,classId:classId,houseId:houseId,status:row.status||'pending',adm:row.admission_no||'-',permAdm:row.permanent_admission_number||'',
     verificationStatus:row.verification_status||'pending',verifiedAt:row.verified_at||'',verifiedBy:row.verified_by||'',verificationNotes:row.verification_notes||'',
     passportPhoto:row.passport_photo_url||'',reg:created.slice(0,10),submittedAt:row.submitted_at||'',personalDone:!!row.personal_done,programmeDone:!!row.programme_done,undertakingDone:!!row.undertaking_done,
@@ -3673,6 +3683,21 @@ async function loadRegisteredPage(reset){
 }
 function queueRegisteredSearch(){ clearTimeout(regSearchTimer); regSearchTimer=setTimeout(function(){ loadRegisteredPage(true); },250); }
 function changeRegisteredPage(delta){ var next=Math.min(Math.max((REG_STATE.page||1)+delta,1),REG_STATE.totalPages||1); if(next===REG_STATE.page)return; REG_STATE.page=next; loadRegisteredPage(false); }
+async function loadManageStudentsPage(reset){
+  if(!SB_SCHOOL||!SB_SCHOOL.id) return;
+  if(reset) MANAGE_STATE.page=1;
+  if(MANAGE_STATE.loading) return;
+  MANAGE_STATE.loading=true;
+  var selectedProgramme=(document.getElementById('stuProg')||{}).value||'all';
+  var {data,error}=await invokeFnDetailed('admin-students-list',{school_id:SB_SCHOOL.id,page:MANAGE_STATE.page,page_size:MANAGE_STATE.pageSize,submitted_only:true,search:(document.getElementById('stuSearch')||{}).value||'',programme_id:selectedProgramme==='all'?'':(pMap[selectedProgramme]||'')});
+  MANAGE_STATE.loading=false;
+  if(error||!data||data.ok===false){ toast((data&&data.message)||(error&&error.message)||'Could not load students'); return; }
+  MANAGE_STATE.total=Number(data.total)||0; MANAGE_STATE.totalPages=Math.max(Number(data.total_pages)||1,1); MANAGE_STATE.page=Number(data.page)||1;
+  MANAGE_STATE.rows=(Array.isArray(data.rows)?data.rows:[]).map(mapAdminStudentRow);
+  renderStudentsRows();
+}
+function queueManageSearch(){ clearTimeout(manageSearchTimer); manageSearchTimer=setTimeout(function(){ loadManageStudentsPage(true); },250); }
+function changeManagePage(delta){ var next=Math.min(Math.max((MANAGE_STATE.page||1)+delta,1),MANAGE_STATE.totalPages||1); if(next===MANAGE_STATE.page)return; MANAGE_STATE.page=next; loadManageStudentsPage(false); }
 function regFiltered(){
   var q=(document.getElementById('regSearch').value||'').toLowerCase();
   var source=REG_STATE.rows.length?REG_STATE.rows:submittedStudents();
