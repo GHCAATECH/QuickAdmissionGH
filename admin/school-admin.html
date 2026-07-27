@@ -1737,7 +1737,7 @@
               <button onclick="exportCSV('excel')">Excel</button>
               <button onclick="exportCSV('pdf')">PDF</button>
             </div>
-            <div class="dt-search"><label>Search:</label><input id="regSearch" oninput="renderRegistered()"></div>
+            <div class="dt-search"><label>Search:</label><input id="regSearch" oninput="queueRegisteredSearch()"></div>
           </div>
           <div class="tbl-wrap"><table id="regTable">
             <thead><tr>
@@ -1753,7 +1753,7 @@
             </tr></thead>
             <tbody id="regRows"></tbody>
           </table></div>
-          <div class="dt-foot"><span id="regCount">0 students</span></div>
+          <div class="dt-foot" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><span id="regCount">0 students</span><div style="display:flex;gap:8px;align-items:center"><span id="regPagerMeta">Page 1 of 1</span><button class="btn btn-ghost btn-sm" type="button" onclick="changeRegisteredPage(-1)">Previous</button><button class="btn btn-ghost btn-sm" type="button" onclick="changeRegisteredPage(1)">Next</button></div></div>
         </div>
       </section>
 
@@ -3634,6 +3634,8 @@ var regExpanded=new Set();
 var regCols=['index','adm','name','reg','time','sms','enrol','form'];
 var regColLabels={index:'JHS Index No',adm:'Admission #',name:'Student Name',reg:'Date Registered',time:'Time',sms:'SMS Contact',enrol:'Enrolment Code',form:'Enrolment Form'};
 var regHidden=new Set();
+var REG_STATE={page:1,pageSize:50,total:0,totalPages:1,rows:[],loading:false};
+var regSearchTimer=0;
 function buildColvis(){
   var m=document.getElementById('colvisMenu'); if(!m)return;
   m.onclick=function(e){e.stopPropagation();};
@@ -3646,16 +3648,42 @@ function toggleColumn(k){ regHidden.has(k)?regHidden.delete(k):regHidden.add(k);
   renderRegistered();
 }
 function sortReg(key){ if(regSort.key===key)regSort.dir=regSort.dir==='asc'?'desc':'asc'; else {regSort.key=key;regSort.dir='asc';} renderRegistered(); }
+function mapAdminStudentRow(row,index){
+  var created=row.submitted_at||row.created_at||'';
+  var dt=created?new Date(created):null;
+  var progId=pRev[row.programme_id]||null, classId=cRev[row.class_id]||null, houseId=hRev[row.house_id]||null;
+  return {id:1000000+index,_id:row.id,index:row.bece_index||'',name:row.full_name||'(no name)',gender:row.gender||'',
+    progId:progId,classId:classId,houseId:houseId,status:row.status||'pending',adm:row.admission_no||'-',permAdm:row.permanent_admission_number||'',
+    verificationStatus:row.verification_status||'pending',verifiedAt:row.verified_at||'',verifiedBy:row.verified_by||'',verificationNotes:row.verification_notes||'',
+    passportPhoto:row.passport_photo_url||'',reg:created.slice(0,10),submittedAt:row.submitted_at||'',personalDone:!!row.personal_done,programmeDone:!!row.programme_done,undertakingDone:!!row.undertaking_done,
+    time:dt&&!isNaN(dt.getTime())?dt.toTimeString().slice(0,8):'-',sms:'-',smsRaw:'',prog:row.programme_name||'',enrol:'-',form:row.enrolment_form_url||null,
+    dob:'',parent:row.parent_name||'-',res:'-',rec:{},pay:row.payment_status||'unpaid',submitted:!!row.submitted_at,loggedIn:false};
+}
+async function loadRegisteredPage(reset){
+  if(!SB_SCHOOL||!SB_SCHOOL.id) return;
+  if(reset) REG_STATE.page=1;
+  if(REG_STATE.loading) return;
+  REG_STATE.loading=true;
+  var {data,error}=await invokeFnDetailed('admin-students-list',{school_id:SB_SCHOOL.id,page:REG_STATE.page,page_size:REG_STATE.pageSize,submitted_only:true,search:(document.getElementById('regSearch')||{}).value||''});
+  REG_STATE.loading=false;
+  if(error||!data||data.ok===false){ toast((data&&data.message)||(error&&error.message)||'Could not load the admission list'); return; }
+  REG_STATE.total=Number(data.total)||0; REG_STATE.totalPages=Math.max(Number(data.total_pages)||1,1); REG_STATE.page=Number(data.page)||1;
+  REG_STATE.rows=(Array.isArray(data.rows)?data.rows:[]).map(mapAdminStudentRow);
+  renderRegisteredRows();
+}
+function queueRegisteredSearch(){ clearTimeout(regSearchTimer); regSearchTimer=setTimeout(function(){ loadRegisteredPage(true); },250); }
+function changeRegisteredPage(delta){ var next=Math.min(Math.max((REG_STATE.page||1)+delta,1),REG_STATE.totalPages||1); if(next===REG_STATE.page)return; REG_STATE.page=next; loadRegisteredPage(false); }
 function regFiltered(){
   var q=(document.getElementById('regSearch').value||'').toLowerCase();
-  var rows=submittedStudents().filter(s=>!q||[s.index,s.name,s.adm,s.sms,s.enrol].some(v=>(v||'').toString().toLowerCase().includes(q)));
+  var source=REG_STATE.rows.length?REG_STATE.rows:submittedStudents();
+  var rows=source.filter(s=>!q||[s.index,s.name,s.adm,s.sms,s.enrol].some(v=>(v||'').toString().toLowerCase().includes(q)));
   var k=regSort.key,dir=regSort.dir==='asc'?1:-1;
   rows=rows.slice().sort((a,b)=>((a[k]||'').toString()).localeCompare((b[k]||'').toString(),undefined,{numeric:true})*dir);
   return rows;
 }
 function formCell(s){ return s.form?`<img class="enrol-thumb" src="${escapeAttr(s.form)}" alt="">`:`<span class="enrol-none">?</span>`; }
 function regCell(k,s){ if(k==='form')return formCell(s); if(k==='name')return `<span class="nm">${safeHtml(s.name)}</span>`; if(['index','adm','enrol','time'].indexOf(k)>-1)return `<span class="mono">${safeHtml(s[k])}</span>`; return safeHtml(s[k],'&mdash;'); }
-function renderRegistered(){
+function renderRegisteredRows(){
   var rows=regFiltered();
   var showHouse=canViewStudentHouse();
   var cnt=document.getElementById('regCount'); if(cnt)cnt.textContent=rows.length+' student'+(rows.length===1?'':'s');
@@ -3681,10 +3709,15 @@ function renderRegistered(){
     }
   });
   document.getElementById('regRows').innerHTML=rows.length?html:emptyRow(visible,'No students found.');
+  var pager=document.getElementById('regPagerMeta'); if(pager)pager.textContent='Page '+(REG_STATE.page||1)+' of '+(REG_STATE.totalPages||1);
+}
+function renderRegistered(){
+  if(SB_SCHOOL&&SB_SCHOOL.id){ loadRegisteredPage(false); return; }
+  renderRegisteredRows();
 }
 function toggleRegExpand(id){ showRegisteredStudentDetails(id); }
 function showRegisteredStudentDetails(id){
-  const s=students.find(x=>x.id===id); if(!s)return;
+  const s=REG_STATE.rows.find(x=>x.id===id)||students.find(x=>x.id===id); if(!s)return;
   const h=houseById(s.houseId),c=classById(s.classId),r=s.rec||{};
   const rows=[
     ['JHS Index No',s.index],['Admission No',s.adm],['Student Name',s.name],['Gender',s.gender==='M'?'Male':(s.gender==='F'?'Female':s.gender)],
@@ -4197,7 +4230,7 @@ function applyPermissions(){
     if(tb&&!document.getElementById('roPill')){ const s=document.createElement('span'); s.id='roPill'; s.textContent='Read-only'; s.style.cssText='margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.4px;color:#fff;background:#7a6a3a;padding:3px 10px;border-radius:999px'; tb.appendChild(s); }
   } else { document.body.classList.remove('ro'); }
 }
-var pMap={},hMap={},cMap={};               // numeric -> uuid
+var pMap={},hMap={},cMap={},pRev={},hRev={},cRev={}; // numeric -> uuid and uuid -> numeric
 const val=id=>document.getElementById(id).value;
 const fmtT=ts=>{ if(!ts) return '—'; const d=new Date(ts), n=new Date(); const days=Math.floor((n-d)/86400000);
   return days===0?('Today '+d.toTimeString().slice(0,5)):(days===1?'Yesterday':days+'d ago'); };
@@ -4509,7 +4542,7 @@ async function loadSchoolData(prof){
   // House-scoped user: only see that house and its students
   if(SB_HOUSE){ stu.data=(stu.data||[]).filter(s=>s.house_id===SB_HOUSE); hs.data=(hs.data||[]).filter(h=>h.id===SB_HOUSE); }
 
-  const pRev={},hRev={},cRev={},progNameByUuid={}; pMap={};hMap={};cMap={};
+  const progNameByUuid={}; pMap={};hMap={};cMap={};pRev={};hRev={};cRev={};
   const plcByIdx={}; (plc.data||[]).forEach(p=>plcByIdx[p.index_number]=p);
   const submittedRawStudents=(stu.data||[]).filter(hasSubmittedPersonalRecord);
   function rawStudentMatchesProgramme(s,p){
