@@ -197,7 +197,7 @@ async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolI
     admin.from("classrooms").select("id,name").eq("school_id", schoolId),
     admin.from("houses").select("id,name").eq("school_id", schoolId),
     admin.from("profiles").select("id,full_name,email").eq("school_id", schoolId),
-    admin.from("placement_list").select("index_number,student_name,gender,residential_status,programme,sms_contact").eq("school_id", schoolId),
+    admin.from("placement_list").select("index_number,student_name,gender,residential_status,programme,sms_contact").eq("school_id", schoolId).order("index_number").limit(5_000),
   ]);
   const school = (schoolRes.data ?? {}) as JsonRecord;
   const cfg = (cfgRes.data ?? {}) as JsonRecord;
