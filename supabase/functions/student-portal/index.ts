@@ -8,6 +8,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "
 type JsonRecord = Record<string, unknown>;
 
 let directoryCache: { expiresAt: number; value: unknown } | null = null;
+const lookupCache = new Map<string, { expiresAt: number; value: unknown }>();
 
 function safeText(value: unknown): string {
   return value == null ? "" : String(value).trim();
@@ -51,8 +52,15 @@ async function resolveSchool(admin: ReturnType<typeof createClient>, index: stri
 }
 
 async function lookupSchool(admin: ReturnType<typeof createClient>, index: string, schoolId: string) {
+  const cacheKey = `${schoolId || "all"}:${index}`;
+  const cached = lookupCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
   const sid = await resolveSchool(admin, index, schoolId);
-  if (!sid) return { ok: false, error: "not_found", message: "Index not on any participating school's placement list." };
+  if (!sid) {
+    const result = { ok: false, error: "not_found", message: "Index not on any participating school's placement list." };
+    lookupCache.set(cacheKey, { expiresAt: Date.now() + 15_000, value: result });
+    return result;
+  }
 
   const [schoolRes, configRes, placementRes, studentRes] = await Promise.all([
     admin.from("schools").select("id,name,school_code").eq("id", sid).maybeSingle(),
@@ -66,7 +74,7 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
   const placement = (placementRes.data ?? {}) as JsonRecord;
   const student = (studentRes.data ?? {}) as JsonRecord;
 
-  return {
+  const result = {
     ok: true,
     school_id: sid,
     id: sid,
@@ -77,6 +85,12 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
     placement_name: firstText(placement.student_name, student.full_name),
     sms_contact: firstText(placement.sms_contact, student.parent_phone),
   };
+  lookupCache.set(cacheKey, { expiresAt: Date.now() + 30_000, value: result });
+  if (lookupCache.size > 1_000) {
+    const oldest = lookupCache.keys().next().value;
+    if (oldest) lookupCache.delete(oldest);
+  }
+  return result;
 }
 
 async function hasToken(admin: ReturnType<typeof createClient>, index: string, schoolId: string) {
