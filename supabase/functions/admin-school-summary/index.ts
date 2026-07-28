@@ -25,6 +25,11 @@ async function resolveProfile(admin: ReturnType<typeof createClient>, req: Reque
   return profile as Record<string, unknown> | null;
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
+
 function canRead(profile: Record<string, unknown> | null, schoolId: string) {
   if (!profile) return false;
   if (text(profile.role) === "super_admin") return true;
@@ -48,6 +53,9 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json(); } catch { return json({ ok: false, error: "validation", message: "A JSON request body is required." }, 400); }
   const schoolId = text(body.school_id || profile.school_id);
   if (!schoolId || !canRead(profile, schoolId)) return json({ ok: false, error: "forbidden", message: "You cannot access this school summary." }, 403);
+  if (!await rateAllowed(admin, `school-summary:${text(profile.id)}:${schoolId}`, 60, 60)) {
+    return json({ ok: false, error: "rate_limited", message: "Too many summary requests. Please wait a minute and try again." }, 429);
+  }
 
   const cached = summaryCache.get(schoolId);
   if (cached && cached.expiresAt > Date.now()) {
