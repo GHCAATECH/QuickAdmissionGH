@@ -116,27 +116,9 @@ Deno.serve(async (req: Request) => {
   };
 
   try {
-    const { data: completedPayments, error: completedPaymentsError } = await admin
-      .from("payments")
-      .select("id, student_id, reference, status, paid_at, created_at")
-      .eq("school_id", schoolId)
-      .order("paid_at", { ascending: true, nullsFirst: false })
-      .order("created_at", { ascending: true });
-    if (completedPaymentsError) throw new Error(`payments: ${completedPaymentsError.message}`);
-    const successfulPaymentKeys: string[] = [];
-    const seenPaymentKeys = new Set<string>();
-    for (const row of completedPayments ?? []) {
-      if (!["completed", "success", "paid"].includes(safeString(row.status).toLowerCase())) continue;
-      const key = safeString(row.student_id)
-        ? `student:${safeString(row.student_id)}`
-        : safeString(row.reference)
-          ? `reference:${safeString(row.reference)}`
-          : `payment:${safeString(row.id)}`;
-      if (!seenPaymentKeys.has(key)) {
-        seenPaymentKeys.add(key);
-        successfulPaymentKeys.push(key);
-      }
-    }
+    const { data: deletedStudentWasSettled, error: settledCheckError } = await admin
+      .rpc("finance_student_is_settled", { p_school_id: schoolId, p_student_id: studentId });
+    if (settledCheckError) throw new Error(`finance settlement lookup: ${settledCheckError.message}`);
     const { data: config, error: configError } = await admin
       .from("school_config")
       .select("finance_settled_students")
@@ -144,9 +126,6 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     if (configError) throw new Error(`school_config: ${configError.message}`);
     const settled = Math.max(Number(config?.finance_settled_students) || 0, 0);
-    const deletedStudentWasSettled = successfulPaymentKeys
-      .slice(0, Math.min(settled, successfulPaymentKeys.length))
-      .includes(`student:${studentId}`);
 
     const [paymentsDeleted, tokensDeleted, smsLogsDeleted] = await Promise.all([
       deleteByStudent("payments"),
