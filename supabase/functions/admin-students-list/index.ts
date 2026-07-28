@@ -7,6 +7,8 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 type JsonRecord = Record<string, unknown>;
 
+const listCache = new Map<string, { expiresAt: number; value: unknown }>();
+
 function text(value: unknown) {
   return String(value ?? "").trim();
 }
@@ -105,6 +107,11 @@ Deno.serve(async (req: Request) => {
   const classId = text(body.class_id);
   const houseId = text(body.house_id);
   const submittedOnly = body.submitted_only === true || body.submitted_only === "true";
+  const cacheKey = [
+    text(profile.id), schoolId, page, pageSize, search, status, programmeId, classId, houseId, submittedOnly ? "submitted" : "all",
+  ].join("|");
+  const cached = listCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return json(cached.value);
 
   let query = admin
     .from("students")
@@ -146,7 +153,7 @@ Deno.serve(async (req: Request) => {
     house_name: houseMap.get(text(row.house_id)) ?? "",
   }));
   const total = count ?? 0;
-  return json({
+  const payload = {
     ok: true,
     school_id: schoolId,
     page,
@@ -154,5 +161,11 @@ Deno.serve(async (req: Request) => {
     total,
     total_pages: Math.max(Math.ceil(total / pageSize), 1),
     rows: result,
-  });
+  };
+  listCache.set(cacheKey, { expiresAt: Date.now() + 10_000, value: payload });
+  if (listCache.size > 250) {
+    const oldest = listCache.keys().next().value;
+    if (oldest) listCache.delete(oldest);
+  }
+  return json(payload);
 });
