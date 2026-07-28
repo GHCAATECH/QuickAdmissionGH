@@ -14,6 +14,10 @@ function pageValue(value: unknown, fallback: number, max: number) {
 function cleanSearch(value: unknown) {
   return text(value).replace(/[%,()]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
 }
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
   if (!token) return null;
@@ -40,6 +44,7 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json(); } catch { return json({ ok: false, error: "validation", message: "A JSON request body is required." }, 400); }
   const schoolId = text(body.school_id || profile.school_id);
   if (!schoolId || !canRead(profile, schoolId)) return json({ ok: false, error: "forbidden", message: "You cannot access this placement list." }, 403);
+  if (!await rateAllowed(admin, `admin-placement-list:${text(profile.id)}:${schoolId}`, 60, 60)) return json({ ok: false, error: "rate_limited", message: "Too many placement-list requests. Please wait a minute and try again." }, 429);
   const page = pageValue(body.page, 1, 1_000_000);
   const pageSize = pageValue(body.page_size, 500, 5_000);
   const search = cleanSearch(body.search);
