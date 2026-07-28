@@ -5528,7 +5528,7 @@ addPlacement=async function(){
   const {data,error}=await sb.rpc('import_placement',{p_school:SB_SCHOOL.id,p_rows:[row]});
   if(error){toast('Could not save: '+error.message);return;}
   if(!data||!data.ok){toast('Could not save: '+((data&&data.error)||'unknown'));return;}
-  const {data:plcData}=await sb.from('placement_list').select('index_number,student_name,gender,residential_status,programme,aggregate,jhs_attended,dob,sms_contact,enrolment_code,logged_in').eq('school_id',SB_SCHOOL.id).order('created_at',{ascending:false}).range(0,4999);
+  const {data:plcData}=await sb.from('placement_list').select('index_number,student_name,gender,residential_status,programme,aggregate,jhs_attended,dob,sms_contact,enrolment_code,logged_in').eq('school_id',SB_SCHOOL.id).order('index_number',{ascending:true}).range(0,4999);
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in})); placementTotalCount=placement.length; PLACEMENT_STATE.loaded=true;
   ['pl_index','pl_name','pl_gender','pl_res','pl_agg','pl_dob','pl_sms'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   notifyStudentPortalRefresh('placement-save',{index:i});
