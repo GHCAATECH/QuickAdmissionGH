@@ -2063,8 +2063,8 @@ async function fetchPlatformSmsHistory(){
 
 async function loadSA(){
   const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl,claims]=await Promise.all([
-    sb.from('schools').select('*').order('created_at'),
-    sb.from('school_config').select('*'),
+    sb.from('schools').select('id,name,code,school_code,status,subscription_plan,subscription_expiry,email,phone,headmaster_title,created_at').order('created_at'),
+    sb.from('school_config').select('school_id,admission_status,service_charge,academic_year'),
     sb.from('profiles').select('id,full_name,email,school_id,role,permissions'),
     sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,personal_done,programme_done,undertaking_done,admission_no'),
     sb.from('payments').select('student_id,amount_pesewas,channel,status,reference,school_id,paid_at,created_at,payer_name, students(full_name,bece_index)'),
