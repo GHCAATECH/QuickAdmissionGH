@@ -34,9 +34,9 @@ async function loadSchoolStructure(admin: ReturnType<typeof createClient>, schoo
   const cached = structureCache.get(schoolId);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
   const [programmesRes, housesRes, classesRes, classCountsRes] = await Promise.all([
-    admin.from("programmes").select("id,code,name,subjects").eq("school_id", schoolId).order("code"),
-    admin.from("houses").select("id,name,capacity,gender,residential_type,priority").eq("school_id", schoolId).order("priority", { ascending: true }).order("name"),
-    admin.from("classrooms").select("id,name,programme_id,subjects,capacity").eq("school_id", schoolId).order("name"),
+    admin.from("programmes").select("id,code,name,subjects").eq("school_id", schoolId).order("code").limit(5_000),
+    admin.from("houses").select("id,name,capacity,gender,residential_type,priority").eq("school_id", schoolId).order("priority", { ascending: true }).order("name").limit(5_000),
+    admin.from("classrooms").select("id,name,programme_id,subjects,capacity").eq("school_id", schoolId).order("name").limit(5_000),
     admin.rpc("student_class_counts", { p_school: schoolId }),
   ]);
   const value: SchoolStructure = {
