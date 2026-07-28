@@ -13,6 +13,11 @@ function upperText(value: unknown): string {
   return safeText(value).toUpperCase();
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
+
 function normalizeGender(value: unknown): string {
   const text = upperText(value);
   if (text === "M" || text === "MALE") return "MALE";
@@ -114,6 +119,11 @@ Deno.serve(async (req: Request) => {
 
   if (!index) return json({ ok: false, error: "index", message: "Index number is required." }, 400);
   if (!token) return json({ ok: false, error: "token", message: "Admission token is required." }, 400);
+  const forwarded = safeText(req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip"));
+  const ip = (forwarded.split(",")[0] || "unknown").trim().slice(0, 80);
+  if (!await rateAllowed(admin, `assign-house:ip:${ip}`, 60, 60) || !await rateAllowed(admin, `assign-house:student:${schoolId || "all"}:${index}`, 10, 60)) {
+    return json({ ok: false, error: "rate_limited", message: "Too many house-assignment requests. Please wait a minute and try again." }, 429);
+  }
 
   let studentQuery = admin
     .from("students")
