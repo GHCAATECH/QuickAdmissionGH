@@ -3619,10 +3619,11 @@ function renderLog(){$('logRows').innerHTML=activityLog.length?activityLog.map(l
 async function loadActivityLog(){
   if(!SB_SCHOOL||!SB_SCHOOL.id||ACTIVITY_LOG_STATE.loaded||ACTIVITY_LOG_STATE.loading)return;
   ACTIVITY_LOG_STATE.loading=true;
-  const {data,error}=await sb.from('activity_log').select('created_at,action,actor').eq('school_id',SB_SCHOOL.id).order('created_at',{ascending:false}).range(0,499);
+  const {data,error}=await invokeFnDetailed('admin-activity-list',{school_id:SB_SCHOOL.id});
   ACTIVITY_LOG_STATE.loading=false;
   if(error){toast('Could not load activity log: '+error.message);return;}
-  activityLog=(data||[]).map(function(row){return {time:fmtT(row.created_at),action:row.action,by:row.actor||'—'};});
+  if(!data||data.ok===false){toast('Could not load activity log: '+((data&&data.message)||'unknown error'));return;}
+  activityLog=(data.rows||[]).map(function(row){return {time:fmtT(row.created_at),action:row.action,by:row.actor||'—'};});
   ACTIVITY_LOG_STATE.loaded=true;
   renderLog();
 }
