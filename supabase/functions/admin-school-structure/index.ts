@@ -5,6 +5,7 @@ import { guardRequest, jsonResponse } from "../_shared/security.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 type JsonRecord = Record<string, unknown>;
+const structureCache = new Map<string, { expiresAt: number; value: unknown }>();
 
 function text(value: unknown) { return String(value ?? "").trim(); }
 
@@ -52,6 +53,8 @@ Deno.serve(async (req: Request) => {
   if (!await rateAllowed(admin, `admin-school-structure:${text(profile.id)}:${schoolId}`, 60, 60)) {
     return json({ ok: false, error: "rate_limited", message: "Too many structure requests. Please wait a minute and try again." }, 429);
   }
+  const cached = structureCache.get(schoolId);
+  if (cached && cached.expiresAt > Date.now()) return json(cached.value);
 
   const [programmes, houses, classrooms] = await Promise.all([
     admin.from("programmes").select("id,code,name,subjects,capacity").eq("school_id", schoolId).order("code").limit(5000),
@@ -60,5 +63,11 @@ Deno.serve(async (req: Request) => {
   ]);
   const error = programmes.error || houses.error || classrooms.error;
   if (error) return json({ ok: false, error: "query_failed", message: error.message }, 500);
-  return json({ ok: true, school_id: schoolId, programmes: programmes.data ?? [], houses: houses.data ?? [], classrooms: classrooms.data ?? [] });
+  const payload = { ok: true, school_id: schoolId, programmes: programmes.data ?? [], houses: houses.data ?? [], classrooms: classrooms.data ?? [] };
+  structureCache.set(schoolId, { expiresAt: Date.now() + 15_000, value: payload });
+  if (structureCache.size > 100) {
+    const oldest = structureCache.keys().next().value;
+    if (oldest) structureCache.delete(oldest);
+  }
+  return json(payload);
 });
