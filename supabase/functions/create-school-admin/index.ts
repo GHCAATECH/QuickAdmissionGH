@@ -81,6 +81,15 @@ function actorLabel(profile: Record<string, unknown> | null) {
   return safeString(profile?.full_name) || safeString(profile?.email) || "System";
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", {
+    p_bucket_key: key,
+    p_limit: limit,
+    p_window_seconds: seconds,
+  });
+  return !!error || data?.allowed !== false;
+}
+
 async function logActivity(admin: ReturnType<typeof createClient>, schoolId: string, actor: string, action: string) {
   if (!schoolId) return;
   try {
@@ -190,6 +199,10 @@ Deno.serve(async (req: Request) => {
     permissions = accountType === "co_admin" ? { co_admin: true } : sanitizePermissions(body.permissions);
   } else {
     return json({ ok: false, error: "forbidden", message: "You do not have permission to create users." }, 403);
+  }
+
+  if (!await rateAllowed(admin, `create-school-admin:${safeString(profile.id)}:${schoolId}`, 20, 60)) {
+    return json({ ok: false, error: "rate_limited", message: "Too many account-creation requests. Please wait a minute and try again." }, 429);
   }
 
   const { data: school, error: schoolError } = await admin
