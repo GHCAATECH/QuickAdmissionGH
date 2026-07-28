@@ -303,6 +303,13 @@ Deno.serve(async (req: Request) => {
     const valueAllowed = await rateAllowed(admin, `portal-read:value:${schoolId || "all"}:${value.slice(0, 100)}`, 30, 60);
     if (!ipAllowed || !valueAllowed) return json({ ok: false, error: "rate_limited", message: "Too many requests. Please wait a minute and try again." }, 429);
   }
+  if (action === "directory") {
+    const forwarded = safeText(req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip"));
+    const ip = (forwarded.split(",")[0] || "unknown").trim().slice(0, 80);
+    if (!await rateAllowed(admin, `portal-directory:ip:${ip}`, 30, 60)) {
+      return json({ ok: false, error: "rate_limited", message: "Too many directory requests. Please wait a minute and try again." }, 429);
+    }
+  }
 
   try {
     if (action === "lookup") {
