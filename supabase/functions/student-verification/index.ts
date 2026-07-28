@@ -86,6 +86,11 @@ function sanitizeSearch(value: string) {
   return value.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
+
 function studentText(record: JsonRecord, keys: string[]) {
   for (const key of keys) {
     const value = record[key];
@@ -349,6 +354,10 @@ Deno.serve(async (req: Request) => {
   const schoolId = safeText(body.school_id || profile.school_id);
   if (!schoolId || !hasSchoolAccess(profile, schoolId)) {
     return json({ ok: false, error: 'forbidden', message: 'You cannot access verification records for this school.' }, 403);
+  }
+  const actionLimit = ['verify', 'documents_incomplete'].includes(action) ? 60 : 120;
+  if (!await rateAllowed(admin, `student-verification:${safeText(profile.id)}:${schoolId}:${action}`, actionLimit, 60)) {
+    return json({ ok: false, error: 'rate_limited', message: 'Too many verification requests. Please wait a minute and try again.' }, 429);
   }
 
   try {
