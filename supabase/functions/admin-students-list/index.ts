@@ -24,6 +24,11 @@ function cleanSearch(value: unknown) {
     .slice(0, 80);
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
+
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const header = req.headers.get("Authorization") ?? "";
   const token = header.replace(/^Bearer\s+/i, "").trim();
@@ -87,6 +92,9 @@ Deno.serve(async (req: Request) => {
   const schoolId = text(body.school_id || profile.school_id);
   if (!schoolId || !canReadStudents(profile, schoolId)) {
     return json({ ok: false, error: "forbidden", message: "You cannot access students for this school." }, 403);
+  }
+  if (!await rateAllowed(admin, `admin-students-list:${text(profile.id)}:${schoolId}`, 120, 60)) {
+    return json({ ok: false, error: "rate_limited", message: "Too many student-list requests. Please wait a minute and try again." }, 429);
   }
 
   const page = asPage(body.page, 1, 1_000_000);
