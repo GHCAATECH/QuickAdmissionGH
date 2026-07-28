@@ -111,13 +111,12 @@ Deno.serve(async (req: Request) => {
   }
 
   const countDeleted = async (table: string, column: string, value: string) => {
-    const { data, error } = await admin
+    const { count, error } = await admin
       .from(table)
-      .delete()
-      .eq(column, value)
-      .select(column);
+      .delete({ count: "exact" })
+      .eq(column, value);
     if (error) throw new Error(`${table}: ${error.message}`);
-    return Array.isArray(data) ? data.length : 0;
+    return Number(count ?? 0);
   };
 
   try {
