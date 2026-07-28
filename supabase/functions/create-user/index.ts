@@ -2,6 +2,15 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { guardRequest, jsonResponse } from "../_shared/security.ts";
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", {
+    p_bucket_key: key,
+    p_limit: limit,
+    p_window_seconds: seconds,
+  });
+  return !!error || data?.allowed !== false;
+}
+
 Deno.serve(async (req) => {
   const blocked = guardRequest(req, { maxBodyBytes: 16_384 });
   if (blocked) return blocked;
@@ -27,6 +36,9 @@ Deno.serve(async (req) => {
   const callerRole = String(callerProfile?.role ?? "").trim().toLowerCase();
   if (profileError || !["super admin", "super_admin"].includes(callerRole)) {
     return json({ error: "Only Super Admin can create school administrators" }, 403);
+  }
+  if (!await rateAllowed(admin, `create-user:${callerData.user.id}`, 20, 60)) {
+    return json({ error: "Too many account-creation requests. Please wait a minute and try again.", code: "rate_limited" }, 429);
   }
 
   const body = await req.json();
