@@ -4638,12 +4638,10 @@ async function loadSchoolData(prof){
       : 'This account is not linked to a school — contact your administrator.');
     return;
   }
-  const [sch,cfg,progs,hs,cls,stu,plc,pay,sms,log,smsCfg,claims]=await Promise.all([
+  const [sch,cfg,structure,stu,plc,pay,sms,log,smsCfg,claims]=await Promise.all([
     sb.from('schools').select('*').eq('id',myId),
     sb.from('school_config').select('*').eq('school_id',myId),
-    sb.from('programmes').select('*').eq('school_id',myId).order('code'),
-    sb.from('houses').select('*').eq('school_id',myId).order('name'),
-    sb.from('classrooms').select('*').eq('school_id',myId).order('name'),
+    invokeFnDetailed('admin-school-structure',{school_id:myId}),
     Promise.resolve({data:[],error:null}),
     sb.from('placement_list').select('id',{count:'exact',head:true}).eq('school_id',myId),
     Promise.resolve({data:[],error:null}),
@@ -4652,6 +4650,10 @@ async function loadSchoolData(prof){
     sb.from('school_sms_templates').select('*').eq('school_id',myId),
     sb.from('finance_claims').select('claim_number,students_claimed,created_at,academic_year').eq('school_id',myId),
   ]);
+  const structurePayload=(structure&&structure.data)||{};
+  const progs={data:Array.isArray(structurePayload.programmes)?structurePayload.programmes:[],error:structure&&structure.error};
+  const hs={data:Array.isArray(structurePayload.houses)?structurePayload.houses:[],error:structure&&structure.error};
+  const cls={data:Array.isArray(structurePayload.classrooms)?structurePayload.classrooms:[],error:structure&&structure.error};
   SB_SCHOOL=(sch.data||[])[0]; SB_CFG=(cfg.data||[])[0]||{};
   placementTotalCount=Number(plc.count)||0; PLACEMENT_STATE={loaded:false,loading:false};
   const summaryResult=await invokeFnDetailed('admin-school-summary',{school_id:myId});
