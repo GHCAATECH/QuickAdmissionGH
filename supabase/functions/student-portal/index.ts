@@ -209,14 +209,16 @@ async function studentFileUrl(
 async function listDirectory(admin: ReturnType<typeof createClient>) {
   const schoolsRes = await admin
     .from("schools")
-    .select("id,name,school_code,code")
-    .order("name", { ascending: true });
+    .select("id,name,school_code,code,phone,email,helpdesk,crest_url")
+    .order("name", { ascending: true })
+    .limit(10_000);
 
   if (schoolsRes.error) throw new Error(schoolsRes.error.message || "Could not load schools.");
 
   const configsRes = await admin
     .from("school_config")
-    .select("school_id,admission_status,academic_year,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload");
+    .select("school_id,admission_status,academic_year,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload")
+    .limit(10_000);
 
   const configs = configsRes.error ? [] : (configsRes.data ?? []);
 

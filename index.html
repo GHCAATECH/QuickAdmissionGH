@@ -2863,14 +2863,16 @@ function updateBlueBannerHelpdesk(){
 async function loadSchoolsFromPublicTables(){
   const schoolsRes=await sb
     .from('schools')
-    .select('id,name,school_code,code')
-    .order('name',{ascending:true});
+    .select('id,name,school_code,code,phone,email,helpdesk,crest_url')
+    .order('name',{ascending:true})
+    .limit(10000);
   if(schoolsRes.error) throw schoolsRes.error;
   let configs=[];
   try{
     const configsRes=await sb
       .from('school_config')
-      .select('school_id,admission_status,academic_year,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload');
+      .select('school_id,admission_status,academic_year,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload')
+      .limit(10000);
     if(!configsRes.error) configs=configsRes.data||[];
   }catch(e){}
   const configBySchool={};
