@@ -41,6 +41,15 @@ function hasSchoolAccess(profile: JsonRecord | null, schoolId: string) {
   return safeText(profile.school_id) === schoolId;
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", {
+    p_bucket_key: key,
+    p_limit: limit,
+    p_window_seconds: seconds,
+  });
+  return !!error || data?.allowed !== false;
+}
+
 async function ensureProgrammeBelongsToSchool(admin: ReturnType<typeof createClient>, schoolId: string, programmeId: string | null) {
   if (!programmeId) return null;
   const { data } = await admin.from("programmes").select("id").eq("id", programmeId).eq("school_id", schoolId).maybeSingle();
@@ -76,6 +85,9 @@ Deno.serve(async (req: Request) => {
   const { profile } = await resolveProfile(admin, req);
   if (!hasSchoolAccess(profile, schoolId)) {
     return json({ ok: false, error: "forbidden", message: "You cannot manage structures for this school." }, 403);
+  }
+  if (!await rateAllowed(admin, `manage-school-structure:${safeText(profile?.id)}:${schoolId}`, 120, 60)) {
+    return json({ ok: false, error: "rate_limited", message: "Too many structure updates. Please wait a minute and try again." }, 429);
   }
 
   try {
