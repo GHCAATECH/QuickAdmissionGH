@@ -124,6 +124,7 @@ function studentMatchesQuery(student: JsonRecord, query: string) {
 }
 
 const schoolContextCache = new Map<string, { expiresAt: number; value: Awaited<ReturnType<typeof loadSchoolContext>> }>();
+const verificationSearchCache = new Map<string, { expiresAt: number; value: unknown }>();
 
 function residentialStatus(student: JsonRecord, placement: JsonRecord) {
   const records = student.records && typeof student.records === "object" && !Array.isArray(student.records)
@@ -244,6 +245,9 @@ async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolI
 }
 
 async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId: string, query: string) {
+  const cacheKey = `${schoolId}:${sanitizeSearch(query)}`;
+  const cached = verificationSearchCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
   let studentQuery = admin
     .from("students")
     .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,passport_photo_url,records")
@@ -263,7 +267,13 @@ async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId
     .map((row) => row as JsonRecord)
     .filter((row) => studentMatchesQuery(row, query))
     .map((row) => toStudentSummary(row, context));
-  return { ok: true, rows: await Promise.all(rows.slice(0, 60).map((row) => signStudentFiles(admin, row))) };
+  const result = { ok: true, rows: await Promise.all(rows.slice(0, 60).map((row) => signStudentFiles(admin, row))) };
+  verificationSearchCache.set(cacheKey, { expiresAt: Date.now() + 10_000, value: result });
+  if (verificationSearchCache.size > 500) {
+    const oldest = verificationSearchCache.keys().next().value;
+    if (oldest) verificationSearchCache.delete(oldest);
+  }
+  return result;
 }
 
 async function listVerified(admin: ReturnType<typeof createClient>, schoolId: string, filters: JsonRecord) {
