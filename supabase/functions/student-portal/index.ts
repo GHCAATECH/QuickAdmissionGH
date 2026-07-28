@@ -9,6 +9,7 @@ type JsonRecord = Record<string, unknown>;
 
 let directoryCache: { expiresAt: number; value: unknown } | null = null;
 const lookupCache = new Map<string, { expiresAt: number; value: unknown }>();
+const schoolResolutionCache = new Map<string, { expiresAt: number; value: string }>();
 
 function safeText(value: unknown): string {
   return value == null ? "" : String(value).trim();
@@ -39,16 +40,26 @@ async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, 
 }
 
 async function resolveSchool(admin: ReturnType<typeof createClient>, index: string, schoolId: string) {
+  const cacheKey = `${schoolId || "all"}:${index}`;
+  const cached = schoolResolutionCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
   if (schoolId) {
     const [placementRes, studentRes] = await Promise.all([
       admin.from("placement_list").select("school_id").eq("school_id", schoolId).eq("index_number", index).maybeSingle(),
       admin.from("students").select("id").eq("school_id", schoolId).eq("bece_index", index).maybeSingle(),
     ]);
-    if (placementRes.data || studentRes.data) return schoolId;
-    return "";
+    const result = placementRes.data || studentRes.data ? schoolId : "";
+    schoolResolutionCache.set(cacheKey, { expiresAt: Date.now() + 15_000, value: result });
+    return result;
   }
   const { data } = await admin.rpc("school_of_index", { p_index: index });
-  return safeText(data);
+  const result = safeText(data);
+  schoolResolutionCache.set(cacheKey, { expiresAt: Date.now() + 15_000, value: result });
+  if (schoolResolutionCache.size > 2_000) {
+    const oldest = schoolResolutionCache.keys().next().value;
+    if (oldest) schoolResolutionCache.delete(oldest);
+  }
+  return result;
 }
 
 async function lookupSchool(admin: ReturnType<typeof createClient>, index: string, schoolId: string) {
