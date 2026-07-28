@@ -3528,7 +3528,8 @@ async function loadSmsHistory(){
   const res=await fetchSchoolSmsHistory(SB_SCHOOL.id);
   SMS_HISTORY_STATE.loading=false;
   if(res&&res.error){toast('Could not load SMS history: '+res.error.message);return;}
-  smsHistory=(res&&res.data||[]).map(function(s){return {date:(s.sent_at||'').slice(0,10),group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status};});
+  if(!res||!res.data||res.data.ok===false){toast('Could not load SMS history: '+((res&&res.data&&res.data.message)||'unknown error'));return;}
+  smsHistory=(res.data.rows||[]).map(function(s){return {date:(s.sent_at||'').slice(0,10),group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status};});
   SMS_HISTORY_STATE.loaded=true;
   renderSms();
 }
@@ -4491,11 +4492,7 @@ function fillSchoolProfileForm(){
   fillStudentFeatureToggles();
 }
 async function fetchSchoolSmsHistory(schoolId){
-  let res=await sb.from('sms_logs').select('*').eq('school_id',schoolId).is('external_id',null).order('sent_at',{ascending:false}).range(0,499);
-  if(res&&res.error){
-    res=await sb.from('sms_log').select('*').eq('school_id',schoolId).order('sent_at',{ascending:false}).range(0,499);
-  }
-  return res;
+  return await invokeFnDetailed('admin-sms-history',{school_id:schoolId});
 }
 function updateSmsSettingsPreview(){
   const preview=document.getElementById('smsset_test_preview');
