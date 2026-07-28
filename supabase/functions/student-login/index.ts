@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
   if (!index) return json({ ok: false, error: "index" });
   if (!token) return json({ ok: false, error: "token" });
 
-  let studentQuery = admin.from("students").select("*").eq("bece_index", index);
+  let studentQuery = admin.from("students").select("id,school_id,bece_index,admission_token,full_name,surname,gender,programme_id,class_id,house_id,records,parent_phone,submitted_at,admission_no,permanent_admission_number,payment_status,personal_done,programme_done,undertaking_done,enrolment_form_url,passport_photo_url").eq("bece_index", index);
   if (schoolId) studentQuery = studentQuery.eq("school_id", schoolId);
   const { data: studentRows, error: studentError } = await studentQuery;
 
@@ -98,7 +98,7 @@ Deno.serve(async (req: Request) => {
     programmesRes,
     housesRes,
     classesRes,
-    classStudentsRes,
+    classCountsRes,
   ] = await Promise.all([
     admin.from("schools").select("*").eq("id", sid).maybeSingle(),
     admin.from("school_config").select("*").eq("school_id", sid).maybeSingle(),
@@ -120,7 +120,7 @@ Deno.serve(async (req: Request) => {
     admin.from("programmes").select("id,code,name,subjects").eq("school_id", sid).order("code"),
     admin.from("houses").select("id,name,capacity,gender,residential_type,priority").eq("school_id", sid).order("priority", { ascending: true }).order("name"),
     admin.from("classrooms").select("id,name,programme_id,subjects,capacity").eq("school_id", sid).order("name"),
-    admin.from("students").select("class_id").eq("school_id", sid),
+    admin.rpc("student_class_counts", { p_school: sid }),
   ]);
 
   const school = (schoolRes.data ?? {}) as Record<string, unknown>;
@@ -138,12 +138,7 @@ Deno.serve(async (req: Request) => {
       .eq("index_number", index);
   }
 
-  const classCounts = new Map<string, number>();
-  for (const row of classStudentsRes.data ?? []) {
-    const classId = safeText((row as Record<string, unknown>).class_id);
-    if (!classId) continue;
-    classCounts.set(classId, (classCounts.get(classId) ?? 0) + 1);
-  }
+  const classCounts = (classCountsRes.data ?? {}) as Record<string, unknown>;
 
   const finalProgramme = firstText(programme.name, placement.programme);
   const finalGender = normalizeGender(student.gender, placement.gender);
@@ -167,7 +162,7 @@ Deno.serve(async (req: Request) => {
     const rec = row as Record<string, unknown>;
     const classId = safeText(rec.id);
     const capacity = Number(rec.capacity ?? 0);
-    const taken = classCounts.get(classId) ?? 0;
+    const taken = Number(classCounts[classId] ?? 0) || 0;
     return {
       id: rec.id,
       name: safeText(rec.name),
