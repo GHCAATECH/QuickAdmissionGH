@@ -241,7 +241,7 @@ async function handleSubmissionConfirmation(req: Request, body: Record<string, u
     .eq("bece_index", index);
 
   if (schoolId) studentQuery = studentQuery.eq("school_id", schoolId);
-  const { data: studentRows, error: studentError } = await studentQuery;
+  const { data: studentRows, error: studentError } = await studentQuery.limit(100);
   if (studentError) {
     return smsJson(req, { ok: false, error: "student_lookup_failed", message: studentError.message }, 500);
   }

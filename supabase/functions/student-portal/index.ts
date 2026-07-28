@@ -184,7 +184,7 @@ async function studentFileUrl(
     .select("id, school_id, bece_index, admission_token, enrolment_form_url, records")
     .eq("bece_index", index);
   if (schoolId) query = query.eq("school_id", schoolId);
-  const { data: rows, error } = await query;
+  const { data: rows, error } = await query.limit(100);
   if (error) throw new Error(error.message || "Could not verify file access.");
   const matches = (rows ?? []).filter((row) => upperText((row as JsonRecord).admission_token) === upperText(token));
   if (!matches.length) return { ok: false, error: "token", message: "Admission token is invalid." };
