@@ -165,9 +165,9 @@ Deno.serve(async (req: Request) => {
       .maybeSingle(),
     admin
       .from("houses")
-      .select("*")
+      .select("id, name, capacity, gender, residential_type, priority, created_at")
       .eq("school_id", sid),
-    admin.from("students").select("house_id, gender").eq("school_id", sid),
+    admin.rpc("house_occupancy_counts", { p_school_id: sid }),
   ]);
 
   if (placementRes.error) return json({ ok: false, error: "placement_lookup_failed", message: placementRes.error.message }, 500);
@@ -182,7 +182,8 @@ Deno.serve(async (req: Request) => {
   for (const row of occupancyRes.data ?? []) {
     const houseId = safeText((row as Record<string, unknown>).house_id);
     if (!houseId) continue;
-    occupancy.set(houseId, (occupancy.get(houseId) ?? 0) + 1);
+    const occupied = Number((row as Record<string, unknown>).occupied ?? 0);
+    occupancy.set(houseId, Number.isFinite(occupied) ? occupied : 0);
   }
 
   const allHouses = (housesRes.data ?? []) as Record<string, unknown>[];
