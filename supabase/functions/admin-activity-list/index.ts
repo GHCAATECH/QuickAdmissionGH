@@ -4,6 +4,7 @@ import { guardRequest, jsonResponse } from "../_shared/security.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 type JsonRecord = Record<string, unknown>;
+const activityCache = new Map<string, { expiresAt: number; value: unknown }>();
 const text = (value: unknown) => String(value ?? "").trim();
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
@@ -35,7 +36,15 @@ Deno.serve(async (req: Request) => {
   const schoolId = text(body.school_id || profile.school_id);
   if (!schoolId || !canRead(profile, schoolId)) return json({ ok: false, error: "forbidden", message: "You cannot access this activity log." }, 403);
   if (!await rateAllowed(admin, `admin-activity-list:${text(profile.id)}:${schoolId}`, 60, 60)) return json({ ok: false, error: "rate_limited", message: "Too many activity-log requests. Please wait a minute and try again." }, 429);
+  const cached = activityCache.get(schoolId);
+  if (cached && cached.expiresAt > Date.now()) return json(cached.value);
   const { data, error } = await admin.from("activity_log").select("created_at,action,actor").eq("school_id", schoolId).order("created_at", { ascending: false }).range(0, 499);
   if (error) return json({ ok: false, error: "query_failed", message: error.message }, 500);
-  return json({ ok: true, school_id: schoolId, rows: data ?? [] });
+  const payload = { ok: true, school_id: schoolId, rows: data ?? [] };
+  activityCache.set(schoolId, { expiresAt: Date.now() + 10_000, value: payload });
+  if (activityCache.size > 100) {
+    const oldest = activityCache.keys().next().value;
+    if (oldest) activityCache.delete(oldest);
+  }
+  return json(payload);
 });
