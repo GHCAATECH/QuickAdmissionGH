@@ -21,6 +21,38 @@ function firstText(...values: unknown[]): string {
   return "";
 }
 
+type SchoolStructure = {
+  programmes: unknown[];
+  houses: unknown[];
+  classes: unknown[];
+  classCounts: Record<string, unknown>;
+};
+
+const structureCache = new Map<string, { expiresAt: number; value: SchoolStructure }>();
+
+async function loadSchoolStructure(admin: ReturnType<typeof createClient>, schoolId: string): Promise<SchoolStructure> {
+  const cached = structureCache.get(schoolId);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const [programmesRes, housesRes, classesRes, classCountsRes] = await Promise.all([
+    admin.from("programmes").select("id,code,name,subjects").eq("school_id", schoolId).order("code"),
+    admin.from("houses").select("id,name,capacity,gender,residential_type,priority").eq("school_id", schoolId).order("priority", { ascending: true }).order("name"),
+    admin.from("classrooms").select("id,name,programme_id,subjects,capacity").eq("school_id", schoolId).order("name"),
+    admin.rpc("student_class_counts", { p_school: schoolId }),
+  ]);
+  const value: SchoolStructure = {
+    programmes: programmesRes.data ?? [],
+    houses: housesRes.data ?? [],
+    classes: classesRes.data ?? [],
+    classCounts: (classCountsRes.data ?? {}) as Record<string, unknown>,
+  };
+  structureCache.set(schoolId, { expiresAt: Date.now() + 30_000, value });
+  if (structureCache.size > 100) {
+    const oldest = structureCache.keys().next().value;
+    if (oldest) structureCache.delete(oldest);
+  }
+  return value;
+}
+
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
   return !!error || data?.allowed !== false;
@@ -95,10 +127,7 @@ Deno.serve(async (req: Request) => {
     programmeRes,
     classRes,
     houseRes,
-    programmesRes,
-    housesRes,
-    classesRes,
-    classCountsRes,
+    structure,
   ] = await Promise.all([
     admin.from("schools").select("id,school_code,code,name,address,phone,helpdesk,crest_url,theme_color,headmaster_name,email").eq("id", sid).maybeSingle(),
     admin.from("school_config").select("academic_year,letter_template,records_template,admission_status,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload").eq("school_id", sid).maybeSingle(),
@@ -117,10 +146,7 @@ Deno.serve(async (req: Request) => {
     student.house_id
       ? admin.from("houses").select("id,name").eq("id", String(student.house_id)).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
-    admin.from("programmes").select("id,code,name,subjects").eq("school_id", sid).order("code"),
-    admin.from("houses").select("id,name,capacity,gender,residential_type,priority").eq("school_id", sid).order("priority", { ascending: true }).order("name"),
-    admin.from("classrooms").select("id,name,programme_id,subjects,capacity").eq("school_id", sid).order("name"),
-    admin.rpc("student_class_counts", { p_school: sid }),
+    loadSchoolStructure(admin, sid),
   ]);
 
   const school = (schoolRes.data ?? {}) as Record<string, unknown>;
@@ -138,7 +164,7 @@ Deno.serve(async (req: Request) => {
       .eq("index_number", index);
   }
 
-  const classCounts = (classCountsRes.data ?? {}) as Record<string, unknown>;
+  const classCounts = structure.classCounts;
 
   const finalProgramme = firstText(programme.name, placement.programme);
   const finalGender = normalizeGender(student.gender, placement.gender);
@@ -151,14 +177,14 @@ Deno.serve(async (req: Request) => {
     student.records && typeof student.records === "object" ? student.records : {};
   const contact = firstText(student.parent_phone, placement.sms_contact);
 
-  const programmes = (programmesRes.data ?? []).map((row) => ({
+  const programmes = structure.programmes.map((row) => ({
     id: (row as Record<string, unknown>).id,
     code: safeText((row as Record<string, unknown>).code),
     name: safeText((row as Record<string, unknown>).name),
     subjects: safeText((row as Record<string, unknown>).subjects),
   }));
 
-  const classes = (classesRes.data ?? []).map((row) => {
+  const classes = structure.classes.map((row) => {
     const rec = row as Record<string, unknown>;
     const classId = safeText(rec.id);
     const capacity = Number(rec.capacity ?? 0);
@@ -171,7 +197,7 @@ Deno.serve(async (req: Request) => {
       seats: Math.max(capacity - taken, 0),
     };
   });
-  const houses = (housesRes.data ?? []).map((row) => {
+  const houses = structure.houses.map((row) => {
     const rec = row as Record<string, unknown>;
     return {
       id: rec.id,
