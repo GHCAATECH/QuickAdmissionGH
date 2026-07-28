@@ -199,18 +199,25 @@ async function syncSchoolBalance(schoolId: string, balance: number | null) {
   }
 }
 
-async function getExistingBulkDeliveryKeys(schoolId: string) {
-  const { data, error } = await admin
-    .from("sms_logs")
-    .select("student_id, external_id, status")
-    .eq("school_id", schoolId)
-    .eq("recipient_group", "bulk-recipient")
-    .in("status", ["sent", "pending"]);
+async function getExistingBulkDeliveryKeys(schoolId: string, candidates: BulkCandidate[]) {
+  const externalIds = [...new Set(candidates.map((candidate) => safeString(candidate.externalId)).filter(Boolean))];
+  const studentIds = [...new Set(candidates.map((candidate) => safeString(candidate.studentId)).filter(Boolean))];
+  if (!externalIds.length && !studentIds.length) return new Set<string>();
 
-  if (error) throw new Error(error.message);
+  const [externalRes, studentRes] = await Promise.all([
+    externalIds.length
+      ? admin.from("sms_logs").select("external_id").eq("school_id", schoolId).eq("recipient_group", "bulk-recipient").in("status", ["sent", "pending"]).in("external_id", externalIds)
+      : Promise.resolve({ data: [], error: null }),
+    studentIds.length
+      ? admin.from("sms_logs").select("student_id").eq("school_id", schoolId).eq("recipient_group", "bulk-recipient").in("status", ["sent", "pending"]).in("student_id", studentIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (externalRes.error) throw new Error(externalRes.error.message);
+  if (studentRes.error) throw new Error(studentRes.error.message);
 
   const keys = new Set<string>();
-  for (const row of data ?? []) {
+  for (const row of [...(externalRes.data ?? []), ...(studentRes.data ?? [])]) {
     const record = row as Record<string, unknown>;
     const identifier = safeString(record.external_id) || safeString(record.student_id);
     if (identifier) keys.add(identifier);
@@ -499,7 +506,7 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     return smsJson(req, { ok: false, error: "validation", message: "No valid recipients were supplied." }, 400);
   }
 
-  const existingKeys = await getExistingBulkDeliveryKeys(schoolId);
+  const existingKeys = await getExistingBulkDeliveryKeys(schoolId, candidates);
   const sendableCandidates: BulkCandidate[] = [];
   let skipped = 0;
   for (const candidate of candidates) {
