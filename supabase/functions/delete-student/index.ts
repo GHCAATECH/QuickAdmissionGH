@@ -9,6 +9,11 @@ function safeString(value: unknown) {
   return String(value ?? "").trim();
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
+
 function storageObjectPath(value: unknown) {
   const text = safeString(value);
   if (!text) return "";
@@ -91,6 +96,9 @@ Deno.serve(async (req: Request) => {
   const { profile } = await resolveProfile(admin, req);
   if (!canAccessSchool(profile as Record<string, unknown> | null, schoolId)) {
     return json({ ok: false, error: "forbidden", message: "You cannot delete students for this school." }, 403);
+  }
+  if (!await rateAllowed(admin, `delete-student:${safeString((profile as Record<string, unknown>).id)}:${schoolId}`, 120, 60)) {
+    return json({ ok: false, error: "rate_limited", message: "Too many deletion requests. Please wait a minute and try again." }, 429);
   }
 
   const { data: student, error: studentError } = await admin
