@@ -2908,10 +2908,16 @@ async function loadSchools(){
   const selected=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)?document.getElementById(id).value:'']));
   let rows=[];
   let loadError=null;
+  const directoryCacheKey='qag_school_directory_v1';
   try{
+    const cached=JSON.parse(localStorage.getItem(directoryCacheKey)||'null');
+    if(cached&&Array.isArray(cached.rows)&&Date.now()-Number(cached.saved_at||0)<300000) rows=cached.rows;
+  }catch(e){}
+  if(!rows.length) try{
     const {data,error}=await studentPortalRequest('directory',{});
     if(error) throw error;
     rows=Array.isArray(data&&data.schools)?data.schools:[];
+    if(rows.length) try{localStorage.setItem(directoryCacheKey,JSON.stringify({saved_at:Date.now(),rows}));}catch(e){}
   }catch(e){
     loadError=e;
   }
