@@ -72,6 +72,15 @@ function actorLabel(profile: Record<string, unknown> | null) {
   return safeString(profile?.full_name) || safeString(profile?.email) || "System";
 }
 
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", {
+    p_bucket_key: key,
+    p_limit: limit,
+    p_window_seconds: seconds,
+  });
+  return !!error || data?.allowed !== false;
+}
+
 async function logActivity(admin: ReturnType<typeof createClient>, schoolId: string, actor: string, action: string) {
   if (!schoolId) return;
   try {
@@ -193,6 +202,12 @@ Deno.serve(async (req: Request) => {
   );
   if (!access.ok) {
     return json({ ok: false, error: access.error, message: access.message }, access.status);
+  }
+
+  const actorId = safeString((profile as Record<string, unknown>).id);
+  const targetSchoolId = safeString((target as Record<string, unknown>).school_id);
+  if (!await rateAllowed(admin, `manage-user:${actorId}:${targetSchoolId || "global"}`, 60, 60)) {
+    return json({ ok: false, error: "rate_limited", message: "Too many user-management requests. Please wait a minute and try again." }, 429);
   }
 
   const schoolId = safeString((target as Record<string, unknown>).school_id);
