@@ -276,12 +276,7 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
   const { data, error } = await verifiedQuery;
   if (error) throw new Error("Could not load verified students.");
   const context = await loadSchoolContext(admin, schoolId);
-  const summaries = (data ?? []).map((row) => toStudentSummary(row as JsonRecord, context));
-  let rows: JsonRecord[] = [];
-  for (let offset = 0; offset < summaries.length; offset += 50) {
-    const batch = await Promise.all(summaries.slice(offset, offset + 50).map((row) => signStudentFiles(admin, row)));
-    rows.push(...batch);
-  }
+  let rows = (data ?? []).map((row) => toStudentSummary(row as JsonRecord, context));
   if (search) {
     const q = sanitizeSearch(search);
     rows = rows.filter((row) => [row.full_name, row.bece_index, row.permanent_admission_number, row.application_number, row.student_phone, row.guardian_contact].join(" \n").toLowerCase().includes(q));
@@ -297,7 +292,16 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
   const pageSize = Math.min(Math.max(Number(filters.page_size) || 25, 1), 200);
   const total = rows.length;
   const start = (page - 1) * pageSize;
-  const paged = rows.slice(start, start + pageSize);
+  const pagedSummaries = rows.slice(start, start + pageSize);
+  const paged: JsonRecord[] = [];
+  if (pageSize >= 5_000) {
+    paged.push(...pagedSummaries);
+  } else {
+    for (let offset = 0; offset < pagedSummaries.length; offset += 50) {
+      const batch = await Promise.all(pagedSummaries.slice(offset, offset + 50).map((row) => signStudentFiles(admin, row)));
+      paged.push(...batch);
+    }
+  }
   const today = new Date().toISOString().slice(0,10);
   const summary = {
     total_verified: total,
@@ -307,7 +311,7 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
     boarding_students: rows.filter((row) => safeText(row.residential_status).toLowerCase() === 'boarding').length,
     verified_today: rows.filter((row) => safeText(row.verified_at).slice(0,10) === today).length,
   };
-  return { ok: true, page, page_size: pageSize, total, total_pages: Math.max(Math.ceil(total / pageSize), 1), rows: paged, all_rows: rows, truncated: data?.length === 5_000, summary };
+  return { ok: true, page, page_size: pageSize, total, total_pages: Math.max(Math.ceil(total / pageSize), 1), rows: paged, all_rows: pageSize >= 5_000 ? rows : [], truncated: data?.length === 5_000, summary };
 }
 
 async function runRpc(admin: ReturnType<typeof createClient>, fn: string, args: JsonRecord) {
