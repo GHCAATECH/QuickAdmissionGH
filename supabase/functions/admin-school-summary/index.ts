@@ -9,6 +9,8 @@ function text(value: unknown) {
   return String(value ?? "").trim();
 }
 
+const summaryCache = new Map<string, { expiresAt: number; value: unknown }>();
+
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const header = req.headers.get("Authorization") ?? "";
   const token = header.replace(/^Bearer\s+/i, "").trim();
@@ -47,7 +49,16 @@ Deno.serve(async (req: Request) => {
   const schoolId = text(body.school_id || profile.school_id);
   if (!schoolId || !canRead(profile, schoolId)) return json({ ok: false, error: "forbidden", message: "You cannot access this school summary." }, 403);
 
+  const cached = summaryCache.get(schoolId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return json({ ok: true, school_id: schoolId, summary: cached.value ?? {} });
+  }
   const { data, error } = await admin.rpc("admin_school_summary", { p_school: schoolId });
   if (error) return json({ ok: false, error: "summary_failed", message: error.message }, 500);
+  summaryCache.set(schoolId, { expiresAt: Date.now() + 15_000, value: data ?? {} });
+  if (summaryCache.size > 100) {
+    const oldest = summaryCache.keys().next().value;
+    if (oldest) summaryCache.delete(oldest);
+  }
   return json({ ok: true, school_id: schoolId, summary: data ?? {} });
 });
