@@ -2803,11 +2803,12 @@ function openClass(id){
 async function loadPlacementRecords(){
   if(!SB_SCHOOL||!SB_SCHOOL.id||PLACEMENT_STATE.loaded||PLACEMENT_STATE.loading)return;
   PLACEMENT_STATE.loading=true;
-  const {data,count,error}=await sb.from('placement_list').select('index_number,student_name,gender,residential_status,programme,aggregate,jhs_attended,dob,sms_contact,enrolment_code,logged_in',{count:'exact'}).eq('school_id',SB_SCHOOL.id).order('created_at',{ascending:false}).range(0,4999);
+  const {data,error}=await invokeFnDetailed('admin-placement-list',{school_id:SB_SCHOOL.id,page:1,page_size:5000});
   PLACEMENT_STATE.loading=false;
   if(error){toast('Could not load placement list: '+error.message);return;}
-  placement=(data||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
-  placementTotalCount=Number(count)||placement.length;PLACEMENT_STATE.loaded=true;
+  if(!data||data.ok===false){toast('Could not load placement list: '+((data&&data.message)||'unknown error'));return;}
+  placement=(data.rows||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in}));
+  placementTotalCount=Number(data.total)||placement.length;PLACEMENT_STATE.loaded=true;
   if(placementTotalCount>placement.length) toast('Showing the latest '+placement.length+' placement records.');
 }
 async function loadFinancePayments(){
