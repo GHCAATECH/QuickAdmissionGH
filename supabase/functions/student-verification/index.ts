@@ -125,6 +125,7 @@ function studentMatchesQuery(student: JsonRecord, query: string) {
 
 const schoolContextCache = new Map<string, { expiresAt: number; value: Awaited<ReturnType<typeof loadSchoolContext>> }>();
 const verificationSearchCache = new Map<string, { expiresAt: number; value: unknown }>();
+const verifiedListCache = new Map<string, { expiresAt: number; value: unknown }>();
 
 function residentialStatus(student: JsonRecord, placement: JsonRecord) {
   const records = student.records && typeof student.records === "object" && !Array.isArray(student.records)
@@ -277,6 +278,9 @@ async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId
 }
 
 async function listVerified(admin: ReturnType<typeof createClient>, schoolId: string, filters: JsonRecord) {
+  const cacheKey = `${schoolId}:${JSON.stringify(filters)}`;
+  const cached = verifiedListCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
   const search = safeText(filters.search);
   const gender = safeText(filters.gender).toUpperCase();
   const programme = safeText(filters.programme_id);
@@ -336,7 +340,13 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
     boarding_students: rows.filter((row) => safeText(row.residential_status).toLowerCase() === 'boarding').length,
     verified_today: rows.filter((row) => safeText(row.verified_at).slice(0,10) === today).length,
   };
-  return { ok: true, page, page_size: pageSize, total, total_pages: Math.max(Math.ceil(total / pageSize), 1), rows: paged, all_rows: pageSize >= 5_000 ? rows : [], truncated: data?.length === 5_000, summary };
+  const result = { ok: true, page, page_size: pageSize, total, total_pages: Math.max(Math.ceil(total / pageSize), 1), rows: paged, all_rows: pageSize >= 5_000 ? rows : [], truncated: data?.length === 5_000, summary };
+  verifiedListCache.set(cacheKey, { expiresAt: Date.now() + 10_000, value: result });
+  if (verifiedListCache.size > 250) {
+    const oldest = verifiedListCache.keys().next().value;
+    if (oldest) verifiedListCache.delete(oldest);
+  }
+  return result;
 }
 
 async function runRpc(admin: ReturnType<typeof createClient>, fn: string, args: JsonRecord) {
