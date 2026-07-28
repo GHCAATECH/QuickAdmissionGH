@@ -4639,15 +4639,15 @@ async function loadSchoolData(prof){
     return;
   }
   const [sch,cfg,structure,stu,plc,pay,sms,log,smsCfg,claims]=await Promise.all([
-    sb.from('schools').select('*').eq('id',myId),
-    sb.from('school_config').select('*').eq('school_id',myId),
+    sb.from('schools').select('id,name,code,school_code,address,phone,email,headmaster_name,headmaster_title,helpdesk,crest_url,theme_color').eq('id',myId),
+    sb.from('school_config').select('academic_year,admission_year,admission_status,reopening_date,reopening_time,service_charge,helpdesk_line,sms_balance,prospectus_url,undertaking_url,subjects_url,letter_template,records_template,req_doc_line1,req_doc_line2,req_doc_line3,req_doc_line4,req_doc_line5,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload').eq('school_id',myId),
     invokeFnDetailed('admin-school-structure',{school_id:myId}),
     Promise.resolve({data:[],error:null}),
     sb.from('placement_list').select('id',{count:'exact',head:true}).eq('school_id',myId),
     Promise.resolve({data:[],error:null}),
     Promise.resolve({data:[],error:null}),
     Promise.resolve({data:[],error:null}),
-    sb.from('school_sms_templates').select('*').eq('school_id',myId),
+    sb.from('school_sms_templates').select('school_id,submission_message,sms_enabled').eq('school_id',myId),
     sb.from('finance_claims').select('claim_number,students_claimed,created_at,academic_year').eq('school_id',myId),
   ]);
   const structurePayload=(structure&&structure.data)||{};
@@ -4655,6 +4655,7 @@ async function loadSchoolData(prof){
   const hs={data:Array.isArray(structurePayload.houses)?structurePayload.houses:[],error:structure&&structure.error};
   const cls={data:Array.isArray(structurePayload.classrooms)?structurePayload.classrooms:[],error:structure&&structure.error};
   SB_SCHOOL=(sch.data||[])[0]; SB_CFG=(cfg.data||[])[0]||{};
+  if(SB_CFG&&!SB_CFG.helpdesk&&SB_CFG.helpdesk_line) SB_CFG.helpdesk=SB_CFG.helpdesk_line;
   placementTotalCount=Number(plc.count)||0; PLACEMENT_STATE={loaded:false,loading:false};
   const summaryResult=await invokeFnDetailed('admin-school-summary',{school_id:myId});
   SB_STUDENT_SUMMARY=(summaryResult.data&&summaryResult.data.summary)||{};
