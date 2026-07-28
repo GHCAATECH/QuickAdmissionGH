@@ -37,6 +37,11 @@ function safeString(value: unknown) {
   return String(value ?? "").trim();
 }
 
+async function rateAllowed(key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
+
 function smsJson(req: Request, body: JsonRecord, status = 200) {
   return jsonResponse(req, body, status);
 }
@@ -454,8 +459,13 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
   const access = await assertSchoolAccess(profile, schoolId);
   if (!access.ok) return smsJson(req, { ok: false, error: "forbidden", message: access.message }, access.status);
 
+  if (!await rateAllowed(`bulk-sms:${safeString(profile?.id) || "unknown"}:${schoolId}`, 3, 60)) {
+    return smsJson(req, { ok: false, error: "rate_limited", message: "Too many bulk SMS requests. Please wait a minute and try again." }, 429);
+  }
+
   const messages = Array.isArray(body.messages) ? body.messages : [];
   if (!messages.length) return smsJson(req, { ok: false, error: "validation", message: "No messages supplied." }, 400);
+  if (messages.length > 1_000) return smsJson(req, { ok: false, error: "batch_too_large", message: "Bulk SMS is limited to 1,000 recipients per request." }, 413);
 
   const { school, settings } = await getSchoolSmsMeta(schoolId);
   const senderId = normalizeSchoolCode(school?.school_code ?? school?.code);
