@@ -89,20 +89,26 @@ Deno.serve(async (req: Request) => {
     return json({ ok: false, error: "owner_only", message: "Only the school owner can do this." }, 403);
   }
 
-  const { data: students, error: studentsError } = await admin
-    .from("students")
-    .select("id, bece_index, enrolment_form_url, records")
-    .eq("school_id", schoolId);
-
-  if (studentsError) {
-    return json({ ok: false, error: "lookup_failed", message: studentsError.message }, 500);
+  let storageFilesDeleted = 0;
+  for (let offset = 0; ; offset += 1_000) {
+    const { data: students, error: studentsError } = await admin
+      .from("students")
+      .select("enrolment_form_url, records")
+      .eq("school_id", schoolId)
+      .range(offset, offset + 999);
+    if (studentsError) {
+      return json({ ok: false, error: "lookup_failed", message: studentsError.message }, 500);
+    }
+    const paths = Array.from(new Set((students ?? [])
+      .flatMap((row) => studentStoragePaths(row as Record<string, unknown>))));
+    for (let index = 0; index < paths.length; index += 1_000) {
+      const chunk = paths.slice(index, index + 1_000);
+      if (!chunk.length) continue;
+      const { error: removeError } = await admin.storage.from("enrolment-forms").remove(chunk);
+      if (!removeError) storageFilesDeleted += chunk.length;
+    }
+    if (!students || students.length < 1_000) break;
   }
-
-  const formUrls = (students ?? [])
-    .map((row) => safeString((row as Record<string, unknown>).enrolment_form_url))
-    .filter(Boolean);
-  const formPaths = Array.from(new Set((students ?? [])
-    .flatMap((row) => studentStoragePaths(row as Record<string, unknown>))));
 
   const countDeleted = async (table: string, column: string, value: string) => {
     const { data, error } = await admin
@@ -160,8 +166,7 @@ Deno.serve(async (req: Request) => {
       activity_logs: activityLogsDeleted,
       finance_claims: financeClaimsDeleted,
       finance_reset: true,
-      form_urls: formUrls,
-      form_paths: formPaths,
+      storage_files_deleted: storageFilesDeleted,
     });
   } catch (error) {
     return json({
