@@ -18,6 +18,10 @@ function canRead(profile: JsonRecord | null, schoolId: string) {
   if (text(profile.role) === "super_admin") return true;
   return text(profile.role) === "school_admin" && text(profile.school_id) === schoolId;
 }
+async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
+  const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
+  return !!error || data?.allowed !== false;
+}
 Deno.serve(async (req: Request) => {
   const blocked = guardRequest(req, { methods: ["POST", "OPTIONS"], maxBodyBytes: 8_192 });
   if (blocked) return blocked;
@@ -30,6 +34,7 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json(); } catch { body = {}; }
   const schoolId = text(body.school_id || profile.school_id);
   if (!schoolId || !canRead(profile, schoolId)) return json({ ok: false, error: "forbidden", message: "You cannot access this activity log." }, 403);
+  if (!await rateAllowed(admin, `admin-activity-list:${text(profile.id)}:${schoolId}`, 60, 60)) return json({ ok: false, error: "rate_limited", message: "Too many activity-log requests. Please wait a minute and try again." }, 429);
   const { data, error } = await admin.from("activity_log").select("created_at,action,actor").eq("school_id", schoolId).order("created_at", { ascending: false }).range(0, 499);
   if (error) return json({ ok: false, error: "query_failed", message: error.message }, 500);
   return json({ ok: true, school_id: schoolId, rows: data ?? [] });
