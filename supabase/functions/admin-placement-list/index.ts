@@ -52,7 +52,7 @@ Deno.serve(async (req: Request) => {
     .from("placement_list")
     .select("index_number,student_name,gender,residential_status,programme,aggregate,jhs_attended,dob,sms_contact,enrolment_code,logged_in", { count: "exact" })
     .eq("school_id", schoolId)
-    .order("created_at", { ascending: false });
+    .order("index_number", { ascending: true });
   if (search) {
     const escaped = search.replace(/[%_]/g, (value) => `\\${value}`);
     query = query.or(`student_name.ilike.%${escaped}%,index_number.ilike.%${escaped}%`);
