@@ -100,8 +100,8 @@ Deno.serve(async (req: Request) => {
     classesRes,
     classCountsRes,
   ] = await Promise.all([
-    admin.from("schools").select("*").eq("id", sid).maybeSingle(),
-    admin.from("school_config").select("*").eq("school_id", sid).maybeSingle(),
+    admin.from("schools").select("id,school_code,code,name,address,phone,helpdesk,crest_url,theme_color,headmaster_name,email").eq("id", sid).maybeSingle(),
+    admin.from("school_config").select("academic_year,letter_template,records_template,admission_status,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload").eq("school_id", sid).maybeSingle(),
     admin
       .from("placement_list")
       .select("student_name,other_names,residential_status,sms_contact,aggregate,programme,gender,logged_in")
