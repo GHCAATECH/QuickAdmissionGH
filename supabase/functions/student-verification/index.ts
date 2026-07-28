@@ -261,7 +261,12 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
     .limit(5_000);
   if (error) throw new Error("Could not load verified students.");
   const context = await loadSchoolContext(admin, schoolId);
-  let rows = await Promise.all((data ?? []).map((row) => signStudentFiles(admin, toStudentSummary(row as JsonRecord, context))));
+  const summaries = (data ?? []).map((row) => toStudentSummary(row as JsonRecord, context));
+  const rows: JsonRecord[] = [];
+  for (let offset = 0; offset < summaries.length; offset += 50) {
+    const batch = await Promise.all(summaries.slice(offset, offset + 50).map((row) => signStudentFiles(admin, row)));
+    rows.push(...batch);
+  }
   const search = safeText(filters.search);
   const gender = safeText(filters.gender).toUpperCase();
   const programme = safeText(filters.programme_id);
