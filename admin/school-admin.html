@@ -2814,11 +2814,12 @@ async function loadPlacementRecords(){
 async function loadFinancePayments(){
   if(!SB_SCHOOL||!SB_SCHOOL.id||FINANCE_PAYMENTS_STATE.loaded||FINANCE_PAYMENTS_STATE.loading)return;
   FINANCE_PAYMENTS_STATE.loading=true;
-  const {data,count,error}=await sb.from('payments').select('student_id,paid_at,created_at,payer_name,amount_pesewas,channel,status,reference, students(bece_index, full_name)',{count:'exact'}).eq('school_id',SB_SCHOOL.id).order('created_at',{ascending:false}).range(0,499);
+  const {data,error}=await invokeFnDetailed('admin-payments-list',{school_id:SB_SCHOOL.id,page:1,page_size:500});
   FINANCE_PAYMENTS_STATE.loading=false;
   if(error){financePaymentsLoadError=error.message||'Could not load payments.';renderFinancePayments();return;}
-  payments=(data||[]).map(function(p){return {studentId:p.student_id,date:(p.paid_at||p.created_at||'').slice(0,10),name:(p.students&&p.students.full_name)||p.payer_name||'—',index:(p.students&&p.students.bece_index)||'—',amount:(p.amount_pesewas||0)/100,method:p.channel,status:p.status,txn:p.reference};});
-  FINANCE_PAYMENTS_STATE.total=Number(count)||payments.length; FINANCE_PAYMENTS_STATE.loaded=true;
+  if(error||!data||data.ok===false){financePaymentsLoadError=(data&&data.message)||(error&&error.message)||'Could not load payments.';renderFinancePayments();return;}
+  payments=(data.rows||[]).map(function(p){return {studentId:p.student_id,date:(p.paid_at||p.created_at||'').slice(0,10),name:(p.students&&p.students.full_name)||p.payer_name||'—',index:(p.students&&p.students.bece_index)||'—',amount:(p.amount_pesewas||0)/100,method:p.channel,status:p.status,txn:p.reference};});
+  FINANCE_PAYMENTS_STATE.total=Number(data&&data.total)||payments.length; FINANCE_PAYMENTS_STATE.loaded=true;
   if(FINANCE_PAYMENTS_STATE.total>payments.length) toast('Showing the latest '+payments.length+' transactions. Exporting the complete history will be added to the paginated finance API.');
   renderFinancePayments();
 }
