@@ -123,6 +123,8 @@ function studentMatchesQuery(student: JsonRecord, query: string) {
   return haystack.includes(q);
 }
 
+const schoolContextCache = new Map<string, { expiresAt: number; value: Awaited<ReturnType<typeof loadSchoolContext>> }>();
+
 function residentialStatus(student: JsonRecord, placement: JsonRecord) {
   const records = student.records && typeof student.records === "object" && !Array.isArray(student.records)
     ? student.records as JsonRecord
@@ -195,6 +197,8 @@ async function signStudentFiles(admin: ReturnType<typeof createClient>, row: Jso
 }
 
 async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolId: string) {
+  const cached = schoolContextCache.get(schoolId);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
   const [schoolRes, cfgRes, programmesRes, classesRes, housesRes, usersRes, placementsRes] = await Promise.all([
     admin.from("schools").select("id,name,school_code,code,crest_url").eq("id", schoolId).maybeSingle(),
     admin.from("school_config").select("academic_year,admission_year").eq("school_id", schoolId).maybeSingle(),
@@ -220,7 +224,7 @@ async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolI
     if (index) placementEntries.push([index, rec]);
   });
   const placementMap = new Map<string,JsonRecord>(placementEntries);
-  return {
+  const value = {
     programmes: programmeMap,
     classes: classMap,
     houses: houseMap,
@@ -231,6 +235,12 @@ async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolI
     academicYear: safeText(cfg.admission_year) || pickFirstYear(cfg.academic_year),
     schoolCode: safeText(school.school_code || school.code),
   };
+  schoolContextCache.set(schoolId, { expiresAt: Date.now() + 30_000, value });
+  if (schoolContextCache.size > 100) {
+    const oldest = schoolContextCache.keys().next().value;
+    if (oldest) schoolContextCache.delete(oldest);
+  }
+  return value;
 }
 
 async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId: string, query: string) {
