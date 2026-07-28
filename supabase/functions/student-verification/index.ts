@@ -229,14 +229,19 @@ async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolI
 }
 
 async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId: string, query: string) {
-  const { data, error } = await admin
+  let studentQuery = admin
     .from("students")
     .select("*")
     .eq("school_id", schoolId)
     .not("submitted_at", "is", null)
     .neq("status", "rejected")
-    .order("submitted_at", { ascending: false })
-    .limit(250);
+    .order("submitted_at", { ascending: false });
+  const search = sanitizeSearch(query);
+  if (search) {
+    const escaped = search.replace(/[%_]/g, (value) => `\\${value}`);
+    studentQuery = studentQuery.or(`full_name.ilike.%${escaped}%,bece_index.ilike.%${escaped}%,admission_no.ilike.%${escaped}%,permanent_admission_number.ilike.%${escaped}%`);
+  }
+  const { data, error } = await studentQuery.limit(100);
   if (error) throw new Error("Could not search students.");
   const context = await loadSchoolContext(admin, schoolId);
   const rows = (data ?? [])
@@ -252,7 +257,8 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
     .select("*")
     .eq("school_id", schoolId)
     .eq("verification_status", "verified")
-    .order("verified_at", { ascending: false });
+    .order("verified_at", { ascending: false })
+    .limit(5_000);
   if (error) throw new Error("Could not load verified students.");
   const context = await loadSchoolContext(admin, schoolId);
   let rows = await Promise.all((data ?? []).map((row) => signStudentFiles(admin, toStudentSummary(row as JsonRecord, context))));
@@ -289,7 +295,7 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
     boarding_students: rows.filter((row) => safeText(row.residential_status).toLowerCase() === 'boarding').length,
     verified_today: rows.filter((row) => safeText(row.verified_at).slice(0,10) === today).length,
   };
-  return { ok: true, page, page_size: pageSize, total, total_pages: Math.max(Math.ceil(total / pageSize), 1), rows: paged, all_rows: rows, summary };
+  return { ok: true, page, page_size: pageSize, total, total_pages: Math.max(Math.ceil(total / pageSize), 1), rows: paged, all_rows: rows, truncated: data?.length === 5_000, summary };
 }
 
 async function runRpc(admin: ReturnType<typeof createClient>, fn: string, args: JsonRecord) {
