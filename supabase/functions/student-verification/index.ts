@@ -252,21 +252,6 @@ async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId
 }
 
 async function listVerified(admin: ReturnType<typeof createClient>, schoolId: string, filters: JsonRecord) {
-  const { data, error } = await admin
-    .from("students")
-    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,passport_photo_url,records")
-    .eq("school_id", schoolId)
-    .eq("verification_status", "verified")
-    .order("verified_at", { ascending: false })
-    .limit(5_000);
-  if (error) throw new Error("Could not load verified students.");
-  const context = await loadSchoolContext(admin, schoolId);
-  const summaries = (data ?? []).map((row) => toStudentSummary(row as JsonRecord, context));
-  const rows: JsonRecord[] = [];
-  for (let offset = 0; offset < summaries.length; offset += 50) {
-    const batch = await Promise.all(summaries.slice(offset, offset + 50).map((row) => signStudentFiles(admin, row)));
-    rows.push(...batch);
-  }
   const search = safeText(filters.search);
   const gender = safeText(filters.gender).toUpperCase();
   const programme = safeText(filters.programme_id);
@@ -275,6 +260,28 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
   const residential = safeText(filters.residential_status).toLowerCase();
   const dateFrom = safeText(filters.date_from);
   const dateTo = safeText(filters.date_to);
+  let verifiedQuery = admin
+    .from("students")
+    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,passport_photo_url,records")
+    .eq("school_id", schoolId)
+    .eq("verification_status", "verified")
+    .order("verified_at", { ascending: false })
+    .limit(5_000);
+  if (gender) verifiedQuery = verifiedQuery.ilike("gender", gender);
+  if (programme) verifiedQuery = verifiedQuery.eq("programme_id", programme);
+  if (classId) verifiedQuery = verifiedQuery.eq("class_id", classId);
+  if (houseId) verifiedQuery = verifiedQuery.eq("house_id", houseId);
+  if (dateFrom) verifiedQuery = verifiedQuery.gte("verified_at", `${dateFrom}T00:00:00.000Z`);
+  if (dateTo) verifiedQuery = verifiedQuery.lte("verified_at", `${dateTo}T23:59:59.999Z`);
+  const { data, error } = await verifiedQuery;
+  if (error) throw new Error("Could not load verified students.");
+  const context = await loadSchoolContext(admin, schoolId);
+  const summaries = (data ?? []).map((row) => toStudentSummary(row as JsonRecord, context));
+  let rows: JsonRecord[] = [];
+  for (let offset = 0; offset < summaries.length; offset += 50) {
+    const batch = await Promise.all(summaries.slice(offset, offset + 50).map((row) => signStudentFiles(admin, row)));
+    rows.push(...batch);
+  }
   if (search) {
     const q = sanitizeSearch(search);
     rows = rows.filter((row) => [row.full_name, row.bece_index, row.permanent_admission_number, row.application_number, row.student_phone, row.guardian_contact].join(" \n").toLowerCase().includes(q));
