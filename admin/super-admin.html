@@ -2054,9 +2054,9 @@ async function superLogin(){
 async function logout(){ if(!confirm('Log out of the Super Admin portal?'))return; try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 
 async function fetchPlatformSmsHistory(){
-  let res=await sb.from('sms_logs').select('*').is('external_id',null).order('sent_at',{ascending:false});
+  let res=await sb.from('sms_logs').select('school_id,recipient_group,recipients,message,status,sent_at').is('external_id',null).order('sent_at',{ascending:false}).range(0,499);
   if(res&&res.error){
-    res=await sb.from('sms_log').select('*').order('sent_at',{ascending:false});
+    res=await sb.from('sms_log').select('school_id,recipient_group,recipients,message,status,sent_at').order('sent_at',{ascending:false}).range(0,499);
   }
   return res;
 }
@@ -2069,7 +2069,7 @@ async function loadSA(){
     sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,personal_done,programme_done,undertaking_done,admission_no'),
     sb.from('payments').select('student_id,amount_pesewas,channel,status,reference,school_id,paid_at,created_at,payer_name, students(full_name,bece_index)'),
     fetchPlatformSmsHistory(),
-    sb.from('activity_log').select('*').order('created_at',{ascending:false}),
+    sb.from('activity_log').select('school_id,action,created_at').order('created_at',{ascending:false}).range(0,499),
     sb.from('programmes').select('id,name'),
     sb.from('placement_list').select('school_id,index_number,sms_contact'),
     sb.from('school_sms_templates').select('school_id,sms_enabled'),
