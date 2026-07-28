@@ -7,6 +7,8 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "
 
 type JsonRecord = Record<string, unknown>;
 
+let directoryCache: { expiresAt: number; value: unknown } | null = null;
+
 function safeText(value: unknown): string {
   return value == null ? "" : String(value).trim();
 }
@@ -207,6 +209,7 @@ async function studentFileUrl(
 }
 
 async function listDirectory(admin: ReturnType<typeof createClient>) {
+  if (directoryCache && directoryCache.expiresAt > Date.now()) return directoryCache.value;
   const schoolsRes = await admin
     .from("schools")
     .select("id,name,school_code,code,phone,email,helpdesk,crest_url")
@@ -266,7 +269,9 @@ async function listDirectory(admin: ReturnType<typeof createClient>) {
     };
   });
 
-  return { ok: true, schools };
+  const result = { ok: true, schools };
+  directoryCache = { expiresAt: Date.now() + 5 * 60_000, value: result };
+  return result;
 }
 
 Deno.serve(async (req: Request) => {
