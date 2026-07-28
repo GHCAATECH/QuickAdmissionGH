@@ -2895,7 +2895,7 @@ async function deletePlacementBatch(scope){
   const {data,error}=await sb.rpc('delete_placement',{p_school:SB_SCHOOL.id,p_scope:scope});
   if(error){toast('Delete failed: '+error.message);return;}
   if(!data||!data.ok){toast('Delete failed: '+((data&&data.error)||'unknown'));return;}
-  const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
+  const {data:plcData}=await sb.from('placement_list').select('index_number,student_name,gender,residential_status,programme,aggregate,jhs_attended,dob,sms_contact,enrolment_code,logged_in').eq('school_id',SB_SCHOOL.id).order('index_number').range(0,4999);
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in})); placementTotalCount=placement.length; PLACEMENT_STATE.loaded=true;
   notifyStudentPortalRefresh('placement-batch-delete');
   renderPlacement();
@@ -3029,7 +3029,7 @@ async function handlePlacementFile(inp){
   const res=data||{};
   toast('Done — added: '+(res.inserted||0)+(res.updated?' · '+res.updated+' updated':'')+((res.invalid||0)?' · '+res.invalid+' invalid':''));
   closePop('importPop');
-  const {data:plcData}=await sb.from('placement_list').select('*').eq('school_id',SB_SCHOOL.id);
+  const {data:plcData}=await sb.from('placement_list').select('index_number,student_name,gender,residential_status,programme,aggregate,jhs_attended,dob,sms_contact,enrolment_code,logged_in').eq('school_id',SB_SCHOOL.id).order('index_number').range(0,4999);
   placement=(plcData||[]).map(p=>({index:p.index_number,name:p.student_name,gender:p.gender||'',res:p.residential_status||'',prog:p.programme,agg:p.aggregate,jhs:p.jhs_attended||'',dob:p.dob||'',sms:p.sms_contact||'',code:p.enrolment_code,loggedIn:p.logged_in})); placementTotalCount=placement.length; PLACEMENT_STATE.loaded=true;
   notifyStudentPortalRefresh('placement-import');
   renderPlacement();
