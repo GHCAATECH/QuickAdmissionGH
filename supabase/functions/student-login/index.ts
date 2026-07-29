@@ -102,7 +102,7 @@ Deno.serve(async (req: Request) => {
   if (!index) return json({ ok: false, error: "index" });
   if (!token) return json({ ok: false, error: "token" });
 
-  let studentQuery = admin.from("students").select("id,school_id,bece_index,admission_token,full_name,gender,programme_id,class_id,house_id,records,parent_phone,submitted_at,admission_no,permanent_admission_number,payment_status,personal_done,programme_done,undertaking_done,enrolment_form_url,passport_photo_url").eq("bece_index", index);
+  let studentQuery = admin.from("students").select("id,school_id,bece_index,admission_token,full_name,gender,programme_id,class_id,house_id,records,parent_phone,submitted_at,admission_no,permanent_admission_number,payment_status,personal_done,programme_done,undertaking_done,enrolment_form_url").eq("bece_index", index);
   if (schoolId) studentQuery = studentQuery.eq("school_id", schoolId);
   const { data: studentRows, error: studentError } = await studentQuery.limit(100);
 

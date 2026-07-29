@@ -256,7 +256,7 @@ async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId
   if (cached && cached.expiresAt > Date.now()) return cached.value;
   let studentQuery = admin
     .from("students")
-    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,passport_photo_url,records")
+    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,records")
     .eq("school_id", schoolId)
     .not("submitted_at", "is", null)
     .neq("status", "rejected")
@@ -296,7 +296,7 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
   const dateTo = safeText(filters.date_to);
   let verifiedQuery = admin
     .from("students")
-    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,passport_photo_url,records")
+    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,records")
     .eq("school_id", schoolId)
     .eq("verification_status", "verified")
     .order("verified_at", { ascending: false })
