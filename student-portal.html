@@ -1374,7 +1374,7 @@ async function doLogin(){
       if(data.error==='index')$('f-index').classList.add('err');
       else if(data.error==='token')$('f-token').classList.add('err');
       else if(data.error==='ambiguous')toast('This index appears under more than one school - contact your school office.');
-      else toast('Could not sign in');
+      else toast(data.message||('Could not sign in ('+(data.error||'unknown error')+')'));
       return;
     }
     session={index:idx,token:tok,school:sid}; STU=data.student; await applySchool(data);
@@ -1652,8 +1652,9 @@ async function retrieveToken(){
   const {data,error}=await studentPortalRequest('retrieve',{p_by:by,p_value:v,p_school:rsid});
   if(error||!data.ok){toast(data&&data.error?data.error:'No token found');return;}
   window._retRec={idx:data.index,tk:data.token};
-  const loginResult=await studentLoginRequest({p_index:data.index,p_token:data.token,p_school:rsid});
-  if(loginResult.data&&loginResult.data.ok){ session={index:data.index,token:data.token,school:rsid}; STU=loginResult.data.student; await applySchool(loginResult.data); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome back.'); return; }
+  const loginSchool=data.school_id||rsid;
+  const loginResult=await studentLoginRequest({p_index:data.index,p_token:data.token,p_school:loginSchool});
+  if(loginResult.data&&loginResult.data.ok){ session={index:data.index,token:data.token,school:loginSchool}; STU=loginResult.data.student; await applySchool(loginResult.data); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome back.'); return; }
   $('ret-token').textContent=data.token;$('retrieve-result').style.display='block';
 }
 function useRetrieved(){$('login-index').value=window._retRec.idx;$('login-token').value=window._retRec.tk;showScreen('s-login');toast('Token filled in - tap Log in');}
