@@ -204,10 +204,10 @@ async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolI
   const [schoolRes, cfgRes, programmesRes, classesRes, housesRes, usersRes, placementsRes] = await Promise.all([
     admin.from("schools").select("id,name,school_code,code,crest_url").eq("id", schoolId).maybeSingle(),
     admin.from("school_config").select("academic_year,admission_year").eq("school_id", schoolId).maybeSingle(),
-    admin.from("programmes").select("id,name,code").eq("school_id", schoolId),
-    admin.from("classrooms").select("id,name").eq("school_id", schoolId),
-    admin.from("houses").select("id,name").eq("school_id", schoolId),
-    admin.from("profiles").select("id,full_name,email").eq("school_id", schoolId),
+    admin.from("programmes").select("id,name,code").eq("school_id", schoolId).limit(5_000),
+    admin.from("classrooms").select("id,name").eq("school_id", schoolId).limit(5_000),
+    admin.from("houses").select("id,name").eq("school_id", schoolId).limit(5_000),
+    admin.from("profiles").select("id,full_name,email").eq("school_id", schoolId).limit(5_000),
     admin.from("placement_list").select("index_number,student_name,gender,residential_status,programme,sms_contact").eq("school_id", schoolId).order("index_number").limit(5_000),
   ]);
   const school = (schoolRes.data ?? {}) as JsonRecord;
