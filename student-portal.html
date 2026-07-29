@@ -1637,8 +1637,10 @@ async function verifyPayment(reference, idx, name, school){
   clearPending(); showPendingBanner();
   window._newToken={idx,tk:data.token};
   toast('Payment confirmed \u2014 signing you in\u2026');
-  session={index:idx,token:data.token,school:school||null};
-  const {data:login,error:loginError}=await studentLoginRequest({p_index:idx,p_token:data.token,p_school:school||null});
+  const loginSchool=data.school_id||school||null;
+  session={index:idx,token:data.token,school:loginSchool};
+  let {data:login,error:loginError}=await studentLoginRequest({p_index:idx,p_token:data.token,p_school:loginSchool});
+  if(!(login&&login.ok)){ await new Promise(function(resolve){setTimeout(resolve,350);}); const retry=await studentLoginRequest({p_index:idx,p_token:data.token,p_school:loginSchool}); login=retry.data; loginError=retry.error; }
   if(login&&login.ok){ STU=login.student; await applySchool(login); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome! Save your token: '+data.token); }
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }

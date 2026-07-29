@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
         message: "This payment reference belongs to a different student record.",
       }, 409);
     }
-    if (st?.admission_token) return json({ ok: true, token: st.admission_token, reused: true, reference });
+    if (st?.admission_token) return json({ ok: true, token: st.admission_token, reused: true, reference, school_id: st.school_id || existingPay.school_id });
   }
   if (existingPay) {
     return json({
@@ -249,7 +249,7 @@ Deno.serve(async (req: Request) => {
         .eq("reference", reference)
         .maybeSingle();
       if (safeString(racedPayment?.student_id) === studentId) {
-        return json({ ok: true, token, reused: true, reference });
+        return json({ ok: true, token, reused: true, reference, school_id: sid });
       }
       return json({ ok: false, error: "reference_mismatch", message: "This payment reference is already in use." }, 409);
     }
@@ -260,5 +260,5 @@ Deno.serve(async (req: Request) => {
   if (tokenError && tokenError.code !== "23505") {
     console.error("Token mirror insert failed", tokenError.message);
   }
-  return json({ ok: true, token, reference });
+  return json({ ok: true, token, reference, school_id: sid });
 });
