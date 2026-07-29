@@ -127,6 +127,11 @@ const schoolContextCache = new Map<string, { expiresAt: number; value: Awaited<R
 const verificationSearchCache = new Map<string, { expiresAt: number; value: unknown }>();
 const verifiedListCache = new Map<string, { expiresAt: number; value: unknown }>();
 
+function clearVerificationCaches() {
+  verificationSearchCache.clear();
+  verifiedListCache.clear();
+}
+
 function residentialStatus(student: JsonRecord, placement: JsonRecord) {
   const records = student.records && typeof student.records === "object" && !Array.isArray(student.records)
     ? student.records as JsonRecord
@@ -412,6 +417,7 @@ Deno.serve(async (req: Request) => {
         p_user_agent: req.headers.get('user-agent') ?? '',
         p_ip_address: req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? '',
       });
+      clearVerificationCaches();
       return json(data);
     }
 
@@ -426,6 +432,7 @@ Deno.serve(async (req: Request) => {
         p_user_agent: req.headers.get('user-agent') ?? '',
         p_ip_address: req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? '',
       });
+      clearVerificationCaches();
       return json(data);
     }
 
@@ -440,6 +447,7 @@ Deno.serve(async (req: Request) => {
         p_user_agent: req.headers.get('user-agent') ?? '',
         p_ip_address: req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? '',
       });
+      clearVerificationCaches();
       return json(data);
     }
 
@@ -457,6 +465,7 @@ Deno.serve(async (req: Request) => {
         p_user_agent: req.headers.get('user-agent') ?? '',
         p_ip_address: req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? '',
       });
+      clearVerificationCaches();
       return json(data);
     }
 
