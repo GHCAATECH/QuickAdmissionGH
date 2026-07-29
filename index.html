@@ -1955,7 +1955,7 @@ async function verifyPayment(reference, idx, name, school){
   window._newToken={idx,tk:data.token};
   toast('Payment confirmed \u2014 signing you in\u2026');
   session={index:idx,token:data.token,school:school||null};
-  const {data:login}=await studentLoginRequest({p_index:idx,p_token:data.token,p_school:school||null});
+  const {data:login,error:loginError}=await studentLoginRequest({p_index:idx,p_token:data.token,p_school:school||null});
   if(login&&login.ok){ STU=login.student; await applySchool(login); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome! Save your token: '+data.token); }
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }
@@ -1966,7 +1966,10 @@ async function retrieveToken(){
   const rsid=$('r-school').value; if(!rsid){toast('Please select your school first','warn');return;}
   const {data,error}=await studentPortalRequest('retrieve',{p_by:by,p_value:v,p_school:rsid});
   if(error||!data.ok){toast(data&&data.error?data.error:'No token found');return;}
-  $('ret-token').textContent=data.token;$('retrieve-result').style.display='block';window._retRec={idx:data.index,tk:data.token};
+  window._retRec={idx:data.index,tk:data.token};
+  const loginResult=await studentLoginRequest({p_index:data.index,p_token:data.token,p_school:rsid});
+  if(loginResult.data&&loginResult.data.ok){ session={index:data.index,token:data.token,school:rsid}; STU=loginResult.data.student; await applySchool(loginResult.data); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome back.'); return; }
+  $('ret-token').textContent=data.token;$('retrieve-result').style.display='block';
 }
 function useRetrieved(){$('login-index').value=window._retRec.idx;$('login-token').value=window._retRec.tk;showScreen('s-login');toast('Token filled in - tap Log in');}
 
