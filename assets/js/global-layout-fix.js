@@ -86,6 +86,12 @@ function updateLoginScreenScrollbarMode() {
   const loginScreenActive = Boolean(
     document.querySelector("#s-login.screen.active")
   );
+  const adminGateActive = Boolean(
+    document.querySelector("#authGate.gate-screen") &&
+      document.body &&
+      (document.body.classList.contains("auth-booting") ||
+        document.body.classList.contains("auth-gate-visible"))
+  );
 
   document.documentElement.classList.toggle(
     "qa-login-screen-active",
@@ -94,6 +100,16 @@ function updateLoginScreenScrollbarMode() {
 
   if (document.body) {
     document.body.classList.toggle("qa-login-screen-active", loginScreenActive);
+    document.documentElement.style.setProperty(
+      "overflow-y",
+      adminGateActive ? "hidden" : "auto",
+      "important"
+    );
+    document.body.style.setProperty(
+      "overflow-y",
+      adminGateActive ? "hidden" : "auto",
+      "important"
+    );
   }
 }
 

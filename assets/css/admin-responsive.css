@@ -34,6 +34,19 @@ body {
   background: var(--admin-background);
 }
 
+/* The fixed admin login gate owns scrolling while it is visible. */
+html:has(body.auth-booting),
+html:has(body.auth-gate-visible),
+body.auth-booting,
+body.auth-gate-visible {
+  overflow-y: hidden !important;
+}
+
+body.auth-booting #authGate.gate-screen,
+body.auth-gate-visible #authGate.gate-screen {
+  overflow-y: auto !important;
+}
+
 button,
 input,
 select,
