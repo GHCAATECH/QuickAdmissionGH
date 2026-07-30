@@ -84,6 +84,17 @@ body.auth-gate-visible #authGate.gate-screen::-webkit-scrollbar {
   overflow: visible !important;
 }
 
+/* Override the page's older #authGate.gate-screen overflow rule. */
+#authGate.gate-screen {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
 button,
 input,
 select,
