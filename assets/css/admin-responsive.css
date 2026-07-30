@@ -34,17 +34,17 @@ body {
   background: var(--admin-background);
 }
 
-/* The fixed admin login gate owns scrolling while it is visible. */
+/* Keep the admin login on the document's single (right-side) scrollbar. */
 html:has(body.auth-booting),
 html:has(body.auth-gate-visible),
 body.auth-booting,
 body.auth-gate-visible {
-  overflow-y: hidden !important;
+  overflow-y: auto !important;
 }
 
 body.auth-booting #authGate.gate-screen,
 body.auth-gate-visible #authGate.gate-screen {
-  overflow-y: auto !important;
+  overflow: visible !important;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
@@ -54,6 +54,34 @@ body.auth-gate-visible #authGate.gate-screen::-webkit-scrollbar {
   width: 0 !important;
   height: 0 !important;
   display: none !important;
+}
+
+/* The gate and both panels must not create an inner scrollbar. */
+#authGate,
+#authGate .qa-login-shell,
+#authGate .qa-brand-panel,
+#authGate .qa-login-panel {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+#authGate::-webkit-scrollbar,
+#authGate .qa-login-shell::-webkit-scrollbar,
+#authGate .qa-brand-panel::-webkit-scrollbar,
+#authGate .qa-login-panel::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+#authGate {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  overflow: visible !important;
 }
 
 button,

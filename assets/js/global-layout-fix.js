@@ -86,12 +86,6 @@ function updateLoginScreenScrollbarMode() {
   const loginScreenActive = Boolean(
     document.querySelector("#s-login.screen.active")
   );
-  const adminGateActive = Boolean(
-    document.querySelector("#authGate.gate-screen") &&
-      document.body &&
-      (document.body.classList.contains("auth-booting") ||
-        document.body.classList.contains("auth-gate-visible"))
-  );
 
   document.documentElement.classList.toggle(
     "qa-login-screen-active",
@@ -102,12 +96,12 @@ function updateLoginScreenScrollbarMode() {
     document.body.classList.toggle("qa-login-screen-active", loginScreenActive);
     document.documentElement.style.setProperty(
       "overflow-y",
-      adminGateActive ? "hidden" : "auto",
+      "auto",
       "important"
     );
     document.body.style.setProperty(
       "overflow-y",
-      adminGateActive ? "hidden" : "auto",
+      "auto",
       "important"
     );
   }
@@ -118,7 +112,7 @@ function updateLoginScreenScrollbarMode() {
  * This protects against legacy page CSS like html,body{overflow:hidden}.
  */
 function forceScrollableLayout() {
-  document.documentElement.dataset.qaLayoutFix = "20260726-layout-fix-12";
+  document.documentElement.dataset.qaLayoutFix = "20260730-layout-fix-13";
 
   document.documentElement.style.setProperty("height", "auto", "important");
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");
