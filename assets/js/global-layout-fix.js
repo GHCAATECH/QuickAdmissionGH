@@ -86,6 +86,7 @@ function updateLoginScreenScrollbarMode() {
   const loginScreenActive = Boolean(
     document.querySelector("#s-login.screen.active")
   );
+  const adminGatePresent = Boolean(document.getElementById("authGate"));
 
   document.documentElement.classList.toggle(
     "qa-login-screen-active",
@@ -96,12 +97,12 @@ function updateLoginScreenScrollbarMode() {
     document.body.classList.toggle("qa-login-screen-active", loginScreenActive);
     document.documentElement.style.setProperty(
       "overflow-y",
-      "auto",
+      adminGatePresent ? "scroll" : "auto",
       "important"
     );
     document.body.style.setProperty(
       "overflow-y",
-      "auto",
+      adminGatePresent ? "visible" : "auto",
       "important"
     );
   }
@@ -116,12 +117,20 @@ function forceScrollableLayout() {
 
   document.documentElement.style.setProperty("height", "auto", "important");
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");
-  document.documentElement.style.setProperty("overflow-y", "auto", "important");
+  document.documentElement.style.setProperty(
+    "overflow-y",
+    document.getElementById("authGate") ? "scroll" : "auto",
+    "important"
+  );
 
   if (document.body && !document.body.classList.contains("modal-open")) {
     document.body.style.setProperty("height", "auto", "important");
     document.body.style.setProperty("overflow-x", "hidden", "important");
-    document.body.style.setProperty("overflow-y", "auto", "important");
+    document.body.style.setProperty(
+      "overflow-y",
+      document.getElementById("authGate") ? "visible" : "auto",
+      "important"
+    );
   }
 
   const shellSelectors = [

@@ -42,6 +42,14 @@ body.auth-gate-visible {
   overflow-y: auto !important;
 }
 
+html:has(#authGate) {
+  overflow-y: scroll !important;
+}
+
+body:has(#authGate) {
+  overflow-y: visible !important;
+}
+
 body.auth-booting #authGate.gate-screen,
 body.auth-gate-visible #authGate.gate-screen {
   overflow: visible !important;
