@@ -45,6 +45,15 @@ body.auth-gate-visible {
 body.auth-booting #authGate.gate-screen,
 body.auth-gate-visible #authGate.gate-screen {
   overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+body.auth-booting #authGate.gate-screen::-webkit-scrollbar,
+body.auth-gate-visible #authGate.gate-screen::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
 }
 
 button,
