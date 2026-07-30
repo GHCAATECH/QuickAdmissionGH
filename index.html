@@ -1013,6 +1013,23 @@
     fill:#C0EBFF!important;
     stroke:#C0EBFF!important;
   }
+  /* Purchase/retrieve school pickers must remain light controls, not generic dark buttons. */
+  body #s-purchase .login-school-trigger,
+  body #s-retrieve .login-school-trigger{
+    background:#C0EBFF!important;
+    background-image:none!important;
+    color:#002B4C!important;
+    -webkit-text-fill-color:#002B4C!important;
+    border:0!important;
+    box-shadow:none!important;
+  }
+  body #s-purchase .login-school-trigger *,
+  body #s-retrieve .login-school-trigger *{
+    color:#002B4C!important;
+    -webkit-text-fill-color:#002B4C!important;
+    fill:#002B4C!important;
+    stroke:#002B4C!important;
+  }
 </style>
 <link rel="stylesheet" href="assets/css/global-layout-fix.css?v=20260726-layout-fix-12">
 <script src="assets/js/global-layout-fix.js?v=20260726-layout-fix-12" defer></script>
@@ -2670,7 +2687,7 @@ function syncSchoolPicker(key){
   if(triggerText){
     triggerText.textContent=selectedSchoolPickerLabel(key);
     triggerText.classList.toggle('is-placeholder',isPlaceholder);
-    const color=isPlaceholder?'#C0EBFF':'#002B4C';
+    const color=isPlaceholder&&key==='login'?'#C0EBFF':'#002B4C';
     triggerText.style.setProperty('color',color,'important');
     triggerText.style.setProperty('-webkit-text-fill-color',color,'important');
   }
