@@ -1467,10 +1467,10 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260726-layout-fix-12">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260731-admin-login-clean-13">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260731-admin-shell-fix-14">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260731-system-footer-1">
 <script src="../assets/js/global-layout-fix.js?v=20260731-admin-login-scroll-14" defer></script>
-<script src="../assets/js/admin-responsive.js?v=20260726-admin-responsive-4" defer></script>
+<script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
 </head>
 <body class="auth-booting system-footer-page">
 <div id="bootSplash"><div class="boot-splash-card"><span class="boot-splash-spinner"></span><span>Restoring your secure school session...</span></div></div>
@@ -1560,7 +1560,7 @@
       <div class="sb-foot">
         <div class="sb-avatar" id="sbAvatar">··</div>
         <div style="flex:1;min-width:0"><div style="color:#fff;font-size:12.5px;font-weight:600" id="sbName">—</div><small id="sbRole">School Admin</small></div>
-        <button class="sb-logout" id="sbLogout" title="Log out" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+        <button class="sb-logout" id="sbLogout" title="Log out" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Log out</span></button>
       </div>
     </nav>
   </aside>
@@ -1569,7 +1569,7 @@
   <!-- MAIN -->
   <div class="main">
     <header class="topbar">
-      <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <button class="hamburger" id="hamburger" data-sidebar-managed="inline" aria-controls="sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="pagetitle" id="pagetitle">Dashboard<small id="pagesub">Admission overview for 2025/2026</small></div>
       <div class="topbar-right">
         <div class="adm-badge open" id="admBadge" onclick="toggleAdmission()"><span class="d"></span><span id="admText">Admission OPEN</span></div>
@@ -2065,6 +2065,7 @@
 <script>
 /* ===== DATA ===== */
 let admissionOpen=true;
+let admissionStatusSaving=false;
 let smsBalance=500;
 const DEFAULT_SUBMISSION_SMS_TEMPLATE='Congratulations {student_name}. Your admission application has been successfully submitted to {school_name}.';
 let SB_SMS_SETTINGS={submission_message:DEFAULT_SUBMISSION_SMS_TEMPLATE,sms_enabled:true};
@@ -2691,18 +2692,34 @@ function placementSmsContact(row){
 /* ===== ADMISSION TOGGLE ===== */
 function toggleAdmission(){
   admissionOpen=!admissionOpen;
-  const b=$('admBadge');b.className='adm-badge '+(admissionOpen?'open':'closed');
-  $('admText').textContent='Admission '+(admissionOpen?'OPEN':'CLOSED');
-  $('qaToggle').innerHTML=(admissionOpen?'Close admission':'Open admission')+'<small>'+(admissionOpen?'Currently accepting':'Not accepting')+'</small>';
+  renderAdmissionStatusControls();
   activityLog.unshift({time:'Just now',action:'Admission '+(admissionOpen?'opened':'closed'),by:(SB_ADMIN_NAME||'Admin')});
   toast('Admission '+(admissionOpen?'opened':'closed'));
+}
+
+function admissionStatusIsOpen(value){
+  return ['OPEN','OPENED','ACTIVE','TRUE','YES','1'].includes(String(value==null?'':value).trim().toUpperCase());
+}
+function renderAdmissionStatusControls(){
+  const badge=$('admBadge'),text=$('admText'),quick=$('qaToggle');
+  if(badge){
+    badge.className='adm-badge '+(admissionOpen?'open':'closed');
+    badge.setAttribute('aria-busy',admissionStatusSaving?'true':'false');
+    badge.style.pointerEvents=admissionStatusSaving?'none':'';
+    badge.style.opacity=admissionStatusSaving?'.65':'';
+  }
+  if(text) text.textContent=admissionStatusSaving?'Saving admission status...':'Admission '+(admissionOpen?'OPEN':'CLOSED');
+  if(quick){
+    quick.disabled=admissionStatusSaving;
+    quick.innerHTML=(admissionStatusSaving?'Saving...':(admissionOpen?'Close admission':'Open admission'))+'<small>'+(admissionOpen?'Currently accepting':'Not accepting')+'</small>';
+  }
 }
 
 /* ===== DASHBOARD ===== */
 function renderStats(){
   const host=$('admCards'); if(!host)return;
   const plc=(typeof placement!=='undefined'?placement:[])||[];
-  const placementTotal=Math.max(Number(placementTotalCount)||0,plc.length);
+  const placementTotal=Math.max(summaryNumber('placed',Number(placementTotalCount)||0),Number(placementTotalCount)||0,plc.length);
   const norm=g=>{g=(g||'').toString().trim().toLowerCase();if(g==='m'||g==='male')return 'M';if(g==='f'||g==='female')return 'F';return '';};
   const resOf=r=>{r=(r||'').toString().trim().toLowerCase();if(r.indexOf('board')===0)return 'B';if(r==='day')return 'D';return '';};
   const tally=rows=>{const t={n:rows.length,day:0,boarding:0,male:0,female:0,md:0,fd:0,mb:0,fb:0};
@@ -2719,11 +2736,11 @@ function renderStats(){
   const placed=placementTotal, completed=Math.min(submittedCount,placed||submittedCount), pending=Math.max(placed-completed,0);
   const pc=placed?Math.round(completed/placed*1000)/10:0, pp=placed?Math.round(pending/placed*1000)/10:0;
   const seen={}; let dup=0; plc.forEach(p=>{const k=String(p.index);if(seen[k])dup++;else seen[k]=1;});
-  const emptyPlacementTally={n:placed,day:0,boarding:0,male:0,female:0,md:0,fd:0,mb:0,fb:0};
-  const P=(plc.length||PLACEMENT_STATE.loaded)?tally(plc):emptyPlacementTally;
-  const summaryTally={n:completed,day:summaryNumber('day',0),boarding:summaryNumber('boarding',0),male:summaryNumber('male',0),female:summaryNumber('female',0),md:0,fd:0,mb:0,fb:0};
-  const emptyTally={n:pending,day:0,boarding:0,male:0,female:0,md:0,fd:0,mb:0,fb:0};
-  const C=hasLocal?tally(completedRows):summaryTally, N=hasLocal?tally(pendingRows):emptyTally;
+  const placementSummary={n:placed,day:summaryNumber('placement_day',0),boarding:summaryNumber('placement_boarding',0),male:summaryNumber('placement_male',0),female:summaryNumber('placement_female',0),md:summaryNumber('placement_male_day',0),fd:summaryNumber('placement_female_day',0),mb:summaryNumber('placement_male_boarding',0),fb:summaryNumber('placement_female_boarding',0)};
+  const P=(plc.length||PLACEMENT_STATE.loaded)?tally(plc):placementSummary;
+  const summaryTally={n:completed,day:summaryNumber('day',0),boarding:summaryNumber('boarding',0),male:summaryNumber('male',0),female:summaryNumber('female',0),md:summaryNumber('male_day',0),fd:summaryNumber('female_day',0),mb:summaryNumber('male_boarding',0),fb:summaryNumber('female_boarding',0)};
+  const pendingSummary={n:pending,day:Math.max(P.day-summaryTally.day,0),boarding:Math.max(P.boarding-summaryTally.boarding,0),male:Math.max(P.male-summaryTally.male,0),female:Math.max(P.female-summaryTally.female,0),md:Math.max(P.md-summaryTally.md,0),fd:Math.max(P.fd-summaryTally.fd,0),mb:Math.max(P.mb-summaryTally.mb,0),fb:Math.max(P.fb-summaryTally.fb,0)};
+  const C=hasLocal?tally(completedRows):summaryTally, N=hasLocal?tally(pendingRows):pendingSummary;
   const rowsBlk=t=>`<div class="rows"><div><b>DAY:</b> ${t.day} &nbsp;|&nbsp; <b>BOARDING:</b> ${t.boarding}</div><div><b>MALE:</b> ${t.male} &nbsp;|&nbsp; <b>FEMALE:</b> ${t.female}</div></div>`+
     `<div class="rows sub"><div><b>MALE DAY:</b> ${t.md} &nbsp;|&nbsp; <b>FEMALE DAY:</b> ${t.fd}</div><div><b>MALE BOARDING:</b> ${t.mb} &nbsp;|&nbsp; <b>FEMALE BOARDING:</b> ${t.fb}</div></div>`;
   host.innerHTML=
@@ -4155,7 +4172,7 @@ function go(view){
   $('pagesub').textContent=(view==='dashboard')?('Admission overview for '+((SB_CFG&&SB_CFG.academic_year)||'2025/2026')):titles[view][1];
   if(view==='sms-settings') setupTab(3);
   if(view==='setup') setupTab(0);
-  if(view==='dashboard'){renderStats();renderRecent();}
+  if(view==='dashboard'){renderStats();renderRecent();refreshDashboardSummary(true);}
   if(view==='programmes')renderProg();
   if(view==='houses')renderHouses();
   if(view==='classes')renderClasses();
@@ -4178,7 +4195,7 @@ function go(view){
   const inAdm=admViews.indexOf(view)>-1;
   document.getElementById('admParent').classList.toggle('active',inAdm);
   if(inAdm) setAdmMenu(true);
-  closeSidebar(true);window.scrollTo(0,0);
+  closeSidebar();resetAdminScroll();
 }
 function setAdmMenu(open){document.getElementById('admMenu').classList.toggle('open',open);document.getElementById('admParent').classList.toggle('open',open);}
 function toggleAdmMenu(){const m=document.getElementById('admMenu');setAdmMenu(!m.classList.contains('open'));}
@@ -4201,10 +4218,16 @@ document.addEventListener('input',function(e){
 /* ===== MODAL / SIDEBAR ===== */
 function closeModal(){$('overlay').classList.remove('show');}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
-function closeSidebar(collapseDesktop){
+function resetAdminScroll(){
+  window.scrollTo(0,0);
+  document.documentElement.scrollTop=0;
+  document.body.scrollTop=0;
+  const content=document.querySelector('.content'); if(content) content.scrollTop=0;
+}
+function closeSidebar(){
   $('sidebar').classList.remove('open');$('backdrop').classList.remove('show');
-  const app=document.querySelector('.app');
-  if(collapseDesktop&&app&&isDesktopSidebar()){app.classList.add('sidebar-hidden');app.classList.remove('sidebar-collapsed');}
+  document.body.classList.remove('sidebar-open');
+  const hamburger=$('hamburger'); if(hamburger) hamburger.setAttribute('aria-expanded','false');
 }
 function isDesktopSidebar(){return window.matchMedia('(min-width: 1025px)').matches;}
 function toggleSidebar(){
@@ -4213,10 +4236,13 @@ function toggleSidebar(){
   if(isDesktopSidebar()){
     app.classList.toggle('sidebar-hidden');
     app.classList.remove('sidebar-collapsed');
+    $('hamburger').setAttribute('aria-expanded',String(!app.classList.contains('sidebar-hidden')));
     return;
   }
   $('sidebar').classList.toggle('open');
   $('backdrop').classList.toggle('show',$('sidebar').classList.contains('open'));
+  document.body.classList.toggle('sidebar-open',$('sidebar').classList.contains('open'));
+  $('hamburger').setAttribute('aria-expanded',String($('sidebar').classList.contains('open')));
 }
 $('hamburger').addEventListener('click',toggleSidebar);
 $('backdrop').addEventListener('click',closeSidebar);
@@ -4320,6 +4346,21 @@ async function invokeFnDetailed(name,body){
 }
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SB_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'PRODUCTION':'DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 var SB_SCHOOL=null, SB_CFG=null, SB_STUDENT_SUMMARY={}, SB_ADMIN_NAME='Admin', SB_PERMS=null, SB_UID=null, SB_HOUSE=null, READONLY=false;
+let dashboardSummaryLoading=false;
+async function refreshDashboardSummary(force){
+  if(dashboardSummaryLoading||!SB_SCHOOL||!SB_SCHOOL.id)return;
+  dashboardSummaryLoading=true;
+  try{
+    const result=await invokeFnDetailed('admin-school-summary',{school_id:SB_SCHOOL.id,refresh:force===true});
+    if(!result.error&&result.data&&result.data.ok!==false&&result.data.summary){
+      SB_STUDENT_SUMMARY=result.data.summary;
+      if(Number.isFinite(Number(SB_STUDENT_SUMMARY.placed))) placementTotalCount=Math.max(Number(SB_STUDENT_SUMMARY.placed),0);
+      renderStats();renderRecent();renderProg();renderHouses();renderClasses();
+    }
+  }finally{
+    dashboardSummaryLoading=false;
+  }
+}
 // Capability catalogue (key -> friendly label)
 const CAPS=[
   ['students','Admissions & students'],
@@ -4761,7 +4802,7 @@ async function loadSchoolData(prof){
   smsHistory=[]; SMS_HISTORY_STATE={loaded:false,loading:false};
   activityLog=[]; ACTIVITY_LOG_STATE={loaded:false,loading:false};
 
-  admissionOpen=(SB_CFG.admission_status==='OPENED');
+  admissionOpen=admissionStatusIsOpen(SB_CFG.admission_status);
   smsBalance=SB_CFG.sms_balance||0;
   populateYearSelect(SB_CFG.academic_year); { const my=$('s_admyear'); if(my&&SB_CFG.admission_year) my.value=SB_CFG.admission_year; }
   { const rd=$('s_reopen_date'); if(rd) rd.value=SB_CFG.reopening_date||''; const rt=$('s_reopen_time'); if(rt) rt.value=SB_CFG.reopening_time||''; const ch=$('s_charge'); if(ch) ch.value=(SB_CFG.service_charge!=null?SB_CFG.service_charge:30); }
@@ -4774,8 +4815,7 @@ async function loadSchoolData(prof){
   cachePublicSchoolProfile();
 
   // header identity
-  const b=document.getElementById('admBadge'); b.className='adm-badge '+(admissionOpen?'open':'closed');
-  document.getElementById('admText').textContent='Admission '+(admissionOpen?'OPEN':'CLOSED');
+  renderAdmissionStatusControls();
   if(prof){
     SB_ADMIN_NAME=prof.full_name||SB_ADMIN_NAME||'Admin';
     const nm=$('sbName'); if(nm) nm.textContent=SB_ADMIN_NAME;
@@ -4834,22 +4874,27 @@ async function notifyStudentPortalRefresh(reason,details){
 toggleAdmission=async function(){
   if(roGuard())return;
   if(!SB_SCHOOL||!SB_SCHOOL.id){toast('School not loaded');return;}
+  if(admissionStatusSaving)return;
   const nextOpen=!admissionOpen;
   const nextStatus=nextOpen?'OPENED':'CLOSED';
-  const result=await invokeFnDetailed('manage-school-settings',{action:'admission_status',school_id:SB_SCHOOL.id,patch:{admission_status:nextStatus}});
-  if(result.error||(result.data&&result.data.ok===false)){
-    toast('Could not update admission status: '+((result.data&&result.data.message)||(result.error&&result.error.message)||'error'));
-    return;
+  admissionStatusSaving=true; renderAdmissionStatusControls();
+  try{
+    const result=await invokeFnDetailed('manage-school-settings',{action:'admission_status',school_id:SB_SCHOOL.id,patch:{admission_status:nextStatus}});
+    if(result.error||(result.data&&result.data.ok===false)){
+      toast('Could not update admission status: '+((result.data&&result.data.message)||(result.error&&result.error.message)||'error'));
+      return;
+    }
+    const savedConfig=(result.data&&result.data.config)||{};
+    const savedStatus=savedConfig.admission_status||nextStatus;
+    if(SB_CFG) Object.assign(SB_CFG,savedConfig,{admission_status:savedStatus});
+    admissionOpen=admissionStatusIsOpen(savedStatus);
+    cachePublicSchoolProfile({admission_status:savedStatus});
+    await notifyStudentPortalRefresh('admission-status',{admission_status:savedStatus});
+    activityLog.unshift({time:'Just now',action:'Admission '+(admissionOpen?'opened':'closed'),by:(SB_ADMIN_NAME||'Admin')});
+    toast('Admission '+(admissionOpen?'opened':'closed'));
+  }finally{
+    admissionStatusSaving=false; renderAdmissionStatusControls();
   }
-  admissionOpen=nextOpen;
-  const b=document.getElementById('admBadge'); b.className='adm-badge '+(admissionOpen?'open':'closed');
-  document.getElementById('admText').textContent='Admission '+(admissionOpen?'OPEN':'CLOSED');
-  const qa=document.getElementById('qaToggle'); if(qa) qa.innerHTML=(admissionOpen?'Close admission':'Open admission')+'<small>'+(admissionOpen?'Currently accepting':'Not accepting')+'</small>';
-  if(SB_CFG&&result.data&&result.data.config) Object.assign(SB_CFG,result.data.config); else if(SB_CFG) SB_CFG.admission_status=nextStatus;
-  cachePublicSchoolProfile({admission_status:nextStatus});
-  notifyStudentPortalRefresh('admission-status');
-  activityLog.unshift({time:'Just now',action:'Admission '+(admissionOpen?'opened':'closed'),by:(SB_ADMIN_NAME||'Admin')});
-  toast('Admission '+(admissionOpen?'opened':'closed'));
 };
 
 async function populateYearSelect(current){

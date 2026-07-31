@@ -683,6 +683,94 @@ body > footer {
   }
 }
 
+/* Logged-in admin shell: the document owns vertical scrolling so the sticky
+   header cannot disappear inside a second scroll container. */
+body:not(.auth-booting):not(.auth-gate-visible) > .app {
+  height: auto !important;
+  min-height: calc(100dvh - var(--system-footer-height, 0px)) !important;
+  overflow: visible !important;
+  align-items: start;
+}
+
+body:not(.auth-booting):not(.auth-gate-visible) > .app > .main {
+  height: auto !important;
+  min-height: calc(100dvh - var(--system-footer-height, 0px)) !important;
+  overflow: visible !important;
+}
+
+body:not(.auth-booting):not(.auth-gate-visible) > .app > .main > .content {
+  flex: 1 0 auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+body:not(.auth-booting):not(.auth-gate-visible) > .app > .main > .topbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 900 !important;
+}
+
+/* Keep dashboard and content cards aligned and centred at every breakpoint. */
+.content > .view.active,
+.adm-cards,
+.stat-grid,
+.stats-grid,
+.chart-grid {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.adm-cards > *,
+.stat-grid > *,
+.stats-grid > *,
+.chart-grid > *,
+.view.active > .panel {
+  width: 100%;
+  box-sizing: border-box;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.sidebar .sb-foot,
+.sidebar .sb-foot #sbName,
+.sidebar .sb-foot #sbRole,
+.sidebar .sb-foot small,
+.sidebar .sb-logout,
+.sidebar .sb-logout span,
+.sidebar .sb-logout svg {
+  color: #c0ebff !important;
+  -webkit-text-fill-color: #c0ebff !important;
+}
+
+.sidebar .sb-logout {
+  display: inline-flex;
+  width: auto;
+  min-width: 72px;
+  padding: 0 9px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-color: rgba(192, 235, 255, 0.55) !important;
+}
+
+.sidebar .sb-logout svg {
+  flex: 0 0 16px;
+  stroke: currentColor !important;
+}
+
+.sidebar .sb-logout span {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 1024px) {
+  body.sidebar-open {
+    overflow: hidden !important;
+  }
+}
+
 /* =====================================================
    SHARED ADMIN LOGIN DOCUMENT-SCROLL LAYOUT
    The document is the only vertical scroller. Keep this

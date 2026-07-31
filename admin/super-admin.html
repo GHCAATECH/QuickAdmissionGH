@@ -669,10 +669,10 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260726-layout-fix-12">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260731-admin-login-clean-13">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260731-admin-shell-fix-14">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260731-system-footer-1">
 <script src="../assets/js/global-layout-fix.js?v=20260731-admin-login-scroll-14" defer></script>
-<script src="../assets/js/admin-responsive.js?v=20260726-admin-responsive-4" defer></script>
+<script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
 </head>
 <body class="auth-booting system-footer-page">
 <div class="app">
@@ -726,7 +726,7 @@
           <div style="color:#fff;font-size:12.5px;font-weight:600">Kwame Mensah</div>
           <small>System Owner</small>
         </div>
-        <button class="sb-logout" title="Log out" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+        <button class="sb-logout" title="Log out" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Log out</span></button>
       </div>
     </nav>
   </aside>
@@ -735,7 +735,7 @@
   <!-- ============ MAIN ============ -->
   <div class="main">
     <header class="topbar">
-      <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <button class="hamburger" id="hamburger" data-sidebar-managed="inline" aria-controls="sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="pagetitle" id="pagetitle">Dashboard<small id="pagesub">System-wide overview across all schools</small></div>
       <div class="topbar-right">
         <div class="clock" id="clock"></div>
@@ -954,6 +954,7 @@ const progs=['General Science','General Arts','Business','Visual Arts','Home Eco
 const stat=['pending','approved','enrolled'];
 let students=[];
 let admins=[]; let SA_UID=null;
+let SA_DASH_SUMMARY={};
 (function seed(){
   let idx=100000000000;
   schools.forEach(s=>{
@@ -1298,16 +1299,28 @@ function downloadFinancePaymentsCSV(){
 /* ============ STATS ============ */
 function totalStudents(){return schools.reduce((a,s)=>a+s.students,0);}
 function totalRevenue(){return payments.filter(p=>p.status==='completed').reduce((a,p)=>a+p.amount,0);}
+function saSummaryNumber(key,fallback){
+  const value=Number(SA_DASH_SUMMARY&&SA_DASH_SUMMARY[key]);
+  return Number.isFinite(value)?Math.max(value,0):fallback;
+}
+function saAdmissionIsOpen(value){
+  return ['OPEN','OPENED','ACTIVE','TRUE','YES','1'].includes(String(value==null?'':value).trim().toUpperCase());
+}
 function renderStats(){
-  const todayReg=window._todayReg||0;
-  const openCount=schools.filter(s=>s.admission==='OPENED').length;
+  const todayReg=saSummaryNumber('today_registrations',window._todayReg||0);
+  const openCount=saSummaryNumber('open_admissions',schools.filter(s=>saAdmissionIsOpen(s.admission)).length);
+  const activeSchools=saSummaryNumber('active_schools',schools.filter(s=>s.status!=='suspended').length);
+  const totalSchoolCount=saSummaryNumber('total_schools',schools.length);
+  const platformStudents=saSummaryNumber('total_students',totalStudents());
+  const platformRevenue=saSummaryNumber('total_revenue_pesewas',Math.round(totalRevenue()*100))/100;
+  const platformSms=saSummaryNumber('sms_balance',smsBalance);
   const cards=[
-    {lbl:'Total Schools',val:schools.filter(s=>s.status!=='suspended').length,ico:'school',delta:'active',flat:true},
-    {lbl:'Total Students',val:fmt(totalStudents()),ico:'users',delta:'all schools',flat:true},
+    {lbl:'Total Schools',val:activeSchools,ico:'school',delta:'active',flat:true},
+    {lbl:'Total Students',val:fmt(platformStudents),ico:'users',delta:'all schools',flat:true},
     {lbl:"Today's Reg.",val:todayReg,ico:'bolt',delta:'live',live:true},
-    {lbl:'Total Revenue',val:totalRevenue(),cur:true,ico:'cash',delta:'collected',flat:true},
-    {lbl:'Open Admissions',val:openCount,ico:'door',delta:openCount+' of '+schools.length,flat:true},
-    {lbl:'SMS Credits',val:fmt(smsBalance),ico:'sms',delta:'global pool',flat:true},
+    {lbl:'Total Revenue',val:platformRevenue,cur:true,ico:'cash',delta:'collected',flat:true},
+    {lbl:'Open Admissions',val:openCount,ico:'door',delta:openCount+' of '+totalSchoolCount,flat:true},
+    {lbl:'SMS Credits',val:fmt(platformSms),ico:'sms',delta:'global pool',flat:true},
   ];
   const icons={school:'<path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>',users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',bolt:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',cash:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',door:'<path d="M13 3v18M3 21h18M6 21V5a2 2 0 0 1 2-2h7"/>',sms:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'};
   $('statGrid').innerHTML=cards.map(c=>`
@@ -1799,7 +1812,7 @@ function go(view){
   if(view==='students')renderStudents();
   if(view==='finance')renderFinance();
   if(view==='sms')renderSms();
-  closeSidebar(true);window.scrollTo(0,0);
+  closeSidebar();resetAdminScroll();
 }
 $('nav').addEventListener('click',e=>{const b=e.target.closest('.nav-item');if(b)go(b.dataset.view);});
 // Phone/contact fields: digits only, max 10
@@ -1812,10 +1825,16 @@ document.addEventListener('input',function(e){
 });
 
 /* ============ MOBILE SIDEBAR ============ */
-function closeSidebar(collapseDesktop){
+function resetAdminScroll(){
+  window.scrollTo(0,0);
+  document.documentElement.scrollTop=0;
+  document.body.scrollTop=0;
+  const content=document.querySelector('.content'); if(content) content.scrollTop=0;
+}
+function closeSidebar(){
   $('sidebar').classList.remove('open');$('backdrop').classList.remove('show');
-  const app=document.querySelector('.app');
-  if(collapseDesktop&&app&&isDesktopSidebar()){app.classList.add('sidebar-hidden');app.classList.remove('sidebar-collapsed');}
+  document.body.classList.remove('sidebar-open');
+  const hamburger=$('hamburger'); if(hamburger) hamburger.setAttribute('aria-expanded','false');
 }
 function isDesktopSidebar(){return window.matchMedia('(min-width: 1025px)').matches;}
 function toggleSidebar(){
@@ -1824,10 +1843,13 @@ function toggleSidebar(){
   if(isDesktopSidebar()){
     app.classList.toggle('sidebar-hidden');
     app.classList.remove('sidebar-collapsed');
+    $('hamburger').setAttribute('aria-expanded',String(!app.classList.contains('sidebar-hidden')));
     return;
   }
   $('sidebar').classList.toggle('open');
   $('backdrop').classList.toggle('show',$('sidebar').classList.contains('open'));
+  document.body.classList.toggle('sidebar-open',$('sidebar').classList.contains('open'));
+  $('hamburger').setAttribute('aria-expanded',String($('sidebar').classList.contains('open')));
 }
 $('hamburger').addEventListener('click',toggleSidebar);
 $('backdrop').addEventListener('click',closeSidebar);
@@ -2068,7 +2090,7 @@ async function fetchPlatformSmsHistory(){
 }
 
 async function loadSA(){
-  const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl,claims]=await Promise.all([
+  const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl,claims,summary]=await Promise.all([
     sb.from('schools').select('id,name,code,school_code,status,subscription_plan,subscription_expiry,email,phone,headmaster_title,created_at').order('created_at'),
     sb.from('school_config').select('school_id,admission_status,service_charge,academic_year'),
     sb.from('profiles').select('id,full_name,email,school_id,role,permissions'),
@@ -2080,7 +2102,10 @@ async function loadSA(){
     sb.from('placement_list').select('school_id,index_number,sms_contact'),
     sb.from('school_sms_templates').select('school_id,sms_enabled'),
     sb.from('finance_claims').select('school_id,claim_number,students_claimed,created_at,academic_year'),
+    invokeFnDetailed('super-admin-summary',{refresh:true}),
   ]);
+  SA_DASH_SUMMARY=(summary.data&&summary.data.summary)||{};
+  const summarySchoolCounts=SA_DASH_SUMMARY.school_students||{};
   const cfgBy={}; (cfg.data||[]).forEach(c=>cfgBy[c.school_id]=c);
   const claimBy={};
   if(!claims.error&&Array.isArray(claims.data)){
@@ -2108,7 +2133,7 @@ async function loadSA(){
     const schoolCode=normalizeSchoolCodeInput(s.school_code||s.code||'');
     const smsCfg=tplBy[s.id]||{};
     return {id,_id:s.id,code:s.code,school_code:schoolCode,schoolCode:schoolCode,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
-      plan:sa_cap(s.subscription_plan||'standard'),students:(stu.data||[]).filter(x=>x.school_id===s.id).length,placements:plcCountBy[s.id]||0,
+      plan:sa_cap(s.subscription_plan||'standard'),students:Number(summarySchoolCounts[s.id]||(stu.data||[]).filter(x=>x.school_id===s.id).length),placements:plcCountBy[s.id]||0,
       admission:c.admission_status||'CLOSED',status:s.status,charge:Number(c.service_charge||0),
       financeSettledStudents:settledStudentCount((claimBy[s.id]&&claimBy[s.id].settled)||0),
       financeSettledAt:(claimBy[s.id]&&claimBy[s.id].settledAt)||'',
@@ -2136,8 +2161,15 @@ async function loadSA(){
 
 /* ---- PERSISTING OVERRIDES ---- */
 toggleAdmission=async function(id){
-  const s=sById(id); s.admission=s.admission==='OPENED'?'CLOSED':'OPENED';
-  await sb.from('school_config').update({admission_status:s.admission}).eq('school_id',s._id);
+  const s=sById(id); if(!s)return;
+  const nextStatus=saAdmissionIsOpen(s.admission)?'CLOSED':'OPENED';
+  const result=await invokeFnDetailed('manage-school-settings',{action:'admission_status',school_id:s._id,patch:{admission_status:nextStatus}});
+  if(result.error||(result.data&&result.data.ok===false)){
+    toast('Could not update admission status: '+((result.data&&result.data.message)||(result.error&&result.error.message)||'error'));
+    return;
+  }
+  s.admission=(result.data&&result.data.config&&result.data.config.admission_status)||nextStatus;
+  SA_DASH_SUMMARY.open_admissions=schools.filter(function(row){return saAdmissionIsOpen(row.admission);}).length;
   activity.unshift({type:'sys',school:id,text:'Admission '+s.admission.toLowerCase()+' by Super Admin',time:'just now'});
   renderSchools(); renderDashTable(); renderFeed(); renderStats();
   toast(s.name+': admission '+s.admission);

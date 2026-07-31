@@ -57,8 +57,9 @@ Deno.serve(async (req: Request) => {
     return json({ ok: false, error: "rate_limited", message: "Too many summary requests. Please wait a minute and try again." }, 429);
   }
 
+  const refresh = body.refresh === true;
   const cached = summaryCache.get(schoolId);
-  if (cached && cached.expiresAt > Date.now()) {
+  if (!refresh && cached && cached.expiresAt > Date.now()) {
     return json({ ok: true, school_id: schoolId, summary: cached.value ?? {} });
   }
   const { data, error } = await admin.rpc("admin_school_summary", { p_school: schoolId });

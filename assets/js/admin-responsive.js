@@ -24,12 +24,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  // The two legacy admin portals provide their own desktop/mobile sidebar
+  // controller. Do not attach a second click handler: two handlers caused the
+  // mobile menu to close and immediately reopen on the same click.
+  if (menuButton.dataset.sidebarManaged === "inline") {
+    return;
+  }
+
   const sidebarLinks = document.querySelectorAll(
     ".sidebar-link, .nav-item, .nav-sub"
   );
 
   function isMobile() {
-    return window.innerWidth <= 768;
+    return window.innerWidth <= 1024;
   }
 
   function openSidebar() {
@@ -54,7 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   menuButton.addEventListener("click", () => {
     if (isMobile()) {
-      openSidebar();
+      if (sidebar.classList.contains("open")) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
     }
   });
 
