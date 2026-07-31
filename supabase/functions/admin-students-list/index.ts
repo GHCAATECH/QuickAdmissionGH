@@ -142,16 +142,19 @@ Deno.serve(async (req: Request) => {
     programmeIds.length ? admin.from("programmes").select("id,name,code").eq("school_id", schoolId).in("id", programmeIds) : Promise.resolve({ data: [] }),
     classIds.length ? admin.from("classrooms").select("id,name,code").eq("school_id", schoolId).in("id", classIds) : Promise.resolve({ data: [] }),
     houseIds.length ? admin.from("houses").select("id,name").eq("school_id", schoolId).in("id", houseIds) : Promise.resolve({ data: [] }),
-    placementIndexes.length ? admin.from("placement_list").select("index_number,residential_status").eq("school_id", schoolId).in("index_number", placementIndexes) : Promise.resolve({ data: [] }),
+    placementIndexes.length ? admin.from("placement_list").select("index_number,gender,residential_status").eq("school_id", schoolId).in("index_number", placementIndexes) : Promise.resolve({ data: [] }),
   ]);
   const programmeMap = mapById(programmes.data, ["name", "code"]);
   const classMap = mapById(classes.data, ["name", "code"]);
   const houseMap = mapById(houses.data, ["name"]);
-  const residentialMap = new Map<string, string>();
+  const placementMap = new Map<string, { gender: string; residentialStatus: string }>();
   for (const placement of placements.data ?? []) {
     const record = placement as JsonRecord;
     const indexNumber = text(record.index_number);
-    if (indexNumber) residentialMap.set(indexNumber, text(record.residential_status));
+    if (indexNumber) placementMap.set(indexNumber, {
+      gender: text(record.gender),
+      residentialStatus: text(record.residential_status),
+    });
   }
 
   const result = rows.map((row) => {
@@ -160,7 +163,8 @@ Deno.serve(async (req: Request) => {
       : {};
     return {
       ...row,
-      residential_status: residentialMap.get(text(row.bece_index)) ?? text(records.residential_status || records.residential),
+      gender: text(row.gender) || placementMap.get(text(row.bece_index))?.gender || "",
+      residential_status: placementMap.get(text(row.bece_index))?.residentialStatus || text(records.residential_status || records.residential),
       programme_name: programmeMap.get(text(row.programme_id)) ?? "",
       class_name: classMap.get(text(row.class_id)) ?? "",
       house_name: houseMap.get(text(row.house_id)) ?? "",
