@@ -885,3 +885,97 @@ body:has(#authGate) > footer {
     border-radius: 0 0 24px 24px !important;
   }
 }
+
+/* =====================================================
+   ADMIN MODAL VIEWPORT LAYER
+   The sticky admin header and shared footer use elevated
+   stacking layers. Keep every admin dialog above both so
+   its heading and actions cannot be clipped by the shell.
+===================================================== */
+
+body > #overlay.overlay,
+body .pop-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 7000 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: max(24px, env(safe-area-inset-top)) 16px
+    max(24px, env(safe-area-inset-bottom)) !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+body > #overlay.overlay:not(.show),
+body .pop-overlay:not(.show) {
+  display: none !important;
+}
+
+body > #overlay.overlay.show,
+body .pop-overlay.show {
+  display: flex !important;
+}
+
+body:has(> #overlay.overlay.show),
+body:has(.pop-overlay.show) {
+  overflow: hidden !important;
+}
+
+body > #overlay.overlay > .modal {
+  position: relative !important;
+  inset: auto !important;
+  display: flex !important;
+  flex: 0 0 auto !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 48px) !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+}
+
+body > #overlay.overlay > .modal > .modal-head,
+body > #overlay.overlay > .modal > .modal-foot {
+  flex: 0 0 auto !important;
+}
+
+body > #overlay.overlay > .modal > .modal-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+@media screen and (max-width: 640px) {
+  body > #overlay.overlay,
+  body .pop-overlay {
+    padding: max(10px, env(safe-area-inset-top)) 10px
+      max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  body > #overlay.overlay > .modal {
+    max-width: 100% !important;
+    max-height: calc(100dvh - 20px) !important;
+    border-radius: 12px !important;
+  }
+
+  body > #overlay.overlay > .modal > .modal-head,
+  body > #overlay.overlay > .modal > .modal-body,
+  body > #overlay.overlay > .modal > .modal-foot {
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+  }
+
+  body > #overlay.overlay > .modal > .modal-foot {
+    flex-wrap: wrap;
+  }
+}
