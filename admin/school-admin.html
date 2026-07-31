@@ -2208,15 +2208,18 @@ function studentProgrammeName(s){
   return cleanSmsText((s&&s.prog)||(s&&s.programme)||(s&&s.programme_name)||((s&&s.rec)||{}).programme)||'-';
 }
 function studentProgrammeIdByName(name){
-  const needle=cleanSmsText(name).toLowerCase();
+  const needle=programmeMatchText(name);
   if(!needle) return null;
   const hit=programmes.find(function(p){
-    return cleanSmsText(p.name).toLowerCase()===needle || cleanSmsText(p.code).toLowerCase()===needle;
+    return programmeMatchText(p.name)===needle || programmeMatchText(p.code)===needle;
   });
   return hit?hit.id:null;
 }
 function programmeMatchText(value){
-  return cleanSmsText(value).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  return cleanSmsText(value).toLowerCase().replace(/[^a-z0-9]+/g,'');
+}
+function effectiveStudentProgrammeId(student){
+  return (student&&student.progId)||studentProgrammeIdByName(studentProgrammeName(student));
 }
 function sanitizeExcelExtension(value){
   const ext=String(value||'').trim().toLowerCase();
@@ -3168,7 +3171,7 @@ function bulkSms(){
 function clearSel(){selected.clear();renderStudentsRows();}
 function studentClassOptionsForProgramme(progId,selectedClassId){
   const pid=progId?String(progId):'';
-  const filtered=classes.filter(function(c){ return !c.progId || !pid || String(c.progId)===pid; });
+  const filtered=pid?classes.filter(function(c){ return c.progId&&String(c.progId)===pid; }):[];
   return '<option value="">- Not allocated -</option>'+filtered.map(c=>`<option value="${c.id}" ${String(selectedClassId||'')===String(c.id)?'selected':''}>${escapeHtml(c.name)}</option>`).join('');
 }
 function refreshEditClassOptions(){
@@ -3207,7 +3210,7 @@ function viewStudent(id){
   const s=managedStudentById(id); if(!s)return toast('Student record is still loading. Please try again.');
   const m=$('modal');
   const selectedProgId=s.progId||studentProgrammeIdByName(s.prog);
-  const progOpts=programmes.map(p=>`<option value="${p.id}" ${selectedProgId==p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  const progOpts='<option value="">Select programme</option>'+programmes.map(p=>`<option value="${p.id}" ${selectedProgId==p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
   const classOpts=studentClassOptionsForProgramme(selectedProgId,s.classId);
   const gender=normalizeStudentGender(s.gender);
   const residential=normalizeResidentialStatus(s.res);
@@ -3267,6 +3270,11 @@ async function saveStudent(id){
   if(!newName){toast('Name is required');return;}
   if(!newGender){toast('Gender is required');return;}
   if(!newResidential){toast('Residential status is required');return;}
+  if(!newProgId||!pMap[newProgId]){toast('Programme is required');return;}
+  if(newClassId){
+    const selectedClass=classById(newClassId);
+    if(!selectedClass||!selectedClass.progId||String(selectedClass.progId)!==String(newProgId)){toast('Select a class linked to the chosen programme.');return;}
+  }
   if(newHouseId){
     const selectedHouse=houseById(newHouseId);
     const issue=houseAllocationIssue(selectedHouse);
@@ -3415,7 +3423,7 @@ function renderClassAlloc(){
   fillSelKeep(sel, classes.length?classes.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}${c.progId?' · '+escapeHtml(((progById(c.progId)||{}).name||'')):''}</option>`).join(''):'<option value="">No classes</option>');
   const cid=+sel.value||0, c=classById(cid);
   const members=students.filter(s=>s.classId===cid);
-  const pool=students.filter(s=>!s.classId && (!c||!c.progId||s.progId===c.progId));
+  const pool=students.filter(s=>!s.classId && c&&c.progId&&String(effectiveStudentProgrammeId(s)||'')===String(c.progId));
   $('caCount').textContent=members.length;
   $('caCap').textContent=c?('capacity '+(c.cap||'—')):'—';
   $('caUnCount').textContent=pool.length;
@@ -3426,8 +3434,11 @@ function caToggle(id){caSel.has(id)?caSel.delete(id):caSel.add(id);renderClassAl
 async function caAssignSelected(){
   if(roGuard())return;
   const cid=+val('caClass')||0, c=classById(cid); if(!c){toast('Pick a class');return;}
+  if(!c.progId){toast('Link this class to a programme before assigning students.');return;}
   if(!caSel.size){toast('Select students to assign');return;}
-  const ids=[...caSel], uuids=ids.map(i=>students.find(s=>s.id===i)._id);
+  const ids=[...caSel], chosen=ids.map(i=>students.find(s=>s.id===i)).filter(Boolean);
+  if(chosen.some(function(s){return String(effectiveStudentProgrammeId(s)||'')!==String(c.progId);})){toast('One or more selected students do not belong to this class programme.');return;}
+  const uuids=chosen.map(s=>s._id);
   const {error}=await sb.from('students').update({class_id:cMap[cid]}).in('id',uuids);
   if(error){toast('Assign failed: '+error.message);return;}
   students.forEach(s=>{if(caSel.has(s.id))s.classId=cid;});
@@ -3448,7 +3459,8 @@ async function caAutoFill(){
   const cid=+val('caClass')||0, c=classById(cid); if(!c){toast('Pick a class');return;}
   const cap=c.cap||1000000, cur=students.filter(s=>s.classId===cid).length, room=cap-cur;
   if(room<=0){toast('Class is full');return;}
-  const pool=students.filter(s=>!s.classId && (!c.progId||s.progId===c.progId)).slice(0,room);
+  if(!c.progId){toast('Link this class to a programme before auto-filling.');return;}
+  const pool=students.filter(s=>!s.classId && String(effectiveStudentProgrammeId(s)||'')===String(c.progId)).slice(0,room);
   if(!pool.length){toast('No matching unassigned students');return;}
   const uuids=pool.map(s=>s._id);
   const {error}=await sb.from('students').update({class_id:cMap[cid]}).in('id',uuids);
@@ -3919,7 +3931,7 @@ function mapAdminStudentRow(row,index){
     progId:progId,classId:classId,houseId:houseId,status:row.status||'pending',adm:row.admission_no||'-',permAdm:row.permanent_admission_number||'',
     verificationStatus:row.verification_status||'pending',verifiedAt:row.verified_at||'',verifiedBy:row.verified_by||'',verificationNotes:row.verification_notes||'',
     passportPhoto:row.passport_photo_url||'',reg:created.slice(0,10),submittedAt:row.submitted_at||'',personalDone:!!row.personal_done,programmeDone:!!row.programme_done,undertakingDone:!!row.undertaking_done,
-    time:dt&&!isNaN(dt.getTime())?dt.toTimeString().slice(0,8):'-',sms:(row.records&&row.records.sms_contact)||row.parent_phone||'-',smsRaw:(row.records&&row.records.sms_contact)||row.parent_phone||'',prog:row.programme_name||'',enrol:(row.records&&row.records.enrolment_code)||'-',form:row.enrolment_form_url||null,
+    time:dt&&!isNaN(dt.getTime())?dt.toTimeString().slice(0,8):'-',sms:(row.records&&row.records.sms_contact)||row.parent_phone||'-',smsRaw:(row.records&&row.records.sms_contact)||row.parent_phone||'',prog:row.programme_name||row.placement_programme||'',enrol:(row.records&&row.records.enrolment_code)||'-',form:row.enrolment_form_url||null,
     dob:(row.records&&row.records.dob)||'',parent:row.parent_name||(row.records&&row.records.guardian)||'-',res:row.residential_status||(row.records&&((row.records.residential_status||row.records.residential)))||'-',rec:row.records||{},pay:row.payment_status||'unpaid',submitted:!!row.submitted_at,loggedIn:false};
 }
 async function loadRegisteredPage(reset){
@@ -4498,6 +4510,18 @@ async function refreshDashboardSummary(force){
     dashboardSummaryLoading=false;
   }
 }
+async function loadAdminSchoolStructure(schoolId){
+  let result=await invokeFnDetailed('admin-school-structure',{school_id:schoolId});
+  if(!result.error&&result.data&&result.data.ok!==false)return result;
+  const [programmesResult,housesResult,classroomsResult]=await Promise.all([
+    sb.from('programmes').select('id,code,name,subjects,capacity').eq('school_id',schoolId).order('code').limit(5000),
+    sb.from('houses').select('id,name,color,motto,capacity,priority,gender,residential_type').eq('school_id',schoolId).order('name').limit(5000),
+    sb.from('classrooms').select('id,name,code,capacity,subjects,programme_id').eq('school_id',schoolId).order('name').limit(5000)
+  ]);
+  const fallbackError=programmesResult.error||housesResult.error||classroomsResult.error;
+  if(fallbackError)return {data:null,error:{message:'Could not load programme, class and house data: '+fallbackError.message}};
+  return {data:{ok:true,programmes:programmesResult.data||[],houses:housesResult.data||[],classrooms:classroomsResult.data||[]},error:null};
+}
 // Capability catalogue (key -> friendly label)
 const CAPS=[
   ['students','Admissions & students'],
@@ -4850,7 +4874,7 @@ async function loadSchoolData(prof){
   const [sch,cfg,structure,stu,plc,pay,sms,log,smsCfg,claims]=await Promise.all([
     sb.from('schools').select('id,name,code,school_code,address,phone,email,headmaster_name,headmaster_title,helpdesk,crest_url,theme_color').eq('id',myId),
     sb.from('school_config').select('academic_year,admission_year,admission_status,reopening_date,reopening_time,service_charge,helpdesk_line,sms_balance,prospectus_url,undertaking_url,subjects_url,letter_template,records_template,req_doc_line1,req_doc_line2,req_doc_line3,req_doc_line4,req_doc_line5,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload').eq('school_id',myId),
-    invokeFnDetailed('admin-school-structure',{school_id:myId}),
+    loadAdminSchoolStructure(myId),
     Promise.resolve({data:[],error:null}),
     sb.from('placement_list').select('id',{count:'exact',head:true}).eq('school_id',myId),
     Promise.resolve({data:[],error:null}),
@@ -4859,7 +4883,12 @@ async function loadSchoolData(prof){
     sb.from('school_sms_templates').select('school_id,submission_message,sms_enabled').eq('school_id',myId),
     sb.from('finance_claims').select('claim_number,students_claimed,created_at,academic_year').eq('school_id',myId),
   ]);
-  const structurePayload=(structure&&structure.data)||{};
+  if(!structure||structure.error||!structure.data||structure.data.ok===false){
+    const structureMessage=(structure&&structure.error&&structure.error.message)||(structure&&structure.data&&structure.data.message)||'Could not load programme, class and house data.';
+    toast(structureMessage);
+    throw new Error(structureMessage);
+  }
+  const structurePayload=structure.data;
   const progs={data:Array.isArray(structurePayload.programmes)?structurePayload.programmes:[],error:structure&&structure.error};
   const hs={data:Array.isArray(structurePayload.houses)?structurePayload.houses:[],error:structure&&structure.error};
   const cls={data:Array.isArray(structurePayload.classrooms)?structurePayload.classrooms:[],error:structure&&structure.error};

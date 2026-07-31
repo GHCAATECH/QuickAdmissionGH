@@ -17,6 +17,15 @@ function getPublicKey(): string {
 function safeString(value: unknown): string {
   return String(value ?? "").trim();
 }
+function programmeKey(value: unknown): string {
+  return safeString(value).toUpperCase().replace(/[^A-Z0-9]+/g, "");
+}
+function placementGender(value: unknown): string | null {
+  const gender = safeString(value).toUpperCase();
+  if (gender === "M" || gender === "MALE" || gender === "BOY") return "M";
+  if (gender === "F" || gender === "FEMALE" || gender === "GIRL") return "F";
+  return null;
+}
 function metadataValue(metadata: unknown, variableName: string): string {
   if (!metadata || typeof metadata !== "object") return "";
   const record = metadata as Record<string, unknown>;
@@ -184,6 +193,26 @@ Deno.serve(async (req: Request) => {
     }, 409);
   }
 
+  const [placementProfileResult, programmesResult] = await Promise.all([
+    admin.from("placement_list").select("student_name,gender,programme").eq("school_id", sid).eq("index_number", index).maybeSingle(),
+    admin.from("programmes").select("id,name,code").eq("school_id", sid).limit(5_000),
+  ]);
+  const profileError = placementProfileResult.error || programmesResult.error;
+  if (profileError) {
+    return json({ ok: false, error: "placement_profile_failed", message: profileError.message }, 500);
+  }
+  const placementProfile = placementProfileResult.data ?? {};
+  const placedProgrammeKey = programmeKey(placementProfile.programme);
+  const matchingProgrammes = (programmesResult.data ?? []).filter((programme) =>
+    placedProgrammeKey && (
+      programmeKey(programme.name) === placedProgrammeKey ||
+      programmeKey(programme.code) === placedProgrammeKey
+    )
+  );
+  const resolvedProgrammeId = matchingProgrammes.length === 1 ? matchingProgrammes[0].id : null;
+  const resolvedGender = placementGender(placementProfile.gender);
+  const resolvedName = safeString(placementProfile.student_name || body.name) || null;
+
   const { data: cfg, error: cfgError } = await admin
     .from("school_config")
     .select("service_charge")
@@ -213,18 +242,20 @@ Deno.serve(async (req: Request) => {
   }
 
   const { data: prior } = await admin.from("students")
-    .select("id, admission_token").eq("school_id", sid).eq("bece_index", index).maybeSingle();
+    .select("id,admission_token,full_name,gender,programme_id").eq("school_id", sid).eq("bece_index", index).maybeSingle();
   let studentId: string; let token: string;
   if (prior?.id) {
     studentId = prior.id; token = prior.admission_token || genToken();
     const { error: updateError } = await admin.from("students").update({ admission_token: token, payment_status: "paid",
+      full_name: prior.full_name || resolvedName, gender: prior.gender || resolvedGender, programme_id: prior.programme_id || resolvedProgrammeId,
       parent_phone: body.phone || null, parent_email: body.email || null }).eq("id", studentId);
     if (updateError) return json({ ok: false, error: "student_update_failed", message: updateError.message }, 500);
   } else {
     token = genToken();
     const { data: stu, error: se } = await admin.from("students").insert({
       school_id: sid, bece_index: index, admission_token: token,
-      full_name: body.name || null, parent_phone: body.phone || null, parent_email: body.email || null,
+      full_name: resolvedName, gender: resolvedGender, programme_id: resolvedProgrammeId,
+      parent_phone: body.phone || null, parent_email: body.email || null,
       payment_status: "paid" }).select("id").single();
     if (se || !stu) return json({ ok: false, error: "save_failed", message: se?.message }, 400);
     studentId = stu.id;

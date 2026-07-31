@@ -26,6 +26,10 @@ function cleanSearch(value: unknown) {
     .slice(0, 80);
 }
 
+function programmeKey(value: unknown) {
+  return text(value).toUpperCase().replace(/[^A-Z0-9]+/g, "");
+}
+
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
   return !!error || data?.allowed !== false;
@@ -134,26 +138,35 @@ Deno.serve(async (req: Request) => {
   if (error) return json({ ok: false, error: "query_failed", message: error.message }, 500);
 
   const rows = (data ?? []) as JsonRecord[];
-  const programmeIds = [...new Set(rows.map((row) => text(row.programme_id)).filter(Boolean))];
   const classIds = [...new Set(rows.map((row) => text(row.class_id)).filter(Boolean))];
   const houseIds = [...new Set(rows.map((row) => text(row.house_id)).filter(Boolean))];
   const placementIndexes = [...new Set(rows.map((row) => text(row.bece_index)).filter(Boolean))];
   const [programmes, classes, houses, placements] = await Promise.all([
-    programmeIds.length ? admin.from("programmes").select("id,name,code").eq("school_id", schoolId).in("id", programmeIds) : Promise.resolve({ data: [] }),
+    rows.length ? admin.from("programmes").select("id,name,code").eq("school_id", schoolId).limit(5_000) : Promise.resolve({ data: [] }),
     classIds.length ? admin.from("classrooms").select("id,name,code").eq("school_id", schoolId).in("id", classIds) : Promise.resolve({ data: [] }),
     houseIds.length ? admin.from("houses").select("id,name").eq("school_id", schoolId).in("id", houseIds) : Promise.resolve({ data: [] }),
-    placementIndexes.length ? admin.from("placement_list").select("index_number,gender,residential_status").eq("school_id", schoolId).in("index_number", placementIndexes) : Promise.resolve({ data: [] }),
+    placementIndexes.length ? admin.from("placement_list").select("index_number,gender,residential_status,programme").eq("school_id", schoolId).in("index_number", placementIndexes) : Promise.resolve({ data: [] }),
   ]);
   const programmeMap = mapById(programmes.data, ["name", "code"]);
   const classMap = mapById(classes.data, ["name", "code"]);
   const houseMap = mapById(houses.data, ["name"]);
-  const placementMap = new Map<string, { gender: string; residentialStatus: string }>();
+  const programmesByKey = new Map<string, { id: string; name: string }>();
+  for (const programme of programmes.data ?? []) {
+    const record = programme as JsonRecord;
+    const value = { id: text(record.id), name: text(record.name || record.code) };
+    const nameKey = programmeKey(record.name);
+    const codeKey = programmeKey(record.code);
+    if (nameKey) programmesByKey.set(nameKey, value);
+    if (codeKey) programmesByKey.set(codeKey, value);
+  }
+  const placementMap = new Map<string, { gender: string; residentialStatus: string; programme: string }>();
   for (const placement of placements.data ?? []) {
     const record = placement as JsonRecord;
     const indexNumber = text(record.index_number);
     if (indexNumber) placementMap.set(indexNumber, {
       gender: text(record.gender),
       residentialStatus: text(record.residential_status),
+      programme: text(record.programme),
     });
   }
 
@@ -161,11 +174,17 @@ Deno.serve(async (req: Request) => {
     const records = row.records && typeof row.records === "object" && !Array.isArray(row.records)
       ? row.records as JsonRecord
       : {};
+    const placement = placementMap.get(text(row.bece_index));
+    const resolvedProgramme = text(row.programme_id)
+      ? { id: text(row.programme_id), name: programmeMap.get(text(row.programme_id)) ?? "" }
+      : programmesByKey.get(programmeKey(placement?.programme));
     return {
       ...row,
-      gender: text(row.gender) || placementMap.get(text(row.bece_index))?.gender || "",
-      residential_status: placementMap.get(text(row.bece_index))?.residentialStatus || text(records.residential_status || records.residential),
-      programme_name: programmeMap.get(text(row.programme_id)) ?? "",
+      programme_id: resolvedProgramme?.id || null,
+      gender: text(row.gender) || placement?.gender || "",
+      residential_status: placement?.residentialStatus || text(records.residential_status || records.residential),
+      placement_programme: placement?.programme || "",
+      programme_name: resolvedProgramme?.name || placement?.programme || "",
       class_name: classMap.get(text(row.class_id)) ?? "",
       house_name: houseMap.get(text(row.house_id)) ?? "",
     };

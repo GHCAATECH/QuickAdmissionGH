@@ -110,16 +110,34 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "house_save") {
+      const genderValue = safeText(patch.gender).toUpperCase();
+      const residentialValue = safeText(patch.residential_type).toUpperCase().replace(/[^A-Z]/g, "");
+      const gender = genderValue === "M" || genderValue === "MALE" || genderValue === "BOY"
+        ? "Male"
+        : genderValue === "F" || genderValue === "FEMALE" || genderValue === "GIRL"
+        ? "Female"
+        : "";
+      const residentialType = residentialValue === "B" || residentialValue === "BOARDER" || residentialValue === "BOARDING" || residentialValue === "RESIDENT"
+        ? "Boarding"
+        : residentialValue === "D" || residentialValue === "DAY" || residentialValue === "DAYSTUDENT"
+        ? "Day"
+        : "";
+      const capacity = toNumber(patch.capacity, 0);
+      const priority = toNumber(patch.priority, 0);
       const record: JsonRecord = {
         name: safeText(patch.name),
         color: safeText(patch.color),
         motto: safeText(patch.motto),
-        capacity: toNumber(patch.capacity, 100),
-        priority: patch.priority == null || patch.priority === "" ? null : Math.max(1, toNumber(patch.priority, 1)),
-        gender: safeText(patch.gender),
-        residential_type: safeText(patch.residential_type),
+        capacity,
+        priority,
+        gender,
+        residential_type: residentialType,
       };
       if (!record.name) return json({ ok: false, error: "validation", message: "House name is required." }, 400);
+      if (!gender) return json({ ok: false, error: "validation", message: "House gender must be Male or Female." }, 400);
+      if (!residentialType) return json({ ok: false, error: "validation", message: "House residential type must be Boarding or Day." }, 400);
+      if (capacity < 1) return json({ ok: false, error: "validation", message: "House capacity must be 1 or higher." }, 400);
+      if (priority < 1) return json({ ok: false, error: "validation", message: "House priority must be 1 or higher." }, 400);
       if (id) {
         const { data, error } = await admin.from("houses").update(record).eq("id", id).eq("school_id", schoolId).select("*").single();
         if (error || !data) throw new Error(error?.message || "Could not update house.");
@@ -133,14 +151,16 @@ Deno.serve(async (req: Request) => {
     if (action === "class_save") {
       const programmeId = await ensureProgrammeBelongsToSchool(admin, schoolId, safeText(patch.programme_id) || null);
       if (!programmeId) return json({ ok: false, error: "validation", message: "A valid programme is required." }, 400);
+      const capacity = toNumber(patch.capacity, 0);
       const record: JsonRecord = {
         name: safeText(patch.name),
         code: safeText(patch.code),
-        capacity: toNumber(patch.capacity, 50),
+        capacity,
         programme_id: programmeId,
         subjects: safeText(patch.subjects) || null,
       };
       if (!record.name) return json({ ok: false, error: "validation", message: "Class name is required." }, 400);
+      if (capacity < 1) return json({ ok: false, error: "validation", message: "Class capacity must be 1 or higher." }, 400);
       if (id) {
         const { data, error } = await admin.from("classrooms").update(record).eq("id", id).eq("school_id", schoolId).select("*").single();
         if (error || !data) throw new Error(error?.message || "Could not update class.");

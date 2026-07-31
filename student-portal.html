@@ -1744,8 +1744,8 @@ function validateStep(step,opts){
     const missing=firstMissing(['pf-dob','pf-pob','pf-nat','pf-rel','pf-addr','pf-town','pf-region','pf-district','pf-interest'],useStored);
     if(missing) return failStep(step,'Please complete the required personal fields',missing,silent);
     if(isChristianReligion()&&!fieldValue('pf-den',useStored)) return failStep(step,'Please select your religious denomination','pf-den',silent);
-    if(allowClassSelection()&&!app.classId&&(SCHOOL&&SCHOOL.classes&&SCHOOL.classes.length)) return failStep(step,'Please select a class','',silent);
-    if(allowHouseSelection()&&!app.houseId&&(SCHOOL&&SCHOOL.houses&&SCHOOL.houses.length)) return failStep(step,'Please select a house','',silent);
+    if(allowClassSelection()&&!app.classId&&eligibleStudentClasses().length) return failStep(step,'Please select a class','',silent);
+    if(allowHouseSelection()&&!app.houseId&&eligibleStudentHouses().length) return failStep(step,'Please select a house','',silent);
   }
   if(step===2){
     const missing=firstMissing(['pf-sms','pf-fname','pf-focc','pf-fphone','pf-mname','pf-mocc','pf-mphone'],useStored);
@@ -1766,27 +1766,35 @@ function buildPickers(){
   if(districtList) districtList.innerHTML=DISTRICTS.map(function(d){ return `<option value="${d}"></option>`; }).join('');
 }
 function fmtCombo(str){ return (str||'').split(',').map(x=>x.trim()).filter(Boolean).join(' - '); }
+function programmeKey(value){
+  return String(value||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
+}
 function resolveStudentProgrammeId(){
   const names=[
     (STU&&STU.programme)||'',
     ($('pf1-prog')&&$('pf1-prog').value)||'',
     (app&&app.fields&&app.fields.programme)||''
-  ].map(function(v){ return String(v||'').trim().toLowerCase(); }).filter(Boolean);
-  if(STU&&STU.programme_id) return STU.programme_id;
+  ].map(programmeKey).filter(Boolean);
+  if(STU&&STU.programme_id&&(PROGRAMMES||[]).some(function(p){return String(p.id||'')===String(STU.programme_id);})){ return STU.programme_id; }
   const hit=(PROGRAMMES||[]).find(function(p){
-    return names.includes(String(p.name||'').trim().toLowerCase()) || names.includes(String(p.code||'').trim().toLowerCase());
+    return names.includes(programmeKey(p.name)) || names.includes(programmeKey(p.code));
   });
   return hit?hit.id:null;
+}
+function eligibleStudentClasses(){
+  const studentProgrammeId=resolveStudentProgrammeId();
+  if(!studentProgrammeId)return [];
+  return ((SCHOOL&&SCHOOL.classes)||[]).filter(function(c){
+    if(String(c.programme_id||'')!==String(studentProgrammeId))return false;
+    const seats=Number(c.seats);
+    return String(c.id||'')===String(app.classId||'')||!Number.isFinite(seats)||seats>0;
+  });
 }
 function buildClassTable(){
   const studentProgrammeId=resolveStudentProgrammeId();
   const progSubs=fmtCombo((progById(studentProgrammeId)||{}).subjects||'');
-  let classes=(SCHOOL&&SCHOOL.classes)||[];
-  // Only show classes linked to the student's placed programme.
-  const mine=studentProgrammeId
-    ? classes.filter(c=>String(c.programme_id||'')===String(studentProgrammeId))
-    : [];
-  if(mine.length) classes=mine;
+  const classes=eligibleStudentClasses();
+  if(app.classId&&!classes.some(function(c){return String(c.id||'')===String(app.classId);})){app.classId=null;app.className='';}
   $('clsRows').innerHTML=classes.length?classes.map(c=>{
     const combo=fmtCombo(c.subjects)||progSubs||'Standard combination';
     return `<tr class="cls-row ${c.id===app.classId?'sel':''}" data-id="${c.id}" onclick="pickClass('${c.id}','${encodeURIComponent(String(c.name||''))}')"><td><span class="cls-radio"></span>${safeHtml(c.name,'-')}</td><td class="cls-combo">${safeHtml(combo,'Standard combination')}</td><td class="cls-seats">${safeHtml(c.seats,'0')}</td></tr>`;
@@ -1811,19 +1819,21 @@ function houseMatchesStudent(h){
   const priority=Number(h&&h.priority), capacity=Number(h&&(h.capacity||h.cap));
   return !!houseGender&&!!studentGender&&houseGender===studentGender&&!!houseResidential&&!!studentResidential&&houseResidential===studentResidential&&Number.isFinite(priority)&&priority>0&&Number.isFinite(capacity)&&capacity>0;
 }
-function buildHouseTable(){
-  const body=$('houseRows'); if(!body)return;
-  const all=(SCHOOL&&SCHOOL.houses)||[];
-  const houses=all.filter(houseMatchesStudent).slice().sort(function(a,b){
+function eligibleStudentHouses(){
+  return ((SCHOOL&&SCHOOL.houses)||[]).filter(houseMatchesStudent).slice().sort(function(a,b){
     const priorityDiff=Number(a.priority)-Number(b.priority);
     return priorityDiff||String(a.name||'').localeCompare(String(b.name||''),undefined,{sensitivity:'base'});
   });
+}
+function buildHouseTable(){
+  const body=$('houseRows'); if(!body)return;
+  const houses=eligibleStudentHouses();
   if(app.houseId&&!houses.some(h=>String(h.id||'')===String(app.houseId))){app.houseId=null;app.houseName='';}
   body.innerHTML=houses.length?houses.map(function(h){
     const id=String(h.id||'');
     const type=[h.residential_type||h.rtype||'',h.gender||''].filter(Boolean).join(' - ')||'Available';
     return `<tr class="cls-row house-row ${id===String(app.houseId||'')?'sel':''}" data-id="${safeHtml(id)}" onclick="pickHouse('${encodeURIComponent(id)}','${encodeURIComponent(String(h.name||''))}')"><td><span class="cls-radio"></span>${safeHtml(h.name,'-')}</td><td class="cls-combo">${safeHtml(type,'Available')}</td><td class="cls-seats">${safeHtml(h.capacity||h.cap||'-')}</td></tr>`;
-  }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No houses are available for your residential status yet.</td></tr>`;
+  }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No configured house matches your gender and residential status. You can still submit; the school will assign a house after configuration.</td></tr>`;
 }
 function pickHouse(id,name){
   app.houseId=decodeURIComponent(String(id||''));

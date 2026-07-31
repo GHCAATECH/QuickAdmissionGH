@@ -21,6 +21,10 @@ function firstText(...values: unknown[]): string {
   return "";
 }
 
+function programmeKey(value: unknown): string {
+  return safeText(value).toUpperCase().replace(/[^A-Z0-9]+/g, "");
+}
+
 type SchoolStructure = {
   programmes: unknown[];
   houses: unknown[];
@@ -39,6 +43,10 @@ async function loadSchoolStructure(admin: ReturnType<typeof createClient>, schoo
     admin.from("classrooms").select("id,name,programme_id,subjects,capacity").eq("school_id", schoolId).order("name").limit(5_000),
     admin.rpc("student_class_counts", { p_school: schoolId }),
   ]);
+  const structureError = programmesRes.error || housesRes.error || classesRes.error;
+  if (structureError) {
+    throw new Error(`Could not load school programmes, classes, and houses: ${structureError.message}`);
+  }
   const value: SchoolStructure = {
     programmes: programmesRes.data ?? [],
     houses: housesRes.data ?? [],
@@ -120,6 +128,36 @@ Deno.serve(async (req: Request) => {
   const sid = safeText(student.school_id);
   if (!sid) return json({ ok: false, error: "index" });
 
+  let loaded;
+  try {
+    loaded = await Promise.all([
+      admin.from("schools").select("id,school_code,code,name,address,phone,helpdesk,crest_url,theme_color,headmaster_name,email").eq("id", sid).maybeSingle(),
+      admin.from("school_config").select("academic_year,letter_template,records_template,admission_status,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload").eq("school_id", sid).maybeSingle(),
+      admin
+        .from("placement_list")
+        .select("student_name,other_names,residential_status,sms_contact,aggregate,programme,gender,logged_in")
+        .eq("school_id", sid)
+        .eq("index_number", index)
+        .maybeSingle(),
+      student.programme_id
+        ? admin.from("programmes").select("id,name").eq("id", String(student.programme_id)).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      student.class_id
+        ? admin.from("classrooms").select("id,name").eq("id", String(student.class_id)).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      student.house_id
+        ? admin.from("houses").select("id,name").eq("id", String(student.house_id)).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      loadSchoolStructure(admin, sid),
+    ]);
+  } catch (error) {
+    return json({
+      ok: false,
+      error: "structure_unavailable",
+      message: error instanceof Error ? error.message : "Could not load the school programme, class, and house setup.",
+    }, 500);
+  }
+
   const [
     schoolRes,
     configRes,
@@ -128,26 +166,7 @@ Deno.serve(async (req: Request) => {
     classRes,
     houseRes,
     structure,
-  ] = await Promise.all([
-    admin.from("schools").select("id,school_code,code,name,address,phone,helpdesk,crest_url,theme_color,headmaster_name,email").eq("id", sid).maybeSingle(),
-    admin.from("school_config").select("academic_year,letter_template,records_template,admission_status,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload").eq("school_id", sid).maybeSingle(),
-    admin
-      .from("placement_list")
-      .select("student_name,other_names,residential_status,sms_contact,aggregate,programme,gender,logged_in")
-      .eq("school_id", sid)
-      .eq("index_number", index)
-      .maybeSingle(),
-    student.programme_id
-      ? admin.from("programmes").select("id,name").eq("id", String(student.programme_id)).maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-    student.class_id
-      ? admin.from("classrooms").select("id,name").eq("id", String(student.class_id)).maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-    student.house_id
-      ? admin.from("houses").select("id,name").eq("id", String(student.house_id)).maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-    loadSchoolStructure(admin, sid),
-  ]);
+  ] = loaded;
 
   const school = (schoolRes.data ?? {}) as Record<string, unknown>;
   const config = (configRes.data ?? {}) as Record<string, unknown>;
@@ -165,8 +184,14 @@ Deno.serve(async (req: Request) => {
   }
 
   const classCounts = structure.classCounts;
-
-  const finalProgramme = firstText(programme.name, placement.programme);
+  const placementProgrammeKey = programmeKey(placement.programme);
+  const resolvedProgramme = (structure.programmes as Array<Record<string, unknown>>).find((row) => {
+    if (student.programme_id && safeText(row.id) === safeText(student.programme_id)) return true;
+    if (!placementProgrammeKey) return false;
+    return programmeKey(row.name) === placementProgrammeKey || programmeKey(row.code) === placementProgrammeKey;
+  });
+  const resolvedProgrammeId = safeText(resolvedProgramme?.id || student.programme_id) || null;
+  const finalProgramme = firstText(resolvedProgramme?.name, programme.name, placement.programme);
   const finalGender = normalizeGender(student.gender, placement.gender);
   const displayName = firstText(
     placement.student_name,
@@ -221,7 +246,7 @@ Deno.serve(async (req: Request) => {
       admission_no: firstText(student.admission_no),
       aggregate: placement.aggregate ?? null,
       programme: finalProgramme,
-      programme_id: student.programme_id ?? null,
+      programme_id: resolvedProgrammeId,
       class: firstText(classroom.name),
       class_id: student.class_id ?? null,
       house: firstText(house.name),
