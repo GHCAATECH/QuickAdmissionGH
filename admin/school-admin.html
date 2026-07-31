@@ -2185,8 +2185,13 @@ const money=n=>'GHS '+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumF
 const moneyBare=n=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const round2=n=>Math.round((Number(n)||0)*100)/100;
 function toast(m){$('toastMsg').textContent=m;const t=$('toast');t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+function studentSummaryData(){
+  return window.SB_STUDENT_SUMMARY&&typeof window.SB_STUDENT_SUMMARY==='object'
+    ? window.SB_STUDENT_SUMMARY
+    : {};
+}
 function summaryNumber(key,fallback){
-  const n=Number(SB_STUDENT_SUMMARY&&SB_STUDENT_SUMMARY[key]);
+  const n=Number(studentSummaryData()[key]);
   return Number.isFinite(n)?Math.max(n,0):fallback;
 }
 const pendingCount=()=>summaryNumber('pending',students.filter(s=>s.status==='pending').length);
@@ -2448,7 +2453,7 @@ function settledStudentCount(raw,maxCount){
 function completedFinancePaymentCount(source){
   const seen=new Set();
   const eligible=submittedStudents();
-  if(!eligible.length && Object.prototype.hasOwnProperty.call(SB_STUDENT_SUMMARY||{},'paid')) return summaryNumber('paid',0);
+  if(!eligible.length && Object.prototype.hasOwnProperty.call(studentSummaryData(),'paid')) return summaryNumber('paid',0);
   const eligibleIds=new Set(eligible.map(function(s){ return s&&s._id?String(s._id):''; }).filter(Boolean));
   const eligibleIndexes=new Set(eligible.map(function(s){ return cleanSmsText(s&&s.index); }).filter(Boolean));
   (source||[]).forEach(function(payment){
@@ -2766,7 +2771,8 @@ function renderStats(){
 }
 function renderRecent(){
   const local=[...students].sort((a,b)=>b.reg.localeCompare(a.reg)).slice(0,8);
-  const rows=local.length?local:(Array.isArray(SB_STUDENT_SUMMARY&&SB_STUDENT_SUMMARY.recent)?SB_STUDENT_SUMMARY.recent:[]).map((r,i)=>({id:1000000+i,index:r.bece_index||'',name:r.full_name||'(no name)',reg:(r.submitted_at||r.created_at||'').slice(0,10),prog:''}));
+  const summary=studentSummaryData();
+  const rows=local.length?local:(Array.isArray(summary.recent)?summary.recent:[]).map((r,i)=>({id:1000000+i,index:r.bece_index||'',name:r.full_name||'(no name)',reg:(r.submitted_at||r.created_at||'').slice(0,10),prog:''}));
   $('recentRows').innerHTML=rows.map(s=>`<tr><td class="mono">${safeHtml(s.reg)}</td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(studentProgrammeName(s),'-')}</td><td><div class="row-actions"><button class="act" onclick="${s.id>=1000000?'go(\'students\')':'viewStudent('+s.id+')'}">${s.id>=1000000?'Open list':'View'}</button></div></td></tr>`).join('');
 }
 
@@ -3590,7 +3596,8 @@ function buildCharts(){
   Chart.defaults.font.family="'Inter',sans-serif";Chart.defaults.font.size=11;Chart.defaults.color='#8A9893';
   const hasLocal=students.length>0;
   const m=hasLocal?students.filter(s=>s.gender==='M').length:summaryNumber('male',0),f=hasLocal?students.length-m:summaryNumber('female',0);
-  const programmeCounts=SB_STUDENT_SUMMARY.programmes||{},houseCounts=SB_STUDENT_SUMMARY.houses||{};
+  const summary=studentSummaryData();
+  const programmeCounts=summary.programmes||{},houseCounts=summary.houses||{};
   charts.g=new Chart($('genderChart'),{type:'doughnut',data:{labels:['Male','Female'],datasets:[{data:[m,f],backgroundColor:['#1557B0','#D2941A'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:12}}}}});
   charts.p=new Chart($('progChart'),{type:'bar',data:{labels:programmes.map(p=>p.code),datasets:[{data:programmes.map(p=>hasLocal?students.filter(s=>s.progId===p.id).length:Number(programmeCounts[p._id]||0)),backgroundColor:'#1557B0',borderRadius:6,barThickness:30}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#EEF1EF'},beginAtZero:true}}}});
   charts.h=new Chart($('houseChart'),{type:'bar',data:{labels:houses.map(h=>h.name),datasets:[{data:houses.map(h=>hasLocal?students.filter(s=>s.houseId===h.id).length:Number(houseCounts[h._id]||0)),backgroundColor:houses.map(h=>h.color),borderRadius:6,barThickness:30}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EEF1EF'},beginAtZero:true},y:{grid:{display:false}}}}});
