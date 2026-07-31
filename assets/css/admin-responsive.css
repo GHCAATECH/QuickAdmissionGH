@@ -34,75 +34,6 @@ body {
   background: var(--admin-background);
 }
 
-/* Keep the admin login on the document's single (right-side) scrollbar. */
-html:has(body.auth-booting),
-html:has(body.auth-gate-visible),
-body.auth-booting,
-body.auth-gate-visible {
-  overflow-y: auto !important;
-}
-
-html:has(#authGate) {
-  overflow-y: scroll !important;
-}
-
-body:has(#authGate) {
-  overflow-y: visible !important;
-}
-
-body.auth-booting #authGate.gate-screen,
-body.auth-gate-visible #authGate.gate-screen {
-  overflow: visible !important;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-
-body.auth-booting #authGate.gate-screen::-webkit-scrollbar,
-body.auth-gate-visible #authGate.gate-screen::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  display: none !important;
-}
-
-/* The gate and both panels must not create an inner scrollbar. */
-#authGate,
-#authGate .qa-login-shell,
-#authGate .qa-brand-panel,
-#authGate .qa-login-panel {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-
-#authGate::-webkit-scrollbar,
-#authGate .qa-login-shell::-webkit-scrollbar,
-#authGate .qa-brand-panel::-webkit-scrollbar,
-#authGate .qa-login-panel::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  display: none !important;
-}
-
-#authGate {
-  position: relative !important;
-  inset: auto !important;
-  width: 100% !important;
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
-  height: auto !important;
-  overflow: visible !important;
-}
-
-/* Override the page's older #authGate.gate-screen overflow rule. */
-#authGate.gate-screen {
-  position: relative !important;
-  inset: auto !important;
-  width: 100% !important;
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
-  height: auto !important;
-  overflow: visible !important;
-}
-
 button,
 input,
 select,
@@ -749,5 +680,96 @@ body > footer {
   .admin-content {
     padding-left: 8px !important;
     padding-right: 8px !important;
+  }
+}
+
+/* =====================================================
+   SHARED ADMIN LOGIN DOCUMENT-SCROLL LAYOUT
+   The document is the only vertical scroller. Keep this
+   after the generic main/section responsive rules.
+===================================================== */
+
+html:has(body #authGate) {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+body:has(#authGate) {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+  position: relative !important;
+}
+
+body:has(#authGate) > #authGate,
+body.auth-booting > #authGate,
+body.auth-gate-visible > #authGate {
+  position: relative !important;
+  inset: auto !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+}
+
+#authGate .qa-login-shell {
+  width: min(1080px, 100%) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) !important;
+  align-items: stretch !important;
+  align-self: flex-start !important;
+  flex: 0 0 auto !important;
+}
+
+#authGate .qa-brand-panel,
+#authGate .qa-login-panel,
+#authGate .qa-login-card {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+
+#authGate .qa-brand-panel,
+#authGate .qa-login-panel {
+  align-self: stretch !important;
+}
+
+body:has(#authGate) > footer {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+@media screen and (max-width: 850px) {
+  #authGate .qa-login-shell {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  #authGate .qa-brand-panel,
+  #authGate .qa-login-panel {
+    width: 100% !important;
   }
 }

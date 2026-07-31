@@ -113,22 +113,29 @@ function updateLoginScreenScrollbarMode() {
  * This protects against legacy page CSS like html,body{overflow:hidden}.
  */
 function forceScrollableLayout() {
-  document.documentElement.dataset.qaLayoutFix = "20260730-layout-fix-13";
+  const adminGatePresent = Boolean(document.getElementById("authGate"));
+
+  document.documentElement.dataset.qaLayoutFix =
+    "20260731-admin-login-scroll-14";
 
   document.documentElement.style.setProperty("height", "auto", "important");
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");
   document.documentElement.style.setProperty(
     "overflow-y",
-    document.getElementById("authGate") ? "scroll" : "auto",
+    adminGatePresent ? "scroll" : "auto",
     "important"
   );
 
   if (document.body && !document.body.classList.contains("modal-open")) {
     document.body.style.setProperty("height", "auto", "important");
-    document.body.style.setProperty("overflow-x", "hidden", "important");
+    document.body.style.setProperty(
+      "overflow-x",
+      adminGatePresent ? "clip" : "hidden",
+      "important"
+    );
     document.body.style.setProperty(
       "overflow-y",
-      document.getElementById("authGate") ? "visible" : "auto",
+      adminGatePresent ? "visible" : "auto",
       "important"
     );
   }
@@ -158,11 +165,26 @@ function forceScrollableLayout() {
   ];
 
   document.querySelectorAll(shellSelectors.join(",")).forEach((element) => {
+    if (element.closest("#authGate")) {
+      return;
+    }
+
     element.style.setProperty("height", "auto", "important");
     element.style.setProperty("max-height", "none", "important");
     element.style.setProperty("overflow-x", "hidden", "important");
     element.style.setProperty("overflow-y", "visible", "important");
   });
+
+  document
+    .querySelectorAll(
+      "#authGate, #authGate .qa-login-shell, #authGate .qa-brand-panel, #authGate .qa-login-panel, #authGate .qa-login-card"
+    )
+    .forEach((element) => {
+      element.style.setProperty("height", "auto", "important");
+      element.style.setProperty("max-height", "none", "important");
+      element.style.setProperty("overflow-x", "visible", "important");
+      element.style.setProperty("overflow-y", "visible", "important");
+    });
 
   document
     .querySelectorAll("#s-login .qa-page-shell")
