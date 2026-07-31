@@ -573,3 +573,26 @@ main > section:last-child:empty,
     overscroll-behavior-y: none !important;
   }
 }
+
+/* The student portal uses one footer across its login, token and dashboard
+   screens. Keep that footer visible while leaving admin login footers in the
+   normal document flow. The spacer preserves access to the last page content. */
+body.student-portal-page > .portal-footer {
+  display: block !important;
+  visibility: visible !important;
+  position: fixed !important;
+  inset: auto 0 0 !important;
+  width: 100% !important;
+  min-height: var(--portal-footer-height, 46px) !important;
+  margin: 0 !important;
+  z-index: 50;
+}
+
+body.student-portal-page > .footer-gap {
+  display: block !important;
+  width: 100%;
+  height: calc(
+    var(--portal-footer-height, 46px) + env(safe-area-inset-bottom)
+  ) !important;
+  flex: 0 0 auto;
+}
