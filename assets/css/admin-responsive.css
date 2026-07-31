@@ -757,6 +757,12 @@ body.auth-gate-visible > #authGate {
   border-radius: 32px 0 0 32px !important;
 }
 
+#authGate .qa-brand-panel::before,
+#authGate .qa-brand-panel::after {
+  display: none !important;
+  content: none !important;
+}
+
 #authGate .qa-login-panel {
   border-radius: 0 32px 32px 0 !important;
 }
