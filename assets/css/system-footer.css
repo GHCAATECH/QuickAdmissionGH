@@ -60,6 +60,20 @@ body.system-footer-page .psidebar {
   ) !important;
 }
 
+/* Keep validation errors and success notifications visible above the
+   fixed footer on every public, student and admin page. */
+body.system-footer-page > .toast {
+  z-index: 7001 !important;
+  bottom: calc(
+    var(--system-footer-height) + 14px + env(safe-area-inset-bottom)
+  ) !important;
+  max-width: min(460px, calc(100vw - 24px));
+  max-height: calc(
+    100dvh - var(--system-footer-height) - 28px - env(safe-area-inset-bottom)
+  );
+  overflow-wrap: anywhere;
+}
+
 /* Admin login layouts previously forced their body footer back into flow. */
 body.system-footer-page:has(#authGate) > footer.system-footer {
   position: fixed !important;
