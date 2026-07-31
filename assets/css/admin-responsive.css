@@ -979,3 +979,38 @@ body > #overlay.overlay > .modal > .modal-body {
     flex-wrap: wrap;
   }
 }
+
+/* =====================================================
+   DESKTOP SIDEBAR VIEWPORT ANCHOR
+   The document scrollbar belongs to the main page. Keep
+   the left navigation fixed while that scrollbar moves.
+===================================================== */
+
+@media screen and (min-width: 1025px) {
+  body:not(.auth-booting):not(.auth-gate-visible) > .app > .sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    width: var(--sidebar-width) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    z-index: 1000 !important;
+    overscroll-behavior: contain;
+  }
+
+  body:not(.auth-booting):not(.auth-gate-visible) > .app > .main {
+    grid-column: 2 !important;
+  }
+
+  body:not(.auth-booting):not(.auth-gate-visible)
+    > .app.sidebar-hidden
+    > .main {
+    grid-column: 1 !important;
+  }
+
+  body:not(.auth-booting):not(.auth-gate-visible)
+    > .app.sidebar-collapsed
+    > .sidebar {
+    width: 88px !important;
+  }
+}
