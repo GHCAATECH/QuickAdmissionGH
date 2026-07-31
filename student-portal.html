@@ -1793,22 +1793,32 @@ function buildClassTable(){
   }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No classes have been linked to your programme yet. You can still submit; a class will be assigned by the school.</td></tr>`;
 }
 function pickClass(id,name){app.classId=id;app.className=decodeURIComponent(String(name||''));document.querySelectorAll('.cls-row').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));}
+function portalHouseGender(value){
+  const gender=String(value||'').trim().toLowerCase();
+  if(gender==='m'||gender==='male'||gender==='boy')return 'M';
+  if(gender==='f'||gender==='female'||gender==='girl')return 'F';
+  return '';
+}
+function portalHouseResidential(value){
+  const residential=String(value||'').trim().toLowerCase();
+  if(residential==='boarding'||residential==='boarder'||residential==='resident'||residential==='b')return 'Boarding';
+  if(residential==='day'||residential==='day student'||residential==='d')return 'Day';
+  return '';
+}
 function houseMatchesStudent(h){
-  const type=String(h.residential_type||h.rtype||'').toLowerCase();
-  const res=String((STU&&STU.residential)||'').toLowerCase();
-  if(type&&res&&type.indexOf('day')>-1&&res.indexOf('day')===-1) return false;
-  if(type&&res&&type.indexOf('boarding')>-1&&res.indexOf('boarding')===-1) return false;
-  const hg=String(h.gender||'').toLowerCase();
-  const sg=String((STU&&STU.gender)||'').toLowerCase();
-  if(!hg||hg==='both'||hg==='mixed') return true;
-  if(hg.startsWith('m')) return sg==='m'||sg==='male';
-  if(hg.startsWith('f')) return sg==='f'||sg==='female';
-  return true;
+  const houseGender=portalHouseGender(h&&h.gender), studentGender=portalHouseGender(STU&&STU.gender);
+  const houseResidential=portalHouseResidential(h&&(h.residential_type||h.rtype)), studentResidential=portalHouseResidential(STU&&STU.residential);
+  const priority=Number(h&&h.priority), capacity=Number(h&&(h.capacity||h.cap));
+  return !!houseGender&&!!studentGender&&houseGender===studentGender&&!!houseResidential&&!!studentResidential&&houseResidential===studentResidential&&Number.isFinite(priority)&&priority>0&&Number.isFinite(capacity)&&capacity>0;
 }
 function buildHouseTable(){
   const body=$('houseRows'); if(!body)return;
   const all=(SCHOOL&&SCHOOL.houses)||[];
-  const houses=all.filter(houseMatchesStudent);
+  const houses=all.filter(houseMatchesStudent).slice().sort(function(a,b){
+    const priorityDiff=Number(a.priority)-Number(b.priority);
+    return priorityDiff||String(a.name||'').localeCompare(String(b.name||''),undefined,{sensitivity:'base'});
+  });
+  if(app.houseId&&!houses.some(h=>String(h.id||'')===String(app.houseId))){app.houseId=null;app.houseName='';}
   body.innerHTML=houses.length?houses.map(function(h){
     const id=String(h.id||'');
     const type=[h.residential_type||h.rtype||'',h.gender||''].filter(Boolean).join(' - ')||'Available';

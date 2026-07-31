@@ -1467,7 +1467,7 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260726-layout-fix-12">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260731-fixed-sidebar-16">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260731-student-house-rules-17">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260731-system-footer-2">
 <script src="../assets/js/global-layout-fix.js?v=20260731-admin-login-scroll-14" defer></script>
 <script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
@@ -1868,15 +1868,16 @@
           <select id="haGender" onchange="renderHouseAlloc()"><option value="">All genders</option><option value="M">Male</option><option value="F">Female</option></select>
           <div style="flex:1"></div>
           <button class="btn btn-ghost btn-sm" onclick="haAutoFill()">Auto-fill house</button>
+          <button class="btn btn-primary btn-sm" onclick="haAutoAssignAll()">Auto-assign all in order</button>
         </div>
         <div class="grid-2" style="align-items:start">
           <div class="panel" style="margin:0">
             <div class="panel-head"><div><h3>House members</h3><div class="sub"><span id="haCount">0</span> assigned · <span id="haCap">—</span></div></div></div>
-            <div class="tbl-wrap"><table><thead><tr><th>Index No</th><th>Student</th><th>Gender</th><th></th></tr></thead><tbody id="haMembers"></tbody></table></div>
+            <div class="tbl-wrap"><table><thead><tr><th>Index No</th><th>Student</th><th>Gender</th><th>Residential</th><th></th></tr></thead><tbody id="haMembers"></tbody></table></div>
           </div>
           <div class="panel" style="margin:0">
             <div class="panel-head"><div><h3>Unassigned students</h3><div class="sub"><span id="haUnCount">0</span> with no house</div></div><button class="btn btn-sm" onclick="haAssignSelected()">Assign selected →</button></div>
-            <div class="tbl-wrap"><table><thead><tr><th style="width:36px"></th><th>Index No</th><th>Student</th><th>Gender</th></tr></thead><tbody id="haPool"></tbody></table></div>
+            <div class="tbl-wrap"><table><thead><tr><th style="width:36px"></th><th>Index No</th><th>Student</th><th>Gender</th><th>Residential</th></tr></thead><tbody id="haPool"></tbody></table></div>
           </div>
         </div>
       </section>
@@ -2818,7 +2819,7 @@ function crudModal(title,fields,onSave){
   m.innerHTML=`<div class="modal-head"><h2>${title}</h2><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body">${fields}</div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="crudSave">Save</button></div>`;
-  $('overlay').classList.add('show');$('crudSave').onclick=onSave;
+  $('overlay').classList.remove('manage-student-editor');$('overlay').classList.add('show');$('crudSave').onclick=onSave;
 }
 function openProg(id){
   const p=id?programmes.find(x=>x.id===id):{code:'',name:'',subjects:'',cap:100};
@@ -3132,15 +3133,30 @@ function updateBulk(){
     <button class="btn btn-sm" onclick="clearSel()" style="margin-left:auto">Clear</button>
   </div>`;
 }
-function applyBulk(){
+async function applyBulk(){
+  if(roGuard())return;
   const cl=$('bulkClass').value,ho=$('bulkHouse').value;
   if(!cl&&!ho){toast('Pick a class or house to assign');return;}
-  let n=0;students.forEach(s=>{if(selected.has(s.id)){if(cl)s.classId=+cl;if(ho)s.houseId=+ho;n++;}});
-  activityLog.unshift({time:'Just now',action:`Bulk allocation on ${n} students`,by:(SB_ADMIN_NAME||'Admin')});
-  clearSel();renderStats();toast(`Updated ${n} students`);
+  const chosen=[...selected].map(managedStudentById).filter(Boolean);
+  if(!chosen.length){toast('Select students to update');return;}
+  const house=ho?houseById(+ho):null;
+  if(house){
+    const issue=houseAllocationIssue(house);if(issue){toast(issue);return;}
+    if(chosen.some(s=>!houseEligibleForStudent(house,s))){toast('Every selected student must match the house gender and residential type.');return;}
+    const capacity=Math.max(Number(house.cap)||0,0), current=Math.max(Number(house.occ)||0,students.filter(s=>s.houseId===house.id).length), moving=chosen.filter(s=>s.houseId!==house.id).length;
+    if(current+moving>capacity){toast('The selected students exceed the remaining capacity in '+house.name+'.');return;}
+  }
+  const patch={};if(cl)patch.class_id=cMap[+cl]||null;if(ho)patch.house_id=hMap[+ho]||null;
+  const {error}=await sb.from('students').update(patch).in('id',chosen.map(s=>s._id));
+  if(error){toast('Bulk allocation failed: '+error.message);return;}
+  const uuids=new Set(chosen.map(s=>String(s._id)));
+  [...students,...(MANAGE_STATE.rows||[]),...(REG_STATE.rows||[])].forEach(s=>{if(uuids.has(String(s._id))){if(cl)s.classId=+cl;if(ho)s.houseId=+ho;}});
+  if(ho)notifyStudentPortalRefresh('house-bulk-assign',{indexes:chosen.map(s=>s.index)});
+  activityLog.unshift({time:'Just now',action:`Bulk allocation on ${chosen.length} students`,by:(SB_ADMIN_NAME||'Admin')});
+  clearSel();renderStats();toast(`Updated ${chosen.length} students`);
 }
 function bulkSms(){
-  var chosen=students.filter(function(s){ return selected.has(s.id); });
+  var chosen=[...selected].map(managedStudentById).filter(Boolean);
   var programmeNames=[...new Set(chosen.map(function(s){
     return cleanSmsText(studentProgrammeName(s)).replace(/^-$/,'');
   }).filter(Boolean))];
@@ -3159,30 +3175,63 @@ function refreshEditClassOptions(){
   const sel=$('es_class'); if(!sel)return;
   sel.innerHTML=studentClassOptionsForProgramme(val('es_prog'),sel.value);
 }
+function managedStudentById(id){
+  return (MANAGE_STATE.rows||[]).find(x=>x.id===id)||students.find(x=>x.id===id);
+}
+function editHouseOptions(gender,residential,selectedHouseId){
+  const candidate={gender:gender,res:residential};
+  const eligible=sortLocalHouses(houses).filter(h=>houseAllocationIssue(h)===''&&houseEligibleForStudent(h,candidate));
+  return '<option value="">— Not allocated —</option>'+eligible.map(h=>`<option value="${h.id}" ${String(selectedHouseId||'')===String(h.id)?'selected':''}>${escapeHtml(h.name)} · ${escapeHtml(h.gender)} · ${escapeHtml(h.rtype)}</option>`).join('');
+}
+function refreshEditHouseOptions(){
+  const sel=$('es_house'); if(!sel)return;
+  const previous=sel.value||sel.dataset.current||'';
+  sel.innerHTML=editHouseOptions(val('es_gender'),val('es_residential'),previous);
+  sel.dataset.current=sel.value;
+  const hint=$('es_house_hint');
+  if(hint) hint.textContent=sel.options.length>1?'Only houses matching gender and residential status are shown.':'No configured house matches this gender and residential status.';
+}
+function positionManageStudentEditor(){
+  const overlay=$('overlay'); if(!overlay||!overlay.classList.contains('manage-student-editor'))return;
+  const topbar=document.querySelector('.topbar'), sidebar=$('sidebar'), footer=document.querySelector('body > footer.system-footer');
+  const desktop=window.matchMedia('(min-width:1025px)').matches;
+  const top=topbar?Math.max(0,topbar.getBoundingClientRect().bottom):0;
+  const left=desktop&&sidebar?Math.max(0,sidebar.getBoundingClientRect().right):0;
+  const bottom=footer?Math.max(0,window.innerHeight-footer.getBoundingClientRect().top):0;
+  overlay.style.setProperty('--manage-editor-top',top+'px');
+  overlay.style.setProperty('--manage-editor-left',left+'px');
+  overlay.style.setProperty('--manage-editor-bottom',bottom+'px');
+}
+window.addEventListener('resize',positionManageStudentEditor);
 function viewStudent(id){
-  const s=students.find(x=>x.id===id);
+  const s=managedStudentById(id); if(!s)return toast('Student record is still loading. Please try again.');
   const m=$('modal');
   const selectedProgId=s.progId||studentProgrammeIdByName(s.prog);
   const progOpts=programmes.map(p=>`<option value="${p.id}" ${selectedProgId==p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
   const classOpts=studentClassOptionsForProgramme(selectedProgId,s.classId);
-  const houseOpts='<option value="">— Not allocated —</option>'+houses.map(h=>`<option value="${h.id}" ${s.houseId==h.id?'selected':''}>${escapeHtml(h.name)}</option>`).join('');
+  const gender=normalizeStudentGender(s.gender);
+  const residential=normalizeResidentialStatus(s.res);
+  const houseOpts=editHouseOptions(gender,residential,s.houseId);
   m.innerHTML=`<div class="modal-head"><div><h2>${safeHtml(s.name)}</h2><p><span class="code">${safeHtml(s.index)}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body"><div class="grid-2">
     <div class="field"><label>Full name</label><input id="es_name" value="${escapeAttr(s.name)}"></div>
-    <div class="field"><label>Gender</label><select id="es_gender"><option value="M" ${s.gender==='M'?'selected':''}>Male</option><option value="F" ${s.gender==='F'?'selected':''}>Female</option></select></div>
+    <div class="field"><label>Gender</label><select id="es_gender" onchange="refreshEditHouseOptions()"><option value="M" ${gender==='M'?'selected':''}>Male</option><option value="F" ${gender==='F'?'selected':''}>Female</option></select></div>
+    <div class="field"><label>Residential status</label><select id="es_residential" onchange="refreshEditHouseOptions()" required><option value="">Select status</option><option value="Boarding" ${residential==='Boarding'?'selected':''}>Boarding</option><option value="Day" ${residential==='Day'?'selected':''}>Day</option></select></div>
     <div class="field"><label>Admission No</label><input id="es_adm" value="${escapeAttr(s.adm)}"></div>
     <div class="field"><label>SMS Contact</label><input id="es_sms" value="${escapeAttr(s.sms)}"></div>
     <div class="field"><label>Programme</label><select id="es_prog" onchange="refreshEditClassOptions()">${progOpts}</select></div>
     <div class="field"><label>Class</label><select id="es_class">${classOpts}</select></div>
-    <div class="field"><label>House</label><select id="es_house">${houseOpts}</select></div>
+    <div class="field"><label>House</label><select id="es_house" data-current="${escapeAttr(s.houseId||'')}">${houseOpts}</select><div class="hint" id="es_house_hint">Only houses matching gender and residential status are shown.</div></div>
     <div class="field"><label>Registered</label><input value="${escapeAttr(s.reg)}" disabled style="opacity:.6"></div>
   </div></div>
   <div class="modal-foot"><button class="btn btn-danger" onclick="deleteStudent(${id})" style="margin-right:auto">Delete student</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveStudent(${id})">Save changes</button></div>`;
-  $('overlay').classList.add('show');
+  if(window.matchMedia('(min-width:1025px)').matches){const app=document.querySelector('.app');if(app)app.classList.remove('sidebar-hidden','sidebar-collapsed');}
+  $('overlay').classList.add('show','manage-student-editor');
+  requestAnimationFrame(positionManageStudentEditor);
 }
 async function deleteStudent(id){
   if(roGuard())return;
-  const s=students.find(x=>x.id===id);if(!s)return;
+  const s=managedStudentById(id);if(!s)return;
   const note=s.submitted?'\n\nNote: this student has ALREADY SUBMITTED their admission — deleting removes their submitted records too.':'';
   if(!confirm('Delete student '+s.name+' ('+s.index+')?\n\nThis removes the student record, their placement entry, payments and tokens.'+note+'\n\nThis cannot be undone.'))return;
   if(!confirm('Final confirmation — permanently delete '+s.name+'?'))return;
@@ -3191,7 +3240,9 @@ async function deleteStudent(id){
   if(!data||!data.ok){toast('Delete failed: '+((data&&data.error)||'unknown'));return;}
   // best-effort: remove the uploaded enrolment-form file from storage
   if(data.form_url || (Array.isArray(data.form_paths)&&data.form_paths.length)){ try{ const pathSet=new Set((data.form_paths||[]).map(function(path){return String(path||'').trim();}).filter(Boolean)); const m=String(data.form_url||'').match(/enrolment-forms\/(.+)$/); if(m) pathSet.add(decodeURIComponent(m[1])); const paths=Array.from(pathSet); if(paths.length) await sb.storage.from('enrolment-forms').remove(paths); }catch(e){} }
-  students=students.filter(x=>x.id!==id);
+  students=students.filter(x=>String(x._id)!==String(s._id));
+  MANAGE_STATE.rows=(MANAGE_STATE.rows||[]).filter(x=>String(x._id)!==String(s._id));
+  REG_STATE.rows=(REG_STATE.rows||[]).filter(x=>String(x._id)!==String(s._id));
   placement=placement.filter(x=>x.index!==s.index);
   payments=payments.filter(function(p){ return String(p.index||'')!==String(s.index); });
   if(data.finance_settled_adjusted&&SB_CFG){
@@ -3204,51 +3255,102 @@ async function deleteStudent(id){
 }
 async function saveStudent(id){
   if(roGuard())return;
-  const s=students.find(x=>x.id===id);if(!s)return;
+  const s=managedStudentById(id);if(!s)return;
   const newName=val('es_name').trim();
-  const newGender=val('es_gender');
+  const newGender=normalizeStudentGender(val('es_gender'));
+  const newResidential=normalizeResidentialStatus(val('es_residential'));
   const newAdm=val('es_adm').trim();
   const newSms=val('es_sms').trim();
   const newProgId=+val('es_prog');
   const newClassId=val('es_class')?+val('es_class'):null;
   const newHouseId=val('es_house')?+val('es_house'):null;
   if(!newName){toast('Name is required');return;}
+  if(!newGender){toast('Gender is required');return;}
+  if(!newResidential){toast('Residential status is required');return;}
+  if(newHouseId){
+    const selectedHouse=houseById(newHouseId);
+    const issue=houseAllocationIssue(selectedHouse);
+    if(issue){toast(issue);return;}
+    if(!houseEligibleForStudent(selectedHouse,{gender:newGender,res:newResidential})){toast('The selected house does not match the student gender and residential status.');return;}
+  }
+  const oldGender=normalizeStudentGender(s.gender);
+  const oldResidential=normalizeResidentialStatus(s.res);
+  const nextRecords=Object.assign({},s.rec||{},{residential_status:newResidential,residential:newResidential});
   const update={full_name:newName,gender:newGender,admission_no:newAdm,parent_phone:newSms||null,
     programme_id:pMap[newProgId]||null,
     class_id:newClassId?cMap[newClassId]:null,
-    house_id:newHouseId?hMap[newHouseId]:null};
+    house_id:newHouseId?hMap[newHouseId]:null,
+    records:nextRecords};
+  const placementUpdate=await sb.from('placement_list').update({gender:genderLabel(newGender),residential_status:newResidential}).eq('school_id',SB_SCHOOL.id).eq('index_number',s.index);
+  if(placementUpdate.error){toast('Save failed: '+placementUpdate.error.message);return;}
   const {error}=await sb.from('students').update(update).eq('id',s._id);
-  if(error){toast('Save failed: '+error.message);return;}
-  s.name=newName;s.gender=newGender;s.adm=newAdm||'—';s.sms=newSms||'—';
-  s.progId=newProgId;s.prog=cleanSmsText((progById(newProgId)||{}).name)||s.prog||'';s.classId=newClassId;s.houseId=newHouseId;
+  if(error){
+    await sb.from('placement_list').update({gender:genderLabel(oldGender),residential_status:oldResidential||null}).eq('school_id',SB_SCHOOL.id).eq('index_number',s.index);
+    toast('Save failed: '+error.message);return;
+  }
+  const copies=[...(students||[]),...(MANAGE_STATE.rows||[]),...(REG_STATE.rows||[])].filter(x=>String(x._id)===String(s._id));
+  copies.forEach(function(item){item.name=newName;item.gender=newGender;item.res=newResidential;item.adm=newAdm||'—';item.sms=newSms||'—';item.smsRaw=newSms||'';item.progId=newProgId;item.prog=cleanSmsText((progById(newProgId)||{}).name)||item.prog||'';item.classId=newClassId;item.houseId=newHouseId;item.rec=nextRecords;});
   notifyStudentPortalRefresh('student-update',{index:s.index});
   closeModal();renderStudents();toast('Student record saved');
 }
 
 /* ===== HOUSE & CLASS ALLOCATION ===== */
 let haSel=new Set(), caSel=new Set();
-function genderLabel(g){return g==='M'?'Male':g==='F'?'Female':(g||'—');}
-function houseMatchesGender(h,s){ if(!h||!h.gender) return true; const hg=String(h.gender).toLowerCase(); const sg=(s.gender==='M'?'male':s.gender==='F'?'female':''); return !sg||hg===sg; }
+function normalizeStudentGender(value){
+  const gender=String(value||'').trim().toLowerCase();
+  if(gender==='m'||gender==='male'||gender==='boy')return 'M';
+  if(gender==='f'||gender==='female'||gender==='girl')return 'F';
+  return '';
+}
+function normalizeResidentialStatus(value){
+  const residential=String(value||'').trim().toLowerCase();
+  if(residential==='boarding'||residential==='boarder'||residential==='resident'||residential==='b')return 'Boarding';
+  if(residential==='day'||residential==='day student'||residential==='d')return 'Day';
+  return '';
+}
+function genderLabel(g){const normalized=normalizeStudentGender(g);return normalized==='M'?'Male':normalized==='F'?'Female':(g||'—');}
+function houseAllocationIssue(h){
+  if(!h)return 'Pick a house';
+  if(!normalizeStudentGender(h.gender))return 'Set the house gender before assigning students.';
+  if(!normalizeResidentialStatus(h.rtype))return 'Set the house residential type before assigning students.';
+  if(!Number.isFinite(Number(h.priority))||Number(h.priority)<1)return 'Set a valid priority order for the house.';
+  if(!Number.isFinite(Number(h.cap))||Number(h.cap)<1)return 'Set a valid capacity for the house.';
+  return '';
+}
+function houseMatchesGender(h,s){return !!h&&normalizeStudentGender(h.gender)!==''&&normalizeStudentGender(h.gender)===normalizeStudentGender(s&&s.gender);}
+function houseMatchesResidential(h,s){return !!h&&normalizeResidentialStatus(h.rtype)!==''&&normalizeResidentialStatus(h.rtype)===normalizeResidentialStatus(s&&s.res);}
+function houseEligibleForStudent(h,s){return houseMatchesGender(h,s)&&houseMatchesResidential(h,s);}
+function allocationStudentOrder(a,b){
+  const indexDiff=String((a&&a.index)||'').localeCompare(String((b&&b.index)||''),undefined,{numeric:true,sensitivity:'base'});
+  return indexDiff||String((a&&a.name)||'').localeCompare(String((b&&b.name)||''),undefined,{sensitivity:'base'});
+}
 function fillSelKeep(sel,html){ if(!sel)return; const cur=sel.value; sel.innerHTML=html; if(cur&&[...sel.options].some(o=>o.value===cur)) sel.value=cur; }
 
 function renderHouseAlloc(){
   const sel=$('haHouse'); if(!sel)return;
-  fillSelKeep(sel, houses.length?houses.map(h=>`<option value="${h.id}">${escapeHtml(h.name)}${h.gender?' · '+escapeHtml(h.gender):''}${h.rtype?' · '+escapeHtml(h.rtype):''}</option>`).join(''):'<option value="">No houses</option>');
+  fillSelKeep(sel, houses.length?sortLocalHouses(houses).map(h=>`<option value="${h.id}">Priority ${safeHtml(housePriorityValue(h,'-'))} · ${escapeHtml(h.name)} · ${escapeHtml(h.gender||'Gender not set')} · ${escapeHtml(h.rtype||'Residential type not set')}</option>`).join(''):'<option value="">No houses</option>');
   const hid=+sel.value||0, h=houseById(hid), gf=val('haGender');
-  const members=students.filter(s=>s.houseId===hid);
-  const pool=students.filter(s=>!s.houseId && (!gf||s.gender===gf) && houseMatchesGender(h,s));
+  const members=students.filter(s=>s.houseId===hid).sort(allocationStudentOrder);
+  const pool=students.filter(s=>!s.houseId && (!gf||normalizeStudentGender(s.gender)===normalizeStudentGender(gf)) && houseEligibleForStudent(h,s)).sort(allocationStudentOrder);
+  const allowedIds=new Set(pool.map(s=>s.id));
+  [...haSel].forEach(id=>{if(!allowedIds.has(id))haSel.delete(id);});
   $('haCount').textContent=members.length;
-  $('haCap').textContent=h?('capacity '+(h.cap||'—')):'—';
+  $('haCap').textContent=h?('capacity '+(h.cap||'—')+(houseAllocationIssue(h)?' · configuration required':'')):'—';
   $('haUnCount').textContent=pool.length;
-  $('haMembers').innerHTML=members.length?members.map(s=>`<tr><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(genderLabel(s.gender),'&mdash;')}</td><td><div class="row-actions"><button class="act" onclick="haRemove(${s.id})">Remove</button></div></td></tr>`).join(''):emptyRow(4,'No students in this house yet.');
-  $('haPool').innerHTML=pool.length?pool.map(s=>`<tr><td><span class="checkbox ${haSel.has(s.id)?'on':''}" onclick="haToggle(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(genderLabel(s.gender),'&mdash;')}</td></tr>`).join(''):emptyRow(4,'All students have a house.');
+  $('haMembers').innerHTML=members.length?members.map(s=>`<tr><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(genderLabel(s.gender),'&mdash;')}</td><td>${safeHtml(normalizeResidentialStatus(s.res)||s.res,'&mdash;')}${houseEligibleForStudent(h,s)?'':' <span class="pill closed">Mismatch</span>'}</td><td><div class="row-actions"><button class="act" onclick="haRemove(${s.id})">Remove</button></div></td></tr>`).join(''):emptyRow(5,'No students in this house yet.');
+  $('haPool').innerHTML=pool.length?pool.map(s=>`<tr><td><span class="checkbox ${haSel.has(s.id)?'on':''}" onclick="haToggle(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td><td>${safeHtml(genderLabel(s.gender),'&mdash;')}</td><td>${safeHtml(normalizeResidentialStatus(s.res)||s.res,'&mdash;')}</td></tr>`).join(''):emptyRow(5,houseAllocationIssue(h)||'No matching unassigned students.');
 }
 function haToggle(id){haSel.has(id)?haSel.delete(id):haSel.add(id);renderHouseAlloc();}
 async function haAssignSelected(){
   if(roGuard())return;
   const hid=+val('haHouse')||0, h=houseById(hid); if(!h){toast('Pick a house');return;}
+  const issue=houseAllocationIssue(h); if(issue){toast(issue);return;}
   if(!haSel.size){toast('Select students to assign');return;}
-  const ids=[...haSel], uuids=ids.map(i=>students.find(s=>s.id===i)._id);
+  const selectedStudents=[...haSel].map(i=>students.find(s=>s.id===i)).filter(Boolean);
+  if(selectedStudents.some(s=>!houseEligibleForStudent(h,s))){toast('One or more selected students do not match the house gender and residential type.');renderHouseAlloc();return;}
+  const capacity=Math.max(Number(h.cap)||0,0), current=students.filter(s=>s.houseId===hid).length, room=Math.max(capacity-current,0);
+  if(selectedStudents.length>room){toast('Only '+room+' place'+(room===1?' is':'s are')+' available in '+h.name+'.');return;}
+  const ids=selectedStudents.map(s=>s.id), uuids=selectedStudents.map(s=>s._id);
   const {error}=await sb.from('students').update({house_id:hMap[hid]}).in('id',uuids);
   if(error){toast('Assign failed: '+error.message);return;}
   students.forEach(s=>{if(haSel.has(s.id))s.houseId=hid;});
@@ -3266,10 +3368,14 @@ async function haRemove(id){
 }
 async function haAutoFill(){
   if(roGuard())return;
+  if(STUDENT_CACHE_STATE.loading){toast('Student records are still loading. Please wait a moment.');return;}
+  if(!STUDENT_CACHE_STATE.loaded)await ensureStudentCache();
+  if(!STUDENT_CACHE_STATE.loaded)return;
   const hid=+val('haHouse')||0, h=houseById(hid); if(!h){toast('Pick a house');return;}
-  const cap=h.cap||1000000, cur=students.filter(s=>s.houseId===hid).length, room=cap-cur;
+  const issue=houseAllocationIssue(h); if(issue){toast(issue);return;}
+  const cap=Math.max(Number(h.cap)||0,0), cur=students.filter(s=>s.houseId===hid).length, room=cap-cur;
   if(room<=0){toast('House is full');return;}
-  const pool=students.filter(s=>!s.houseId && houseMatchesGender(h,s)).slice(0,room);
+  const pool=students.filter(s=>!s.houseId && houseEligibleForStudent(h,s)).sort(allocationStudentOrder).slice(0,room);
   if(!pool.length){toast('No matching unassigned students');return;}
   const uuids=pool.map(s=>s._id);
   const {error}=await sb.from('students').update({house_id:hMap[hid]}).in('id',uuids);
@@ -3278,6 +3384,30 @@ async function haAutoFill(){
   notifyStudentPortalRefresh('house-autofill',{indexes:pool.map(function(s){ return s.index; })});
   activityLog.unshift({time:'Just now',action:'Auto-filled '+pool.length+' students into '+h.name,by:(SB_ADMIN_NAME||'Admin')});
   renderHouseAlloc(); renderStats&&renderStats(); toast('Auto-filled '+pool.length+' students');
+}
+async function haAutoAssignAll(){
+  if(roGuard())return;
+  if(STUDENT_CACHE_STATE.loading){toast('Student records are still loading. Please wait a moment.');return;}
+  if(!STUDENT_CACHE_STATE.loaded)await ensureStudentCache();
+  if(!STUDENT_CACHE_STATE.loaded)return;
+  const orderedHouses=sortLocalHouses(houses).filter(h=>houseAllocationIssue(h)==='');
+  const skipped=houses.length-orderedHouses.length;
+  if(!orderedHouses.length){toast('Set a gender, residential type, priority and capacity for each house first.');return;}
+  let assigned=0; const assignedIndexes=[];
+  for(const h of orderedHouses){
+    const hid=h.id, capacity=Math.max(Number(h.cap)||0,0), current=students.filter(s=>s.houseId===hid).length, room=Math.max(capacity-current,0);
+    if(!room)continue;
+    const candidates=students.filter(s=>!s.houseId&&houseEligibleForStudent(h,s)).sort(allocationStudentOrder).slice(0,room);
+    if(!candidates.length)continue;
+    const {error}=await sb.from('students').update({house_id:hMap[hid]}).in('id',candidates.map(s=>s._id));
+    if(error){renderHouseAlloc();toast('Auto-assignment stopped at '+h.name+': '+error.message);return;}
+    candidates.forEach(s=>{s.houseId=hid;assignedIndexes.push(s.index);});
+    assigned+=candidates.length;
+  }
+  if(assignedIndexes.length)notifyStudentPortalRefresh('house-autoassign-all',{indexes:assignedIndexes});
+  activityLog.unshift({time:'Just now',action:'Auto-assigned '+assigned+' students by house priority, gender and residential status',by:(SB_ADMIN_NAME||'Admin')});
+  haSel.clear();renderHouseAlloc();renderStats&&renderStats();
+  toast(assigned?('Assigned '+assigned+' student'+(assigned===1?'':'s')+' in house priority order'+(skipped?' · '+skipped+' unconfigured house'+(skipped===1?' was':'s were')+' skipped':'')):('No eligible unassigned students were found'+(skipped?' · '+skipped+' unconfigured house'+(skipped===1?' was':'s were')+' skipped':'')));
 }
 
 function renderClassAlloc(){
@@ -3790,7 +3920,7 @@ function mapAdminStudentRow(row,index){
     verificationStatus:row.verification_status||'pending',verifiedAt:row.verified_at||'',verifiedBy:row.verified_by||'',verificationNotes:row.verification_notes||'',
     passportPhoto:row.passport_photo_url||'',reg:created.slice(0,10),submittedAt:row.submitted_at||'',personalDone:!!row.personal_done,programmeDone:!!row.programme_done,undertakingDone:!!row.undertaking_done,
     time:dt&&!isNaN(dt.getTime())?dt.toTimeString().slice(0,8):'-',sms:(row.records&&row.records.sms_contact)||row.parent_phone||'-',smsRaw:(row.records&&row.records.sms_contact)||row.parent_phone||'',prog:row.programme_name||'',enrol:(row.records&&row.records.enrolment_code)||'-',form:row.enrolment_form_url||null,
-    dob:(row.records&&row.records.dob)||'',parent:row.parent_name||(row.records&&row.records.guardian)||'-',res:(row.records&&((row.records.residential_status||row.records.residential)))||'-',rec:row.records||{},pay:row.payment_status||'unpaid',submitted:!!row.submitted_at,loggedIn:false};
+    dob:(row.records&&row.records.dob)||'',parent:row.parent_name||(row.records&&row.records.guardian)||'-',res:row.residential_status||(row.records&&((row.records.residential_status||row.records.residential)))||'-',rec:row.records||{},pay:row.payment_status||'unpaid',submitted:!!row.submitted_at,loggedIn:false};
 }
 async function loadRegisteredPage(reset){
   if(!SB_SCHOOL||!SB_SCHOOL.id) return;
@@ -4223,7 +4353,7 @@ document.addEventListener('input',function(e){
 });
 
 /* ===== MODAL / SIDEBAR ===== */
-function closeModal(){$('overlay').classList.remove('show');}
+function closeModal(){const overlay=$('overlay');overlay.classList.remove('show','manage-student-editor');overlay.style.removeProperty('--manage-editor-top');overlay.style.removeProperty('--manage-editor-left');overlay.style.removeProperty('--manage-editor-bottom');}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
 function resetAdminScroll(){
   window.scrollTo(0,0);
@@ -4963,18 +5093,6 @@ async function saveAcademicConfig(){
   toast('Admission configuration saved');
 }
 
-applyBulk=async function(){
-  const cl=val('bulkClass'),ho=val('bulkHouse');
-  if(!cl&&!ho){toast('Pick a class or house to assign');return;}
-  const ids=[...selected]; const uuids=ids.map(i=>students.find(s=>s.id===i)._id);
-  const patch={}; if(cl)patch.class_id=cMap[cl]; if(ho)patch.house_id=hMap[ho];
-  await sb.from('students').update(patch).in('id',uuids);
-  students.forEach(s=>{ if(selected.has(s.id)){ if(cl)s.classId=+cl; if(ho)s.houseId=+ho; } });
-  notifyStudentPortalRefresh('bulk-student-update',{indexes:studentIndexListFromIds(ids)});
-  activityLog.unshift({time:'Just now',action:'Bulk allocation on '+ids.length+' students',by:(SB_ADMIN_NAME||'Admin')});
-  clearSel(); renderStats(); toast('Updated '+ids.length+' students');
-};
-
 /* ===== SCHOOL USERS ===== */
 /* ===== DOCUMENT TEMPLATES ===== */
 let SCHOOL_CREST='data:image/png;base64,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';
@@ -5547,11 +5665,13 @@ openHouse=function(id){
   const gOpt=v=>((h.gender||'')===v?'selected':''); const rOpt=v=>((h.rtype||'')===v?'selected':'');
   crudModal(id?'Edit house':'Add house',
     `<div class="grid-2"><div class="field"><label>House name</label><input id="c_name" value="${escapeAttr(h.name)}"></div><div class="field"><label>Colour</label><input id="c_color" type="color" value="${escapeAttr(h.color)}"></div></div>
-     <div class="grid-2"><div class="field"><label>Gender</label><select id="c_gender"><option value="" ${gOpt('')}>Any</option><option value="Male" ${gOpt('Male')}>Male</option><option value="Female" ${gOpt('Female')}>Female</option></select></div><div class="field"><label>Residential type</label><select id="c_rtype"><option value="" ${rOpt('')}>Any</option><option value="Boarding" ${rOpt('Boarding')}>Boarding</option><option value="Day" ${rOpt('Day')}>Day</option></select></div></div>
+     <div class="grid-2"><div class="field"><label>Gender <span class="hint">— required</span></label><select id="c_gender" required><option value="" ${gOpt('')}>Select gender</option><option value="Male" ${gOpt('Male')}>Male</option><option value="Female" ${gOpt('Female')}>Female</option></select></div><div class="field"><label>Residential type <span class="hint">— required</span></label><select id="c_rtype" required><option value="" ${rOpt('')}>Select residential type</option><option value="Boarding" ${rOpt('Boarding')}>Boarding</option><option value="Day" ${rOpt('Day')}>Day</option></select></div></div>
      <div class="field"><label>Motto</label><input id="c_motto" value="${escapeAttr(h.motto||'')}"></div>
      <div class="grid-2"><div class="field" style="max-width:160px"><label>Priority order</label><input id="c_priority" type="number" min="1" step="1" value="${escapeAttr(priority)}"></div><div class="field" style="max-width:160px"><label>Capacity</label><input id="c_cap" type="number" value="${escapeAttr(h.cap)}"></div></div>`,
     async ()=>{ const name=val('c_name'); if(!name){toast('House name required');return;}
       const gender=val('c_gender'), rtype=val('c_rtype');
+      if(!gender){toast('Please select the house gender');$('c_gender')&&$('c_gender').focus();return;}
+      if(!rtype){toast('Please select Boarding or Day for this house');$('c_rtype')&&$('c_rtype').focus();return;}
       const priorityVal=Math.max(1,+val('c_priority')||0); if(!priorityVal){toast('Priority order must be 1 or higher');return;}
       const patch={name,color:val('c_color'),motto:val('c_motto'),capacity:+val('c_cap')||100,priority:priorityVal,gender,residential_type:rtype};
       const {data,error}=await invokeFnDetailed('manage-school-structure',{action:'house_save',school_id:SB_SCHOOL.id,id:id?h._id:null,patch});

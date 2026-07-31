@@ -34,15 +34,12 @@ function normalizeResidential(value: unknown): string {
 
 function genderMatches(houseGender: unknown, studentGender: string): boolean {
   const target = normalizeGender(houseGender);
-  if (!target || !studentGender) return true;
-  return target === studentGender;
+  return !!target && !!studentGender && target === studentGender;
 }
 
 function residentialMatches(houseResidential: unknown, studentResidential: string): boolean {
   const target = normalizeResidential(houseResidential);
-  if (studentResidential === "DAY") return target === "DAY";
-  if (studentResidential === "BOARDING") return !target || target === "BOARDING";
-  return true;
+  return !!target && !!studentResidential && target === studentResidential;
 }
 
 function parseFiniteNumber(value: unknown): number | null {
@@ -187,6 +184,12 @@ Deno.serve(async (req: Request) => {
   const placement = (placementRes.data ?? {}) as Record<string, unknown>;
   const studentGender = normalizeGender(student.gender || placement.gender);
   const residential = normalizeResidential(placement.residential_status);
+  if (!studentGender) {
+    return json({ ok: false, status: "gender_required", error: "gender_required", message: "Set the student's gender before assigning a house." }, 409);
+  }
+  if (!residential) {
+    return json({ ok: false, status: "residential_required", error: "residential_required", message: "Set the student's residential status to Boarding or Day before assigning a house." }, 409);
+  }
 
   const occupancy = new Map<string, number>();
   for (const row of occupancyRes.data ?? []) {
@@ -197,21 +200,18 @@ Deno.serve(async (req: Request) => {
   }
 
   const allHouses = (housesRes.data ?? []) as Record<string, unknown>[];
-  let eligible = allHouses.filter((house) => genderMatches(house.gender, studentGender));
-
-  if (residential === "DAY") {
-    eligible = eligible.filter((house) => normalizeResidential(house.residential_type) === "DAY");
-    if (!eligible.length) {
-      return json({
-        ok: false,
-        status: "no_day_house",
-        error: "no_day_house",
-        message: "No day house is configured for this school yet.",
-      }, 409);
-    }
-  } else if (residential === "BOARDING") {
-    const matched = eligible.filter((house) => residentialMatches(house.residential_type, residential));
-    if (matched.length) eligible = matched;
+  const eligible = allHouses.filter((house) =>
+    genderMatches(house.gender, studentGender) &&
+    residentialMatches(house.residential_type, residential) &&
+    housePriorityRank(house) !== Number.MAX_SAFE_INTEGER
+  );
+  if (!eligible.length) {
+    return json({
+      ok: false,
+      status: "no_matching_house",
+      error: "no_matching_house",
+      message: `No ${residential.toLowerCase()} house is configured for ${studentGender === "MALE" ? "male" : "female"} students yet.`,
+    }, 409);
   }
 
   const ranked = eligible
@@ -220,11 +220,10 @@ Deno.serve(async (req: Request) => {
       const capacityValue = Number(house.capacity ?? 0);
       const capacity = Number.isFinite(capacityValue) ? capacityValue : 0;
       const occupied = occupancy.get(houseId) ?? 0;
-      const unlimited = capacity <= 0;
-      const seats = unlimited ? Number.MAX_SAFE_INTEGER : Math.max(capacity - occupied, 0);
-      return { house, houseId, occupied, capacity, seats, unlimited };
+      const seats = Math.max(capacity - occupied, 0);
+      return { house, houseId, occupied, capacity, seats };
     })
-    .filter((entry) => entry.unlimited || entry.seats > 0)
+    .filter((entry) => entry.capacity > 0 && entry.seats > 0)
     .sort(houseOrderCompare);
 
   if (!ranked.length) {
@@ -236,32 +235,25 @@ Deno.serve(async (req: Request) => {
     }, 409);
   }
 
-  let chosen = ranked[0];
+  let chosen: (typeof ranked)[number] | null = null;
+  for (const candidate of ranked) {
+    const { data: updatedRows, error: updateError } = await admin
+      .from("students")
+      .update({ house_id: candidate.houseId })
+      .eq("id", String(student.id))
+      .is("house_id", null)
+      .select("id, house_id");
 
-  if (residential === "BOARDING" && ranked.length > 1) {
-    const rankedHouseIds = new Set(ranked.map((entry) => entry.houseId));
-    const assignedCountAcrossEligibleHouses = (occupancyRes.data ?? []).reduce((total, row) => {
-      const record = row as Record<string, unknown>;
-      const houseId = safeText(record.house_id);
-      if (!houseId || !rankedHouseIds.has(houseId)) return total;
-      return total + 1;
-    }, 0);
+    if (updateError) {
+      if (updateError.code === "23514" && /capacity/i.test(updateError.message ?? "")) continue;
+      return json({ ok: false, error: "assign_failed", message: updateError.message }, 500);
+    }
 
-    chosen = ranked[assignedCountAcrossEligibleHouses % ranked.length];
-  }
+    if (updatedRows?.length) {
+      chosen = candidate;
+      break;
+    }
 
-  const { data: updatedRows, error: updateError } = await admin
-    .from("students")
-    .update({ house_id: chosen.houseId })
-    .eq("id", String(student.id))
-    .is("house_id", null)
-    .select("id, house_id");
-
-  if (updateError) {
-    return json({ ok: false, error: "assign_failed", message: updateError.message }, 500);
-  }
-
-  if (!updatedRows || !updatedRows.length) {
     const { data: currentStudent } = await admin
       .from("students")
       .select("house_id")
@@ -283,7 +275,10 @@ Deno.serve(async (req: Request) => {
         house_name: safeText(currentHouse?.name),
       });
     }
-    return json({ ok: false, error: "assign_failed", message: "Could not update the student house." }, 500);
+  }
+
+  if (!chosen) {
+    return json({ ok: false, status: "no_available_house", error: "no_available_house", message: "All matching houses have reached capacity." }, 409);
   }
 
   return json({
@@ -296,6 +291,6 @@ Deno.serve(async (req: Request) => {
     house_name: safeText(chosen.house.name),
     gender: studentGender,
     residential,
-    allocation_mode: residential === "DAY" ? "day-house" : "gender-round-robin",
+    allocation_mode: "priority-gender-residential",
   });
 });
