@@ -126,10 +126,52 @@ function studentMatchesQuery(student: JsonRecord, query: string) {
 const schoolContextCache = new Map<string, { expiresAt: number; value: Awaited<ReturnType<typeof loadSchoolContext>> }>();
 const verificationSearchCache = new Map<string, { expiresAt: number; value: unknown }>();
 const verifiedListCache = new Map<string, { expiresAt: number; value: unknown }>();
+const verificationSummaryCache = new Map<string, { expiresAt: number; value: unknown }>();
 
 function clearVerificationCaches() {
   verificationSearchCache.clear();
   verifiedListCache.clear();
+  verificationSummaryCache.clear();
+}
+
+async function verificationSummary(admin: ReturnType<typeof createClient>, schoolId: string) {
+  const cached = verificationSummaryCache.get(schoolId);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  const baseQuery = () => admin
+    .from("students")
+    .select("id", { count: "exact", head: true })
+    .eq("school_id", schoolId)
+    .not("submitted_at", "is", null)
+    .or("status.is.null,status.neq.rejected");
+
+  const [submittedResult, pendingResult, incompleteResult, verifiedResult] = await Promise.all([
+    baseQuery(),
+    baseQuery().or("verification_status.is.null,verification_status.eq.pending"),
+    baseQuery().eq("verification_status", "documents_incomplete"),
+    baseQuery().eq("verification_status", "verified"),
+  ]);
+  const error = submittedResult.error || pendingResult.error || incompleteResult.error || verifiedResult.error;
+  if (error) throw new Error("Could not load verification totals.");
+
+  const pending = pendingResult.count ?? 0;
+  const documentsIncomplete = incompleteResult.count ?? 0;
+  const value = {
+    ok: true,
+    summary: {
+      submitted: submittedResult.count ?? 0,
+      pending,
+      documents_incomplete: documentsIncomplete,
+      actionable: pending + documentsIncomplete,
+      verified: verifiedResult.count ?? 0,
+    },
+  };
+  verificationSummaryCache.set(schoolId, { expiresAt: Date.now() + 10_000, value });
+  if (verificationSummaryCache.size > 500) {
+    const oldest = verificationSummaryCache.keys().next().value;
+    if (oldest) verificationSummaryCache.delete(oldest);
+  }
+  return value;
 }
 
 function residentialStatus(student: JsonRecord, placement: JsonRecord) {
@@ -259,7 +301,8 @@ async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId
     .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,records")
     .eq("school_id", schoolId)
     .not("submitted_at", "is", null)
-    .neq("status", "rejected")
+    .or("status.is.null,status.neq.rejected")
+    .in("verification_status", ["pending", "documents_incomplete"])
     .order("submitted_at", { ascending: false });
   const search = sanitizeSearch(query);
   if (search) {
@@ -399,6 +442,10 @@ Deno.serve(async (req: Request) => {
     if (action === 'search') {
       if (!hasPerm(profile, 'verify_students')) return json({ ok: false, error: 'forbidden', message: 'You do not have permission to verify students.' }, 403);
       return json(await searchCandidates(admin, schoolId, safeText(body.query)));
+    }
+
+    if (action === 'summary') {
+      return json(await verificationSummary(admin, schoolId));
     }
 
     if (action === 'list_verified') {
