@@ -909,7 +909,23 @@
   body #s-login .qa-tutorial-video-details{padding:18px}
   body #s-login .qa-site-footer{border-top:1px solid #001619!important;background:#fff!important}
   body #s-login .qa-footer-inner{width:min(1200px,calc(100% - 32px));margin:0 auto;padding:24px 0;display:flex;align-items:center;justify-content:space-between;gap:20px;font-size:13px}
-  body #s-login .admission-closed-view{margin:44px auto;width:min(760px,calc(100% - 32px))}
+  body #s-login .admission-closed-view{
+    align-self:start;
+    width:100%;
+    min-width:0;
+    max-width:none;
+    margin:0;
+    padding:20px;
+    box-sizing:border-box;
+  }
+  body #s-login .admission-closed-image{
+    width:min(100%,430px);
+    max-width:430px;
+    height:auto;
+    max-height:610px;
+    object-fit:contain;
+  }
+  body #s-login .admission-closed-change{width:min(100%,264px);min-width:0}
   @media(max-width:980px){
     body #s-login .qa-page-shell{grid-template-columns:1fr}
     body #s-login .qa-hero-panel{min-height:auto}
@@ -930,6 +946,9 @@
     body #s-login .qa-hero-footer .qa-btn{width:100%}
     body #s-login .login-token-row{grid-template-columns:1fr}
     body #s-login .qa-footer-inner{flex-direction:column;text-align:center}
+    body #s-login .admission-closed-view{padding:14px;border-radius:18px!important}
+    body #s-login .admission-closed-image{width:min(100%,380px);max-height:none}
+    body #s-login .admission-closed-change{width:100%}
   }
   body #s-login select,
   body #s-login option,
@@ -1155,12 +1174,12 @@
         </div>
       </div>
     </section>
-  </main>
 
-  <section class="admission-closed-view" id="admissionClosedView" aria-label="Admission closed" hidden>
-    <img class="admission-closed-image" src="admission-closed.png" alt="Admission closed. Thank you to all applicants and parents for your interest and support.">
-    <button class="btn btn-primary admission-closed-change" type="button" onclick="chooseAnotherLoginSchool()">Choose another school</button>
-  </section>
+    <section class="admission-closed-view" id="admissionClosedView" aria-label="Admission closed" hidden>
+      <img class="admission-closed-image" src="admission-closed.png" alt="Admission closed. Thank you to all applicants and parents for your interest and support.">
+      <button class="btn btn-primary admission-closed-change" type="button" onclick="chooseAnotherLoginSchool()">Choose another school</button>
+    </section>
+  </main>
 
   <div class="qa-tutorial-modal" id="tutorialModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
     <div class="qa-tutorial-modal-overlay" data-close-tutorial></div>
