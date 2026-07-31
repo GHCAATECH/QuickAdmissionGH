@@ -1,0 +1,88 @@
+:root {
+  --system-footer-height: 46px;
+}
+
+body.system-footer-page > footer.system-footer {
+  display: flex !important;
+  visibility: visible !important;
+  position: fixed !important;
+  inset: auto 0 0 !important;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  min-height: var(--system-footer-height) !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 10px 16px max(10px, env(safe-area-inset-bottom)) !important;
+  overflow: visible !important;
+  transform: none !important;
+  border: 0 !important;
+  border-top: 1px solid #002b4c !important;
+  background: #c0ebff !important;
+  color: #002b4c !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  z-index: 6001 !important;
+}
+
+body.system-footer-page > footer.system-footer *,
+body.system-footer-page > footer.system-footer p,
+body.system-footer-page > footer.system-footer span {
+  margin: 0 !important;
+  color: #002b4c !important;
+  -webkit-text-fill-color: #002b4c !important;
+}
+
+body.system-footer-page > .system-footer-spacer {
+  display: block !important;
+  visibility: hidden !important;
+  width: 100% !important;
+  height: calc(
+    var(--system-footer-height) + env(safe-area-inset-bottom)
+  ) !important;
+  min-height: calc(
+    var(--system-footer-height) + env(safe-area-inset-bottom)
+  ) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 auto;
+  pointer-events: none;
+}
+
+body.system-footer-page .sidebar,
+body.system-footer-page .psidebar {
+  padding-bottom: calc(
+    var(--system-footer-height) + 20px + env(safe-area-inset-bottom)
+  ) !important;
+}
+
+/* Admin login layouts previously forced their body footer back into flow. */
+body.system-footer-page:has(#authGate) > footer.system-footer {
+  position: fixed !important;
+  inset: auto 0 0 !important;
+  margin: 0 !important;
+}
+
+body.system-footer-page:has(#authGate) #authGate {
+  min-height: calc(100vh - var(--system-footer-height)) !important;
+  min-height: calc(100dvh - var(--system-footer-height)) !important;
+}
+
+@media (max-width: 480px) {
+  body.system-footer-page > footer.system-footer {
+    padding-right: 12px !important;
+    padding-left: 12px !important;
+    font-size: 11px;
+  }
+}
+
+@media print {
+  body.system-footer-page > footer.system-footer,
+  body.system-footer-page > .system-footer-spacer {
+    display: none !important;
+  }
+}
