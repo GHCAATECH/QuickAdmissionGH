@@ -828,7 +828,7 @@
             <div class="finance-rate-note">Request form comes next. Transaction charge estimated at 1%.</div>
           </div>
           <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table">
-            <thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">Claims Paid /<br>Submitted</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Amount Due</th><th>Claim Status</th><th><span class="finance-head-stack">Claim Payments<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead>
+            <thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">Successful Payments /<br>Placement Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Amount Due</th><th>Claim Status</th><th><span class="finance-head-stack">Claim Payments<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead>
             <tbody id="finRows"></tbody>
           </table></div>
         </div>
@@ -1052,27 +1052,20 @@ function settledStudentCount(raw,maxCount){
 }
 function completedFinancePaymentCount(source,schoolId){
   const seen=new Set();
-  const eligible=students.filter(function(st){ return (schoolId==null||st.schoolId===schoolId)&&hasSubmittedPersonalRecord(st); });
-  const eligibleIds=new Set(eligible.map(function(st){ return st&&st._id?String(st._id):''; }).filter(Boolean));
-  const eligibleIndexes=new Set(eligible.map(function(st){ return String(st&&st.index||'').trim(); }).filter(Boolean));
   (source||[]).forEach(function(payment){
     const status=String(payment&&payment.status||'').trim().toLowerCase();
-    if(!['completed','success','paid'].includes(status)) return;
+    if(!['completed','success','successful','paid'].includes(status)) return;
     if(schoolId!=null&&payment.schoolId!==schoolId) return;
     const index=String(payment&&payment.index||'').trim();
-    if(payment&&payment.studentId){
-      if(!eligibleIds.has(String(payment.studentId))) return;
-    } else if(index&&index!=='—'&&index!=='-'){
-      if(!eligibleIndexes.has(index)) return;
-    } else {
-      return;
-    }
+    const reference=String(payment&&payment.txn||'').trim();
     const key=(payment&&payment.studentId)
       ? 'student:'+String(payment.studentId)
       : (index&&index!=='—'&&index!=='-')
         ? 'school-index:'+String(payment.schoolId)+':'+index
-        : 'reference:'+String(payment&&payment.txn||'').trim();
-    if(key!=='reference:') seen.add(key);
+        : reference
+          ? 'reference:'+reference
+          : '';
+    if(key) seen.add(key);
   });
   return seen.size;
 }
@@ -1089,8 +1082,8 @@ function financeSettlementForSchool(s){
     return ['submitted','personalDone','programmeDone','undertakingDone','submittedAt'].some(function(k){ return typeof st[k]!=='undefined'; });
   });
   const registered=Math.max(hasCompletionFlag ? schoolStudents.filter(hasSubmittedPersonalRecord).length : Number(s.students||0),0);
-  const total=Math.max(Number(s.placements||0),registered);
   const completedStudents=completedFinancePaymentCount(payments,s.id);
+  const total=Math.max(Number(s.placements||0),registered,completedStudents);
   const paidStudents=settledStudentCount(s&&s.financeSettledStudents,completedStudents);
   const dueStudents=Math.max(completedStudents-paidStudents,0);
   const pendingPlacements=Math.max(total-registered,0);
@@ -1100,7 +1093,6 @@ function financeSettlementForSchool(s){
   const headCharge=round2(headGross*FINANCE_CHARGE_RATE);
   const totalGross=round2(dueStudents*FINANCE_TOTAL_RATE);
   const paidAmount=round2(paidStudents*FINANCE_TOTAL_RATE);
-  const unpaidSubmittedClaims=Math.max(registered-paidStudents,0);
   return {
     registered:registered,
     total:total,
@@ -1118,8 +1110,7 @@ function financeSettlementForSchool(s){
     completedAmount:round2(completedStudents*FINANCE_TOTAL_RATE),
     hasHistory:paidStudents>0,
     pendingPlacements:pendingPlacements,
-    unpaidSubmittedClaims:unpaidSubmittedClaims,
-    claimStatus:registered<=0?'NO SUBMITTED':(paidStudents<=0?'UNPAID':(unpaidSubmittedClaims<=0?'PAID':'PARTIAL'))
+    claimStatus:completedStudents<=0?'NO PAYMENT':(paidStudents<=0?'UNPAID':(dueStudents<=0?'PAID':'PARTIAL'))
   };
 }
 function financeClaimStatusClass(status){
@@ -1557,12 +1548,12 @@ function renderFinance(){
     return;
   }
   const summary=schools.map(financeSettlementForSchool);
-  const totalRegistered=summary.reduce((a,s)=>a+s.registered,0);
+  const totalSuccessful=summary.reduce((a,s)=>a+s.completedStudents,0);
   const totalDue=summary.reduce((a,s)=>a+s.dueStudents,0);
   const totalPaidStudents=summary.reduce((a,s)=>a+s.paidStudents,0);
   const totalPaidAmount=round2(summary.reduce((a,s)=>a+s.paidAmount,0));
   const stats=[
-    {lbl:'Registered Students',val:fmt(totalRegistered),ico:'users',delta:'submitted across all schools',flat:true},
+    {lbl:'Successful Student Payments',val:fmt(totalSuccessful),ico:'users',delta:'unique completed payments across all schools',flat:true},
     {lbl:'Due Successful Payments',val:fmt(totalDue),ico:'door',delta:'unclaimed paid-token records',flat:true},
     {lbl:'Successful Payments Paid',val:fmt(totalPaidStudents),ico:'school',delta:'already settled',flat:true},
     {lbl:'Amount Paid',val:totalPaidAmount,cur:true,ico:'cash',delta:'IT + Head successful-payment share paid so far',flat:true},
@@ -1573,7 +1564,7 @@ function renderFinance(){
   }).join('');
   $('finRows').innerHTML=schools.length?schools.map(function(s,idx){
     const f=financeSettlementForSchool(s);
-    const registeredLabel=fmt(f.paidStudents)+' Out of '+fmt(f.registered);
+    const successfulPaymentLabel=fmt(f.completedStudents)+' Out of '+fmt(f.total);
     const placementGapHtml=f.pendingPlacements>0
       ? `<div class="finance-summary-sub">${safeHtml(fmt(f.pendingPlacements))} placement student(s) not submitted yet</div>`
       : '';
@@ -1582,7 +1573,7 @@ function renderFinance(){
       ? `<div class="finance-action-note">${safeHtml(fmt(f.dueStudents))} remaining</div>
           <button class="btn btn-primary btn-sm finance-request-btn" onclick="printSettlementRequest(${s.id})">Print Request Form</button>
           <button class="btn btn-ghost btn-sm finance-request-btn" onclick="openFinanceReset(${s.id})">${f.paidStudents>0?'Mark Remaining Paid':'Mark Claim as Paid'}</button>`
-      : `<div class="finance-summary-sub">${f.paidStudents>0?(f.unpaidSubmittedClaims>0?'No successful payments pending':'Paid in full'):'No successful payments to claim'}</div>`;
+      : `<div class="finance-summary-sub">${f.paidStudents>0?'Paid in full':'No successful payments to claim'}</div>`;
     return `<tr>
       <td><div class="finance-index mono">${idx+1}</div></td>
       <td>
@@ -1593,7 +1584,7 @@ function renderFinance(){
       </td>
       <td>
         <div class="finance-registered-block">
-          <div class="finance-registered-count">${safeHtml(registeredLabel)}</div>
+          <div class="finance-registered-count">${safeHtml(successfulPaymentLabel)}</div>
           ${submittedClaimsHtml}
           ${placementGapHtml}
           <div>
