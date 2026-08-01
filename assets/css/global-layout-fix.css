@@ -732,26 +732,26 @@ body.student-dashboard-active #s-app.screen.active .psidebar {
   }
 
   /* Shared school-admin and super-admin login shell. */
-  body.system-footer-page #authGate.gate-screen .qa-login-shell {
+  body.system-footer-page #authGate .qa-login-shell {
     width: min(1080px, 100%) !important;
     grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr) !important;
   }
 
-  body.system-footer-page #authGate.gate-screen :is(.qa-brand-panel, .qa-login-panel) {
+  body.system-footer-page #authGate :is(.qa-brand-panel, .qa-login-panel) {
     min-height: 0 !important;
     padding: 24px !important;
   }
 
-  body.system-footer-page #authGate.gate-screen .qa-brand-panel {
+  body.system-footer-page #authGate .qa-brand-panel {
     border-right: 1px solid #001619 !important;
     border-bottom: 0 !important;
   }
 
-  body.system-footer-page #authGate.gate-screen .qa-brand-panel h1 {
+  body.system-footer-page #authGate .qa-brand-panel h1 {
     font-size: 36px !important;
   }
 
-  body.system-footer-page #authGate.gate-screen .qa-brand-bottom {
+  body.system-footer-page #authGate .qa-brand-bottom {
     margin-top: 20px !important;
   }
 }
