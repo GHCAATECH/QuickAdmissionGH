@@ -242,7 +242,7 @@ table {
 }
 
 .app {
-  min-height: 100dvh !important;
+  min-height: 0 !important;
   height: auto !important;
 }
 

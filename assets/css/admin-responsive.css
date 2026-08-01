@@ -54,8 +54,7 @@ iframe {
 .admin-layout,
 .app {
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 0;
   overflow-x: hidden !important;
 }
 
@@ -69,7 +68,7 @@ iframe {
   flex-direction: column;
   min-width: 0;
   width: 100%;
-  min-height: 100dvh;
+  min-height: 0;
   overflow-x: hidden !important;
   overflow-y: visible !important;
 }
@@ -426,7 +425,7 @@ body > footer {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
     width: 100%;
-    min-height: 100dvh;
+    min-height: 0;
   }
 
   .admin-sidebar,
@@ -687,14 +686,14 @@ body > footer {
    header cannot disappear inside a second scroll container. */
 body:not(.auth-booting):not(.auth-gate-visible) > .app {
   height: auto !important;
-  min-height: calc(100dvh - var(--system-footer-height, 0px)) !important;
+  min-height: 0 !important;
   overflow: visible !important;
   align-items: start;
 }
 
 body:not(.auth-booting):not(.auth-gate-visible) > .app > .main {
   height: auto !important;
-  min-height: calc(100dvh - var(--system-footer-height, 0px)) !important;
+  min-height: 0 !important;
   overflow: visible !important;
 }
 
