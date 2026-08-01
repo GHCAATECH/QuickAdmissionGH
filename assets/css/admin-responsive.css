@@ -958,7 +958,8 @@ body > #overlay.overlay > .modal > .modal-body {
 /* Keep the Manage Student editor inside the visible admin workspace.
    The shared header, sidebar and system footer remain exposed around it. */
 body > #overlay.overlay.manage-student-editor,
-body > #overlay.overlay.verified-student-details {
+body > #overlay.overlay.verified-student-details,
+body > #overlay.overlay.class-subject-details {
   inset: var(--manage-editor-top, var(--header-height)) 0
     var(--manage-editor-bottom, var(--system-footer-height, 46px))
     var(--manage-editor-left, var(--sidebar-width)) !important;
@@ -981,9 +982,16 @@ body > #overlay.overlay.verified-student-details > .modal {
   border-radius: 18px !important;
 }
 
+body > #overlay.overlay.class-subject-details > .modal {
+  max-width: 620px !important;
+  max-height: 100% !important;
+  border-radius: 18px !important;
+}
+
 @media screen and (max-width: 1024px) {
   body > #overlay.overlay.manage-student-editor,
-  body > #overlay.overlay.verified-student-details {
+  body > #overlay.overlay.verified-student-details,
+  body > #overlay.overlay.class-subject-details {
     left: 0 !important;
     padding: 12px !important;
   }

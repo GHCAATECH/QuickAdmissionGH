@@ -1474,7 +1474,7 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260726-layout-fix-12">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260801-verified-details-workspace-19">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260801-class-subject-workspace-20">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260731-system-footer-2">
 <script src="../assets/js/global-layout-fix.js?v=20260731-admin-login-scroll-14" defer></script>
 <script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
@@ -2839,8 +2839,14 @@ function openClassSubjects(id){
   const items=classSubjectItems(c);
   const m=$('modal');
   m.innerHTML='<div class="modal-head"><div><h2>'+safeHtml(c.name,'Class')+' subject combination</h2><p>'+safeHtml(items.length)+' subject'+(items.length===1?'':'s')+'</p></div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body">'+(items.length?'<ol class="class-subject-modal-list">'+items.map(function(subject){return '<li>'+safeHtml(subject)+'</li>';}).join('')+'</ol>':'<div class="empty">No subjects have been added to this class.</div>')+'</div><div class="modal-foot"><button class="btn btn-primary" onclick="closeModal()">Close</button></div>';
-  $('overlay').classList.remove('manage-student-editor');
-  $('overlay').classList.add('show');
+  const overlay=$('overlay');
+  overlay.classList.remove('manage-student-editor','verified-student-details');
+  if(window.matchMedia('(min-width:1025px)').matches){
+    const app=document.querySelector('.app');
+    if(app)app.classList.remove('sidebar-hidden','sidebar-collapsed');
+  }
+  overlay.classList.add('show','class-subject-details');
+  requestAnimationFrame(positionManageStudentEditor);
 }
 function delItem(type,id){
   const map={prog:[programmes,'programme'],house:[houses,'house'],class:[classes,'class']};
@@ -3230,7 +3236,7 @@ function refreshEditHouseOptions(){
   if(hint) hint.textContent=sel.options.length>1?'Only houses matching gender and residential status are shown.':'No configured house matches this gender and residential status.';
 }
 function positionManageStudentEditor(){
-  const overlay=$('overlay'); if(!overlay||(!overlay.classList.contains('manage-student-editor')&&!overlay.classList.contains('verified-student-details')))return;
+  const overlay=$('overlay'); if(!overlay||(!overlay.classList.contains('manage-student-editor')&&!overlay.classList.contains('verified-student-details')&&!overlay.classList.contains('class-subject-details')))return;
   const topbar=document.querySelector('.topbar'), sidebar=$('sidebar'), footer=document.querySelector('body > footer.system-footer');
   const desktop=window.matchMedia('(min-width:1025px)').matches;
   const top=topbar?Math.max(0,topbar.getBoundingClientRect().bottom):0;
@@ -4432,7 +4438,7 @@ document.addEventListener('input',function(e){
 });
 
 /* ===== MODAL / SIDEBAR ===== */
-function closeModal(){const overlay=$('overlay');overlay.classList.remove('show','manage-student-editor','verified-student-details');overlay.style.removeProperty('--manage-editor-top');overlay.style.removeProperty('--manage-editor-left');overlay.style.removeProperty('--manage-editor-bottom');}
+function closeModal(){const overlay=$('overlay');overlay.classList.remove('show','manage-student-editor','verified-student-details','class-subject-details');overlay.style.removeProperty('--manage-editor-top');overlay.style.removeProperty('--manage-editor-left');overlay.style.removeProperty('--manage-editor-bottom');}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
 function resetAdminScroll(){
   window.scrollTo(0,0);

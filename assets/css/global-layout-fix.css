@@ -611,3 +611,101 @@ body.student-dashboard-active #s-app.screen.active .psidebar {
       env(safe-area-inset-bottom)
   ) !important;
 }
+
+/* Class subject preview and popup. Keep the action label readable and make
+   the popup an opaque, bounded card instead of inheriting translucent cards. */
+body .cls-subject-more {
+  background: #002b4c !important;
+  color: #c0ebff !important;
+  -webkit-text-fill-color: #c0ebff !important;
+  border: 1px solid #002b4c !important;
+}
+
+body .cls-subject-more:hover,
+body .cls-subject-more:focus-visible {
+  background: #001d33 !important;
+  color: #c0ebff !important;
+  -webkit-text-fill-color: #c0ebff !important;
+}
+
+body .subject-combo-overlay {
+  z-index: 45 !important;
+  padding: max(76px, calc(var(--portal-topbar-height, 61px) + 15px)) 14px
+    calc(var(--portal-footer-height, 46px) + 15px) !important;
+  background: rgba(0, 43, 76, 0.24) !important;
+  backdrop-filter: none !important;
+}
+
+body.student-dashboard-active .subject-combo-overlay {
+  inset: var(--portal-topbar-height, 61px) 0
+    calc(var(--portal-footer-height, 46px) + env(safe-area-inset-bottom))
+    0 !important;
+  align-items: center !important;
+  padding: 16px !important;
+}
+
+body .subject-combo-dialog,
+body .subject-combo-head,
+body .subject-combo-list {
+  background: #c0ebff !important;
+  color: #002b4c !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+}
+
+body .subject-combo-dialog {
+  width: min(560px, 100%) !important;
+  max-height: calc(
+    100dvh - var(--portal-topbar-height, 61px) -
+      var(--portal-footer-height, 46px) - 30px
+  ) !important;
+  box-shadow: 0 24px 54px -24px rgba(0, 43, 76, 0.62) !important;
+}
+
+body .subject-combo-list li {
+  background: #d8f3ff !important;
+  color: #002b4c !important;
+  opacity: 1 !important;
+}
+
+body .subject-combo-close,
+body .subject-combo-close:hover,
+body .subject-combo-close:focus-visible {
+  background: #002b4c !important;
+  color: #c0ebff !important;
+  -webkit-text-fill-color: #c0ebff !important;
+}
+
+@media screen and (min-width: 1025px) {
+  body.student-dashboard-active .subject-combo-overlay {
+    left: 240px !important;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  body .subject-combo-overlay {
+    align-items: center !important;
+    padding: calc(var(--portal-topbar-height, 61px) + 10px) 10px
+      calc(var(--portal-footer-height, 46px) + 10px) !important;
+  }
+
+  body.student-dashboard-active .subject-combo-overlay {
+    padding: 10px !important;
+  }
+
+  body .subject-combo-dialog {
+    max-height: calc(
+      100dvh - var(--portal-topbar-height, 61px) -
+        var(--portal-footer-height, 46px) - 20px
+    ) !important;
+    border-radius: 12px !important;
+  }
+
+  body .subject-combo-head {
+    padding: 14px !important;
+  }
+
+  body .subject-combo-list {
+    padding: 14px 14px 14px 42px !important;
+  }
+}
