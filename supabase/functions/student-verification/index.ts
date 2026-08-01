@@ -123,7 +123,6 @@ function studentMatchesQuery(student: JsonRecord, query: string) {
   const haystack = [
     safeText(student.full_name),
     safeText(student.bece_index),
-    safeText(student.admission_no),
     safeText(student.parent_phone),
     safeText(student.permanent_admission_number),
     safeText(records.enrolment_code),
@@ -159,24 +158,21 @@ async function verificationSummary(admin: ReturnType<typeof createClient>, schoo
     .not("submitted_at", "is", null)
     .or("status.is.null,status.neq.rejected");
 
-  const [submittedResult, pendingResult, incompleteResult, verifiedResult] = await Promise.all([
+  const [submittedResult, pendingResult, verifiedResult] = await Promise.all([
     baseQuery(),
-    baseQuery().or("verification_status.is.null,verification_status.eq.pending"),
-    baseQuery().eq("verification_status", "documents_incomplete"),
+    baseQuery().or("verification_status.is.null,verification_status.eq.pending,verification_status.eq.documents_incomplete"),
     baseQuery().eq("verification_status", "verified"),
   ]);
-  const error = submittedResult.error || pendingResult.error || incompleteResult.error || verifiedResult.error;
+  const error = submittedResult.error || pendingResult.error || verifiedResult.error;
   if (error) throw new Error("Could not load verification totals.");
 
   const pending = pendingResult.count ?? 0;
-  const documentsIncomplete = incompleteResult.count ?? 0;
   const value = {
     ok: true,
     summary: {
       submitted: submittedResult.count ?? 0,
       pending,
-      documents_incomplete: documentsIncomplete,
-      actionable: pending + documentsIncomplete,
+      actionable: pending,
       verified: verifiedResult.count ?? 0,
     },
   };
@@ -218,7 +214,6 @@ function toStudentSummary(student: JsonRecord, maps: { programmes: Map<string,st
     house_id: safeText(student.house_id),
     full_name: safeText(student.full_name),
     bece_index: safeText(student.bece_index),
-    application_number: safeText(student.admission_no),
     permanent_admission_number: safeText(student.permanent_admission_number),
     gender: safeText(student.gender || records.gender || placement.gender),
     programme: maps.programmes.get(safeText(student.programme_id)) ?? safeText(
@@ -239,7 +234,6 @@ function toStudentSummary(student: JsonRecord, maps: { programmes: Map<string,st
     verified_at: safeText(student.verified_at),
     verified_by: verifiedById,
     verified_by_name: maps.users.get(verifiedById) ?? "",
-    verification_notes: safeText(student.verification_notes),
     passport_photo_url: studentText(records,["passport_photo_url","photo_url"]) || safeText(student.passport_photo_url),
     passport_photo_path: studentText(records,["passport_photo_path"]) || storageObjectPath(studentText(records,["passport_photo_url","photo_url"]) || safeText(student.passport_photo_url)),
     enrolment_code: safeText(records.enrolment_code),
@@ -312,7 +306,7 @@ async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId
   if (cached && cached.expiresAt > Date.now()) return cached.value;
   let studentQuery = admin
     .from("students")
-    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,records")
+    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,records")
     .eq("school_id", schoolId)
     .not("submitted_at", "is", null)
     .or("status.is.null,status.neq.rejected")
@@ -321,7 +315,7 @@ async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId
   const search = sanitizeSearch(query);
   if (search) {
     const escaped = search.replace(/[%_]/g, (value) => `\\${value}`);
-    studentQuery = studentQuery.or(`full_name.ilike.%${escaped}%,bece_index.ilike.%${escaped}%,admission_no.ilike.%${escaped}%,permanent_admission_number.ilike.%${escaped}%`);
+    studentQuery = studentQuery.or(`full_name.ilike.%${escaped}%,bece_index.ilike.%${escaped}%,permanent_admission_number.ilike.%${escaped}%`);
   }
   const { data, error } = await studentQuery.limit(100);
   if (error) throw new Error("Could not search students.");
@@ -353,7 +347,7 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
   const dateTo = safeText(filters.date_to);
   let verifiedQuery = admin
     .from("students")
-    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,admission_no,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,verification_notes,records")
+    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,records")
     .eq("school_id", schoolId)
     .eq("verification_status", "verified")
     .order("verified_at", { ascending: false })
@@ -369,7 +363,7 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
   let rows = (data ?? []).map((row) => toStudentSummary(row as JsonRecord, context));
   if (search) {
     const q = sanitizeSearch(search);
-    rows = rows.filter((row) => [row.full_name, row.bece_index, row.permanent_admission_number, row.application_number, row.student_phone, row.guardian_contact].join(" \n").toLowerCase().includes(q));
+    rows = rows.filter((row) => [row.full_name, row.bece_index, row.permanent_admission_number, row.student_phone, row.guardian_contact].join(" \n").toLowerCase().includes(q));
   }
   if (gender) rows = rows.filter((row) => normalizedGender(row.gender) === gender);
   if (programme) rows = rows.filter((row) => safeText(row.programme_id || row.programme) === programme || safeText(row.programme) === safeText(context.programmes.get(programme)));
@@ -446,7 +440,7 @@ Deno.serve(async (req: Request) => {
   if (!schoolId || !hasSchoolAccess(profile, schoolId)) {
     return json({ ok: false, error: 'forbidden', message: 'You cannot access verification records for this school.' }, 403);
   }
-  const actionLimit = ['verify', 'documents_incomplete'].includes(action) ? 60 : 120;
+  const actionLimit = action === 'verify' ? 60 : 120;
   if (!await rateAllowed(admin, `student-verification:${safeText(profile.id)}:${schoolId}:${action}`, actionLimit, 60)) {
     return json({ ok: false, error: 'rate_limited', message: 'Too many verification requests. Please wait a minute and try again.' }, 429);
   }
@@ -473,37 +467,7 @@ Deno.serve(async (req: Request) => {
       const data = await runRpc(admin, 'verify_campus_student_backend', {
         p_student_id: studentId,
         p_actor_id: profile.id,
-        p_notes: safeText(body.notes),
-        p_user_agent: req.headers.get('user-agent') ?? '',
-        p_ip_address: req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? '',
-      });
-      clearVerificationCaches();
-      return json(data);
-    }
-
-    if (action === 'documents_incomplete') {
-      if (!hasPerm(profile, 'verify_students')) return json({ ok: false, error: 'forbidden', message: 'You do not have permission to update verification status.' }, 403);
-      const studentId = safeText(body.student_id);
-      if (!studentId) return json({ ok: false, error: 'validation', message: 'student_id is required.' }, 400);
-      const data = await runRpc(admin, 'mark_student_documents_incomplete_backend', {
-        p_student_id: studentId,
-        p_actor_id: profile.id,
-        p_notes: safeText(body.notes),
-        p_user_agent: req.headers.get('user-agent') ?? '',
-        p_ip_address: req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? '',
-      });
-      clearVerificationCaches();
-      return json(data);
-    }
-
-    if (action === 'update_notes') {
-      if (!hasPerm(profile, 'edit_verification_notes')) return json({ ok: false, error: 'forbidden', message: 'You do not have permission to edit verification notes.' }, 403);
-      const studentId = safeText(body.student_id);
-      if (!studentId) return json({ ok: false, error: 'validation', message: 'student_id is required.' }, 400);
-      const data = await runRpc(admin, 'update_student_verification_notes_backend', {
-        p_student_id: studentId,
-        p_actor_id: profile.id,
-        p_notes: safeText(body.notes),
+        p_notes: '',
         p_user_agent: req.headers.get('user-agent') ?? '',
         p_ip_address: req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? '',
       });
@@ -521,7 +485,7 @@ Deno.serve(async (req: Request) => {
         p_student_id: studentId,
         p_actor_id: profile.id,
         p_reason: reason,
-        p_notes: safeText(body.notes),
+        p_notes: '',
         p_user_agent: req.headers.get('user-agent') ?? '',
         p_ip_address: req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? '',
       });
