@@ -54,7 +54,8 @@ iframe {
 .admin-layout,
 .app {
   width: 100%;
-  min-height: 0;
+  height: auto !important;
+  min-height: 0 !important;
   overflow-x: hidden !important;
 }
 
@@ -68,7 +69,8 @@ iframe {
   flex-direction: column;
   min-width: 0;
   width: 100%;
-  min-height: 0;
+  min-height: 0 !important;
+  height: auto !important;
   overflow-x: hidden !important;
   overflow-y: visible !important;
 }
