@@ -2679,7 +2679,9 @@ function normalizeTemplateHeader(tpl,kind){
   return out;
 }
 function resolveDocTemplate(kind,tpl){
-  const raw=normalizeTemplateHeader(tpl,kind).trim();
+  // A saved template is authoritative. Re-normalizing custom HTML here used to
+  // restore headers and fields that the school had removed in the editor.
+  const raw=String(tpl||'').trim();
   const fallback=kind==='letter'?LETTER_DEFAULT:RECORDS_DEFAULT;
   if(!raw) return fallback;
   if(kind==='letter' && raw===LEGACY_LETTER_DEFAULT) return LETTER_DEFAULT;

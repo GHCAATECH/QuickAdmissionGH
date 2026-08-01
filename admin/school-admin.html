@@ -5301,7 +5301,11 @@ function normalizeTemplateHeader(tpl,kind){
   return out;
 }
 function resolveTemplateDraft(kind,tpl){
-  const raw=normalizeTemplateHeader(tpl,kind).trim();
+  // Defaults and legacy upgrades belong only to the initial load. Once a school
+  // has saved a custom template, preserve its HTML exactly: normalizing it here
+  // would recreate headers and other content the administrator deliberately
+  // deleted.
+  const raw=String(tpl||'').trim();
   const fallback=kind==='letter'?TPL_DEFAULT.letter:TPL_DEFAULT.records;
   if(!raw) return fallback;
   if(kind==='letter' && raw===LEGACY_TPL_DEFAULT.letter) return TPL_DEFAULT.letter;
@@ -5310,6 +5314,20 @@ function resolveTemplateDraft(kind,tpl){
 }
 const TPL_VARS=['CREST','CREST_TOP','CREST_CENTER','SCHOOL_NAME','SCHOOL_ADDRESS','SCHOOL_PHONE','SCHOOL_EMAIL','HEADMASTER','ACADEMIC_YEAR','DATE','REPORTING_DATE','REPORTING_TIME','STUDENT_NAME','INDEX','ADMISSION_NO','PROGRAMME','CLASS','HOUSE','GENDER','RESIDENTIAL','AGGREGATE','CONTACT'];
 let TPL={letter:'',records:''}, tplCur='letter', tplRange=null, tplLoaded=false, tplBound=false, tplSelectedFloat=null;
+const TPL_EMPTY_MARKER='<div data-template-empty="1"></div>';
+function tplStoredHTML(html){
+  const raw=String(html||'').trim();
+  if(!raw) return TPL_EMPTY_MARKER;
+  const probe=document.createElement('div');
+  probe.innerHTML=raw;
+  const text=String(probe.textContent||'').replace(/\u200B/g,'').trim();
+  const visibleObject=probe.querySelector('img,table,hr,svg,canvas,[data-float="1"],.tpl-line-object');
+  return (text||visibleObject)?raw:TPL_EMPTY_MARKER;
+}
+function tplEditorDisplayHTML(html){
+  const raw=String(html||'').trim();
+  return raw===TPL_EMPTY_MARKER?'':raw;
+}
 function tplSelectionRoot(){
   if(tplSelectedFloat && tplSelectedFloat.getAttribute('data-float-type')==='text' && tplSelectedFloat.getAttribute('data-editing')==='1') return tplSelectedFloat;
   return $('tplEditor');
@@ -5588,12 +5606,10 @@ function renderTemplates(){
       if(!t) tplClearFloatSelection();
     });
     tplBound=true; }
-  TPL.letter=resolveTemplateDraft('letter',TPL.letter);
-  TPL.records=resolveTemplateDraft('records',TPL.records);
-  tplClearFloatSelection(); buildTplVars(); ed.innerHTML=TPL[tplCur]; tplUpgradeLegacyLayout(ed); tplApplyEditorFont();
+  tplClearFloatSelection(); buildTplVars(); ed.innerHTML=tplEditorDisplayHTML(TPL[tplCur]); tplUpgradeLegacyLayout(ed); tplApplyEditorFont();
 }
 function tplApplyEditorFont(){ const ed=$('tplEditor'); if(ed) ed.style.fontFamily=(tplCur==='records')?"'Times New Roman',Times,serif":'Georgia,serif'; }
-function tplTab(which){ TPL[tplCur]=tplEditorHTML(); tplCur=which; TPL[tplCur]=resolveTemplateDraft(tplCur,TPL[tplCur]); tplClearFloatSelection(); $('tplTabLetter').classList.toggle('active',which==='letter'); $('tplTabRecords').classList.toggle('active',which==='records'); buildTplVars(); $('tplEditor').innerHTML=TPL[tplCur]; tplUpgradeLegacyLayout($('tplEditor')); tplApplyEditorFont(); }
+function tplTab(which){ TPL[tplCur]=tplStoredHTML(tplEditorHTML()); tplCur=which; tplClearFloatSelection(); $('tplTabLetter').classList.toggle('active',which==='letter'); $('tplTabRecords').classList.toggle('active',which==='records'); buildTplVars(); $('tplEditor').innerHTML=tplEditorDisplayHTML(TPL[tplCur]); tplUpgradeLegacyLayout($('tplEditor')); tplApplyEditorFont(); }
 function tplFull(){ const c=$('tplCard'); const on=c.classList.toggle('tpl-fs'); $('tplFullBtn').textContent=on?'⤢ Exit full screen':'⛶ Full screen'; document.body.style.overflow=on?'hidden':''; }
 document.addEventListener('keydown',e=>{
   const tplCard=document.getElementById('tplCard');
@@ -5621,11 +5637,12 @@ document.addEventListener('keydown',e=>{
 });
 async function tplSave(){
   if(roGuard())return;
-  TPL[tplCur]=tplEditorHTML();
-  TPL.letter=resolveTemplateDraft('letter',TPL.letter);
-  TPL.records=resolveTemplateDraft('records',TPL.records);
+  TPL[tplCur]=tplStoredHTML(tplEditorHTML());
   const tplRes=await invokeFnDetailed('manage-school-settings',{action:'templates',school_id:SB_SCHOOL.id,patch:{letter_template:TPL.letter,records_template:TPL.records}});
   if(tplRes.error||(tplRes.data&&tplRes.data.ok===false)){toast('Could not save: '+((tplRes.data&&tplRes.data.message)||(tplRes.error&&tplRes.error.message)||'error'));return;}
+  const savedCfg=(tplRes.data&&tplRes.data.config)||{};
+  if(typeof savedCfg.letter_template==='string') TPL.letter=savedCfg.letter_template;
+  if(typeof savedCfg.records_template==='string') TPL.records=savedCfg.records_template;
   if(SB_CFG){SB_CFG.letter_template=TPL.letter;SB_CFG.records_template=TPL.records;}
   notifyStudentPortalRefresh('template-save');
   toast('Template saved · students will see it on their printouts');
@@ -5643,8 +5660,7 @@ function tplSampleTable(){
     +'</table>';
 }
 function tplPreview(){
-  TPL[tplCur]=tplEditorHTML();
-  TPL[tplCur]=resolveTemplateDraft(tplCur,TPL[tplCur]);
+  TPL[tplCur]=tplStoredHTML(tplEditorHTML());
   const S=(SB_SCHOOL&&SB_SCHOOL.name)||'Senior High School';
   const _cr=(typeof SCHOOL_CREST!=='undefined'&&SCHOOL_CREST)||(SB_SCHOOL&&SB_SCHOOL.crest_url)||'';
   const sample={CREST:_cr?('<img src="'+_cr+'" style="width:90px;height:auto;display:block;margin:0 auto 4px" alt="">'):'',CREST_TOP:_cr?('<img src="'+_cr+'" style="width:54px;height:auto;display:block" alt="">'):'',CREST_CENTER:_cr?('<img src="'+_cr+'" style="width:148px;height:auto;display:block;margin:0 auto" alt="">'):'',SCHOOL_NAME:S,SCHOOL_ADDRESS:(SB_SCHOOL&&SB_SCHOOL.address)||'P.O. Box 1',SCHOOL_PHONE:(SB_SCHOOL&&SB_SCHOOL.phone)||(SB_CFG&&SB_CFG.helpdesk)||'024 000 0000',SCHOOL_EMAIL:(SB_SCHOOL&&SB_SCHOOL.email)||'admissions@school.edu.gh',HEADMASTER:(SB_SCHOOL&&SB_SCHOOL.headmaster_name)||'The Headmaster',ACADEMIC_YEAR:(SB_CFG&&SB_CFG.academic_year)||'2025/2026',DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),REPORTING_DATE:'18 October 2025',REPORTING_TIME:(SB_CFG&&SB_CFG.reopening_time)||'8:00 AM',STUDENT_NAME:'AMA MENSAH',INDEX:'100000000026',ADMISSION_NO:'AM/GS/2025/0001',PROGRAMME:'General Science',CLASS:'Science 1',HOUSE:'Unity House',GENDER:'FEMALE',RESIDENTIAL:'Boarding',AGGREGATE:'06',CONTACT:'024 123 4567'};
@@ -5663,8 +5679,7 @@ function tplPreview(){
 }
 
 tplPreview=function(){
-  TPL[tplCur]=tplEditorHTML();
-  TPL[tplCur]=resolveTemplateDraft(tplCur,TPL[tplCur]);
+  TPL[tplCur]=tplStoredHTML(tplEditorHTML());
   const S=(SB_SCHOOL&&SB_SCHOOL.name)||'Senior High School';
   const _cr=(typeof SCHOOL_CREST!=='undefined'&&SCHOOL_CREST)||(SB_SCHOOL&&SB_SCHOOL.crest_url)||'';
   const sample={CREST:_cr?('<img src="'+_cr+'" style="width:90px;height:auto;display:block;margin:0 auto 4px" alt="">'):'',CREST_TOP:_cr?('<img src="'+_cr+'" style="width:54px;height:auto;display:block" alt="">'):'',CREST_CENTER:_cr?('<img src="'+_cr+'" style="width:148px;height:auto;display:block;margin:0 auto" alt="">'):'',SCHOOL_NAME:S,SCHOOL_ADDRESS:(SB_SCHOOL&&SB_SCHOOL.address)||'P.O. Box 1',SCHOOL_PHONE:(SB_SCHOOL&&SB_SCHOOL.phone)||(SB_CFG&&SB_CFG.helpdesk)||'024 000 0000',SCHOOL_EMAIL:(SB_SCHOOL&&SB_SCHOOL.email)||'admissions@school.edu.gh',HEADMASTER:(SB_SCHOOL&&SB_SCHOOL.headmaster_name)||'The Headmaster',ACADEMIC_YEAR:(SB_CFG&&SB_CFG.academic_year)||'2025/2026',DATE:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),REPORTING_DATE:'18 October 2025',REPORTING_TIME:(SB_CFG&&SB_CFG.reopening_time)||'8:00 AM',STUDENT_NAME:'AMA MENSAH',INDEX:'100000000026',ADMISSION_NO:'AM/GS/2025/0001',PROGRAMME:'General Science',CLASS:'Science 1',HOUSE:'Unity House',GENDER:'FEMALE',RESIDENTIAL:'Boarding',AGGREGATE:'06',CONTACT:'024 123 4567'};
