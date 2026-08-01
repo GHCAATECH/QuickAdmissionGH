@@ -119,7 +119,7 @@ Deno.serve(async (req: Request) => {
   if (!index) return json({ ok: false, error: "index" });
   if (!token) return json({ ok: false, error: "token" });
 
-  let studentQuery = admin.from("students").select("id,school_id,bece_index,admission_token,full_name,gender,programme_id,class_id,house_id,records,parent_phone,submitted_at,admission_no,permanent_admission_number,payment_status,personal_done,programme_done,undertaking_done,enrolment_form_url").eq("bece_index", index);
+  let studentQuery = admin.from("students").select("id,school_id,bece_index,admission_token,full_name,gender,programme_id,class_id,house_id,records,parent_phone,submitted_at,admission_no,permanent_admission_number,verification_status,verified_at,payment_status,personal_done,programme_done,undertaking_done,enrolment_form_url").eq("bece_index", index);
   if (schoolId) studentQuery = studentQuery.eq("school_id", schoolId);
   const { data: studentRows, error: studentError } = await studentQuery.limit(100);
 
@@ -218,6 +218,12 @@ Deno.serve(async (req: Request) => {
   const records =
     student.records && typeof student.records === "object" ? student.records : {};
   const contact = firstText(student.parent_phone, placement.sms_contact);
+  const isCampusVerified = safeText(student.verification_status).toLowerCase() === "verified";
+  const verifiedAdmissionNumber = isCampusVerified
+    ? firstText(student.permanent_admission_number, student.admission_no)
+    : "";
+  const verifiedHouseId = isCampusVerified ? student.house_id ?? null : null;
+  const verifiedHouseName = isCampusVerified ? firstText(house.name) : "";
 
   const programmes = structure.programmes.map((row) => ({
     id: (row as Record<string, unknown>).id,
@@ -264,15 +270,17 @@ Deno.serve(async (req: Request) => {
       other_names: firstText(placement.other_names, (records as Record<string, unknown>).other_names),
       student_name: firstText(placement.student_name, displayName),
       placement_name: firstText(placement.student_name, displayName),
-      school_no: firstText(student.admission_no),
-      admission_no: firstText(student.admission_no),
+      school_no: verifiedAdmissionNumber,
+      admission_no: verifiedAdmissionNumber,
+      permanent_admission_number: verifiedAdmissionNumber,
       aggregate: placement.aggregate ?? null,
       programme: finalProgramme,
       programme_id: resolvedProgrammeId,
       class: firstText(classroom.name),
       class_id: student.class_id ?? null,
-      house: firstText(house.name),
-      house_id: student.house_id ?? null,
+      house: verifiedHouseName,
+      house_name: verifiedHouseName,
+      house_id: verifiedHouseId,
       gender: finalGender,
       residential: firstText(placement.residential_status),
       contact,
