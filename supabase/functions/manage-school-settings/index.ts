@@ -155,7 +155,15 @@ Deno.serve(async (req: Request) => {
         theme_color: safeText(patchInput.theme_color),
       };
       if (!safeText(patch.name)) return json({ ok: false, error: "validation", message: "School name is required." }, 400);
-      return json({ ok: true, school: await updateSchoolProfile(admin, schoolId, patch) });
+      const school = await updateSchoolProfile(admin, schoolId, patch);
+      const config = await upsertSchoolConfig(admin, schoolId, {
+        helpdesk_line: safeText(patch.helpdesk) || safeText(patch.phone) || null,
+      });
+      return json({
+        ok: true,
+        school,
+        config: pickPatch(config, ["school_id", "helpdesk_line"]),
+      });
     }
 
     if (action === "portal_setup") {
