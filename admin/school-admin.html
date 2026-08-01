@@ -2964,8 +2964,8 @@ async function savePlacement(encIdx){
     sms_contact:val('ep_sms')||null,
     enrolment_code:val('ep_code')||null
   };
-  const {error}=await sb.from('placement_list').update(upd).eq('school_id',SB_SCHOOL.id).eq('index_number',idx);
-  if(error){toast('Save failed: '+error.message);return;}
+  const {data,error}=await invokeFnDetailed('admin-placement-list',{action:'update',school_id:SB_SCHOOL.id,index_number:idx,patch:upd});
+  if(error||!data||data.ok===false){toast('Save failed: '+((data&&data.message)||(error&&error.message)||'Could not update placement record.'));return;}
   p.name=name;p.gender=upd.gender||'';p.res=upd.residential_status||'';
   p.prog=upd.programme||'';p.agg=upd.aggregate;p.jhs=upd.jhs_attended||'';p.dob=upd.dob||'';
   p.sms=upd.sms_contact||'';p.code=upd.enrolment_code||null;
@@ -2977,8 +2977,8 @@ async function deletePlacement(encIdx){
   const idx=decodeURIComponent(encIdx);
   const p=placement.find(x=>x.index===idx);if(!p)return;
   if(!confirm('Delete placement record for '+(p.name||idx)+' ('+idx+')?\n\nThis cannot be undone.'))return;
-  const {error}=await sb.from('placement_list').delete().eq('school_id',SB_SCHOOL.id).eq('index_number',idx);
-  if(error){toast('Delete failed: '+error.message);return;}
+  const {data,error}=await invokeFnDetailed('admin-placement-list',{action:'delete',school_id:SB_SCHOOL.id,index_number:idx});
+  if(error||!data||data.ok===false){toast('Delete failed: '+((data&&data.message)||(error&&error.message)||'Could not delete placement record.'));return;}
   placement=placement.filter(x=>x.index!==idx);
   notifyStudentPortalRefresh('placement-delete',{index:idx});
   renderPlacement();toast('Placement record deleted');
@@ -3330,11 +3330,11 @@ async function saveStudent(id){
     class_id:newClassId?cMap[newClassId]:null,
     house_id:newHouseId?hMap[newHouseId]:null,
     records:nextRecords};
-  const placementUpdate=await sb.from('placement_list').update({gender:genderLabel(newGender),residential_status:newResidential}).eq('school_id',SB_SCHOOL.id).eq('index_number',s.index);
-  if(placementUpdate.error){toast('Save failed: '+placementUpdate.error.message);return;}
+  const placementUpdate=await invokeFnDetailed('admin-placement-list',{action:'update',school_id:SB_SCHOOL.id,index_number:s.index,patch:{gender:genderLabel(newGender),residential_status:newResidential}});
+  if(placementUpdate.error||!placementUpdate.data||placementUpdate.data.ok===false){toast('Save failed: '+((placementUpdate.data&&placementUpdate.data.message)||(placementUpdate.error&&placementUpdate.error.message)||'Could not update placement record.'));return;}
   const {error}=await sb.from('students').update(update).eq('id',s._id);
   if(error){
-    await sb.from('placement_list').update({gender:genderLabel(oldGender),residential_status:oldResidential||null}).eq('school_id',SB_SCHOOL.id).eq('index_number',s.index);
+    await invokeFnDetailed('admin-placement-list',{action:'update',school_id:SB_SCHOOL.id,index_number:s.index,patch:{gender:genderLabel(oldGender),residential_status:oldResidential||null}});
     toast('Save failed: '+error.message);return;
   }
   const copies=[...(students||[]),...(MANAGE_STATE.rows||[]),...(REG_STATE.rows||[])].filter(x=>String(x._id)===String(s._id));
