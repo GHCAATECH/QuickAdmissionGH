@@ -1063,7 +1063,7 @@
     stroke:#002B4C!important;
   }
 </style>
-<link rel="stylesheet" href="assets/css/global-layout-fix.css?v=20260801-subject-modal-17">
+<link rel="stylesheet" href="assets/css/global-layout-fix.css?v=20260801-button-contrast-21">
 <link rel="stylesheet" href="assets/css/system-footer.css?v=20260731-system-footer-2">
 <script src="assets/js/global-layout-fix.js?v=20260730-layout-fix-13" defer></script>
 </head>
@@ -2824,9 +2824,8 @@ function syncSchoolPicker(key){
   if(triggerText){
     triggerText.textContent=selectedSchoolPickerLabel(key);
     triggerText.classList.toggle('is-placeholder',isPlaceholder);
-    const color=isPlaceholder&&key==='login'?'#C0EBFF':'#002B4C';
-    triggerText.style.setProperty('color',color,'important');
-    triggerText.style.setProperty('-webkit-text-fill-color',color,'important');
+    triggerText.style.setProperty('color','#002B4C','important');
+    triggerText.style.setProperty('-webkit-text-fill-color','#002B4C','important');
   }
 }
 function buildSchoolPickerOptions(key,filterText){

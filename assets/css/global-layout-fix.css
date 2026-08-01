@@ -709,3 +709,114 @@ body .subject-combo-close:focus-visible {
     padding: 14px 14px 14px 42px !important;
   }
 }
+
+/* Final foreground contrast guard for every dark-blue action control.
+   Component styles sometimes colour nested spans after the shared button rule;
+   keep labels and SVGs tied to the control foreground. */
+body button:not(:where(.qa-toggle-password, .login-school-trigger, .icon-btn, .icon, .ico)),
+body .btn,
+body .button,
+body .action-button,
+body .act,
+body .qa,
+body .btn-grn,
+body .exp-btn,
+body .finance-request-btn,
+body .admin-login-button,
+body .portal-link-btn,
+body .corner-nav a,
+body .pay-opt,
+body .class-subject-more,
+body .cls-subject-more,
+body .qa-btn:not(.qa-btn-outline),
+body input[type="button"],
+body input[type="submit"],
+body input[type="reset"] {
+  color: #c0ebff !important;
+  -webkit-text-fill-color: #c0ebff !important;
+}
+
+body button:not(:where(.qa-toggle-password, .login-school-trigger, .icon-btn, .icon, .ico)) *,
+body .btn *,
+body .button *,
+body .action-button *,
+body .act *,
+body .qa *,
+body .btn-grn *,
+body .exp-btn *,
+body .finance-request-btn *,
+body .admin-login-button *,
+body .portal-link-btn *,
+body .corner-nav a *,
+body .pay-opt *,
+body .class-subject-more *,
+body .cls-subject-more *,
+body .qa-btn:not(.qa-btn-outline) * {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+body button:not(:where(.qa-toggle-password, .login-school-trigger, .icon-btn, .icon, .ico)) svg,
+body .btn svg,
+body .button svg,
+body .action-button svg,
+body .act svg,
+body .qa svg,
+body .btn-grn svg,
+body .exp-btn svg,
+body .finance-request-btn svg,
+body .admin-login-button svg,
+body .portal-link-btn svg,
+body .corner-nav a svg,
+body .pay-opt svg,
+body .class-subject-more svg,
+body .cls-subject-more svg,
+body .qa-btn:not(.qa-btn-outline) svg {
+  color: inherit !important;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+/* Orange icon blocks deliberately use the dark foreground for contrast. */
+body :is(button, .btn, .button, .action-button, .act, .qa, .portal-link-btn, .pay-opt)
+  :is(.ico, .icon, .b, .nav-badge) {
+  background: #f59e71 !important;
+  color: #002b4c !important;
+  -webkit-text-fill-color: #002b4c !important;
+}
+
+body :is(button, .btn, .button, .action-button, .act, .qa, .portal-link-btn, .pay-opt)
+  :is(.ico, .icon, .b, .nav-badge) * {
+  color: #002b4c !important;
+  -webkit-text-fill-color: #002b4c !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* School pickers are light controls, so their prompt and selected school need
+   the dark foreground instead of the action-button foreground. */
+body #s-login .login-school-trigger,
+body #s-purchase .login-school-trigger,
+body #s-retrieve .login-school-trigger {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #002b4c !important;
+  -webkit-text-fill-color: #002b4c !important;
+  border: 1px solid #002b4c !important;
+}
+
+body #s-login .login-school-trigger,
+body #s-login .login-school-trigger *,
+body #s-login .login-school-trigger.has-placeholder,
+body #s-login .login-school-trigger.has-placeholder *,
+body #s-login .login-school-trigger-text.is-placeholder,
+body #s-login #loginSchoolTriggerText.is-placeholder,
+body #s-login #purchaseSchoolTriggerText.is-placeholder,
+body #s-login #retrieveSchoolTriggerText.is-placeholder,
+body #s-purchase .login-school-trigger *,
+body #s-retrieve .login-school-trigger * {
+  color: #002b4c !important;
+  -webkit-text-fill-color: #002b4c !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
