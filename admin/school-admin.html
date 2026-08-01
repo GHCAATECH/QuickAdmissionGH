@@ -1473,7 +1473,7 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260801-footer-flow-22">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260801-reports-workspace-21">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260801-school-admin-ui-22">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260801-footer-flow-3">
 <script src="../assets/js/global-layout-fix.js?v=20260731-admin-login-scroll-14" defer></script>
 <script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
@@ -1537,7 +1537,6 @@
         <button class="nav-item" data-view="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financials</button>
         <button class="nav-item" data-view="sms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>SMS</button>
         <button class="nav-item" data-view="sms-settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V22a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 1 1 4.41 17.96l.06-.06A1.65 1.65 0 0 0 4.8 16.1a1.65 1.65 0 0 0-1.51-1H3.2a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1A1.65 1.65 0 0 0 4.47 8.3l-.06-.06A2 2 0 1 1 7.24 5.4l.06.06A1.65 1.65 0 0 0 9.12 5.8h.01a1.65 1.65 0 0 0 1-1.51V4.2a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 1 1 19.83 8.3l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1h.09a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>SMS Settings</button>
-        <button class="nav-item" data-view="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</button>
         <button class="nav-item" data-view="templates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Templates</button>
         <button class="nav-item" data-view="users"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Users</button>
         <button class="nav-item" data-view="utilities"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82M4.6 9a1.65 1.65 0 0 0 .33-1.82"/></svg>Utilities</button>
@@ -1555,7 +1554,7 @@
           <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="submenu" id="admMenu">
-          <button class="nav-sub" data-view="students"><span class="bullet"></span>Admission List</button>
+          <button class="nav-sub" data-view="students"><span class="bullet"></span>View Students</button>
           <button class="nav-sub" data-view="verify-students"><span class="bullet"></span>Verify Student <span class="nav-badge" id="badge-verify-pending">0</span></button>
           <button class="nav-sub" data-view="verified-students"><span class="bullet"></span>Verified Students <span class="nav-badge" id="badge-verified-total">0</span></button>
           <button class="nav-sub" data-view="manage-students"><span class="bullet"></span>Manage Students</button>
@@ -1709,7 +1708,7 @@
       <!-- PROGRAMMES -->
       <section class="view" id="view-programmes">
         <div class="toolbar"><h2 class="section-title" style="margin:0">Programmes</h2><div style="flex:1"></div><button class="btn btn-primary" onclick="openProg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add programme</button></div>
-        <div class="panel"><div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Subjects</th><th>Capacity</th><th>Enrolled</th><th></th></tr></thead><tbody id="progRows"></tbody></table></div></div>
+        <div class="panel"><div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Capacity</th><th>Enrolled</th><th></th></tr></thead><tbody id="progRows"></tbody></table></div></div>
       </section>
 
       <!-- HOUSES -->
@@ -1764,8 +1763,6 @@
       <section class="view" id="view-students">
         <div class="reg-dl">
           <button class="btn-grn" onclick="downloadAdmissionList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download Admission Lists</button>
-          <button class="btn-grn" onclick="toast('Preparing student pictures…')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Download Pictures</button>
-          <button class="btn-grn" onclick="toast('Preparing enrolment forms…')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Download Enrolment Forms</button>
         </div>
         <div class="panel">
           <div class="dt-toolbar">
@@ -2779,7 +2776,7 @@ function renderRecent(){
 
 /* ===== PROGRAMMES / HOUSES / CLASSES ===== */
 function renderProg(){
-  $('progRows').innerHTML=programmes.map(p=>{const cap=Math.max(parseInt(p.cap,10)||0,0);const pct=cap?Math.round(p.enr/cap*100):0;return `<tr><td><span class="code">${safeHtml(p.code)}</span></td><td class="nm">${safeHtml(p.name)}</td><td style="max-width:260px;color:var(--ink-soft);font-size:12.5px">${safeHtml(p.subjects)}</td><td class="mono">${safeHtml(p.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(p.enr)}</span></td><td><div class="row-actions"><button class="act" onclick="openProg(${p.id})">Edit</button><button class="act danger" onclick="delItem('prog',${p.id})">Delete</button></div></td></tr>`;}).join('');
+  $('progRows').innerHTML=programmes.map(p=>{const cap=Math.max(parseInt(p.cap,10)||0,0);const pct=cap?Math.round(p.enr/cap*100):0;return `<tr><td><span class="code">${safeHtml(p.code)}</span></td><td class="nm">${safeHtml(p.name)}</td><td class="mono">${safeHtml(p.cap)}</td><td><div class="cap-bar ${pct>=100?'full':''}"><i style="width:${Math.min(pct,100)}%"></i></div> <span class="mono" style="font-size:12px">${safeHtml(p.enr)}</span></td><td><div class="row-actions"><button class="act" onclick="openProg(${p.id})">Edit</button><button class="act danger" onclick="delItem('prog',${p.id})">Delete</button></div></td></tr>`;}).join('');
 }
 function housePriorityValue(h,fallback){
   const num=Number(h&&h.priority);
@@ -3246,6 +3243,7 @@ function positionManageStudentEditor(){
   overlay.style.setProperty('--manage-editor-bottom',bottom+'px');
 }
 window.addEventListener('resize',positionManageStudentEditor);
+window.addEventListener('scroll',positionManageStudentEditor,{passive:true});
 function viewStudent(id){
   const s=managedStudentById(id); if(!s)return toast('Student record is still loading. Please try again.');
   const m=$('modal');
@@ -4396,6 +4394,7 @@ async function exportVerifiedStudentsExcel(){ if(!can('export_verified_students'
 async function exportVerifiedStudentsPdf(){ if(!can('export_verified_students')) return toast('You do not have permission to export verified students'); const {data,error}=await verificationAction('list_verified',{filters:Object.assign({},VERIFIED_STATE.filters||collectVerifiedFilters(),{page:1,page_size:5000})}); if(error||!data||!Array.isArray(data.all_rows)||!data.all_rows.length){ toast('No verified students match the current filters'); return; } const rows=data.all_rows; const headers=['S/N','Permanent Admission Number','JHS Index Number','Student Name','Gender','Programme','Class','Residential Status','House','Verification Date','Verified By']; const tableRows=rows.map(function(row,idx){ return [idx+1,row.permanent_admission_number||'',row.bece_index||'',row.full_name||'',row.gender||'',row.programme||'',row.class_name||'',row.residential_status||'',row.house_name||'',(row.verified_at||'').slice(0,10),row.verified_by_name||'']; }); const crest=(rows[0]&&rows[0].school_crest)||''; const schoolName=(rows[0]&&rows[0].school_name)||exportSchoolName(); const admissionYear=(rows[0]&&rows[0].academic_year)||exportAdmissionYear(); const filters=activeFilterPills(VERIFIED_STATE.filters||{}); const generated=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); const w=window.open('','_blank'); if(!w){ toast('Allow pop-ups to print / save PDF'); return; } w.document.write('<html><head><title>Verified Students Report</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,sans-serif;color:#111827;padding:18px 20px 10px}.pdf-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff}.pdf-brand{display:flex;align-items:center;gap:12px}.pdf-brand img{width:62px;height:62px;object-fit:contain}.pdf-title{font-size:24px;font-weight:800;line-height:1.1}.pdf-sub{font-size:12px;color:rgba(255,255,255,.9);margin-top:4px}.pdf-meta{text-align:right;font-size:12px;color:#ffffff}.pdf-filters{margin:10px 0 12px;font-size:12px;color:#334155}.pdf-filters span{display:inline-block;margin:0 8px 8px 0;padding:5px 8px;border-radius:999px;background:#e8f0ff;color:#123a78;font-weight:700}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #111827;padding:6px 7px;vertical-align:top;text-align:left}th{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#fff;font-weight:700}tbody tr:nth-child(even){background:#fafafa}.pdf-foot{margin-top:18px;font-size:11px;color:#4b5563;display:flex;justify-content:space-between;gap:18px}.sign{display:flex;justify-content:space-between;gap:30px;margin-top:32px}.sign div{width:240px;border-top:1px solid #1f2937;padding-top:8px}</style></head><body><div class="pdf-head"><div class="pdf-brand">'+(crest?'<img src="'+escapeAttr(crest)+'" alt="">':'')+'<div><div class="pdf-title">'+safeHtml(schoolName)+'</div><div class="pdf-sub">Verified Students Report · Academic Year '+safeHtml(admissionYear||'—')+'</div></div></div><div class="pdf-meta"><div><b>Generated:</b> '+safeHtml(generated)+'</div><div><b>Total records:</b> '+rows.length+'</div></div></div><div class="pdf-filters">'+(filters.length?filters.map(function(item){ return '<span>'+safeHtml(item)+'</span>'; }).join(''):'<span>All verified students</span>')+'</div><table><thead><tr>'+headers.map(function(h){ return '<th>'+safeHtml(h)+'</th>'; }).join('')+'</tr></thead><tbody>'+tableRows.map(function(r){ return '<tr>'+r.map(function(c){ return '<td>'+safeHtml(c==null?'':String(c),'&mdash;')+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table><div class="sign"><div>Admission Officer</div><div>Head of School</div></div><div class="pdf-foot"><div>'+safeHtml(exportHeadLabel())+'</div><div>Page 1 of 1</div></div></body></html>'); w.document.close(); setTimeout(function(){ w.print(); },350); }
 const titles={dashboard:['Dashboard','Admission overview for 2025/2026'],setup:['School Setup','Profile, calendar and admission configuration'],portal:['Student Portal Setup','Control what students see and fill in'],programmes:['Programmes','Define programmes and subject combinations'],houses:['Houses','Manage houses and allocation'],classes:['Classrooms','Manage classes and capacity'],placement:['Placement List','Import and manage CSSPS placements'],students:['Admission List','Browse submitted student records'],'verify-students':['Verify Student','Search admitted students and assign permanent admission numbers'],'verified-students':['Verified Students','Campus-verified students, filters and exports'],'manage-students':['Manage Students','Edit submitted student records'],'house-alloc':['Manage House Allocation','Assign students to houses'],'class-alloc':['Manage Class Allocation','Assign students to classes'],finance:['Financials','Payments overview and transaction history'],sms:['SMS','Programme-based bulk notifications'],'sms-settings':['SMS Settings','Sender ID, submission template and test delivery'],reports:['Reports','Enrolment analytics'],templates:['Document templates','Design your admission letter & records printout'],users:['Users','Manage who can sign in to this school'],utilities:['Utilities','Account and document tools']};
 function go(view){
+  closeModal();
   closeReports();
   if(!can(VIEW_CAP[view])){ view=firstAllowedView(); }
   const actualView=view==='sms-settings'?'setup':view;
