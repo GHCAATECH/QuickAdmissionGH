@@ -76,17 +76,19 @@ body.system-footer-page:has(#authGate) #authGate {
   min-height: calc(100dvh - var(--system-footer-height)) !important;
 }
 
+/* Let visible content determine the page height. A viewport-height floor here
+   kept a blank remainder on short mobile routes and became especially obvious
+   after rotating a phone. */
 body.system-footer-page > .screen.active {
-  min-height: calc(
-    100dvh - var(--system-footer-height) - env(safe-area-inset-bottom)
-  ) !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 
+body.system-footer-page > #s-login.screen.active,
+body.system-footer-page > #s-login.screen.active > .auth,
 body.student-dashboard-active #s-app.screen.active .pbody {
-  min-height: calc(
-    100dvh - var(--portal-topbar-height, 61px) -
-      var(--system-footer-height) - env(safe-area-inset-bottom)
-  ) !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 
 @media (max-width: 480px) {

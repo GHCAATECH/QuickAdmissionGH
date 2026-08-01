@@ -605,6 +605,56 @@ body.student-dashboard-active #s-app.screen.active .psidebar {
   padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
 }
 
+/* A phone in landscape is wide enough for the compact dashboard shell even
+   when it still falls below the generic 1024px tablet breakpoint. Restore the
+   two-column layout on rotation instead of leaving the portrait drawer and
+   single-column cards active. */
+@media screen and (orientation: landscape) and (min-width: 540px) and (max-height: 600px) {
+  body.student-dashboard-active #s-app.screen.active .pbody {
+    grid-template-columns: minmax(180px, 210px) minmax(0, 1fr) !important;
+    min-height: 0 !important;
+  }
+
+  body.student-dashboard-active #s-app.screen.active .psidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: var(--portal-topbar-height, 61px) !important;
+    bottom: 0 !important;
+    width: min(210px, 30vw) !important;
+    height: auto !important;
+    transform: none !important;
+    transition: none !important;
+    overflow-y: auto !important;
+  }
+
+  body.student-dashboard-active #s-app.screen.active .pmain {
+    grid-column: 2 !important;
+    width: 100% !important;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom)) !important;
+  }
+
+  body.student-dashboard-active #s-app.screen.active .ptopbar .ham {
+    display: none !important;
+  }
+
+  body.student-dashboard-active #s-app.screen.active .pbackdrop {
+    display: none !important;
+  }
+
+  body.student-dashboard-active #s-app.screen.active .wu-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    padding-top: 24px !important;
+  }
+
+  body.student-dashboard-active #s-app.screen.active :is(.grid-2, .prog-grid, .pay-methods) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.student-dashboard-active #s-app.screen.active .grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
 /* Class subject preview and popup. Keep the action label readable and make
    the popup an opaque, bounded card instead of inheriting translucent cards. */
 body .cls-subject-more {
