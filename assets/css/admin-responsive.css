@@ -988,10 +988,63 @@ body > #overlay.overlay.class-subject-details > .modal {
   border-radius: 18px !important;
 }
 
+/* Keep the Admission List download/report picker in the admin workspace too.
+   It is created dynamically and therefore does not use the shared #overlay. */
+body > #reportsOverlay.overlay {
+  inset: var(--reports-overlay-top, var(--header-height)) 0
+    var(--reports-overlay-bottom, var(--system-footer-height, 46px))
+    var(--reports-overlay-left, var(--sidebar-width)) !important;
+  z-index: 850 !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 16px !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: rgba(0, 43, 76, 0.22) !important;
+}
+
+body > #reportsOverlay.overlay:not(.show) {
+  display: none !important;
+}
+
+body > #reportsOverlay.overlay.show {
+  display: flex !important;
+}
+
+body > #reportsOverlay.overlay > .rep-modal {
+  position: relative !important;
+  inset: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 880px !important;
+  max-height: 100% !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+  border-radius: 18px !important;
+}
+
+body > #reportsOverlay.overlay > .rep-modal > .modal-head,
+body > #reportsOverlay.overlay > .rep-modal > .rep-tabs {
+  flex: 0 0 auto !important;
+}
+
+body > #reportsOverlay.overlay > .rep-modal > .modal-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
 @media screen and (max-width: 1024px) {
   body > #overlay.overlay.manage-student-editor,
   body > #overlay.overlay.verified-student-details,
-  body > #overlay.overlay.class-subject-details {
+  body > #overlay.overlay.class-subject-details,
+  body > #reportsOverlay.overlay {
     left: 0 !important;
     padding: 12px !important;
   }
