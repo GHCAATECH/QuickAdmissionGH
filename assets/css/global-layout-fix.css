@@ -609,7 +609,10 @@ body.student-dashboard-active #s-app.screen.active .psidebar {
    when it still falls below the generic 1024px tablet breakpoint. Restore the
    two-column layout on rotation instead of leaving the portrait drawer and
    single-column cards active. */
-@media screen and (orientation: landscape) and (min-width: 540px) and (max-height: 600px) {
+/* Width and height are intentionally used instead of `orientation`. Some
+   mobile Safari/WebView versions retain a stale orientation media-query value
+   after rotation even though the viewport dimensions have already swapped. */
+@media screen and (min-width: 540px) and (max-height: 600px) {
   body.student-dashboard-active #s-app.screen.active .pbody {
     grid-template-columns: minmax(180px, 210px) minmax(0, 1fr) !important;
     min-height: 0 !important;
@@ -655,7 +658,7 @@ body.student-dashboard-active #s-app.screen.active .psidebar {
   }
 }
 
-@media screen and (orientation: landscape) and (min-width: 640px) and (max-height: 600px) {
+@media screen and (min-width: 640px) and (max-height: 600px) {
   /* Public admission landing page. */
   body.system-footer-page > #s-login.screen.active .qa-page-shell {
     width: min(1200px, calc(100% - 24px)) !important;

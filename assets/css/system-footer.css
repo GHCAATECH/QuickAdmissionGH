@@ -2,6 +2,13 @@
   --system-footer-height: 46px;
 }
 
+/* No viewport-height floor: the document is exactly visible content + footer.
+   Also suppress elastic vertical overscroll where the browser supports it. */
+body.system-footer-page {
+  min-height: 0 !important;
+  overscroll-behavior-y: none;
+}
+
 body.system-footer-page > footer.system-footer {
   display: flex !important;
   visibility: visible !important;
