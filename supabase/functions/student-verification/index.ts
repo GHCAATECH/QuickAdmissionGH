@@ -86,6 +86,20 @@ function sanitizeSearch(value: string) {
   return value.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+function normalizedGender(value: unknown) {
+  const key = safeText(value).toLowerCase();
+  if (["m", "male", "boy"].includes(key)) return "m";
+  if (["f", "female", "girl"].includes(key)) return "f";
+  return "";
+}
+
+function normalizedResidential(value: unknown) {
+  const key = safeText(value).toLowerCase().replace(/[^a-z]+/g, "");
+  if (["b", "boarder", "boarding", "boardingstudent", "resident"].includes(key)) return "boarding";
+  if (["d", "day", "daystudent"].includes(key)) return "day";
+  return "";
+}
+
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
   return !!error || data?.allowed !== false;
@@ -330,11 +344,11 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
   const cached = verifiedListCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
   const search = safeText(filters.search);
-  const gender = safeText(filters.gender).toUpperCase();
+  const gender = normalizedGender(filters.gender);
   const programme = safeText(filters.programme_id);
   const classId = safeText(filters.class_id);
   const houseId = safeText(filters.house_id);
-  const residential = safeText(filters.residential_status).toLowerCase();
+  const residential = normalizedResidential(filters.residential_status);
   const dateFrom = safeText(filters.date_from);
   const dateTo = safeText(filters.date_to);
   let verifiedQuery = admin
@@ -344,7 +358,6 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
     .eq("verification_status", "verified")
     .order("verified_at", { ascending: false })
     .limit(5_000);
-  if (gender) verifiedQuery = verifiedQuery.ilike("gender", gender);
   if (programme) verifiedQuery = verifiedQuery.eq("programme_id", programme);
   if (classId) verifiedQuery = verifiedQuery.eq("class_id", classId);
   if (houseId) verifiedQuery = verifiedQuery.eq("house_id", houseId);
@@ -358,11 +371,11 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
     const q = sanitizeSearch(search);
     rows = rows.filter((row) => [row.full_name, row.bece_index, row.permanent_admission_number, row.application_number, row.student_phone, row.guardian_contact].join(" \n").toLowerCase().includes(q));
   }
-  if (gender) rows = rows.filter((row) => safeText(row.gender).toUpperCase() === gender);
+  if (gender) rows = rows.filter((row) => normalizedGender(row.gender) === gender);
   if (programme) rows = rows.filter((row) => safeText(row.programme_id || row.programme) === programme || safeText(row.programme) === safeText(context.programmes.get(programme)));
   if (classId) rows = rows.filter((row) => safeText(row.class_id || row.class_name) === classId || safeText(row.class_name) === safeText(context.classes.get(classId)));
   if (houseId) rows = rows.filter((row) => safeText(row.house_id || row.house_name) === houseId || safeText(row.house_name) === safeText(context.houses.get(houseId)));
-  if (residential) rows = rows.filter((row) => safeText(row.residential_status).toLowerCase() === residential);
+  if (residential) rows = rows.filter((row) => normalizedResidential(row.residential_status) === residential);
   if (dateFrom) rows = rows.filter((row) => safeText(row.verified_at).slice(0,10) >= dateFrom);
   if (dateTo) rows = rows.filter((row) => safeText(row.verified_at).slice(0,10) <= dateTo);
   const page = Math.max(Number(filters.page) || 1, 1);
@@ -382,10 +395,10 @@ async function listVerified(admin: ReturnType<typeof createClient>, schoolId: st
   const today = new Date().toISOString().slice(0,10);
   const summary = {
     total_verified: total,
-    male: rows.filter((row) => safeText(row.gender).toUpperCase() === 'M').length,
-    female: rows.filter((row) => safeText(row.gender).toUpperCase() === 'F').length,
-    day_students: rows.filter((row) => safeText(row.residential_status).toLowerCase() === 'day').length,
-    boarding_students: rows.filter((row) => safeText(row.residential_status).toLowerCase() === 'boarding').length,
+    male: rows.filter((row) => normalizedGender(row.gender) === 'm').length,
+    female: rows.filter((row) => normalizedGender(row.gender) === 'f').length,
+    day_students: rows.filter((row) => normalizedResidential(row.residential_status) === 'day').length,
+    boarding_students: rows.filter((row) => normalizedResidential(row.residential_status) === 'boarding').length,
     verified_today: rows.filter((row) => safeText(row.verified_at).slice(0,10) === today).length,
   };
   const result = { ok: true, page, page_size: pageSize, total, total_pages: Math.max(Math.ceil(total / pageSize), 1), rows: paged, all_rows: pageSize >= 5_000 ? rows : [], truncated: data?.length === 5_000, summary };
