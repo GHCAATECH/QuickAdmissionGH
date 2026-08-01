@@ -30,6 +30,7 @@ type SchoolStructure = {
   houses: unknown[];
   classes: unknown[];
   classCounts: Record<string, unknown>;
+  houseCounts: Record<string, unknown>;
 };
 
 const structureCache = new Map<string, { expiresAt: number; value: SchoolStructure }>();
@@ -37,21 +38,29 @@ const structureCache = new Map<string, { expiresAt: number; value: SchoolStructu
 async function loadSchoolStructure(admin: ReturnType<typeof createClient>, schoolId: string): Promise<SchoolStructure> {
   const cached = structureCache.get(schoolId);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
-  const [programmesRes, housesRes, classesRes, classCountsRes] = await Promise.all([
+  const [programmesRes, housesRes, classesRes, classCountsRes, houseCountsRes] = await Promise.all([
     admin.from("programmes").select("id,code,name,subjects").eq("school_id", schoolId).order("code").limit(5_000),
     admin.from("houses").select("id,name,capacity,gender,residential_type,priority").eq("school_id", schoolId).order("priority", { ascending: true }).order("name").limit(5_000),
     admin.from("classrooms").select("id,name,programme_id,subjects,capacity").eq("school_id", schoolId).order("name").limit(5_000),
     admin.rpc("student_class_counts", { p_school: schoolId }),
+    admin.rpc("house_occupancy_counts", { p_school_id: schoolId }),
   ]);
   const structureError = programmesRes.error || housesRes.error || classesRes.error;
   if (structureError) {
     throw new Error(`Could not load school programmes, classes, and houses: ${structureError.message}`);
+  }
+  const houseCounts: Record<string, unknown> = {};
+  for (const row of houseCountsRes.data ?? []) {
+    const record = row as Record<string, unknown>;
+    const houseId = safeText(record.house_id);
+    if (houseId) houseCounts[houseId] = Number(record.occupied ?? 0);
   }
   const value: SchoolStructure = {
     programmes: programmesRes.data ?? [],
     houses: housesRes.data ?? [],
     classes: classesRes.data ?? [],
     classCounts: (classCountsRes.data ?? {}) as Record<string, unknown>,
+    houseCounts,
   };
   structureCache.set(schoolId, { expiresAt: Date.now() + 30_000, value });
   if (structureCache.size > 100) {
@@ -131,8 +140,8 @@ Deno.serve(async (req: Request) => {
   let loaded;
   try {
     loaded = await Promise.all([
-      admin.from("schools").select("id,school_code,code,name,address,phone,helpdesk,crest_url,theme_color,headmaster_name,email").eq("id", sid).maybeSingle(),
-      admin.from("school_config").select("academic_year,letter_template,records_template,admission_status,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload").eq("school_id", sid).maybeSingle(),
+      admin.from("schools").select("id,school_code,code,name,address,phone,helpdesk,crest_url,theme_color,headmaster_name,headmaster_title,email,status").eq("id", sid).maybeSingle(),
+      admin.from("school_config").select("academic_year,admission_year,letter_template,records_template,admission_status,reopening_date,reopening_time,service_charge,accept_online_payment,announcement,helpdesk_line,prospectus_url,undertaking_url,subjects_url,req_doc_line1,req_doc_line2,req_doc_line3,req_doc_line4,req_doc_line5,show_personal_records,personal_records_caption,show_undertaking,undertaking_caption,show_programme_selection,programme_selection_caption,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload").eq("school_id", sid).maybeSingle(),
       admin
         .from("placement_list")
         .select("student_name,other_names,residential_status,sms_contact,aggregate,programme,gender,logged_in")
@@ -174,6 +183,15 @@ Deno.serve(async (req: Request) => {
   const programme = (programmeRes.data ?? {}) as Record<string, unknown>;
   const classroom = (classRes.data ?? {}) as Record<string, unknown>;
   const house = (houseRes.data ?? {}) as Record<string, unknown>;
+
+  if (safeText(school.status).toLowerCase() !== "active") {
+    return json({ ok: false, error: "school_inactive", message: "This school portal is currently unavailable." }, 403);
+  }
+
+  const admissionStatus = upperText(config.admission_status);
+  if (["CLOSED", "CLOSE", "INACTIVE", "FALSE", "NO", "0"].includes(admissionStatus) && !student.submitted_at) {
+    return json({ ok: false, error: "closed", message: "Admission is closed for this school." }, 403);
+  }
 
   if (placementRes.data) {
     await admin
@@ -223,10 +241,14 @@ Deno.serve(async (req: Request) => {
   });
   const houses = structure.houses.map((row) => {
     const rec = row as Record<string, unknown>;
+    const houseId = safeText(rec.id);
+    const capacity = Number(rec.capacity ?? 0);
+    const occupied = Number(structure.houseCounts[houseId] ?? 0) || 0;
     return {
       id: rec.id,
       name: safeText(rec.name),
       capacity: rec.capacity ?? null,
+      seats: Math.max(capacity - occupied, 0),
       gender: safeText(rec.gender),
       residential_type: safeText(rec.residential_type),
       priority: rec.priority ?? null,
@@ -274,6 +296,7 @@ Deno.serve(async (req: Request) => {
       crest_url: firstText(school.crest_url),
       theme_color: firstText(school.theme_color),
       headmaster_name: firstText(school.headmaster_name),
+      headmaster_title: firstText(school.headmaster_title, "Head of School"),
       email: firstText(school.email),
     },
     config,

@@ -1732,6 +1732,7 @@ function editSchool(id){
   <div class="modal-body"><div class="form-grid">
     <fieldset><legend>School information</legend>
       <div class="grid-2"><div class="field"><label>School Code / SMS Sender ID</label><input id="e_school_code" value="${escapeAttr(schoolSenderCode(s)||'')}" maxlength="11" placeholder="e.g. ASEC"></div><div class="field"><label>Service charge (GHS)</label><input id="e_charge" type="number" step="0.5" value="${escapeAttr((s.charge!=null?s.charge:30))}"></div></div>
+      <div class="field"><label>Online token payment</label><select id="e_online"><option value="yes" ${s.acceptOnlinePayment!==false?'selected':''}>Enabled</option><option value="no" ${s.acceptOnlinePayment===false?'selected':''}>Disabled</option></select></div>
       <div class="field"><label>Full school name</label><input id="e_name" value="${escapeAttr(s.name||'')}"></div>
       <div class="grid-2"><div class="field"><label>Phone</label><input id="e_phone" value="${escapeAttr(s.phone||'')}"></div><div class="field"><label>Email</label><input id="e_email" type="email" value="${escapeAttr(s.email||'')}"></div></div>
     </fieldset>
@@ -1756,11 +1757,12 @@ function openAddSchool(){
     </fieldset>
     <fieldset><legend>Primary admin account</legend>
       <div class="grid-2"><div class="field"><label>Admin full name</label><input id="f_admin" placeholder="e.g. Isaac Addo"></div><div class="field"><label>Admin email</label><input id="f_aemail" type="email" placeholder="admin@..."></div></div>
+      <div class="field"><label>Temporary password <span class="hint">â€” at least 8 characters</span></label><input id="f_apass" type="password" minlength="8" placeholder="Create a temporary password"></div>
       <div class="field"><label>Username <span class="hint">- auto-derived from code</span></label><input id="f_uname" placeholder="auto" disabled></div>
     </fieldset>
     <fieldset><legend>Subscription & defaults</legend>
       <div class="grid-2"><div class="field"><label>Plan</label><select id="f_plan"><option>Basic</option><option selected>Standard</option><option>Premium</option></select></div><div class="field"><label>Expiry</label><input id="f_expiry" type="date" value="2026-12-31"></div></div>
-      <div class="field"><label>Admission status</label><select id="f_admission"><option>CLOSED</option><option>OPENED</option></select></div>
+      <div class="grid-2"><div class="field"><label>Admission status</label><select id="f_admission"><option>CLOSED</option><option>OPENED</option></select></div><div class="field"><label>Online token payment</label><select id="f_online"><option value="yes">Enabled</option><option value="no">Disabled</option></select></div></div>
     </fieldset>
   </div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createSchool()">Create school</button></div>`;
@@ -2092,7 +2094,7 @@ async function fetchPlatformSmsHistory(){
 async function loadSA(){
   const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl,claims,summary]=await Promise.all([
     sb.from('schools').select('id,name,code,school_code,status,subscription_plan,subscription_expiry,email,phone,headmaster_title,created_at').order('created_at'),
-    sb.from('school_config').select('school_id,admission_status,service_charge,academic_year'),
+    sb.from('school_config').select('school_id,admission_status,service_charge,accept_online_payment,academic_year'),
     sb.from('profiles').select('id,full_name,email,school_id,role,permissions'),
     sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,personal_done,programme_done,undertaking_done,admission_no'),
     sb.from('payments').select('student_id,amount_pesewas,channel,status,reference,school_id,paid_at,created_at,payer_name, students(full_name,bece_index)'),
@@ -2135,6 +2137,7 @@ async function loadSA(){
     return {id,_id:s.id,code:s.code,school_code:schoolCode,schoolCode:schoolCode,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
       plan:sa_cap(s.subscription_plan||'standard'),students:Number(summarySchoolCounts[s.id]||(stu.data||[]).filter(x=>x.school_id===s.id).length),placements:plcCountBy[s.id]||0,
       admission:c.admission_status||'CLOSED',status:s.status,charge:Number(c.service_charge||0),
+      acceptOnlinePayment:c.accept_online_payment!==false,
       financeSettledStudents:settledStudentCount((claimBy[s.id]&&claimBy[s.id].settled)||0),
       financeSettledAt:(claimBy[s.id]&&claimBy[s.id].settledAt)||'',
       financeClaimCount:financeClaimCountValue((claimBy[s.id]&&claimBy[s.id].count)||0),
@@ -2175,16 +2178,21 @@ toggleAdmission=async function(id){
   toast(s.name+': admission '+s.admission);
 };
 suspendSchool=async function(id){
-  const s=sById(id); s.status=s.status==='suspended'?'active':'suspended';
-  await sb.from('schools').update({status:s.status}).eq('id',s._id);
+  const s=sById(id); if(!s)return;
+  const nextStatus=s.status==='suspended'?'active':'suspended';
+  const {data,error}=await invokeFnDetailed('manage-school',{action:'status',school_id:s._id,patch:{status:nextStatus}});
+  if(error||(data&&data.ok===false)){toast('Could not update school status: '+((data&&data.message)||(error&&error.message)||'error'));return;}
+  s.status=nextStatus;
   closeModal(); renderSchools(); renderStats(); renderDashTable();
   toast(s.name+' '+(s.status==='suspended'?'suspended':'reactivated'));
 };
 deleteSchool=async function(id){
   const s=sById(id); if(!confirm('Delete '+s.name+'? This removes the school and all its data.'))return;
-  const {error}=await sb.from('schools').delete().eq('id',s._id);
-  if(error){toast('Could not delete: '+error.message);return;}
-  closeModal(); await loadSA(); go('schools'); toast(s.name+' deleted');
+  const {data,error}=await invokeFnDetailed('manage-school',{action:'delete',school_id:s._id});
+  if(error||(data&&data.ok===false)){toast('Could not delete: '+((data&&data.message)||(error&&error.message)||'error'));return;}
+  closeModal(); await loadSA(); go('schools');
+  const pending=Array.isArray(data&&data.auth_cleanup_pending)?data.auth_cleanup_pending.length:0;
+  toast(s.name+' deleted'+(pending?' (some inactive login records require cleanup)':''));
 };
 saveAdminEdit=async function(uid){
   const a=admins.find(x=>x.uid===uid); if(!a)return;
@@ -2227,18 +2235,18 @@ saveSchoolEdit=async function(id){
   if(codeErr){toast(codeErr);return;}
   if(schoolCodeExists(schoolCode,s._id)){toast('That School Code / SMS Sender ID is already in use.');return;}
   const btn=$('e_btn'); if(btn)btn.textContent='Saving...';
-  const {error}=await sb.from('schools').update({
-    name, code:schoolCode, school_code:schoolCode, phone:sval('e_phone'), email:sval('e_email'),
-    subscription_plan:(sval('e_plan')||'Standard').toLowerCase(), subscription_expiry:sval('e_expiry')||null, status:sval('e_status')
-  }).eq('id',s._id);
-  if(error){
-    if(btn)btn.textContent='Save changes';
-    toast((/school_code|duplicate key/i.test(error.message||'')?'That School Code / SMS Sender ID already exists.':'Could not save: '+error.message));
+  const patch={
+    name,school_code:schoolCode,phone:sval('e_phone'),email:sval('e_email'),
+    subscription_plan:(sval('e_plan')||'Standard').toLowerCase(),subscription_expiry:sval('e_expiry')||null,status:sval('e_status'),
+    service_charge:parseFloat(sval('e_charge'))||0,admission_status:sval('e_admission'),accept_online_payment:sval('e_online')!=='no'
+  };
+  const {data,error}=await invokeFnDetailed('manage-school',{action:'update',school_id:s._id,patch});
+  if(btn)btn.textContent='Save changes';
+  if(error||(data&&data.ok===false)){
+    const message=(data&&data.message)||(error&&error.message)||'Could not save the school.';
+    toast((/school_code|duplicate|already in use/i.test(message)?'That School Code / SMS Sender ID already exists.':'Could not save: '+message));
     return;
   }
-  await sb.from('school_config').update({ service_charge:parseFloat(sval('e_charge'))||0, admission_status:sval('e_admission') }).eq('school_id',s._id);
-  await sb.from('school_sms_templates').upsert({school_id:s._id},{onConflict:'school_id'});
-  await sb.from('activity_log').insert({school_id:s._id,actor:'Super Admin',action:'School information updated'});
   closeModal(); await loadSA(); go('schools'); toast(name+' updated');
 };
 createSchool=async function(){
@@ -2247,16 +2255,23 @@ createSchool=async function(){
   if(!name){toast('School name is required');return;}
   if(codeErr){toast(codeErr);return;}
   if(schoolCodeExists(schoolCode)){toast('That School Code / SMS Sender ID is already in use.');return;}
-  const {data:school,error}=await sb.from('schools').insert({
-    code:schoolCode,school_code:schoolCode,name,phone:sval('f_phone'),email:sval('f_email'),
-    subscription_plan:sval('f_plan').toLowerCase(),subscription_expiry:sval('f_expiry')||null,status:'active'
-  }).select().single();
-  if(error){toast((/school_code|duplicate key/i.test(error.message||'')?'That School Code / SMS Sender ID already exists.':'Could not create: '+error.message));return;}
-  await sb.from('school_config').insert({school_id:school.id,service_charge:parseFloat(sval('f_charge'))||30,admission_status:sval('f_admission')});
-  await sb.from('school_sms_templates').upsert({school_id:school.id},{onConflict:'school_id'});
-  await sb.from('activity_log').insert({school_id:school.id,actor:'Super Admin',action:'New school created'});
+  const adminEmail=(sval('f_aemail')||'').trim(),adminPassword=sval('f_apass')||'',adminName=(sval('f_admin')||'').trim();
+  if(!adminName||!adminEmail){toast('Primary admin name and email are required.');return;}
+  if(adminPassword.length<8){toast('Temporary password must be at least 8 characters.');return;}
+  const patch={
+    school_code:schoolCode,name,phone:sval('f_phone'),email:sval('f_email'),
+    subscription_plan:(sval('f_plan')||'Standard').toLowerCase(),subscription_expiry:sval('f_expiry')||null,status:'active',
+    service_charge:parseFloat(sval('f_charge'))||30,admission_status:sval('f_admission'),accept_online_payment:sval('f_online')!=='no',
+    admin_name:adminName,admin_email:adminEmail,admin_password:adminPassword
+  };
+  const {data,error}=await invokeFnDetailed('manage-school',{action:'create',patch});
+  if(error||(data&&data.ok===false)){
+    const message=(data&&data.message)||(error&&error.message)||'Could not create the school.';
+    toast('Could not create: '+message);
+    return;
+  }
   closeModal(); await loadSA(); go('schools');
-  toast(name+' created - provision its admin login from Supabase Auth');
+  toast(name+' and its primary admin login were created');
 };
 createAdmin=async function(){
   const s=sById(parseInt(sval('a_school')));

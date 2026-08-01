@@ -1612,12 +1612,11 @@
               <div class="field" style="max-width:260px"><label>School Code / SMS Sender ID</label><input id="sp_school_code" readonly></div>
             </fieldset>
             <fieldset><legend>Head of school & support</legend>
-              <div class="grid-2"><div class="field"><label>Headmaster name</label><input id="sp_headmaster" value="Isaac Addo"></div><div class="field"><label>Title</label><input id="sp_headmaster_title" value="Headmaster"></div></div>
+              <div class="grid-2"><div class="field"><label>Headmaster / Headmistress name</label><input id="sp_headmaster" value="Isaac Addo"></div><div class="field"><label>Title</label><input id="sp_headmaster_title" value="Headmaster"></div></div>
               <div class="field"><label>Helpdesk line</label><input id="sp_helpdesk" value="0256744028"></div>
             </fieldset>
             <fieldset><legend>Branding</legend>
               <div class="field"><label>School crest</label><input type="file" id="s_crest_input" accept="image/*" onchange="uploadSchoolCrest(this)"><div style="margin-top:8px;display:flex;align-items:center;gap:10px"><img id="s_crest_prev" style="width:54px;height:54px;object-fit:contain;border:1px solid var(--line);border-radius:8px;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 50%/12px 12px;display:none"><small style="color:var(--muted)">Background is auto-removed (transparent). This crest flows through the letter, portal and school branding.</small></div></div>
-              <div class="field" style="max-width:160px"><label>Theme colour</label><input id="sp_theme" type="color" value="#1557B0"></div>
             </fieldset>
             <button class="btn btn-primary" onclick="saveSchoolProfile()">Save profile</button>
           </div>
@@ -1629,7 +1628,7 @@
               <div class="grid-2"><div class="field"><label>Reopening date</label><input id="s_reopen_date" type="date" value="2025-10-18"></div><div class="field"><label>Reopening time</label><input id="s_reopen_time" type="time" value="14:00"></div></div>
             </fieldset>
             <fieldset><legend>Financial settings</legend>
-              <div class="grid-2"><div class="field"><label>Service charge (GHS)</label><input type="number" value="30" step="0.5"></div><div class="field"><label>Accept online payment</label><select><option>Yes — accept online payments</option><option>No — manual payments only</option></select></div></div>
+              <div class="grid-2"><div class="field"><label>Service charge (GHS)</label><input id="s_charge" type="number" value="30" step="0.5"></div><div class="field"><label>Accept online payment</label><select id="s_accept_online_payment"><option value="yes">Yes — accept online payments</option><option value="no">No — manual payments only</option></select></div></div>
             </fieldset>
             <fieldset><legend>Student features</legend>
               <div class="switch-row"><div class="meta">Allow passport photo upload<small>Students upload their own photo</small></div><label class="switch"><input id="s_allow_passport_photo" type="checkbox" onchange="queueStudentFeatureSave()"><span class="track"></span></label></div>
@@ -1652,7 +1651,7 @@
             <fieldset><legend>Public announcement</legend>
               <div class="field"><label>Login-page notice</label><textarea id="s_announcement" rows="3">Kindly use your JHS index number to log into the system. Your enrolment code from the CSSPS placement form is required.</textarea></div>
             </fieldset>
-            <button class="btn btn-primary" onclick="toast('Announcement updated')">Publish announcement</button>
+            <button class="btn btn-primary" onclick="saveAnnouncement()">Publish announcement</button>
           </div>
         </div>
         <div class="tab-panel" data-tab="3">
@@ -1682,16 +1681,16 @@
       <section class="view" id="view-portal">
         <div style="max-width:760px">
           <fieldset><legend>Form sections</legend>
-            <div class="switch-row"><div class="meta">Personal records form<small>Caption & visibility</small></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-            <div class="field" style="margin-top:10px"><label>Section caption</label><input value="PERSONAL RECORDS FORM"></div>
+            <div class="switch-row"><div class="meta">Personal records form<small>Download visibility and caption</small></div><label class="switch"><input id="portal_show_records" type="checkbox" checked><span class="track"></span></label></div>
+            <div class="field" style="margin-top:10px"><label>Section caption</label><input id="portal_records_caption" value="PERSONAL RECORDS FORM"></div>
           </fieldset>
           <fieldset><legend>Undertaking / medical form</legend>
-            <div class="switch-row"><div class="meta">Show undertaking & medical form</div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-            <div class="field" style="margin-top:10px"><label>Section caption</label><input value="UNDERTAKING / MEDICAL FORM"></div>
+            <div class="switch-row"><div class="meta">Show undertaking & medical form</div><label class="switch"><input id="portal_show_undertaking" type="checkbox" checked><span class="track"></span></label></div>
+            <div class="field" style="margin-top:10px"><label>Section caption</label><input id="portal_undertaking_caption" value="UNDERTAKING / MEDICAL FORM"></div>
           </fieldset>
           <fieldset><legend>Programme / subject combination</legend>
-            <div class="switch-row"><div class="meta">Show programme selection</div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-            <div class="field" style="margin-top:10px"><label>Section caption</label><input value="PROGRAMME / SUBJECT COMBINATION"></div>
+            <div class="switch-row"><div class="meta">Show programme / subject combination</div><label class="switch"><input id="portal_show_programme" type="checkbox" checked><span class="track"></span></label></div>
+            <div class="field" style="margin-top:10px"><label>Section caption</label><input id="portal_programme_caption" value="PROGRAMME / SUBJECT COMBINATION"></div>
           </fieldset>
           <fieldset><legend>Reporting day — documents checklist</legend>
             <p style="font-size:12px;color:var(--muted);margin-bottom:14px">These five lines appear on the student dashboard as the documents to bring on reporting day.</p>
@@ -3752,13 +3751,32 @@ async function savePortalSetup(){
   if(!SB_SCHOOL){toast('School not loaded');return;}
   const lines=docLines.slice(0,5).map(x=>(x||'').trim());
   while(lines.length<5)lines.push('');
-  const patch={req_doc_line1:lines[0],req_doc_line2:lines[1],req_doc_line3:lines[2],req_doc_line4:lines[3],req_doc_line5:lines[4]};
+  const patch={
+    req_doc_line1:lines[0],req_doc_line2:lines[1],req_doc_line3:lines[2],req_doc_line4:lines[3],req_doc_line5:lines[4],
+    show_personal_records:!!($('portal_show_records')&&$('portal_show_records').checked),
+    personal_records_caption:(val('portal_records_caption')||'PERSONAL RECORDS FORM').trim(),
+    show_undertaking:!!($('portal_show_undertaking')&&$('portal_show_undertaking').checked),
+    undertaking_caption:(val('portal_undertaking_caption')||'UNDERTAKING / MEDICAL FORM').trim(),
+    show_programme_selection:!!($('portal_show_programme')&&$('portal_show_programme').checked),
+    programme_selection_caption:(val('portal_programme_caption')||'PROGRAMME / SUBJECT COMBINATION').trim()
+  };
   const {data,error}=await invokeFnDetailed('manage-school-settings',{action:'portal_setup',school_id:SB_SCHOOL.id,patch});
   if(error||(data&&data.ok===false)){toast('Could not save portal setup: '+((data&&data.message)||(error&&error.message)||'error'));return;}
   docLines=lines;
   if(SB_CFG&&data&&data.config) Object.assign(SB_CFG,data.config);
   notifyStudentPortalRefresh('portal-setup');
   toast('Student portal configuration saved');
+}
+async function saveAnnouncement(){
+  if(roGuard())return;
+  if(!SB_SCHOOL){toast('School not loaded');return;}
+  const patch={announcement:(val('s_announcement')||'').trim()||null};
+  const {data,error}=await invokeFnDetailed('manage-school-settings',{action:'announcement',school_id:SB_SCHOOL.id,patch});
+  if(error||(data&&data.ok===false)){toast('Could not publish announcement: '+((data&&data.message)||(error&&error.message)||'error'));return;}
+  if(SB_CFG&&data&&data.config)Object.assign(SB_CFG,data.config);
+  cachePublicSchoolProfile({announcement:patch.announcement||''});
+  notifyStudentPortalRefresh('announcement');
+  toast(patch.announcement?'Announcement published':'Announcement cleared');
 }
 async function saveSchoolProfile(){
   if(roGuard()) return;
@@ -3771,8 +3789,9 @@ async function saveSchoolProfile(){
     phone:val('sp_phone').trim(),
     email:val('sp_email').trim(),
     headmaster_name:val('sp_headmaster').trim(),
+    headmaster_title:val('sp_headmaster_title').trim()||'Head of School',
     helpdesk:val('sp_helpdesk').trim(),
-    theme_color:(document.getElementById('sp_theme')&&document.getElementById('sp_theme').value)||SB_SCHOOL.theme_color||'#1557B0'
+    theme_color:SB_SCHOOL.theme_color||'#002B4C'
   };
   const {data,error}=await invokeFnDetailed('manage-school-settings',{action:'profile',school_id:SB_SCHOOL.id,patch});
   if(error||(data&&data.ok===false)){toast('Could not save school profile: '+((data&&data.message)||(error&&error.message)||'error'));return;}
@@ -4349,7 +4368,7 @@ function go(view){
   if(view==='users')renderUsers();
   if(view==='templates')renderTemplates();
   if(view==='reports')buildCharts();
-  if(view==='portal')renderDocLines();
+  if(view==='portal')fillPortalSetupForm();
   if(view==='utilities'){renderLog();loadActivityLog().then(renderLog);}
   const admViews=['students','verify-students','verified-students','manage-students','house-alloc','class-alloc'];
   const inAdm=admViews.indexOf(view)>-1;
@@ -4656,7 +4675,9 @@ function cachePublicSchoolProfile(extra){
     helpdesk_line:SB_SCHOOL.helpdesk||'',
     crest_url:SB_SCHOOL.crest_url||'',
     service_charge:SB_CFG&&SB_CFG.service_charge,
-    admission_status:SB_CFG&&SB_CFG.admission_status
+    admission_status:SB_CFG&&SB_CFG.admission_status,
+    accept_online_payment:SB_CFG&&SB_CFG.accept_online_payment,
+    announcement:SB_CFG&&SB_CFG.announcement
   },featureFlags,extra||{});
   writeSchoolProfileCache(cache);
 }
@@ -4676,6 +4697,17 @@ function fillStudentFeatureToggles(){
   setChecked('s_allow_house_selection',cfgBool('allow_house_selection',false));
   setChecked('s_allow_class_selection',cfgBool('allow_class_selection',true));
   setChecked('s_force_enrolment_upload',cfgBool('force_enrolment_upload',true));
+}
+function fillPortalSetupForm(){
+  const cfg=SB_CFG||{};
+  const setValue=function(id,value){const el=$(id);if(el)el.value=value==null?'':String(value);};
+  setChecked('portal_show_records',cfgBool('show_personal_records',true));
+  setChecked('portal_show_undertaking',cfgBool('show_undertaking',true));
+  setChecked('portal_show_programme',cfgBool('show_programme_selection',true));
+  setValue('portal_records_caption',cfg.personal_records_caption||'PERSONAL RECORDS FORM');
+  setValue('portal_undertaking_caption',cfg.undertaking_caption||'UNDERTAKING / MEDICAL FORM');
+  setValue('portal_programme_caption',cfg.programme_selection_caption||'PROGRAMME / SUBJECT COMBINATION');
+  renderDocLines();
 }
 function studentFeaturePatch(){
   return {
@@ -4731,8 +4763,6 @@ function fillSchoolProfileForm(){
   setValue('sp_headmaster',SB_SCHOOL.headmaster_name||'');
   setValue('sp_headmaster_title',SB_SCHOOL.headmaster_title||'Headmaster');
   setValue('sp_helpdesk',SB_SCHOOL.helpdesk||SB_SCHOOL.phone||'');
-  const theme=document.getElementById('sp_theme');
-  if(theme) theme.value=(SB_SCHOOL.theme_color||'#1557B0');
   fillStudentFeatureToggles();
 }
 async function fetchSchoolSmsHistory(schoolId){
@@ -4885,7 +4915,7 @@ async function loadSchoolData(prof){
   }
   const [sch,cfg,structure,stu,plc,pay,sms,log,smsCfg,claims]=await Promise.all([
     sb.from('schools').select('id,name,code,school_code,address,phone,email,headmaster_name,headmaster_title,helpdesk,crest_url,theme_color').eq('id',myId),
-    sb.from('school_config').select('academic_year,admission_year,admission_status,reopening_date,reopening_time,service_charge,helpdesk_line,sms_balance,prospectus_url,undertaking_url,subjects_url,letter_template,records_template,req_doc_line1,req_doc_line2,req_doc_line3,req_doc_line4,req_doc_line5,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload').eq('school_id',myId),
+    sb.from('school_config').select('academic_year,admission_year,admission_status,reopening_date,reopening_time,service_charge,accept_online_payment,announcement,helpdesk_line,sms_balance,prospectus_url,undertaking_url,subjects_url,letter_template,records_template,req_doc_line1,req_doc_line2,req_doc_line3,req_doc_line4,req_doc_line5,show_personal_records,personal_records_caption,show_undertaking,undertaking_caption,show_programme_selection,programme_selection_caption,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload').eq('school_id',myId),
     loadAdminSchoolStructure(myId),
     Promise.resolve({data:[],error:null}),
     sb.from('placement_list').select('id',{count:'exact',head:true}).eq('school_id',myId),
@@ -4983,10 +5013,11 @@ async function loadSchoolData(prof){
   admissionOpen=admissionStatusIsOpen(SB_CFG.admission_status);
   smsBalance=SB_CFG.sms_balance||0;
   populateYearSelect(SB_CFG.academic_year); { const my=$('s_admyear'); if(my&&SB_CFG.admission_year) my.value=SB_CFG.admission_year; }
-  { const rd=$('s_reopen_date'); if(rd) rd.value=SB_CFG.reopening_date||''; const rt=$('s_reopen_time'); if(rt) rt.value=SB_CFG.reopening_time||''; const ch=$('s_charge'); if(ch) ch.value=(SB_CFG.service_charge!=null?SB_CFG.service_charge:30); }
+  { const rd=$('s_reopen_date'); if(rd) rd.value=SB_CFG.reopening_date||''; const rt=$('s_reopen_time'); if(rt) rt.value=SB_CFG.reopening_time||''; const ch=$('s_charge'); if(ch) ch.value=(SB_CFG.service_charge!=null?SB_CFG.service_charge:30); const online=$('s_accept_online_payment'); if(online) online.value=cfgBool('accept_online_payment',true)?'yes':'no'; const announcement=$('s_announcement'); if(announcement) announcement.value=SB_CFG.announcement||''; }
   showSchoolDocLink('prospectus',SB_CFG.prospectus_url); showSchoolDocLink('undertaking',SB_CFG.undertaking_url); showSchoolDocLink('subjects',SB_CFG.subjects_url);
   if(SB_CFG.req_doc_line1!==undefined) docLines=[SB_CFG.req_doc_line1,SB_CFG.req_doc_line2,SB_CFG.req_doc_line3,SB_CFG.req_doc_line4,SB_CFG.req_doc_line5].map(x=>x||'');
   fillSchoolProfileForm();
+  fillPortalSetupForm();
   fillSmsSettingsForm();
   fillVerifiedFilterOptions();
   await loadVerificationCounts();
@@ -5096,6 +5127,7 @@ async function saveAcademicConfig(){
   const reopeningDate=(val('s_reopen_date')||'').trim()||null;
   const reopeningTime=(val('s_reopen_time')||'').trim()||null;
   const serviceCharge=(document.getElementById('s_charge')&&document.getElementById('s_charge').value!=='')?parseFloat(document.getElementById('s_charge').value):null;
+  const acceptOnlinePayment=(val('s_accept_online_payment')||'yes')==='yes';
   const featurePatch=studentFeaturePatch();
   if(!newYear){toast('Academic year is required');return;}
   const curYear=(SB_CFG&&SB_CFG.academic_year)||'';
@@ -5110,7 +5142,7 @@ async function saveAcademicConfig(){
     const {data,error}=await sb.rpc('switch_academic_year',{p_school:SB_SCHOOL.id,p_new_year:newYear});
     if(error){toast('Switch failed: '+error.message);return;}
     if(!data||!data.ok){toast('Switch failed: '+((data&&data.error)||'unknown'));return;}
-    const cfgRes=await invokeFnDetailed('manage-school-settings',{action:'academic_config',school_id:SB_SCHOOL.id,patch:{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}});
+    const cfgRes=await invokeFnDetailed('manage-school-settings',{action:'academic_config',school_id:SB_SCHOOL.id,patch:{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge,accept_online_payment:acceptOnlinePayment}});
     if(cfgRes.error||(cfgRes.data&&cfgRes.data.ok===false)){toast('Could not save configuration: '+((cfgRes.data&&cfgRes.data.message)||(cfgRes.error&&cfgRes.error.message)||'error'));return;}
     if(SB_CFG&&cfgRes.data&&cfgRes.data.config) Object.assign(SB_CFG,cfgRes.data.config);
     await persistStudentFeatureSettings();
@@ -5124,12 +5156,12 @@ async function saveAcademicConfig(){
     return;
   }
   // No year change — just persist year/admission-year
-  const cfgRes=await invokeFnDetailed('manage-school-settings',{action:'academic_config',school_id:SB_SCHOOL.id,patch:{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge}});
+  const cfgRes=await invokeFnDetailed('manage-school-settings',{action:'academic_config',school_id:SB_SCHOOL.id,patch:{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge,accept_online_payment:acceptOnlinePayment}});
   if(cfgRes.error||(cfgRes.data&&cfgRes.data.ok===false)){toast('Could not save: '+((cfgRes.data&&cfgRes.data.message)||(cfgRes.error&&cfgRes.error.message)||'error'));return;}
   if(SB_CFG&&cfgRes.data&&cfgRes.data.config) Object.assign(SB_CFG,cfgRes.data.config);
   if(!await persistStudentFeatureSettings())return;
-  if(SB_CFG){Object.assign(SB_CFG,{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge},featurePatch);}
-  cachePublicSchoolProfile(Object.assign({service_charge:serviceCharge},featurePatch));
+  if(SB_CFG){Object.assign(SB_CFG,{academic_year:newYear,admission_year:newAdmYear,reopening_date:reopeningDate,reopening_time:reopeningTime,service_charge:serviceCharge,accept_online_payment:acceptOnlinePayment},featurePatch);}
+  cachePublicSchoolProfile(Object.assign({service_charge:serviceCharge,accept_online_payment:acceptOnlinePayment},featurePatch));
   notifyStudentPortalRefresh('academic-config');
   toast('Admission configuration saved');
 }
@@ -5242,7 +5274,7 @@ function uploadSchoolCrest(inp){
   const f=inp.files&&inp.files[0]; if(!f){return;} inp.value='';
   if(f.size>2*1024*1024){toast('Please use a crest under 2 MB');return;}
   const img=new Image();
-  img.onload=function(){
+  img.onload=async function(){
     let w=img.width,h=img.height; const sc=Math.min(260/w,260/h,1); w=Math.round(w*sc); h=Math.round(h*sc);
     const c=document.createElement('canvas'); c.width=w; c.height=h;
     const x=c.getContext('2d'); x.drawImage(img,0,0,w,h);
@@ -5262,8 +5294,22 @@ function uploadSchoolCrest(inp){
     SCHOOL_CREST=uri;
     const prev=$('s_crest_prev'); if(prev){prev.src=uri;prev.style.display='block';}
     const bm=$('brandCrest'); if(bm){bm.src=uri;bm.style.display='block';} const dl=$('brandDefaultLogo'); if(dl) dl.style.display='none'; const lt=$('brandLogoText'); if(lt) lt.style.display='none';
-    if(window.SB_SCHOOL&&SB_SCHOOL.id){ sb.from('schools').update({crest_url:uri}).eq('id',SB_SCHOOL.id).then(({error})=>{ if(error){toast('Crest set (not saved: '+error.message+')');} else {SB_SCHOOL.crest_url=uri; cachePublicSchoolProfile({crest_url:uri}); notifyStudentPortalRefresh('crest-update'); toast('Crest uploaded & saved');} }); }
-    else toast('Crest set');
+    if(window.SB_SCHOOL&&SB_SCHOOL.id){
+      toast('Saving crest...');
+      const result=await invokeFnDetailed('manage-school-settings',{action:'crest',school_id:SB_SCHOOL.id,patch:{data_url:uri}});
+      const saved=result&&result.data&&result.data.school;
+      if(result.error||!saved||result.data.ok===false){
+        toast('Could not save crest: '+((result.data&&result.data.message)||(result.error&&result.error.message)||'error'));
+      }else{
+        Object.assign(SB_SCHOOL,saved);
+        SCHOOL_CREST=saved.crest_url||uri;
+        if(prev)prev.src=SCHOOL_CREST;
+        if(bm)bm.src=SCHOOL_CREST;
+        cachePublicSchoolProfile({crest_url:SCHOOL_CREST});
+        notifyStudentPortalRefresh('crest-update');
+        toast('Crest uploaded & saved');
+      }
+    } else toast('Crest set');
     URL.revokeObjectURL(img.src);
   };
   img.onerror=function(){toast('Could not read that image');};

@@ -857,6 +857,7 @@
         </div>
 
         <div class="notice warn" id="admClosedBanner" style="display:none"><b>Admission closed.</b> This school is not accepting applications at the moment. Please contact the school office for details.</div>
+        <div class="notice" id="loginAnnouncement" style="display:none"></div>
 
         <div class="field" id="f-index">
           <label for="login-index">BECE index number</label>
@@ -1035,9 +1036,9 @@
           <div class="doc-btns">
             <button class="btn btn-primary" onclick="docProspectus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Prospectus</button>
             <button class="btn btn-primary" onclick="docAdmissionLetter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Admission Letter</button>
-            <button class="btn btn-primary" onclick="docRecords()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Personal Records Form</button>
-            <button class="btn btn-primary" onclick="docUndertaking()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Undertaking</button>
-            <button class="btn btn-primary" onclick="docSubjects()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Programme / Subject Combination</button>
+            <button class="btn btn-primary" id="docRecordsBtn" onclick="docRecords()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Personal Records Form</button>
+            <button class="btn btn-primary" id="docUndertakingBtn" onclick="docUndertaking()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Undertaking</button>
+            <button class="btn btn-primary" id="docSubjectsBtn" onclick="docSubjects()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Programme / Subject Combination</button>
           </div>
           <div class="report-box">
             <div class="rt">You are expected to come along with the following on the reporting date:</div>
@@ -1151,6 +1152,28 @@ function allowPassportPhoto(){return configBool('allow_passport_photo',false);}
 function allowHouseSelection(){return configBool('allow_house_selection',false);}
 function allowClassSelection(){return configBool('allow_class_selection',true);}
 function forceEnrolmentUpload(){return configBool('force_enrolment_upload',true);}
+function acceptOnlinePayment(){return configBool('accept_online_payment',true);}
+function portalCaption(key,fallback){
+  const value=String((schoolConfig()[key])||'').trim();
+  return value||fallback;
+}
+function setPortalButtonLabel(id,label){
+  const button=$(id); if(!button)return;
+  Array.from(button.childNodes).forEach(function(node){if(node.nodeType===3)button.removeChild(node);});
+  button.appendChild(document.createTextNode(label));
+}
+function applyPortalSetup(){
+  const cfg=schoolConfig();
+  const records=$('docRecordsBtn'), undertaking=$('docUndertakingBtn'), subjects=$('docSubjectsBtn');
+  if(records){records.style.display=configBool('show_personal_records',true)?'':'none';setPortalButtonLabel('docRecordsBtn',portalCaption('personal_records_caption','PERSONAL RECORDS FORM'));}
+  if(undertaking){undertaking.style.display=configBool('show_undertaking',true)?'':'none';setPortalButtonLabel('docUndertakingBtn',portalCaption('undertaking_caption','UNDERTAKING / MEDICAL FORM'));}
+  if(subjects){subjects.style.display=configBool('show_programme_selection',true)?'':'none';setPortalButtonLabel('docSubjectsBtn',portalCaption('programme_selection_caption','PROGRAMME / SUBJECT COMBINATION'));}
+  const nav=$('navForm');
+  if(nav){
+    Array.from(nav.childNodes).forEach(function(node){if(node.nodeType===3)nav.removeChild(node);});
+    nav.appendChild(document.createTextNode(portalCaption('personal_records_caption','Personal Records Form')));
+  }
+}
 function isChristianReligion(){
   const rel=fieldValue?fieldValue('pf-rel',false):(($('pf-rel')&&$('pf-rel').value)||'');
   return /^christ/i.test(String(rel||'').trim());
@@ -1360,6 +1383,7 @@ async function applySchool(data){
   // data carries school + config + programmes + houses + classes from login
   SCHOOL={school:data.school,config:data.config,houses:data.houses||[],classes:data.classes||[]};
   PROGRAMMES=data.programmes||[];
+  applyPortalSetup();
   try{
     normalizeStudent(STU);
     const sid=(data.school&&data.school.id)||(session&&session.school);
@@ -1386,7 +1410,6 @@ async function doLogin(){
   const prevBtn=btn?btn.innerHTML:'';
   $('f-index').classList.remove('err');$('f-token').classList.remove('err');$('f-school').classList.remove('err');
   if(!sid){$('f-school').classList.add('err');return;}
-  if(admissionClosed(sid)){ const b=$('admClosedBanner'); if(b)b.style.display='block'; toast('Admission is closed for this school'); return; }
   if(!idx){$('f-index').classList.add('err');return;}
   if(!tok){$('f-token').classList.add('err');return;}
   if(btn){btn.disabled=true;btn.style.pointerEvents='none';btn.style.opacity='.8';btn.innerHTML='Signing in...';}
@@ -1396,6 +1419,7 @@ async function doLogin(){
     if(!data.ok){
       if(data.error==='index')$('f-index').classList.add('err');
       else if(data.error==='token')$('f-token').classList.add('err');
+      else if(data.error==='closed'){const b=$('admClosedBanner');if(b)b.style.display='block';toast(data.message||'Admission is closed for this school');}
       else if(data.error==='ambiguous')toast('This index appears under more than one school - contact your school office.');
       else toast(data.message||('Could not sign in ('+(data.error||'unknown error')+')'));
       return;
@@ -1602,6 +1626,9 @@ async function payToken(method){
   if(has&&has.ok&&has.paid){ toast('This index has already paid. Use "Retrieve token" to get your token.','warn'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
   const {data:sch}=await studentPortalRequest('lookup',{p_index:idx,p_school:sid});
   if(!sch||!sch.ok){toast('This index is not on any participating school\u2019s placement list','warn');return;}
+  const liveAdmissionStatus=String(sch.admission_status||'').trim().toUpperCase();
+  if(liveAdmissionStatus&&!['OPEN','OPENED','ACTIVE','TRUE','YES','1'].includes(liveAdmissionStatus)){toast('Admission is closed for this school','warn');return;}
+  if(sch.accept_online_payment===false){toast('Online token payment is currently unavailable for this school. Contact the school office.','warn');return;}
   const verifiedName=nameFromLookup(sch)||await lookupPlacementName(idx,sid)||name;
   const amount=Math.round(Number(sch.charge||0)*100);
   if(!amount){toast('This school has no service charge set','warn');return;}
@@ -1820,7 +1847,11 @@ function houseMatchesStudent(h){
   return !!houseGender&&!!studentGender&&houseGender===studentGender&&!!houseResidential&&!!studentResidential&&houseResidential===studentResidential&&Number.isFinite(priority)&&priority>0&&Number.isFinite(capacity)&&capacity>0;
 }
 function eligibleStudentHouses(){
-  return ((SCHOOL&&SCHOOL.houses)||[]).filter(houseMatchesStudent).slice().sort(function(a,b){
+  return ((SCHOOL&&SCHOOL.houses)||[]).filter(function(h){
+    if(!houseMatchesStudent(h))return false;
+    const seats=Number(h.seats);
+    return String(h.id||'')===String(app.houseId||'')||!Number.isFinite(seats)||seats>0;
+  }).slice().sort(function(a,b){
     const priorityDiff=Number(a.priority)-Number(b.priority);
     return priorityDiff||String(a.name||'').localeCompare(String(b.name||''),undefined,{sensitivity:'base'});
   });
@@ -1832,7 +1863,7 @@ function buildHouseTable(){
   body.innerHTML=houses.length?houses.map(function(h){
     const id=String(h.id||'');
     const type=[h.residential_type||h.rtype||'',h.gender||''].filter(Boolean).join(' - ')||'Available';
-    return `<tr class="cls-row house-row ${id===String(app.houseId||'')?'sel':''}" data-id="${safeHtml(id)}" onclick="pickHouse('${encodeURIComponent(id)}','${encodeURIComponent(String(h.name||''))}')"><td><span class="cls-radio"></span>${safeHtml(h.name,'-')}</td><td class="cls-combo">${safeHtml(type,'Available')}</td><td class="cls-seats">${safeHtml(h.capacity||h.cap||'-')}</td></tr>`;
+    return `<tr class="cls-row house-row ${id===String(app.houseId||'')?'sel':''}" data-id="${safeHtml(id)}" onclick="pickHouse('${encodeURIComponent(id)}','${encodeURIComponent(String(h.name||''))}')"><td><span class="cls-radio"></span>${safeHtml(h.name,'-')}</td><td class="cls-combo">${safeHtml(type,'Available')}</td><td class="cls-seats">${safeHtml(h.seats!=null?h.seats:(h.capacity||h.cap||'-'))}</td></tr>`;
   }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No configured house matches your gender and residential status. You can still submit; the school will assign a house after configuration.</td></tr>`;
 }
 function pickHouse(id,name){
@@ -2058,7 +2089,7 @@ async function submitApp(){
     const {data,error}=await studentPortalRequest('submit',{p_index:session.index,p_token:session.token,payload,p_school:session.school||null});
     if(error||!data.ok){
       if(data&&data.error==='closed'){toast('Admission is closed for this school - submission not allowed.');return;}
-      toast('Submission failed - please try again');return;
+      toast((data&&data.message)||(error&&error.message)||'Submission failed - please try again');return;
     }
     applySubmittedStudentState(data.admission_no,payload);
     patchSubmissionSuccess({
@@ -2277,6 +2308,7 @@ function docAdmissionLetter(){
   printDoc('Admission Letter', fillTemplate(resolveDocTemplate('letter',tpl)), true);
 }
 function docRecords(){
+  if(!configBool('show_personal_records',true)){toast('The personal records document is disabled by the school.');return;}
   if(!requirePersonalRecordComplete()) return;
   const tpl=(SCHOOL&&SCHOOL.config&&SCHOOL.config.records_template);
   printDoc('Personal Records Form', fillTemplate(resolveDocTemplate('records',tpl)), true);
@@ -2284,11 +2316,13 @@ function docRecords(){
 function schoolDocUrl(k){ const c=(SCHOOL&&SCHOOL.config)||{}; return c[k]||''; }
 function openUploadedDoc(url){ const w=window.open(url,'_blank'); if(!w)toast('Allow pop-ups to open the document'); }
 function docUndertaking(){
+  if(!configBool('show_undertaking',true)){toast('The undertaking document is disabled by the school.');return;}
   if(!requirePersonalRecordComplete()) return;
   const u=schoolDocUrl('undertaking_url'); if(u){return openUploadedDoc(u);}
   printDoc('Undertaking','<h2>Undertaking</h2><p>I, <b>'+(STU.full_name||'')+'</b> (Index No. '+(STU.index||'')+'), hereby undertake to abide by all the rules and regulations of '+((SCHOOL&&SCHOOL.school.name)||'the school')+'. I understand that any breach may lead to disciplinary action.</p><p style="margin-top:30px">Signature of Student: _______________________</p><p>Signature of Parent / Guardian: _______________________</p><p>Date: _______________________</p>');
 }
 function docSubjects(){
+  if(!configBool('show_programme_selection',true)){toast('The programme / subject document is disabled by the school.');return;}
   if(!requirePersonalRecordComplete()) return;
   const u=schoolDocUrl('subjects_url'); if(u){return openUploadedDoc(u);}
   const p=progById(STU.programme_id);
@@ -2537,6 +2571,18 @@ function setButtonDisabled(el,disabled){
   el.style.opacity=disabled?'.55':'';
   el.style.pointerEvents=disabled?'none':'';
 }
+const SCHOOL_STATUS_REFRESHED={};
+async function refreshSelectedSchoolStatus(schoolId){
+  if(!schoolId)return;
+  const now=Date.now();
+  if(now-Number(SCHOOL_STATUS_REFRESHED[schoolId]||0)<5000)return;
+  SCHOOL_STATUS_REFRESHED[schoolId]=now;
+  const {data}=await studentPortalRequest('school_status',{p_school:schoolId});
+  if(!data||!data.ok||String(($('login-school')&&$('login-school').value)||'')!==String(schoolId))return;
+  const school=SCHOOLS_LIST.find(function(row){return String(row.id||row.school_id)===String(schoolId);});
+  if(school)Object.assign(school,data);
+  onLoginSchoolChange();
+}
 function selectedSchoolHelpdeskPhone(selectedSchool){
   if(!selectedSchool) return LOGIN_DEFAULTS.phone;
   const helpdeskPhone=firstNonEmpty(
@@ -2593,7 +2639,7 @@ async function loadSchools(){
   const directoryCacheKey='qag_school_directory_v1';
   try{
     const cached=JSON.parse(localStorage.getItem(directoryCacheKey)||'null');
-    if(cached&&Array.isArray(cached.rows)&&Date.now()-Number(cached.saved_at||0)<300000) rows=cached.rows;
+    if(cached&&Array.isArray(cached.rows)&&Date.now()-Number(cached.saved_at||0)<30000) rows=cached.rows;
   }catch(e){}
   if(!rows.length) try{
     const {data,error}=await studentPortalRequest('directory',{});
@@ -2696,12 +2742,22 @@ function onLoginSchoolChange(){
     }
   }
   updateBlueBannerHelpdesk();
+  const acceptsOnline=!s||schoolField(s,['accept_online_payment'],true)!==false;
+  const announcementText=String(schoolField(s,['announcement'],'')||'').trim();
+  const announcement=$('loginAnnouncement');
+  if(announcement){announcement.textContent=announcementText;announcement.style.display=announcementText?'block':'none';}
+  if(charge) charge.textContent=acceptsOnline
+    ? 'A service charge of GHS '+chargeValue.toFixed(2)+' is required.'
+    : 'Online token payment is currently unavailable for this school.';
+  const quickBuy=$('buyTokenQuickBtn');
+  if(quickBuy)quickBuy.style.display=acceptsOnline?'':'none';
   const closed=admissionClosed(sid);
   const banner=$('admClosedBanner');
   if(banner) banner.style.display=closed?'block':'none';
   setAdmissionClosedView(closed);
   setButtonDisabled($('loginBtn'),closed);
-  setButtonDisabled($('buyTokenBtn'),closed);
+  setButtonDisabled($('buyTokenBtn'),closed||!acceptsOnline);
+  refreshSelectedSchoolStatus(sid);
 }
 async function initStudentPortal(){
   try{

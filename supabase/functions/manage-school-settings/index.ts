@@ -80,7 +80,7 @@ async function updateSchoolProfile(admin: ReturnType<typeof createClient>, schoo
     .from("schools")
     .update(patch)
     .eq("id", schoolId)
-    .select("id,name,address,phone,email,headmaster_name,helpdesk,theme_color,school_code,code,crest_url")
+    .select("id,name,address,phone,email,headmaster_name,headmaster_title,helpdesk,theme_color,school_code,code,crest_url")
     .single();
   if (error || !data) throw new Error(error?.message || "Could not save school profile.");
   return data as JsonRecord;
@@ -106,7 +106,7 @@ function pickPatch(source: JsonRecord, keys: string[]) {
 }
 
 Deno.serve(async (req: Request) => {
-  const blocked = guardRequest(req, { maxBodyBytes: 65_536 });
+  const blocked = guardRequest(req, { maxBodyBytes: 786_432 });
   if (blocked) return blocked;
   const json = (body: unknown, status = 200) => jsonResponse(req, body, status);
 
@@ -150,6 +150,7 @@ Deno.serve(async (req: Request) => {
         phone: safeText(patchInput.phone),
         email: safeText(patchInput.email),
         headmaster_name: safeText(patchInput.headmaster_name),
+        headmaster_title: safeText(patchInput.headmaster_title) || "Head of School",
         helpdesk: safeText(patchInput.helpdesk),
         theme_color: safeText(patchInput.theme_color),
       };
@@ -158,8 +159,27 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "portal_setup") {
-      const patch = pickPatch(patchInput, ["req_doc_line1", "req_doc_line2", "req_doc_line3", "req_doc_line4", "req_doc_line5"]);
+      const patch: JsonRecord = {
+        req_doc_line1: safeText(patchInput.req_doc_line1),
+        req_doc_line2: safeText(patchInput.req_doc_line2),
+        req_doc_line3: safeText(patchInput.req_doc_line3),
+        req_doc_line4: safeText(patchInput.req_doc_line4),
+        req_doc_line5: safeText(patchInput.req_doc_line5),
+        show_personal_records: optionalBoolean(patchInput.show_personal_records) ?? true,
+        personal_records_caption: safeText(patchInput.personal_records_caption) || "PERSONAL RECORDS FORM",
+        show_undertaking: optionalBoolean(patchInput.show_undertaking) ?? true,
+        undertaking_caption: safeText(patchInput.undertaking_caption) || "UNDERTAKING / MEDICAL FORM",
+        show_programme_selection: optionalBoolean(patchInput.show_programme_selection) ?? true,
+        programme_selection_caption: safeText(patchInput.programme_selection_caption) || "PROGRAMME / SUBJECT COMBINATION",
+      };
       return json({ ok: true, config: await upsertSchoolConfig(admin, schoolId, patch) });
+    }
+
+    if (action === "announcement") {
+      const saved = await upsertSchoolConfig(admin, schoolId, {
+        announcement: optionalText(patchInput.announcement),
+      });
+      return json({ ok: true, config: pickPatch(saved, ["school_id", "announcement"]) });
     }
 
     if (action === "sms_settings") {
@@ -199,9 +219,10 @@ Deno.serve(async (req: Request) => {
         reopening_date: optionalText(patchInput.reopening_date),
         reopening_time: optionalText(patchInput.reopening_time),
         service_charge: optionalNumber(patchInput.service_charge),
+        accept_online_payment: optionalBoolean(patchInput.accept_online_payment) ?? true,
       };
       const saved = await upsertSchoolConfig(admin, schoolId, patch);
-      return json({ ok: true, config: pickPatch(saved, ["school_id", "academic_year", "admission_year", "reopening_date", "reopening_time", "service_charge"]) });
+      return json({ ok: true, config: pickPatch(saved, ["school_id", "academic_year", "admission_year", "reopening_date", "reopening_time", "service_charge", "accept_online_payment"]) });
     }
 
     if (action === "templates") {
@@ -226,6 +247,35 @@ Deno.serve(async (req: Request) => {
       const patch: JsonRecord = { [column]: url };
       const saved = await upsertSchoolConfig(admin, schoolId, patch);
       return json({ ok: true, config: pickPatch(saved, ["school_id", column]) });
+    }
+
+    if (action === "crest") {
+      const dataUrl = safeText(patchInput.data_url);
+      const match = dataUrl.match(/^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) return json({ ok: false, error: "validation", message: "A PNG or JPEG crest is required." }, 400);
+      let bytes: Uint8Array;
+      try {
+        const decoded = atob(match[2]);
+        bytes = new Uint8Array(decoded.length);
+        for (let index = 0; index < decoded.length; index += 1) bytes[index] = decoded.charCodeAt(index);
+      } catch {
+        return json({ ok: false, error: "validation", message: "The crest image could not be decoded." }, 400);
+      }
+      if (bytes.byteLength > 512 * 1024) {
+        return json({ ok: false, error: "validation", message: "The processed crest must be under 512 KB." }, 400);
+      }
+      const extension = match[1] === "image/jpeg" ? "jpg" : "png";
+      const path = `${schoolId}/crest.${extension}`;
+      const { error: uploadError } = await admin.storage.from("school-docs").upload(path, bytes, {
+        contentType: match[1],
+        upsert: true,
+        cacheControl: "3600",
+      });
+      if (uploadError) throw new Error(uploadError.message || "Could not store the school crest.");
+      const { data: publicData } = admin.storage.from("school-docs").getPublicUrl(path);
+      const publicUrl = `${publicData.publicUrl}?v=${Date.now()}`;
+      const school = await updateSchoolProfile(admin, schoolId, { crest_url: publicUrl });
+      return json({ ok: true, school });
     }
 
     return json({ ok: false, error: "validation", message: "Unknown action." }, 400);

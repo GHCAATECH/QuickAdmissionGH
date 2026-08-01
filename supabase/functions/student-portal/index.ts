@@ -74,8 +74,8 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
   }
 
   const [schoolRes, configRes, placementRes, studentRes] = await Promise.all([
-    admin.from("schools").select("id,name,school_code").eq("id", sid).maybeSingle(),
-    admin.from("school_config").select("service_charge").eq("school_id", sid).maybeSingle(),
+    admin.from("schools").select("id,name,school_code,status").eq("id", sid).maybeSingle(),
+    admin.from("school_config").select("service_charge,accept_online_payment,admission_status").eq("school_id", sid).maybeSingle(),
     admin.from("placement_list").select("student_name,sms_contact,index_number").eq("school_id", sid).eq("index_number", index).maybeSingle(),
     admin.from("students").select("full_name,parent_phone,bece_index").eq("school_id", sid).eq("bece_index", index).maybeSingle(),
   ]);
@@ -85,6 +85,12 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
   const placement = (placementRes.data ?? {}) as JsonRecord;
   const student = (studentRes.data ?? {}) as JsonRecord;
 
+  if (safeText(school.status).toLowerCase() !== "active") {
+    const result = { ok: false, error: "school_inactive", message: "This school portal is currently unavailable." };
+    lookupCache.set(cacheKey, { expiresAt: Date.now() + 15_000, value: result });
+    return result;
+  }
+
   const result = {
     ok: true,
     school_id: sid,
@@ -92,6 +98,8 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
     name: firstText(school.name),
     school_code: firstText(school.school_code),
     charge: Number(config.service_charge ?? 0),
+    accept_online_payment: config.accept_online_payment !== false,
+    admission_status: firstText(config.admission_status),
     student_name: firstText(placement.student_name, student.full_name),
     placement_name: firstText(placement.student_name, student.full_name),
     sms_contact: firstText(placement.sms_contact, student.parent_phone),
@@ -122,6 +130,29 @@ async function hasToken(admin: ReturnType<typeof createClient>, index: string, s
     paid: !!token || status === "PAID" || status === "COMPLETED" || status === "SUCCESS",
     token: token || null,
     school_id: sid,
+  };
+}
+
+async function schoolStatus(admin: ReturnType<typeof createClient>, schoolId: string) {
+  if (!schoolId) return { ok: false, error: "school", message: "School is required." };
+  const [schoolResult, configResult] = await Promise.all([
+    admin.from("schools").select("status").eq("id", schoolId).maybeSingle(),
+    admin.from("school_config").select("admission_status,service_charge,accept_online_payment,announcement").eq("school_id", schoolId).maybeSingle(),
+  ]);
+  if (schoolResult.error || configResult.error) {
+    throw new Error(schoolResult.error?.message || configResult.error?.message || "Could not load school status.");
+  }
+  const school = (schoolResult.data ?? {}) as JsonRecord;
+  const config = (configResult.data ?? {}) as JsonRecord;
+  const active = safeText(school.status).toLowerCase() === "active";
+  return {
+    ok: true,
+    school_id: schoolId,
+    school_status: firstText(school.status),
+    admission_status: active ? firstText(config.admission_status) : "CLOSED",
+    service_charge: Number(config.service_charge ?? 0),
+    accept_online_payment: config.accept_online_payment !== false,
+    announcement: firstText(config.announcement),
   };
 }
 
@@ -238,6 +269,7 @@ async function listDirectory(admin: ReturnType<typeof createClient>) {
   const schoolsRes = await admin
     .from("schools")
     .select("id,name,school_code,code,phone,email,helpdesk,crest_url")
+    .eq("status", "active")
     .order("name", { ascending: true })
     .limit(10_000);
 
@@ -245,7 +277,7 @@ async function listDirectory(admin: ReturnType<typeof createClient>) {
 
   const configsRes = await admin
     .from("school_config")
-    .select("school_id,admission_status,academic_year,service_charge,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload")
+    .select("school_id,admission_status,academic_year,service_charge,accept_online_payment,announcement,helpdesk_line,allow_passport_photo,allow_house_selection,allow_class_selection,force_enrolment_upload")
     .limit(10_000);
 
   const configs = configsRes.error ? [] : (configsRes.data ?? []);
@@ -260,6 +292,8 @@ async function listDirectory(admin: ReturnType<typeof createClient>) {
       "admission_status",
       "academic_year",
       "service_charge",
+      "accept_online_payment",
+      "announcement",
       "helpdesk_line",
       "allow_passport_photo",
       "allow_house_selection",
@@ -287,6 +321,8 @@ async function listDirectory(admin: ReturnType<typeof createClient>) {
       admission_status: firstText(config.admission_status),
       academic_year: firstText(config.academic_year),
       service_charge: Number(config.service_charge ?? 0),
+      accept_online_payment: config.accept_online_payment !== false,
+      announcement: firstText(config.announcement),
       allow_passport_photo: Boolean(config.allow_passport_photo ?? false),
       allow_house_selection: Boolean(config.allow_house_selection ?? false),
       allow_class_selection: Boolean(config.allow_class_selection ?? true),
@@ -295,7 +331,7 @@ async function listDirectory(admin: ReturnType<typeof createClient>) {
   });
 
   const result = { ok: true, schools };
-  directoryCache = { expiresAt: Date.now() + 5 * 60_000, value: result };
+  directoryCache = { expiresAt: Date.now() + 30_000, value: result };
   return result;
 }
 
@@ -325,7 +361,7 @@ Deno.serve(async (req: Request) => {
 
   if (!action) return json({ ok: false, error: "action", message: "Action is required." }, 400);
 
-  if (["lookup", "has_token", "retrieve", "file_url"].includes(action)) {
+  if (["lookup", "has_token", "retrieve", "file_url", "school_status"].includes(action)) {
     const forwarded = safeText(req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip"));
     const ip = (forwarded.split(",")[0] || "unknown").trim().slice(0, 80);
     const value = safeText(body.p_value ?? body.value ?? body.path ?? body.file_path ?? index);
@@ -350,6 +386,10 @@ Deno.serve(async (req: Request) => {
     if (action === "has_token") {
       if (!index) return json({ ok: false, error: "index", message: "Index number is required." }, 400);
       return json(await hasToken(admin, index, schoolId));
+    }
+
+    if (action === "school_status") {
+      return json(await schoolStatus(admin, schoolId));
     }
 
     if (action === "retrieve") {
