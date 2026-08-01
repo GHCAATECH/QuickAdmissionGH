@@ -4925,6 +4925,17 @@ async function loadSchoolData(prof){
     sb.from('school_sms_templates').select('school_id,submission_message,sms_enabled').eq('school_id',myId),
     sb.from('finance_claims').select('claim_number,students_claimed,created_at,academic_year').eq('school_id',myId),
   ]);
+  const setupLoadError=sch.error||cfg.error;
+  if(setupLoadError){
+    const message='Could not load the school admission configuration: '+(setupLoadError.message||'unknown error');
+    toast(message);
+    throw new Error(message);
+  }
+  if(!(cfg.data||[]).length){
+    const message='The school admission configuration is missing.';
+    toast(message);
+    throw new Error(message);
+  }
   if(!structure||structure.error||!structure.data||structure.data.ok===false){
     const structureMessage=(structure&&structure.error&&structure.error.message)||(structure&&structure.data&&structure.data.message)||'Could not load programme, class and house data.';
     toast(structureMessage);
@@ -4937,7 +4948,7 @@ async function loadSchoolData(prof){
   SB_SCHOOL=(sch.data||[])[0]; SB_CFG=(cfg.data||[])[0]||{};
   if(SB_CFG&&!SB_CFG.helpdesk&&SB_CFG.helpdesk_line) SB_CFG.helpdesk=SB_CFG.helpdesk_line;
   placementTotalCount=Number(plc.count)||0; PLACEMENT_STATE={loaded:false,loading:false};
-  const summaryResult=await invokeFnDetailed('admin-school-summary',{school_id:myId});
+  const summaryResult=await invokeFnDetailed('admin-school-summary',{school_id:myId,refresh:true});
   SB_STUDENT_SUMMARY=(summaryResult.data&&summaryResult.data.summary)||{};
   if(!claims.error&&Array.isArray(claims.data)){
     const cfgYear=financeAcademicYearValue(SB_CFG&&SB_CFG.academic_year);
@@ -5012,7 +5023,7 @@ async function loadSchoolData(prof){
 
   admissionOpen=admissionStatusIsOpen(SB_CFG.admission_status);
   smsBalance=SB_CFG.sms_balance||0;
-  populateYearSelect(SB_CFG.academic_year); { const my=$('s_admyear'); if(my&&SB_CFG.admission_year) my.value=SB_CFG.admission_year; }
+  await populateYearSelect(SB_CFG.academic_year); syncAdmissionYearFromAcademicYear();
   { const rd=$('s_reopen_date'); if(rd) rd.value=SB_CFG.reopening_date||''; const rt=$('s_reopen_time'); if(rt) rt.value=SB_CFG.reopening_time||''; const ch=$('s_charge'); if(ch) ch.value=(SB_CFG.service_charge!=null?SB_CFG.service_charge:30); const online=$('s_accept_online_payment'); if(online) online.value=cfgBool('accept_online_payment',true)?'yes':'no'; const announcement=$('s_announcement'); if(announcement) announcement.value=SB_CFG.announcement||''; }
   showSchoolDocLink('prospectus',SB_CFG.prospectus_url); showSchoolDocLink('undertaking',SB_CFG.undertaking_url); showSchoolDocLink('subjects',SB_CFG.subjects_url);
   if(SB_CFG.req_doc_line1!==undefined) docLines=[SB_CFG.req_doc_line1,SB_CFG.req_doc_line2,SB_CFG.req_doc_line3,SB_CFG.req_doc_line4,SB_CFG.req_doc_line5].map(x=>x||'');
@@ -5106,38 +5117,52 @@ toggleAdmission=async function(){
   }
 };
 
+const SAVED_ACADEMIC_YEARS=new Set();
 async function populateYearSelect(current){
   const sel=$('s_acadyear'); if(!sel)return;
   const years=new Set();
+  SAVED_ACADEMIC_YEARS.clear();
   const base=new Date().getFullYear()-2;
   for(let y=base;y<=base+9;y++) years.add(y+'/'+(y+1));
   if(current) years.add(current);
   // include any saved (parked) years so they're switchable from the dropdown too
-  try{ const {data}=await sb.rpc('list_archived_years',{p_school:SB_SCHOOL.id}); (Array.isArray(data)?data:[]).forEach(r=>{ if(r.academic_year) years.add(r.academic_year); }); }catch(e){}
+  try{ const {data}=await sb.rpc('list_archived_years',{p_school:SB_SCHOOL.id}); (Array.isArray(data)?data:[]).forEach(r=>{ if(r.academic_year){years.add(r.academic_year);SAVED_ACADEMIC_YEARS.add(r.academic_year);} }); }catch(e){}
   const sorted=[...years].sort();
   sel.innerHTML=sorted.map(y=>`<option value="${y}" ${y===current?'selected':''}>${y}${y===current?' (current)':''}</option>`).join('');
   if(current) sel.value=current;
+  sel.onchange=syncAdmissionYearFromAcademicYear;
+  syncAdmissionYearFromAcademicYear();
+}
+function admissionYearFromAcademicYear(value){
+  const match=String(value||'').match(/(\d{4})/);
+  return match?parseInt(match[1],10):null;
+}
+function syncAdmissionYearFromAcademicYear(){
+  const admissionYear=admissionYearFromAcademicYear(val('s_acadyear'));
+  const input=$('s_admyear');
+  if(input){input.value=admissionYear||'';input.readOnly=true;}
+  return admissionYear;
 }
 async function saveAcademicConfig(){
   if(roGuard())return;
   if(!SB_SCHOOL){toast('School not loaded');return;}
   ensureSetupRuntimeFields();
   const newYear=(val('s_acadyear')||'').trim();
-  const newAdmYear=val('s_admyear')?parseInt(val('s_admyear')):null;
+  const newAdmYear=admissionYearFromAcademicYear(newYear);
   const reopeningDate=(val('s_reopen_date')||'').trim()||null;
   const reopeningTime=(val('s_reopen_time')||'').trim()||null;
   const serviceCharge=(document.getElementById('s_charge')&&document.getElementById('s_charge').value!=='')?parseFloat(document.getElementById('s_charge').value):null;
   const acceptOnlinePayment=(val('s_accept_online_payment')||'yes')==='yes';
   const featurePatch=studentFeaturePatch();
-  if(!newYear){toast('Academic year is required');return;}
+  if(!newYear||!newAdmYear){toast('A valid academic year is required');return;}
   const curYear=(SB_CFG&&SB_CFG.academic_year)||'';
-  if(newYear!==curYear && curYear){
+  if(curYear&&(newYear!==curYear||SAVED_ACADEMIC_YEARS.has(newYear))){
     // Academic year changed -> SWAP: park current year's data, load the target year's data (or start empty)
     const msg='Switch academic year from "'+curYear+'" to "'+newYear+'"?\n\n'
       +'Your "'+curYear+'" data (students, placements, payments) will be saved and set aside. '
       +'If "'+newYear+'" has saved data it will be loaded back; otherwise the year starts empty.\n\n'
       +'You can switch back any time — nothing is deleted.\n\nContinue?';
-    if(!confirm(msg))return;
+    if(newYear!==curYear&&!confirm(msg))return;
     toast('Switching to '+newYear+'…');
     const {data,error}=await sb.rpc('switch_academic_year',{p_school:SB_SCHOOL.id,p_new_year:newYear});
     if(error){toast('Switch failed: '+error.message);return;}
@@ -5150,7 +5175,7 @@ async function saveAcademicConfig(){
     alert('Academic year is now '+newYear+'.\n\n'+(data.restored
       ? 'Loaded saved data for '+newYear+':\n• '+data.students+' students\n• '+data.placements+' placements\n• '+data.payments+' payments'
       : 'This is a new year — starting empty.')
-      +'\n\nYour previous year ("'+(data.old_year||curYear)+'") was saved and can be switched back to any time.');
+      +(data.recovered_same_year?'\n\nThe parked data for this academic year has been recovered.':'\n\nYour previous year ("'+(data.old_year||curYear)+'") was saved and can be switched back to any time.'));
     await loadSchoolData({full_name:SB_ADMIN_NAME,role:(SB_PERMS==null?'super_admin':'school_admin'),permissions:SB_PERMS,school_id:(SB_SCHOOL&&SB_SCHOOL.id)||null});
     go('dashboard');
     return;

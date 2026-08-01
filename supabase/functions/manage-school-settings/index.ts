@@ -213,9 +213,11 @@ Deno.serve(async (req: Request) => {
     if (action === "academic_config") {
       const academicYear = optionalText(patchInput.academic_year);
       if (!academicYear) return json({ ok: false, error: "validation", message: "academic_year is required." }, 400);
+      const admissionYearMatch = academicYear.match(/(\d{4})/);
+      if (!admissionYearMatch) return json({ ok: false, error: "validation", message: "academic_year must contain a four-digit starting year." }, 400);
       const patch: JsonRecord = {
         academic_year: academicYear,
-        admission_year: optionalNumber(patchInput.admission_year),
+        admission_year: Number(admissionYearMatch[1]),
         reopening_date: optionalText(patchInput.reopening_date),
         reopening_time: optionalText(patchInput.reopening_time),
         service_charge: optionalNumber(patchInput.service_charge),
