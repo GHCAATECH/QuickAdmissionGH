@@ -405,7 +405,19 @@
   .cls-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex:none}
   .cls-row.sel{background:var(--primary-soft)}
   .cls-row.sel .cls-radio{border-color:var(--primary);background:var(--primary);box-shadow:inset 0 0 0 3px var(--primary-soft)}
-  .cls-combo{color:var(--ink-soft);line-height:1.5;min-width:240px}
+  .cls-combo{color:var(--ink-soft);line-height:1.5;min-width:240px;white-space:normal;overflow-wrap:anywhere}
+  .cls-subject-summary{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px}
+  .cls-subject-summary span{display:inline;white-space:normal}
+  .cls-subject-more{flex:none;padding:4px 8px;border:1px solid var(--primary);border-radius:999px;background:var(--surface);color:var(--primary);font-size:10.5px;font-weight:700;line-height:1.2}
+  .subject-combo-overlay{position:fixed;inset:0;z-index:160;display:none;align-items:flex-start;justify-content:center;padding:clamp(70px,10vh,110px) 14px calc(var(--portal-footer-height) + 18px);overflow-y:auto;background:rgba(0,43,76,.48)}
+  .subject-combo-overlay.open{display:flex}
+  .subject-combo-dialog{width:min(520px,100%);max-height:calc(100dvh - var(--portal-footer-height) - 100px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:0 24px 60px -20px rgba(0,43,76,.55);overflow:hidden}
+  .subject-combo-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
+  .subject-combo-head h3{font-family:'Space Grotesk';font-size:17px;color:var(--ink)}
+  .subject-combo-head p{margin-top:3px;font-size:12px;color:var(--muted)}
+  .subject-combo-close{width:34px;height:34px;display:grid;place-items:center;flex:none;border:1px solid var(--line);border-radius:9px;background:var(--primary);color:#fff;font-size:20px;line-height:1}
+  .subject-combo-list{margin:0;padding:18px 22px 18px 46px;overflow-y:auto;display:grid;gap:9px}
+  .subject-combo-list li{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);overflow-wrap:anywhere}
   .cls-seats{font-family:'JetBrains Mono';font-weight:600;text-align:center}
 
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,#14532d 0%,#16a34a 48%,#22c55e 100%);color:#ffffff;padding:13px 18px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 14px 34px -10px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.14) inset;z-index:90;opacity:0;transition:.3s}
@@ -2127,7 +2139,64 @@ function buildPickers(){
   var districtList=$('pf-district-list');
   if(districtList) districtList.innerHTML=DISTRICTS.map(function(d){ return `<option value="${d}"></option>`; }).join('');
 }
-function fmtCombo(str){ return (str||'').split(',').map(x=>x.trim()).filter(Boolean).join(' - '); }
+function portalSubjectItems(raw){
+  const text=String(raw||'').replace(/\r/g,'\n').trim();
+  if(!text)return [];
+  const markers=Array.from(text.matchAll(/(?:^|\s)(\d{1,2})\s*[.)-]?\s+(?=[A-Za-z])/g));
+  if(markers.length>1){
+    return markers.map(function(marker,index){
+      const start=(marker.index||0)+marker[0].length;
+      const end=index+1<markers.length?(markers[index+1].index||text.length):text.length;
+      return text.slice(start,end).replace(/^[,;|\s]+|[,;|\s]+$/g,'').trim();
+    }).filter(Boolean);
+  }
+  return text.split(/[,;\n|]+/).map(function(item){return item.replace(/^\s*\d{1,2}\s*[.)-]?\s*/,'').trim();}).filter(Boolean);
+}
+function fmtCombo(str){ return portalSubjectItems(str).join(' - '); }
+function portalClassSubjectItems(c,fallbackSubjects){
+  const own=portalSubjectItems(c&&c.subjects);
+  return own.length?own:portalSubjectItems(fallbackSubjects);
+}
+function portalClassSubjectPreviewHTML(c,fallbackSubjects,limit){
+  const items=portalClassSubjectItems(c,fallbackSubjects);
+  if(!items.length)return '<span>Standard combination</span>';
+  const visible=items.slice(0,Math.max(1,limit||3));
+  const preview=visible.map(function(subject,index){return '<span>'+(index+1)+'. '+safeHtml(subject)+'</span>';}).join('');
+  const encodedId=encodeURIComponent(String(c&&c.id||''));
+  const more=items.length>visible.length?'<button type="button" class="cls-subject-more" onclick="event.stopPropagation();openPortalClassSubjects(\''+encodedId+'\',event)">View more (+'+(items.length-visible.length)+')</button>':'';
+  return '<div class="cls-subject-summary">'+preview+more+'</div>';
+}
+function ensurePortalSubjectOverlay(){
+  let overlay=$('portalClassSubjectsOverlay');
+  if(overlay)return overlay;
+  overlay=document.createElement('div');
+  overlay.id='portalClassSubjectsOverlay';
+  overlay.className='subject-combo-overlay';
+  overlay.setAttribute('aria-hidden','true');
+  overlay.addEventListener('click',function(event){if(event.target===overlay)closePortalClassSubjects();});
+  document.body.appendChild(overlay);
+  return overlay;
+}
+function closePortalClassSubjects(){
+  const overlay=$('portalClassSubjectsOverlay');
+  if(!overlay)return;
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden','true');
+}
+function openPortalClassSubjects(encodedId,event){
+  if(event){event.preventDefault();event.stopPropagation();}
+  const id=decodeURIComponent(String(encodedId||''));
+  const c=((SCHOOL&&SCHOOL.classes)||[]).find(function(item){return String(item&&item.id||'')===id;});
+  if(!c){toast('Class subject combination is unavailable','warn');return;}
+  const programme=progById(c.programme_id||resolveStudentProgrammeId())||{};
+  const items=portalClassSubjectItems(c,programme.subjects);
+  const overlay=ensurePortalSubjectOverlay();
+  overlay.innerHTML='<div class="subject-combo-dialog" role="dialog" aria-modal="true" aria-labelledby="portalClassSubjectsTitle"><div class="subject-combo-head"><div><h3 id="portalClassSubjectsTitle">'+safeHtml(c.name,'Class')+' subject combination</h3><p>'+safeHtml(items.length)+' subject'+(items.length===1?'':'s')+'</p></div><button type="button" class="subject-combo-close" aria-label="Close" onclick="closePortalClassSubjects()">×</button></div>'+(items.length?'<ol class="subject-combo-list">'+items.map(function(subject){return '<li>'+safeHtml(subject)+'</li>';}).join('')+'</ol>':'<div style="padding:22px;color:var(--muted)">No subjects have been added to this class.</div>')+'</div>';
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden','false');
+  const closeButton=overlay.querySelector('.subject-combo-close');
+  if(closeButton)closeButton.focus();
+}
 function programmeKey(value){
   return String(value||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
 }
@@ -2154,12 +2223,12 @@ function eligibleStudentClasses(){
 }
 function buildClassTable(){
   const studentProgrammeId=resolveStudentProgrammeId();
-  const progSubs=fmtCombo((progById(studentProgrammeId)||{}).subjects||'');
+  const progSubs=(progById(studentProgrammeId)||{}).subjects||'';
   const classes=eligibleStudentClasses();
   if(app.classId&&!classes.some(function(c){return String(c.id||'')===String(app.classId);})){app.classId=null;app.className='';}
   $('clsRows').innerHTML=classes.length?classes.map(c=>{
-    const combo=fmtCombo(c.subjects)||progSubs||'Standard combination';
-    return `<tr class="cls-row ${c.id===app.classId?'sel':''}" data-id="${c.id}" onclick="pickClass('${c.id}','${encodeURIComponent(String(c.name||''))}')"><td><span class="cls-radio"></span>${safeHtml(c.name,'-')}</td><td class="cls-combo">${safeHtml(combo,'Standard combination')}</td><td class="cls-seats">${safeHtml(c.seats,'0')}</td></tr>`;
+    const combo=portalClassSubjectPreviewHTML(c,progSubs,3);
+    return `<tr class="cls-row ${c.id===app.classId?'sel':''}" data-id="${c.id}" onclick="pickClass('${c.id}','${encodeURIComponent(String(c.name||''))}')"><td><span class="cls-radio"></span>${safeHtml(c.name,'-')}</td><td class="cls-combo">${combo}</td><td class="cls-seats">${safeHtml(c.seats,'0')}</td></tr>`;
   }).join(''):`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No classes have been linked to your programme yet. You can still submit; a class will be assigned by the school.</td></tr>`;
 }
 function pickClass(id,name){app.classId=id;app.className=decodeURIComponent(String(name||''));document.querySelectorAll('.cls-row').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));}
