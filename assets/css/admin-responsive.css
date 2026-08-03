@@ -26,10 +26,9 @@ html {
 
 body {
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 0 !important;
   overflow-x: hidden !important;
-  overflow-y: auto !important;
+  overflow-y: visible !important;
   color: var(--admin-primary);
   background: var(--admin-background);
 }
@@ -407,7 +406,7 @@ body > footer {
   }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1024px) {
   :root {
     --header-height: 68px;
   }
@@ -440,7 +439,7 @@ body > footer {
     width: min(86vw, 310px) !important;
     max-width: calc(100vw - 24px);
     height: 100vh !important;
-    height: 100dvh !important;
+    height: 100svh !important;
     transform: translateX(-105%) !important;
     transition: transform 0.25s ease !important;
     box-shadow: 12px 0 30px rgba(0, 22, 25, 0.24);
@@ -1574,5 +1573,175 @@ body > #overlay.overlay.manage-student-editor {
   #view-verify-students tbody td {
     grid-template-columns: minmax(94px, 38%) minmax(0, 1fr);
     padding: 9px 10px;
+  }
+}
+
+/* =====================================================
+   FINAL RESPONSIVE SHELL GUARD
+   Phone, tablet, desktop, Edge, Chrome, Safari, Firefox.
+===================================================== */
+
+html {
+  height: auto !important;
+  min-height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+body {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+body.sidebar-open {
+  overflow: hidden !important;
+}
+
+/* Avoid locking page scroll just because a sidebar has an .open class. */
+body:not(.sidebar-open) {
+  overflow-y: visible !important;
+}
+
+@media screen and (max-width: 1024px) {
+  .admin-layout,
+  .app {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .admin-main,
+  .main {
+    display: block !important;
+    grid-column: 1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  .admin-sidebar,
+  .sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    width: min(86vw, 310px) !important;
+    max-width: calc(100vw - 20px) !important;
+    height: 100vh !important;
+    height: 100svh !important;
+    transform: translate3d(-105%, 0, 0) !important;
+    transition: transform 0.25s ease !important;
+    will-change: transform;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    z-index: 1100 !important;
+  }
+
+  @supports (height: 100dvh) {
+    .admin-sidebar,
+    .sidebar {
+      height: 100dvh !important;
+    }
+  }
+
+  .admin-sidebar.open,
+  .sidebar.open {
+    transform: translate3d(0, 0, 0) !important;
+  }
+
+  .mobile-menu-button,
+  .hamburger {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .admin-content,
+  .content {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+}
+
+/* Tablet */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .stat-grid,
+  .stats-grid,
+  .adm-cards,
+  .chart-grid,
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .form-grid,
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Phone portrait */
+@media screen and (max-width: 768px) {
+  .admin-grid,
+  .dashboard-grid,
+  .stats-grid,
+  .stat-grid,
+  .form-grid,
+  .settings-grid,
+  .action-grid,
+  .adm-cards,
+  .chart-grid,
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Phone landscape: full-width content, drawer sidebar, two-card grid. */
+@media screen and (min-width: 540px) and (max-width: 932px) and (max-height: 600px) {
+  .admin-layout,
+  .app {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .admin-sidebar,
+  .sidebar {
+    transform: translate3d(-105%, 0, 0) !important;
+    width: min(42vw, 300px) !important;
+  }
+
+  .admin-sidebar.open,
+  .sidebar.open {
+    transform: translate3d(0, 0, 0) !important;
+  }
+
+  .admin-main,
+  .main {
+    grid-column: 1 !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .stat-grid,
+  .stats-grid,
+  .adm-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .admin-content,
+  .content {
+    padding: 10px 12px 16px !important;
+  }
+
+  .admin-header,
+  .topbar {
+    min-height: 56px !important;
+    padding: 6px 10px !important;
   }
 }

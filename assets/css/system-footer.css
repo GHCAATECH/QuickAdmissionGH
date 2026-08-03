@@ -112,3 +112,46 @@ body.student-dashboard-active #s-app.screen.active .pbody {
     display: none !important;
   }
 }
+
+/* =====================================================
+   FINAL FOOTER FLOW FIX
+===================================================== */
+
+body.system-footer-page {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow-y: visible !important;
+}
+
+body.system-footer-page > :is(
+  .app,
+  .screen.active,
+  #s-app.screen.active,
+  #s-login.screen.active
+) {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+body.system-footer-page > footer.system-footer {
+  position: static !important;
+  inset: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+body.system-footer-page > :is(
+  .system-footer-spacer,
+  .footer-spacer,
+  .footer-gap
+) {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}

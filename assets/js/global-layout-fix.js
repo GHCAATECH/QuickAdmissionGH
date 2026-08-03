@@ -175,6 +175,39 @@ function forceScrollableLayout() {
     element.style.setProperty("overflow-y", "visible", "important");
   });
 
+  // The school-admin dashboard uses a fixed desktop shell with one dedicated
+  // scrolling content pane. Preserve that contract after the generic mobile
+  // layout repair above; otherwise its content is clipped by the shell and
+  // neither the page nor the pane can be scrolled.
+  const desktopAppContent =
+    window.matchMedia("(min-width: 1025px)").matches &&
+    document.querySelector(".school-admin-login-wrapper")
+      ? document.querySelector(".app > .main > .content")
+      : null;
+
+  if (desktopAppContent) {
+    const desktopApp = desktopAppContent.closest(".app");
+    const desktopMain = desktopAppContent.closest(".main");
+
+    if (desktopApp) {
+      desktopApp.style.setProperty("height", "100dvh", "important");
+      desktopApp.style.setProperty("min-height", "0", "important");
+      desktopApp.style.setProperty("overflow", "hidden", "important");
+    }
+
+    if (desktopMain) {
+      desktopMain.style.setProperty("height", "100dvh", "important");
+      desktopMain.style.setProperty("min-height", "0", "important");
+      desktopMain.style.setProperty("overflow", "hidden", "important");
+    }
+
+    desktopAppContent.style.setProperty("height", "auto", "important");
+    desktopAppContent.style.setProperty("min-height", "0", "important");
+    desktopAppContent.style.setProperty("max-height", "none", "important");
+    desktopAppContent.style.setProperty("overflow-x", "hidden", "important");
+    desktopAppContent.style.setProperty("overflow-y", "auto", "important");
+  }
+
   document
     .querySelectorAll(
       "#authGate, #authGate .qa-login-shell, #authGate .qa-brand-panel, #authGate .qa-login-panel, #authGate .qa-login-card"
