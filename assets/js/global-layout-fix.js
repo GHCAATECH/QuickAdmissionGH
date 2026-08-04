@@ -113,8 +113,9 @@ function updateLoginScreenScrollbarMode() {
  * Keep the complete sign-in experience visible on a desktop viewport.  The
  * student and administrator pages deliberately carry useful context beside
  * their forms, so simply clipping the overflow would hide controls.  Instead
- * scale the login shell down just enough to share the viewport with the
- * system footer.  Phone layouts retain their normal, scrollable flow.
+ * scale the login shell only when the resulting controls remain comfortably
+ * readable. Short desktop windows keep their normal document scrolling
+ * instead of being squeezed into an overly small login card.
  */
 function fitDesktopLoginToViewport() {
   const isDesktop = window.matchMedia("(min-width: 769px)").matches;
@@ -146,13 +147,21 @@ function fitDesktopLoginToViewport() {
       0,
       window.innerHeight - otherContentHeight - 4
     );
-    const zoom = Math.max(
-      0.55,
-      Math.min(0.94, availableShellHeight / Math.max(shellHeight, 1))
+    const idealZoom = Math.min(
+      0.94,
+      availableShellHeight / Math.max(shellHeight, 1)
     );
 
-    loginShell.style.setProperty("zoom", zoom.toFixed(3), "important");
-    loginShell.dataset.qaLoginZoom = zoom.toFixed(3);
+    // Below 78% the form becomes too dense to use comfortably. Leave the
+    // document in its regular scrollable layout at that size instead.
+    if (idealZoom < 0.78) {
+      loginShell.style.removeProperty("zoom");
+      loginShell.removeAttribute("data-qa-login-zoom");
+      return;
+    }
+
+    loginShell.style.setProperty("zoom", idealZoom.toFixed(3), "important");
+    loginShell.dataset.qaLoginZoom = idealZoom.toFixed(3);
   });
 }
 
@@ -171,7 +180,7 @@ function forceScrollableLayout() {
   const adminGatePresent = Boolean(document.getElementById("authGate"));
 
   document.documentElement.dataset.qaLayoutFix =
-    "20260804-login-fit-18";
+    "20260804-readable-login-fit-19";
 
   document.documentElement.style.setProperty("height", "auto", "important");
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");

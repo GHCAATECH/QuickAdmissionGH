@@ -672,10 +672,39 @@
 <link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260801-content-flow-24">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260801-content-height-5">
 <link rel="stylesheet" href="../assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
-<script src="../assets/js/global-layout-fix.js?v=20260804-login-fit-18" defer></script>
+<style>
+  /* The super-admin dashboard uses document scrolling after sign-in. Keep
+     every shell in normal flow so wheel and trackpad gestures reach it. */
+  @media (min-width:1025px){
+    html:has(body.super-admin-page:not(.auth-booting):not(.auth-gate-visible)){
+      overflow-x:clip!important;
+      overflow-y:auto!important;
+    }
+    body.super-admin-page:not(.auth-booting):not(.auth-gate-visible){
+      overflow-x:clip!important;
+      overflow-y:visible!important;
+    }
+    body.super-admin-page:not(.auth-booting):not(.auth-gate-visible)>.app,
+    body.super-admin-page:not(.auth-booting):not(.auth-gate-visible)>.app>.main,
+    body.super-admin-page:not(.auth-booting):not(.auth-gate-visible)>.app>.main>.content{
+      height:auto!important;
+      min-height:0!important;
+      max-height:none!important;
+      overflow:visible!important;
+    }
+    body.super-admin-page:not(.auth-booting):not(.auth-gate-visible)>.app{
+      min-height:100dvh!important;
+      align-items:start!important;
+    }
+    body.super-admin-page:not(.auth-booting):not(.auth-gate-visible)>.app>.main>.content{
+      flex:1 0 auto!important;
+    }
+  }
+</style>
+<script src="../assets/js/global-layout-fix.js?v=20260804-readable-login-fit-19" defer></script>
 <script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
 </head>
-<body class="auth-booting system-footer-page">
+<body class="auth-booting system-footer-page super-admin-page">
 <div class="app">
   <!-- ============ SIDEBAR ============ -->
   <aside class="sidebar" id="sidebar">
