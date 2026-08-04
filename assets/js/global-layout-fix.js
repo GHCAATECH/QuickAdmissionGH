@@ -100,6 +100,7 @@ function updateLoginScreenScrollbarMode() {
       adminGatePresent ? "scroll" : "auto",
       "important"
     );
+    document.body.style.setProperty("overflow-x", "clip", "important");
     document.body.style.setProperty(
       "overflow-y",
       "visible",
@@ -130,7 +131,7 @@ function forceScrollableLayout() {
     document.body.style.setProperty("height", "auto", "important");
     document.body.style.setProperty(
       "overflow-x",
-      adminGatePresent ? "clip" : "hidden",
+      "clip",
       "important"
     );
     document.body.style.setProperty(

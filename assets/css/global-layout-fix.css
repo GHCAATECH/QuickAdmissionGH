@@ -1077,3 +1077,16 @@ body:not(.sidebar-open) :is(
     height: 12px !important;
   }
 }
+
+/* Keep one vertical scroll owner. With one axis set to `hidden`, browsers
+   compute the other axis's `visible` value as `auto`, which creates a second,
+   non-scrollable body container that absorbs wheel and trackpad input. */
+html {
+  overflow-x: clip !important;
+  overflow-y: auto !important;
+}
+
+body {
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+}
