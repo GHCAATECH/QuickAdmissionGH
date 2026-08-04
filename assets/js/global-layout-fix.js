@@ -110,6 +110,60 @@ function updateLoginScreenScrollbarMode() {
 }
 
 /**
+ * Keep the complete sign-in experience visible on a desktop viewport.  The
+ * student and administrator pages deliberately carry useful context beside
+ * their forms, so simply clipping the overflow would hide controls.  Instead
+ * scale the login shell down just enough to share the viewport with the
+ * system footer.  Phone layouts retain their normal, scrollable flow.
+ */
+function fitDesktopLoginToViewport() {
+  const isDesktop = window.matchMedia("(min-width: 769px)").matches;
+  const studentLogin = document.querySelector("#s-login.screen.active");
+  const loginShells = [
+    studentLogin?.querySelector(".portal-login-wrap, .qa-page-shell"),
+    document.querySelector("#authGate .qa-login-shell"),
+  ].filter(Boolean);
+
+  loginShells.forEach((loginShell) => {
+    if (!isDesktop || window.innerHeight < 560) {
+      loginShell.style.removeProperty("zoom");
+      loginShell.removeAttribute("data-qa-login-zoom");
+      return;
+    }
+
+    // Measure at the unscaled size first. This also overrides the older
+    // fixed 90% student-login rule so every desktop height gets a fitting
+    // scale instead of only a one-size-fits-all reduction.
+    loginShell.style.setProperty("zoom", "1", "important");
+
+    const shellHeight = loginShell.getBoundingClientRect().height;
+    const documentHeight = Math.max(
+      document.documentElement.scrollHeight,
+      document.body?.scrollHeight || 0
+    );
+    const otherContentHeight = Math.max(0, documentHeight - shellHeight);
+    const availableShellHeight = Math.max(
+      0,
+      window.innerHeight - otherContentHeight - 4
+    );
+    const zoom = Math.max(
+      0.55,
+      Math.min(0.94, availableShellHeight / Math.max(shellHeight, 1))
+    );
+
+    loginShell.style.setProperty("zoom", zoom.toFixed(3), "important");
+    loginShell.dataset.qaLoginZoom = zoom.toFixed(3);
+  });
+}
+
+let loginFitTimer;
+
+function scheduleDesktopLoginFit() {
+  window.clearTimeout(loginFitTimer);
+  loginFitTimer = window.setTimeout(fitDesktopLoginToViewport, 60);
+}
+
+/**
  * Force the document roots and app shells to allow page scrolling.
  * This protects against legacy page CSS like html,body{overflow:hidden}.
  */
@@ -117,7 +171,7 @@ function forceScrollableLayout() {
   const adminGatePresent = Boolean(document.getElementById("authGate"));
 
   document.documentElement.dataset.qaLayoutFix =
-    "20260731-admin-login-scroll-14";
+    "20260804-login-fit-18";
 
   document.documentElement.style.setProperty("height", "auto", "important");
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");
@@ -242,6 +296,7 @@ function forceScrollableLayout() {
   });
 
   updateLoginScreenScrollbarMode();
+  scheduleDesktopLoginFit();
 }
 
 /**
@@ -281,6 +336,7 @@ document.addEventListener("DOMContentLoaded", initialiseLayoutFix);
 
 const layoutMutationObserver = new MutationObserver(() => {
   updateLoginScreenScrollbarMode();
+  scheduleDesktopLoginFit();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -288,8 +344,13 @@ document.addEventListener("DOMContentLoaded", () => {
     layoutMutationObserver.observe(document.body, {
       attributes: true,
       attributeFilter: ["class"],
+      childList: true,
       subtree: true,
     });
+
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(scheduleDesktopLoginFit);
+    }
   }
 });
 
