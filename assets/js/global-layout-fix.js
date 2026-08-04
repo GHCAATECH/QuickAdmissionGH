@@ -102,7 +102,7 @@ function updateLoginScreenScrollbarMode() {
     );
     document.body.style.setProperty(
       "overflow-y",
-      adminGatePresent ? "visible" : "auto",
+      "visible",
       "important"
     );
   }
@@ -135,7 +135,7 @@ function forceScrollableLayout() {
     );
     document.body.style.setProperty(
       "overflow-y",
-      adminGatePresent ? "visible" : "auto",
+      "visible",
       "important"
     );
   }
