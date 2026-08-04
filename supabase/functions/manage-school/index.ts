@@ -154,6 +154,24 @@ Deno.serve(async (req: Request) => {
     return json({ ok: false, error: "validation", message: "Admin email and a password of at least 8 characters are required." }, 400);
   }
 
+  // A new tenant must begin with an empty academic structure. This also
+  // clears records created by a legacy database trigger or template clone, so
+  // programmes, classrooms, and houses are added only by that school's admin.
+  const structureResets = await Promise.all([
+    admin.from("programmes").delete().eq("school_id", createdSchoolId),
+    admin.from("classrooms").delete().eq("school_id", createdSchoolId),
+    admin.from("houses").delete().eq("school_id", createdSchoolId),
+  ]);
+  const structureResetError = structureResets.find((result) => result.error)?.error;
+  if (structureResetError) {
+    if (createdSchoolId) await admin.from("schools").delete().eq("id", createdSchoolId);
+    return json({
+      ok: false,
+      error: "structure_reset_failed",
+      message: `Could not initialise the new school: ${structureResetError.message}`,
+    }, 500);
+  }
+
   const { data: createdUser, error: userError } = await admin.auth.admin.createUser({
     email: adminEmail,
     password: adminPassword,
