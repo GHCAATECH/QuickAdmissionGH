@@ -1474,7 +1474,7 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260804-wheel-scroll-30">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-verified-mobile-5">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-verified-dates-6">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260801-content-height-5">
 <link rel="stylesheet" href="../assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <style>
@@ -1864,8 +1864,8 @@
             <div class="field"><label>Class</label><select id="verf_class"></select></div>
             <div class="field"><label>Residential status</label><select id="verf_residential" onchange="onVerifiedResidentialFilterChange()"><option value="">All</option><option value="Day">Day</option><option value="Boarding">Boarding</option></select></div>
             <div class="field"><label>House</label><select id="verf_house"></select></div>
-            <div class="field"><label>Verification date from</label><input id="verf_date_from" type="date"></div>
-            <div class="field"><label>Verification date to</label><input id="verf_date_to" type="date"></div>
+            <div class="field verified-date-field"><label>Verification date from</label><input id="verf_date_from" type="date"></div>
+            <div class="field verified-date-field"><label>Verification date to</label><input id="verf_date_to" type="date"></div>
           </div>
           <div class="verify-active-filters" id="verifiedActiveFilters"></div>
           <div class="verified-filter-actions"><button class="btn btn-primary btn-sm" type="button" onclick="applyVerifiedFilters()">Apply Filters</button><button class="btn btn-ghost btn-sm" type="button" onclick="clearVerifiedFilters()">Clear Filters</button><button class="btn btn-ghost btn-sm" type="button" onclick="exportVerifiedStudentsExcel()">Export Excel</button><button class="btn btn-ghost btn-sm" type="button" onclick="exportVerifiedStudentsPdf()">Export PDF</button></div>
