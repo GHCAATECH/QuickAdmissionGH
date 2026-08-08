@@ -2109,6 +2109,37 @@ body:not(.sidebar-open) {
   white-space: nowrap !important;
 }
 
+/* Template controls remain single-line and scroll within their own toolbars.
+   The editable document itself keeps normal page-style text wrapping. */
+#view-templates .template-page-actions,
+#view-templates .tpl-toolbar,
+#view-templates .tpl-fieldbar {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+#view-templates .template-tabs,
+#view-templates .template-command-actions,
+#view-templates .tpl-toolbar > *,
+#view-templates .tpl-fieldbar > * {
+  flex: 0 0 auto;
+  flex-wrap: nowrap !important;
+}
+
+#view-templates :where(
+  .template-tabs,
+  .template-command-actions,
+  .tpl-toolbar,
+  .tpl-fieldbar,
+  .tpl-vars
+) :where(button, select, label, span) {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
 /* School Admin mobile header: one stable row shared by every dashboard view. */
 @media screen and (max-width: 640px) {
   body .topbar {

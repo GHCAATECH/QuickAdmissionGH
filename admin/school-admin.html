@@ -1474,7 +1474,7 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260804-wheel-scroll-30">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-manage-students-nowrap-14">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-templates-nowrap-15">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260808-school-admin-bottom-6">
 <link rel="stylesheet" href="../assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <style>
@@ -1992,12 +1992,12 @@
       <!-- TEMPLATES -->
       <section class="view" id="view-templates">
         <div class="panel panel-pad" style="margin:0 0 16px">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
-            <div class="seg" style="display:inline-flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px">
+          <div class="template-page-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+            <div class="seg template-tabs" style="display:inline-flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px">
               <button class="seg-btn active" id="tplTabLetter" onclick="tplTab('letter')">Admission letter</button>
               <button class="seg-btn" id="tplTabRecords" onclick="tplTab('records')">Personal records</button>
             </div>
-            <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="tplFull()" id="tplFullBtn">⛶ Full screen</button><button class="btn btn-ghost btn-sm" onclick="tplPreview()">Preview</button><button class="btn btn-primary btn-sm" onclick="tplSave()">Save template</button></div>
+            <div class="template-command-actions" style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="tplFull()" id="tplFullBtn">⛶ Full screen</button><button class="btn btn-ghost btn-sm" onclick="tplPreview()">Preview</button><button class="btn btn-primary btn-sm" onclick="tplSave()">Save template</button></div>
           </div>
         </div>
         <div class="panel" id="tplCard" style="margin:0;overflow:hidden">
