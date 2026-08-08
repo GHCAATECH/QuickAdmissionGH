@@ -1471,7 +1471,9 @@ body > #reportsOverlay.overlay > .rep-modal > .modal-body {
 }
 
 .sidebar .sb-foot {
-  margin-top: 24px;
+  flex: 0 0 auto;
+  width: 100%;
+  margin-top: auto;
 }
 
 body > #overlay.overlay.manage-student-editor {
@@ -2914,4 +2916,33 @@ body:not(.sidebar-open) {
     max-width: none !important;
     white-space: nowrap !important;
   }
+}
+
+/* Keep account controls at the viewport bottom while only the menu scrolls. */
+.sidebar {
+  overflow-y: hidden !important;
+}
+
+.sidebar > .nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sidebar > .sb-foot {
+  flex: 0 0 auto;
+  width: 100%;
+  margin-top: auto;
+  padding-bottom: max(13px, env(safe-area-inset-bottom));
+}
+
+.sidebar > .nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar > .nav::-webkit-scrollbar-thumb {
+  background: rgba(192, 235, 255, 0.28);
+  border-radius: 3px;
 }
