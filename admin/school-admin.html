@@ -1474,7 +1474,7 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260804-wheel-scroll-30">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-mobile-header-10">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-user-dialog-11">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260801-content-height-5">
 <link rel="stylesheet" href="../assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <style>
@@ -3278,7 +3278,7 @@ function refreshEditHouseOptions(){
   if(hint) hint.textContent=sel.options.length>1?'Only houses matching gender and residential status are shown.':'No configured house matches this gender and residential status.';
 }
 function positionManageStudentEditor(){
-  const overlay=$('overlay'); if(!overlay||(!overlay.classList.contains('manage-student-editor')&&!overlay.classList.contains('verified-student-details')&&!overlay.classList.contains('class-subject-details')))return;
+  const overlay=$('overlay'); if(!overlay||(!overlay.classList.contains('manage-student-editor')&&!overlay.classList.contains('verified-student-details')&&!overlay.classList.contains('class-subject-details')&&!overlay.classList.contains('user-account-editor')))return;
   const topbar=document.querySelector('.topbar'), sidebar=$('sidebar'), footer=document.querySelector('body > footer.system-footer');
   const desktop=window.matchMedia('(min-width:1025px)').matches;
   const top=topbar?Math.max(0,topbar.getBoundingClientRect().bottom):0;
@@ -4580,7 +4580,7 @@ document.addEventListener('input',function(e){
 });
 
 /* ===== MODAL / SIDEBAR ===== */
-function closeModal(){const overlay=$('overlay');overlay.classList.remove('show','manage-student-editor','verified-student-details','class-subject-details');overlay.style.removeProperty('--manage-editor-top');overlay.style.removeProperty('--manage-editor-left');overlay.style.removeProperty('--manage-editor-bottom');}
+function closeModal(){const overlay=$('overlay');overlay.classList.remove('show','manage-student-editor','verified-student-details','class-subject-details','user-account-editor');overlay.style.removeProperty('--manage-editor-top');overlay.style.removeProperty('--manage-editor-left');overlay.style.removeProperty('--manage-editor-bottom');}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
 function resetAdminScroll(){
   window.scrollTo(0,0);
@@ -5935,7 +5935,8 @@ function openCreateUser(){
     </div>
   </div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="u_btn" onclick="createUser()">Create user</button></div>`;
-  $('overlay').classList.add('show');
+  $('overlay').classList.add('show','user-account-editor');
+  requestAnimationFrame(positionManageStudentEditor);
   toggleUserCreateMode();
 }
 async function createUser(){
@@ -5963,7 +5964,8 @@ function openUserPerms(id){
     <div class="field"><label>Restrict to one house (optional)</label>${houseSelectHTML(u.permissions&&u.permissions.house||'')}<div style="font-size:11.5px;color:var(--muted);margin-top:5px">House master: they will only see this house and its students.</div></div>
   </div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="up_btn" onclick="saveUserPerms('${id}')">Save privileges</button></div>`;
-  $('overlay').classList.add('show');
+  $('overlay').classList.add('show','user-account-editor');
+  requestAnimationFrame(positionManageStudentEditor);
 }
 async function saveUserPerms(id){
   if(roGuard())return;

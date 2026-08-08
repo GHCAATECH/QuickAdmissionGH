@@ -959,7 +959,8 @@ body > #overlay.overlay > .modal > .modal-body {
    The shared header, sidebar and system footer remain exposed around it. */
 body > #overlay.overlay.manage-student-editor,
 body > #overlay.overlay.verified-student-details,
-body > #overlay.overlay.class-subject-details {
+body > #overlay.overlay.class-subject-details,
+body > #overlay.overlay.user-account-editor {
   inset: var(--manage-editor-top, var(--header-height)) 0
     var(--manage-editor-bottom, var(--system-footer-height, 46px))
     var(--manage-editor-left, var(--sidebar-width)) !important;
@@ -984,6 +985,12 @@ body > #overlay.overlay.verified-student-details > .modal {
 
 body > #overlay.overlay.class-subject-details > .modal {
   max-width: 620px !important;
+  max-height: 100% !important;
+  border-radius: 18px !important;
+}
+
+body > #overlay.overlay.user-account-editor > .modal {
+  max-width: 680px !important;
   max-height: 100% !important;
   border-radius: 18px !important;
 }
