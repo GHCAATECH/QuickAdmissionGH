@@ -1474,7 +1474,7 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260804-wheel-scroll-30">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-verified-dates-7">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-placement-mobile-8">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260801-content-height-5">
 <link rel="stylesheet" href="../assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <style>
@@ -1749,7 +1749,7 @@
 
       <!-- PLACEMENT -->
       <section class="view" id="view-placement">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="placement-primary-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
           <button class="btn btn-primary" onclick="openPop('importPop')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import CSSPS placement list</button>
           <button class="btn btn-primary" onclick="openPop('manualPop')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:16px;height:16px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add record manually</button>
         </div>
@@ -1778,7 +1778,7 @@
             <button class="btn btn-primary btn-sm" onclick="addPlacement()">Add record</button>
           </div>
         </div>
-        <div class="panel"><div class="panel-head"><div><h3>Current placement list</h3><div class="sub"><span id="placeCount">0</span> placed students</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input id="placeSearch" placeholder="Search name or index…" oninput="resetPlacementPage()" style="width:200px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:13px"><button class="btn btn-ghost btn-sm" onclick="toast('Downloading contacts as CSV…')">Download contacts</button><button class="btn btn-ghost btn-sm" onclick="deletePlacementBatch('recent')">Delete recent import</button><button class="btn btn-danger btn-sm" onclick="deletePlacementBatch('all')">Delete all</button></div></div>
+        <div class="panel placement-list-panel"><div class="panel-head placement-list-head"><div><h3>Current placement list</h3><div class="sub"><span id="placeCount">0</span> placed students</div></div><div class="placement-list-controls" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input id="placeSearch" placeholder="Search name or index…" oninput="resetPlacementPage()" style="width:200px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:13px"><button class="btn btn-ghost btn-sm" onclick="toast('Downloading contacts as CSV…')">Download contacts</button><button class="btn btn-ghost btn-sm" onclick="deletePlacementBatch('recent')">Delete recent import</button><button class="btn btn-danger btn-sm" onclick="deletePlacementBatch('all')">Delete all</button></div></div>
           <div class="tbl-wrap"><table><thead><tr><th>Index No</th><th>Name</th><th>Gender</th><th>Res.</th><th>Programme</th><th>Agg.</th><th>SMS contact</th><th>Logged in?</th><th></th></tr></thead><tbody id="placeRows"></tbody></table></div>
           <div class="dt-foot" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><span id="placePageMeta">Showing 0 of 0 students</span><div style="display:flex;gap:8px;align-items:center"><span id="placePagerMeta">Page 1 of 1 · 50 per page</span><button class="btn btn-ghost btn-sm" id="placePrevBtn" type="button" onclick="changePlacementPage(-1)">Previous</button><button class="btn btn-ghost btn-sm" id="placeNextBtn" type="button" onclick="changePlacementPage(1)">Next</button></div></div>
         </div>

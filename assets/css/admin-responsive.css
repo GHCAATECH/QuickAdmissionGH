@@ -2092,6 +2092,118 @@ body:not(.sidebar-open) {
   }
 }
 
+/* Placement List mobile layout. The shared admin header remains governed by
+   the common shell rules so every other page keeps the same header. */
+@media screen and (max-width: 640px) {
+  #view-placement .placement-primary-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px !important;
+    width: 100%;
+    margin-bottom: 18px !important;
+  }
+
+  #view-placement .placement-primary-actions > .btn {
+    width: 100% !important;
+    min-width: 0;
+    min-height: 54px;
+    padding: 10px 8px;
+    justify-content: center;
+    text-align: center;
+    font-size: clamp(10px, 3vw, 13px);
+    line-height: 1.25;
+  }
+
+  #view-placement .placement-primary-actions > .btn svg {
+    flex: 0 0 15px;
+  }
+
+  #view-placement .placement-list-panel {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  #view-placement .placement-list-head {
+    display: block !important;
+    padding: 18px 16px 16px;
+  }
+
+  #view-placement .placement-list-head > div:first-child {
+    margin-bottom: 16px;
+  }
+
+  #view-placement .placement-list-head h3 {
+    margin-bottom: 4px;
+    font-size: clamp(18px, 5.3vw, 22px);
+  }
+
+  #view-placement .placement-list-controls {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100%;
+    min-width: 0;
+  }
+
+  #view-placement .placement-list-controls #placeSearch {
+    grid-column: 1 / -1;
+    width: min(100%, 250px) !important;
+    min-width: 0;
+    min-height: 46px;
+    margin: 0 0 8px;
+    padding: 9px 11px !important;
+    font-size: 13px !important;
+  }
+
+  #view-placement .placement-list-controls > .btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px;
+    padding: 8px 5px;
+    justify-content: center;
+    text-align: center;
+    font-size: clamp(9px, 2.75vw, 11px);
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  #view-placement .placement-list-panel > .tbl-wrap {
+    border-top: 1px solid currentColor;
+  }
+
+  #view-placement .placement-list-panel > .dt-foot {
+    padding: 12px 14px;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  #view-placement .placement-primary-actions {
+    gap: 7px !important;
+  }
+
+  #view-placement .placement-primary-actions > .btn {
+    min-height: 50px;
+    padding-inline: 5px;
+    font-size: 10px;
+  }
+
+  #view-placement .placement-list-head {
+    padding-inline: 12px;
+  }
+
+  #view-placement .placement-list-controls {
+    gap: 6px !important;
+  }
+
+  #view-placement .placement-list-controls > .btn {
+    min-height: 44px;
+    padding-inline: 3px;
+    font-size: 9px;
+  }
+}
+
 /* =====================================================
    MOBILE TABLE PRESERVATION
    Keep every school-admin and super-admin table in its desktop table form.
