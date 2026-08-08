@@ -2299,8 +2299,11 @@ body:not(.sidebar-open) {
 
   #view-verified-students .verified-filter-grid .verified-date-field {
     grid-column: auto !important;
+    width: 100% !important;
+    max-width: 100%;
     min-width: 0;
     align-self: start;
+    overflow: hidden;
   }
 
   #view-verified-students .verified-filter-grid .field label {
@@ -2328,13 +2331,37 @@ body:not(.sidebar-open) {
 
   #view-verified-students .verified-filter-grid .verified-date-field input[type="date"] {
     display: block;
+    box-sizing: border-box !important;
     width: 100% !important;
+    inline-size: 100% !important;
     min-width: 0 !important;
+    min-inline-size: 0 !important;
     max-width: 100% !important;
+    max-inline-size: 100% !important;
     height: 46px;
     min-height: 46px;
     padding: 7px 8px;
+    margin: 0;
     font-size: clamp(11px, 3.2vw, 13px);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  #view-verified-students .verified-filter-grid .verified-date-field input[type="date"]::-webkit-date-and-time-value {
+    min-width: 0;
+    margin: 0;
+    text-align: left;
+  }
+
+  #view-verified-students .verified-filter-grid .verified-date-field input[type="date"]::-webkit-datetime-edit {
+    min-width: 0;
+    padding: 0;
+  }
+
+  #view-verified-students .verified-filter-grid .verified-date-field input[type="date"]::-webkit-calendar-picker-indicator {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 2px;
   }
 
   #view-verified-students .verified-filter-actions {
