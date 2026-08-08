@@ -1216,6 +1216,21 @@ body > #reportsOverlay.overlay > .rep-modal > .modal-body {
   vertical-align: middle;
 }
 
+#view-verified-students #verifiedStudentsTable .verify-student-photo,
+#view-verify-students .verify-student-photo {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  min-width: 72px;
+  height: 84px;
+  border-radius: 8px;
+  overflow: hidden;
+  object-fit: cover;
+  object-position: center;
+  white-space: nowrap;
+  line-height: 1;
+}
+
 #view-verified-students #verifiedStudentsTable .row-actions {
   justify-content: flex-start;
   min-width: 170px;
@@ -1378,8 +1393,9 @@ body > #reportsOverlay.overlay > .rep-modal > .modal-body {
   }
 
   #view-verified-students #verifiedStudentsTable .verify-student-photo {
-    width: 54px;
-    height: 64px;
+    width: 72px;
+    min-width: 72px;
+    height: 84px;
   }
 
   #view-verified-students #verifiedStudentsTable .row-actions {
@@ -1572,8 +1588,9 @@ body > #overlay.overlay.manage-student-editor {
   }
 
   #view-verify-students .verify-student-photo {
-    width: 54px;
-    height: 64px;
+    width: 72px;
+    min-width: 72px;
+    height: 84px;
   }
 
   #view-verify-students .row-actions {
