@@ -1900,7 +1900,6 @@ function fillSchoolSelects(){
   $('smsTarget').innerHTML='<option value="all">All schools (platform-wide)</option>'+schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
 }
 function renderAll(){renderStats();renderDashTable();renderFeed();renderSchools();fillSchoolSelects();}
-renderAll();buildCharts();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
