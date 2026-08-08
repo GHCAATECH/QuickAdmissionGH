@@ -2059,8 +2059,9 @@ body:not(.sidebar-open) {
   }
 }
 
-/* Placement records stay on one line at every viewport size. The table grows
-   to its natural width and its own wrapper scrolls instead of wrapping cells. */
+/* Placement and classroom records stay on one line at every viewport size.
+   Tables grow naturally and their wrappers scroll instead of wrapping cells. */
+#view-classes .tbl-wrap,
 #view-placement .placement-list-panel > .tbl-wrap {
   width: 100%;
   max-width: 100%;
@@ -2069,6 +2070,7 @@ body:not(.sidebar-open) {
   -webkit-overflow-scrolling: touch;
 }
 
+#view-classes .tbl-wrap > table,
 #view-placement .placement-list-panel > .tbl-wrap > table {
   width: max-content !important;
   min-width: 100% !important;
@@ -2076,6 +2078,8 @@ body:not(.sidebar-open) {
   table-layout: auto !important;
 }
 
+#view-classes .tbl-wrap > table :where(th, td),
+#view-classes .tbl-wrap > table :where(th, td) *,
 #view-placement .placement-list-panel > .tbl-wrap > table :where(th, td),
 #view-placement .placement-list-panel > .tbl-wrap > table :where(th, td) * {
   max-width: none !important;
@@ -2083,6 +2087,22 @@ body:not(.sidebar-open) {
   overflow-wrap: normal !important;
   word-break: normal !important;
   hyphens: none !important;
+}
+
+#view-classes .class-subject-cell {
+  width: auto !important;
+  max-width: none !important;
+}
+
+#view-classes .class-subject-preview {
+  width: max-content !important;
+  max-width: none !important;
+  flex-wrap: nowrap !important;
+}
+
+#view-classes .class-subject-preview > span,
+#view-classes .class-subject-more {
+  white-space: nowrap !important;
 }
 
 /* School Admin mobile header: one stable row shared by every dashboard view. */
