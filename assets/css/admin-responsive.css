@@ -1745,3 +1745,310 @@ body:not(.sidebar-open) {
     padding: 6px 10px !important;
   }
 }
+
+/* =====================================================
+   SYSTEM-WIDE RESPONSIVE CONTROLS
+   Final ownership rules for admin buttons, filters, tables, pagination,
+   forms, and modals. These rules preserve all existing page behavior.
+===================================================== */
+
+:where(
+  .admin-main,
+  .main,
+  .admin-content,
+  .content,
+  .view,
+  .panel,
+  .card,
+  .box,
+  .row,
+  .column,
+  form,
+  fieldset,
+  .toolbar,
+  .dt-toolbar,
+  .panel-head,
+  .dt-foot,
+  .finance-transactions-tools,
+  .finance-transactions-foot
+) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(
+  .toolbar,
+  .dt-toolbar,
+  .panel-head,
+  .dt-foot,
+  .finance-transactions-tools,
+  .finance-transactions-foot,
+  .verified-filter-actions,
+  .verified-pagination-actions,
+  .finance-pager,
+  .rep-actions,
+  .sms-actions,
+  .row-actions,
+  .modal-foot,
+  .modal-actions,
+  .tpl-toolbar,
+  .qa-header-actions,
+  .doc-btns,
+  .button-group,
+  .btn-group,
+  .action-group,
+  .table-actions,
+  .form-actions,
+  .dt-actions
+) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(.panel-head, .dt-foot, .finance-transactions-foot, .finance-pager) {
+  justify-content: space-between;
+}
+
+:where(
+  button,
+  .btn,
+  .act,
+  .qa,
+  .btn-grn,
+  .rep-tab,
+  .finance-request-btn,
+  .admin-login-button,
+  input[type="button"],
+  input[type="submit"]
+) {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+:where(.btn, .act, .qa, .btn-grn, .rep-tab, .finance-request-btn, .admin-login-button) {
+  font-size: clamp(12px, 1vw, 14px);
+  padding-block: clamp(8px, 1vw, 12px);
+  padding-inline: clamp(10px, 1.4vw, 18px);
+}
+
+:where(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(
+  .filter-grid,
+  .filters,
+  .filter-row,
+  .search-row,
+  .verified-filter-grid,
+  .pdf-filters
+) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(
+  .table-responsive,
+  .table-wrapper,
+  .data-table-wrapper,
+  .table-container,
+  .table-wrap,
+  .tbl-wrap,
+  .cls-wrap,
+  .verified-table-wrap,
+  .finance-settlement-wrap
+) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto !important;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+}
+
+:where(
+  .table-responsive,
+  .table-wrapper,
+  .data-table-wrapper,
+  .table-container,
+  .table-wrap,
+  .tbl-wrap,
+  .cls-wrap,
+  .verified-table-wrap,
+  .finance-settlement-wrap
+) > table {
+  width: 100%;
+  max-width: none;
+}
+
+:where(.panel, .card, .box):has(> :where(.table-wrap, .tbl-wrap, .table-responsive, .table-wrapper)) {
+  overflow-x: hidden !important;
+}
+
+:where(.row-actions, .table-actions, td .action-group) {
+  justify-content: flex-start;
+}
+
+:where(.pagination, .pagination-controls, .pager, .page-controls, .finance-pager, .verified-pagination-actions) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(.modal, .modal-dialog) {
+  width: min(100%, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+
+:where(.modal-head, .modal-body, .modal-foot, .modal-actions) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Earlier tablet rules stacked every toolbar and action group. Restore natural
+   wrapping at tablet widths so compact actions remain inline when they fit. */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  :where(
+    .toolbar,
+    .dt-toolbar,
+    .panel-head,
+    .dt-foot,
+    .finance-transactions-tools,
+    .finance-transactions-foot,
+    .verified-filter-actions,
+    .verified-pagination-actions,
+    .finance-pager,
+    .rep-actions,
+    .sms-actions,
+    .row-actions,
+    .modal-foot,
+    .modal-actions,
+    .tpl-toolbar,
+    .qa-header-actions,
+    .doc-btns,
+    .button-group,
+    .btn-group,
+    .action-group,
+    .table-actions,
+    .form-actions,
+    .dt-actions
+  ) {
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+
+  :where(
+    .toolbar,
+    .dt-toolbar,
+    .finance-transactions-tools,
+    .verified-filter-actions,
+    .form-actions,
+    .modal-actions,
+    .modal-foot
+  ) > :where(input, select, textarea) {
+    flex: 1 1 210px;
+    width: auto;
+  }
+
+  :where(
+    .button-group,
+    .btn-group,
+    .action-group,
+    .table-actions,
+    .form-actions,
+    .modal-actions,
+    .modal-foot,
+    .row-actions
+  ) > :where(button, .btn, .act, .qa, .btn-grn) {
+    flex: 0 1 auto;
+    width: auto !important;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  :where(.filter-grid, .filters, .filter-row, .search-row, .verified-filter-grid, .pdf-filters) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :where(
+    .toolbar,
+    .dt-toolbar,
+    .finance-transactions-tools,
+    .verified-filter-actions,
+    .form-actions,
+    .modal-actions,
+    .modal-foot
+  ) > :where(input, select, textarea) {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  :where(.finance-pager, .verified-pagination-actions, .pagination, .pagination-controls) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  :where(.modal, .modal-dialog) {
+    width: min(100%, calc(100vw - 16px));
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  :where(.form-actions, .modal-actions, .modal-foot) > :where(button, .btn, .act, .qa, .btn-grn) {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  :where(.table-actions, .row-actions, td .action-group) > :where(button, .btn, .act, .qa, .btn-grn) {
+    flex: 1 1 auto;
+  }
+
+  :where(.dt-foot, .finance-transactions-foot, .finance-pager) {
+    justify-content: center;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  :where(.btn, .act, .qa, .btn-grn, .rep-tab, .finance-request-btn, .admin-login-button) {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  :where(
+    .toolbar,
+    .dt-toolbar,
+    .panel-head,
+    .dt-foot,
+    .finance-transactions-tools,
+    .finance-transactions-foot,
+    .verified-filter-actions,
+    .verified-pagination-actions,
+    .finance-pager,
+    .row-actions,
+    .modal-foot,
+    .modal-actions,
+    .form-actions
+  ) {
+    gap: 6px;
+  }
+}

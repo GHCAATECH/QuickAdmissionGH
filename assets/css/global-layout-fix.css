@@ -549,8 +549,6 @@ main > section:last-child:empty,
   }
 }
 
-}
-
 /* The login page owns its full content flow. Do not force the document to
    remain viewport-height after its footer, especially on mobile Safari where
    -webkit-fill-available can recreate the empty scroll area. */
@@ -1089,4 +1087,250 @@ html {
 body {
   overflow-x: clip !important;
   overflow-y: visible !important;
+}
+
+/* =========================================================
+   SYSTEM-WIDE RESPONSIVE CONTROLS
+   Keep public and student-portal actions inside their owners without
+   changing the established page structure or visual theme.
+========================================================= */
+
+:where(
+  main,
+  .main,
+  .content,
+  .container,
+  .panel,
+  .card,
+  .box,
+  .row,
+  .column,
+  form,
+  fieldset,
+  .qa-card,
+  .qa-login-card,
+  .portal-card,
+  .portal-form,
+  .portal-main,
+  .pmain,
+  .pcontent,
+  .view
+) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(
+  .qa-header-actions,
+  .qa-form-links,
+  .portal-quick-links,
+  .portal-brand-helpdesk-links,
+  .doc-btns,
+  .step-nav,
+  .pnav,
+  .pay-methods,
+  .login-token-row,
+  .form-actions,
+  .modal-actions,
+  .modal-foot,
+  .button-group,
+  .btn-group,
+  .action-group,
+  .table-actions,
+  .row-actions
+) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(
+  button,
+  .btn,
+  .qa-btn,
+  .portal-link-btn,
+  .pay-opt,
+  .back-link,
+  input[type="button"],
+  input[type="submit"]
+) {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+:where(.btn, .qa-btn, .portal-link-btn, .pay-opt, .back-link) {
+  font-size: clamp(12px, 1vw, 14px);
+  padding-block: clamp(8px, 1vw, 12px);
+  padding-inline: clamp(10px, 1.4vw, 18px);
+}
+
+:where(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(
+  .filter-grid,
+  .filters,
+  .filter-row,
+  .search-row,
+  .portal-filter-grid
+) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(
+  .table-responsive,
+  .table-wrapper,
+  .data-table-wrapper,
+  .table-container,
+  .table-wrap,
+  .tbl-wrap,
+  .cls-wrap
+) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto !important;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+}
+
+:where(
+  .table-responsive,
+  .table-wrapper,
+  .data-table-wrapper,
+  .table-container,
+  .table-wrap,
+  .tbl-wrap,
+  .cls-wrap
+) > table {
+  width: 100%;
+  max-width: none;
+}
+
+/* A dedicated table wrapper owns horizontal scrolling. Its surrounding panel
+   must remain fixed to the content width instead of becoming a second scroller. */
+:where(.panel, .card, .box):has(> :where(.table-wrap, .tbl-wrap, .table-responsive, .table-wrapper)) {
+  overflow-x: hidden !important;
+}
+
+:where(.pagination, .pagination-controls, .pager, .page-controls) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(.modal, .modal-dialog, .qa-modal, .qa-tutorial-modal) {
+  width: min(100%, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+
+:where(.modal-head, .modal-body, .modal-foot, .modal-actions) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media screen and (max-width: 1024px) {
+  :where(
+    .qa-header-actions,
+    .qa-form-links,
+    .portal-quick-links,
+    .doc-btns,
+    .step-nav,
+    .pnav,
+    .pay-methods,
+    .login-token-row,
+    .form-actions,
+    .modal-actions,
+    .modal-foot
+  ) {
+    flex-direction: row;
+  }
+
+  :where(.filter-grid, .filters, .filter-row, .search-row, .portal-filter-grid) {
+    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  }
+}
+
+@media screen and (max-width: 768px) {
+  :where(.filter-grid, .filters, .filter-row, .search-row, .portal-filter-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :where(
+    .qa-form-links,
+    .portal-quick-links,
+    .doc-btns,
+    .step-nav,
+    .pay-methods,
+    .login-token-row,
+    .form-actions,
+    .modal-actions,
+    .modal-foot
+  ) > :where(input, select, textarea) {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  :where(.modal, .modal-dialog, .qa-modal, .qa-tutorial-modal) {
+    width: min(100%, calc(100vw - 16px));
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  :where(.form-actions, .modal-actions, .modal-foot) > :where(button, .btn, .qa-btn) {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  :where(.table-actions, .row-actions, td .action-group) > :where(button, .btn, .qa-btn) {
+    flex: 1 1 auto;
+  }
+
+  :where(.pagination, .pagination-controls, .pager, .page-controls) {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  :where(.btn, .qa-btn, .portal-link-btn, .pay-opt, .back-link) {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  :where(
+    .qa-header-actions,
+    .qa-form-links,
+    .portal-quick-links,
+    .doc-btns,
+    .step-nav,
+    .pnav,
+    .pay-methods,
+    .login-token-row,
+    .form-actions,
+    .modal-actions,
+    .modal-foot
+  ) {
+    gap: 6px;
+  }
 }
