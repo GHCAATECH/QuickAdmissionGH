@@ -812,7 +812,7 @@
           <button class="btn btn-primary" onclick="openAddSchool()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add new school</button>
         </div>
         <div class="panel"><div class="tbl-wrap"><table>
-          <thead><tr><th>School Name</th><th>School Code</th><th>Email</th><th>Phone</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>School Name</th><th>School Code</th><th>Portal</th><th>Email</th><th>Phone</th><th>Status</th><th></th></tr></thead>
           <tbody id="schoolRows"></tbody>
         </table></div></div>
       </section>
@@ -1369,6 +1369,7 @@ function schoolRow(s,mode){
   }
   return `<tr><td><div class="sch-cell">${crest(s)}<span class="sch-name">${safeHtml(s.name)}</span></div></td>
     <td><span class="code">${safeHtml(schoolSenderCode(s)||'—')}</span></td>
+    <td class="mono" style="font-size:12px">${s.subdomain?`<a href="${escapeAttr(schoolPortalUrl(s))}" target="_blank" rel="noopener">${safeHtml(s.subdomain)}.quickadmissiongh.com</a>`:'&mdash;'}</td>
     <td class="mono" style="font-size:12px">${safeHtml(s.email,'&mdash;')}</td>
     <td class="mono">${safeHtml(s.phone,'&mdash;')}</td>
     <td><span class="pill ${s.status}">${s.status}</span></td>
@@ -1405,8 +1406,8 @@ function buildCharts(){
 /* ============ VIEW RENDERERS ============ */
 function renderSchools(){
   const q=($('schoolSearch').value||'').toLowerCase();const f=$('schoolFilter').value;
-  const rows=schools.filter(s=>(s.name.toLowerCase().includes(q)||String(s.code||'').toLowerCase().includes(q)||schoolSenderCode(s).toLowerCase().includes(q))&&(f==='all'||s.status===f));
-  $('schoolRows').innerHTML=rows.length?rows.map(s=>schoolRow(s,'manage')).join(''):emptyRow(6,'No schools match your filters.');
+  const rows=schools.filter(s=>(s.name.toLowerCase().includes(q)||String(s.code||'').toLowerCase().includes(q)||schoolSenderCode(s).toLowerCase().includes(q)||String(s.subdomain||'').includes(q))&&(f==='all'||s.status===f));
+  $('schoolRows').innerHTML=rows.length?rows.map(s=>schoolRow(s,'manage')).join(''):emptyRow(7,'No schools match your filters.');
   $('badge-schools').textContent=schools.filter(s=>s.status!=='suspended').length;
 }
 function aInit(n){return ((n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('')||'?').toUpperCase();}
@@ -1706,6 +1707,7 @@ function openSchool(id){
   </div>
   <div class="tab-panel active" data-tab="0">
     <dl class="kv"><dt>Full name</dt><dd>${safeHtml(s.name)}</dd><dt>School code / Sender ID</dt><dd><span class="code">${safeHtml(senderCode)}</span></dd>
+    <dt>School portal</dt><dd>${s.subdomain?`<a href="${escapeAttr(schoolPortalUrl(s))}" target="_blank" rel="noopener">${safeHtml(schoolPortalUrl(s))}</a>`:'Not configured'}</dd>
     <dt>Email</dt><dd>${safeHtml(s.email)}</dd><dt>Phone</dt><dd class="mono">${safeHtml(s.phone)}</dd>
     <dt>Admission</dt><dd><span class="pill ${s.admission==='OPENED'?'open':'closed'}">${safeHtml(s.admission)}</span></dd>
     <dt>Service charge</dt><dd class="mono">GHS ${safeHtml(s.charge.toFixed(2))}</dd><dt>Status</dt><dd><span class="pill ${s.status}">${safeHtml(s.status)}</span></dd></dl>
@@ -1752,7 +1754,8 @@ function editSchool(id){
   <div class="modal-head"><div><h2>Edit school</h2><p>Update ${safeHtml(s.name)}'s information</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid">
     <fieldset><legend>School information</legend>
-      <div class="grid-2"><div class="field"><label>School Code / SMS Sender ID</label><input id="e_school_code" value="${escapeAttr(schoolSenderCode(s)||'')}" maxlength="11" placeholder="e.g. ASEC"></div><div class="field"><label>Service charge (GHS)</label><input id="e_charge" type="number" step="0.5" value="${escapeAttr((s.charge!=null?s.charge:30))}"></div></div>
+      <div class="grid-2"><div class="field"><label>School Code / SMS Sender ID</label><input id="e_school_code" value="${escapeAttr(schoolSenderCode(s)||'')}" maxlength="11" placeholder="e.g. ASEC"></div><div class="field"><label>Portal subdomain</label><input id="e_subdomain" value="${escapeAttr(s.subdomain||'')}" maxlength="63" placeholder="e.g. asec"><span class="hint">${escapeHtml((s.subdomain||'school')+'.quickadmissiongh.com')}</span></div></div>
+      <div class="field"><label>Service charge (GHS)</label><input id="e_charge" type="number" step="0.5" value="${escapeAttr((s.charge!=null?s.charge:30))}"></div>
       <div class="field"><label>Online token payment</label><select id="e_online"><option value="yes" ${s.acceptOnlinePayment!==false?'selected':''}>Enabled</option><option value="no" ${s.acceptOnlinePayment===false?'selected':''}>Disabled</option></select></div>
       <div class="field"><label>Full school name</label><input id="e_name" value="${escapeAttr(s.name||'')}"></div>
       <div class="grid-2"><div class="field"><label>Phone</label><input id="e_phone" value="${escapeAttr(s.phone||'')}"></div><div class="field"><label>Email</label><input id="e_email" type="email" value="${escapeAttr(s.email||'')}"></div></div>
@@ -1764,7 +1767,7 @@ function editSchool(id){
   </div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="e_btn" onclick="saveSchoolEdit(${id})">Save changes</button></div>`;
   $('overlay').classList.add('show');
-  setTimeout(()=>bindSchoolCodeInput('e_school_code'),0);
+  setTimeout(()=>{bindSchoolCodeInput('e_school_code');bindSchoolSubdomainInput('e_subdomain');},0);
 }
 function openAddSchool(){
   const m=$('modal');m.className='modal';
@@ -1772,7 +1775,8 @@ function openAddSchool(){
   <div class="modal-head"><div><h2>Add new school</h2><p>Creates the tenant and its primary admin account</p></div><button class="modal-x" onclick="closeModal()">&times;</button></div>
   <div class="modal-body"><div class="form-grid">
     <fieldset><legend>School information</legend>
-      <div class="grid-2"><div class="field"><label>School Code / SMS Sender ID</label><input id="f_code" placeholder="e.g. ASEC" maxlength="11"></div><div class="field"><label>Service charge (GHS)</label><input id="f_charge" type="number" value="30" step="0.5"></div></div>
+      <div class="grid-2"><div class="field"><label>School Code / SMS Sender ID</label><input id="f_code" placeholder="e.g. ASEC" maxlength="11"></div><div class="field"><label>Portal subdomain</label><input id="f_subdomain" placeholder="e.g. asec" maxlength="63"><span class="hint">School's address: subdomain.quickadmissiongh.com</span></div></div>
+      <div class="field"><label>Service charge (GHS)</label><input id="f_charge" type="number" value="30" step="0.5"></div>
       <div class="field"><label>Full school name</label><input id="f_name" placeholder="e.g. Asuom Senior High School"></div>
       <div class="grid-2"><div class="field"><label>Phone</label><input id="f_phone" placeholder="0244..."></div><div class="field"><label>Email</label><input id="f_email" type="email" placeholder="school@..."></div></div>
     </fieldset>
@@ -1788,7 +1792,7 @@ function openAddSchool(){
   </div></div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createSchool()">Create school</button></div>`;
   $('overlay').classList.add('show');
-  setTimeout(()=>bindSchoolCodeInput('f_code','f_uname'),0);
+  setTimeout(()=>{bindSchoolCodeInput('f_code','f_uname');bindSchoolSubdomainInput('f_subdomain','f_code');},0);
 }
 function createSchool(){
   const code=$('f_code').value.trim().toUpperCase(),name=$('f_name').value.trim();
@@ -1976,6 +1980,32 @@ const normalizeSchoolCodeDraft=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9 
 const normalizeSchoolCodeInput=v=>normalizeSchoolCodeDraft(v).trim();
 const schoolSenderCode=s=>normalizeSchoolCodeInput((s&&((s.schoolCode||s.school_code||s.code)))||'');
 const schoolAdminCodeHandle=code=>normalizeSchoolCodeInput(code).replace(/\s+/g,'_').toLowerCase();
+const RESERVED_SCHOOL_SUBDOMAINS=new Set(['www','admin','api','mail','ftp','support','staging','app','dashboard','cdn','static','assets','auth','login','portal','superadmin','super-admin','school-admin']);
+const normalizeSchoolSubdomain=v=>String(v||'').toLowerCase().replace(/[^a-z0-9-]/g,'').replace(/^-+/,'').slice(0,63);
+const schoolPortalUrl=s=>s&&s.subdomain?'https://'+s.subdomain+'.quickadmissiongh.com/':'';
+function schoolSubdomainExists(subdomain,excludeId){
+  const normalized=normalizeSchoolSubdomain(subdomain);
+  return !!normalized&&schools.some(s=>String(s._id||s.id)!==String(excludeId||'')&&normalizeSchoolSubdomain(s.subdomain)===normalized);
+}
+function schoolSubdomainErrorMessage(subdomain){
+  const normalized=normalizeSchoolSubdomain(subdomain);
+  if(!normalized)return 'Portal subdomain is required.';
+  if(!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(normalized))return 'Use letters, numbers, or hyphens, without a hyphen at either end.';
+  if(RESERVED_SCHOOL_SUBDOMAINS.has(normalized))return 'That portal subdomain is reserved. Choose another one.';
+  return '';
+}
+function bindSchoolSubdomainInput(inputId,codeInputId){
+  const input=document.getElementById(inputId);
+  if(!input)return;
+  const codeInput=codeInputId?document.getElementById(codeInputId):null;
+  const suggest=function(){
+    if(!input.value&&codeInput)input.value=normalizeSchoolSubdomain(codeInput.value);
+  };
+  input.addEventListener('input',function(){input.value=normalizeSchoolSubdomain(input.value);});
+  input.addEventListener('blur',function(){suggest();input.value=normalizeSchoolSubdomain(input.value);});
+  if(codeInput)codeInput.addEventListener('blur',suggest);
+  suggest();
+}
 function schoolCodeExists(code,excludeId){
   const normalized=normalizeSchoolCodeInput(code);
   if(!normalized) return false;
@@ -2114,7 +2144,7 @@ async function fetchPlatformSmsHistory(){
 
 async function loadSA(){
   const [sch,cfg,prof,stu,pay,sms,log,progs,plc,tmpl,claims,summary]=await Promise.all([
-    sb.from('schools').select('id,name,code,school_code,status,subscription_plan,subscription_expiry,email,phone,headmaster_title,created_at').order('created_at'),
+    sb.from('schools').select('id,name,code,school_code,subdomain,status,subscription_plan,subscription_expiry,email,phone,headmaster_title,created_at').order('created_at'),
     sb.from('school_config').select('school_id,admission_status,service_charge,accept_online_payment,academic_year'),
     sb.from('profiles').select('id,full_name,email,school_id,role,permissions'),
     sb.from('students').select('id,school_id,bece_index,full_name,programme_id,status,created_at,parent_phone,records,submitted_at,personal_done,programme_done,undertaking_done,admission_no'),
@@ -2155,7 +2185,7 @@ async function loadSA(){
   schools=(sch.data||[]).map((s,i)=>{ const id=i+1; sRev[s.id]=id; const c=cfgBy[s.id]||{};
     const schoolCode=normalizeSchoolCodeInput(s.school_code||s.code||'');
     const smsCfg=tplBy[s.id]||{};
-    return {id,_id:s.id,code:s.code,school_code:schoolCode,schoolCode:schoolCode,name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
+    return {id,_id:s.id,code:s.code,school_code:schoolCode,schoolCode:schoolCode,subdomain:normalizeSchoolSubdomain(s.subdomain),name:s.name,short:sa_init(s.name),admin:adminBy[s.id]||'-',
       plan:sa_cap(s.subscription_plan||'standard'),students:Number(summarySchoolCounts[s.id]||(stu.data||[]).filter(x=>x.school_id===s.id).length),placements:plcCountBy[s.id]||0,
       admission:c.admission_status||'CLOSED',status:s.status,charge:Number(c.service_charge||0),
       acceptOnlinePayment:c.accept_online_payment!==false,
@@ -2251,13 +2281,17 @@ saveSchoolEdit=async function(id){
   const s=sById(id); if(!s)return;
   const name=(sval('e_name')||'').trim();
   const schoolCode=normalizeSchoolCodeInput(sval('e_school_code'));
+  const subdomain=normalizeSchoolSubdomain(sval('e_subdomain'));
   const codeErr=schoolCodeErrorMessage(schoolCode);
+  const subdomainErr=schoolSubdomainErrorMessage(subdomain);
   if(!name){toast('School name is required');return;}
   if(codeErr){toast(codeErr);return;}
+  if(subdomainErr){toast(subdomainErr);return;}
   if(schoolCodeExists(schoolCode,s._id)){toast('That School Code / SMS Sender ID is already in use.');return;}
+  if(schoolSubdomainExists(subdomain,s._id)){toast('That school portal subdomain is already in use.');return;}
   const btn=$('e_btn'); if(btn)btn.textContent='Saving...';
   const patch={
-    name,school_code:schoolCode,phone:sval('e_phone'),email:sval('e_email'),
+    name,school_code:schoolCode,subdomain,phone:sval('e_phone'),email:sval('e_email'),
     subscription_plan:(sval('e_plan')||'Standard').toLowerCase(),subscription_expiry:sval('e_expiry')||null,status:sval('e_status'),
     service_charge:parseFloat(sval('e_charge'))||0,admission_status:sval('e_admission'),accept_online_payment:sval('e_online')!=='no'
   };
@@ -2272,15 +2306,19 @@ saveSchoolEdit=async function(id){
 };
 createSchool=async function(){
   const schoolCode=normalizeSchoolCodeInput(sval('f_code')), name=sval('f_name').trim();
+  const subdomain=normalizeSchoolSubdomain(sval('f_subdomain')||schoolCode);
   const codeErr=schoolCodeErrorMessage(schoolCode);
+  const subdomainErr=schoolSubdomainErrorMessage(subdomain);
   if(!name){toast('School name is required');return;}
   if(codeErr){toast(codeErr);return;}
+  if(subdomainErr){toast(subdomainErr);return;}
   if(schoolCodeExists(schoolCode)){toast('That School Code / SMS Sender ID is already in use.');return;}
+  if(schoolSubdomainExists(subdomain)){toast('That school portal subdomain is already in use.');return;}
   const adminEmail=(sval('f_aemail')||'').trim(),adminPassword=sval('f_apass')||'',adminName=(sval('f_admin')||'').trim();
   if(!adminName||!adminEmail){toast('Primary admin name and email are required.');return;}
   if(adminPassword.length<8){toast('Temporary password must be at least 8 characters.');return;}
   const patch={
-    school_code:schoolCode,name,phone:sval('f_phone'),email:sval('f_email'),
+    school_code:schoolCode,subdomain,name,phone:sval('f_phone'),email:sval('f_email'),
     subscription_plan:(sval('f_plan')||'Standard').toLowerCase(),subscription_expiry:sval('f_expiry')||null,status:'active',
     service_charge:parseFloat(sval('f_charge'))||30,admission_status:sval('f_admission'),accept_online_payment:sval('f_online')!=='no',
     admin_name:adminName,admin_email:adminEmail,admin_password:adminPassword

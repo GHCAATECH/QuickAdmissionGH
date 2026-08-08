@@ -4542,6 +4542,26 @@ const schoolAuthStorage={
 };
 clearLegacySchoolAuthStorage();
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-school-auth',storage:schoolAuthStorage}});
+const SCHOOL_ADMIN_ROOT_DOMAIN='quickadmissiongh.com';
+const RESERVED_SCHOOL_ADMIN_SUBDOMAINS=new Set(['www','admin','api','mail','ftp','support','staging','app','dashboard','cdn','static','assets','auth','login','portal','superadmin','super-admin','school-admin']);
+function currentSchoolAdminSubdomain(){
+  const host=String((window.location&&window.location.hostname)||'').toLowerCase().replace(/\.$/,'');
+  if(!host||host===SCHOOL_ADMIN_ROOT_DOMAIN||host==='www.'+SCHOOL_ADMIN_ROOT_DOMAIN||!host.endsWith('.'+SCHOOL_ADMIN_ROOT_DOMAIN))return '';
+  const label=host.slice(0,-(SCHOOL_ADMIN_ROOT_DOMAIN.length+1));
+  return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(label)&&!RESERVED_SCHOOL_ADMIN_SUBDOMAINS.has(label)?label:'';
+}
+async function requireMatchingSchoolAdminPortal(prof){
+  const subdomain=currentSchoolAdminSubdomain();
+  if(!subdomain)return null;
+  const {data,error}=await sb.rpc('resolve_school_by_subdomain',{p_subdomain:subdomain});
+  if(error)throw new Error('Could not verify this school portal. Please refresh and try again.');
+  const school=Array.isArray(data)?data[0]:data;
+  if(!school||!school.id)throw new Error('This school portal does not exist or has been suspended.');
+  if(!prof||!prof.school_id||String(prof.school_id)!==String(school.id)){
+    throw new Error('This account does not belong to the school portal you opened.');
+  }
+  return school;
+}
 // Always attach a FRESH user token to privileged Edge Function calls, otherwise an
 // expired session makes the client send the publishable key and the function 401s.
 async function freshToken(){
@@ -4874,6 +4894,7 @@ function loadDefaultSmsTemplate(){
 })();
 
 async function enterAdmin(prof,uid){
+  await requireMatchingSchoolAdminPortal(prof);
   setSchoolAdminTabSessionActive(true);
   SB_UID=uid; SB_PERMS=(prof.permissions===undefined?null:prof.permissions); SB_HOUSE=(SB_PERMS&&SB_PERMS.house)||null;
   await loadSchoolData(prof);
@@ -4893,7 +4914,12 @@ async function bootSession(){
     const {data:prof}=await sb.from('profiles').select('full_name,role,school_id,permissions').eq('id',session.user.id).single();
     if(!prof||(prof.role!=='school_admin'&&prof.role!=='super_admin')){ setSchoolAdminTabSessionActive(false); return; }
     await enterAdmin(prof,session.user.id);
-  }catch(e){}
+  }catch(e){
+    setSchoolAdminTabSessionActive(false);
+    try{await sb.auth.signOut();}catch(ignore){}
+    const err=document.getElementById('ag_err');
+    if(err){err.textContent=(e&&e.message)||'Could not verify this school portal.';err.style.display='block';}
+  }
 }
 async function adminLogin(){
   const btn=document.getElementById('ag_btn'), err=document.getElementById('ag_err');
@@ -4932,8 +4958,9 @@ async function adminLogin(){
       await enterAdmin(prof,data.user.id);
       return;
     }catch(e){
-      err.textContent='Could not load school data.';
+      err.textContent=(e&&e.message)||'Could not load school data.';
       err.style.display='block';
+      try{await sb.auth.signOut();}catch(ignore){}
       return;
     }
   }catch(e){

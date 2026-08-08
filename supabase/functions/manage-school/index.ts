@@ -15,6 +15,19 @@ function email(value: unknown) {
   return text(value).toLowerCase();
 }
 
+const RESERVED_SUBDOMAINS = new Set([
+  "www", "admin", "api", "mail", "ftp", "support", "staging", "app", "dashboard",
+  "cdn", "static", "assets", "auth", "login", "portal", "superadmin", "super-admin", "school-admin",
+]);
+
+function portalSubdomain(value: unknown) {
+  return text(value).toLowerCase();
+}
+
+function validPortalSubdomain(value: string) {
+  return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(value) && !RESERVED_SUBDOMAINS.has(value);
+}
+
 async function actorProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
   if (!token) return null;
@@ -109,10 +122,18 @@ Deno.serve(async (req: Request) => {
 
   const schoolCode = text(source.school_code).toUpperCase().replace(/[^A-Z0-9]/g, "");
   const schoolName = text(source.name);
+  const subdomain = portalSubdomain(source.subdomain);
   const admissionStatus = text(source.admission_status).toUpperCase();
   if (!schoolName) return json({ ok: false, error: "validation", message: "School name is required." }, 400);
   if (!schoolCode || schoolCode.length > 11) {
     return json({ ok: false, error: "validation", message: "School code must contain 1 to 11 letters or numbers." }, 400);
+  }
+  if (!validPortalSubdomain(subdomain)) {
+    return json({
+      ok: false,
+      error: "validation",
+      message: "Enter a valid school portal subdomain using letters, numbers, or hyphens.",
+    }, 400);
   }
   if (admissionStatus !== "OPENED" && admissionStatus !== "CLOSED") {
     return json({ ok: false, error: "validation", message: "Admission status must be OPENED or CLOSED." }, 400);
@@ -121,6 +142,7 @@ Deno.serve(async (req: Request) => {
   const patch: JsonRecord = {
     school_code: schoolCode,
     name: schoolName,
+    subdomain,
     phone: text(source.phone),
     email: email(source.email),
     subscription_plan: text(source.subscription_plan) || "standard",
@@ -139,8 +161,13 @@ Deno.serve(async (req: Request) => {
   });
   if (saveError || !saved?.ok) {
     const message = saveError?.message || saved?.message || "Could not save the school.";
-    const duplicate = /duplicate|unique|school_code/i.test(message);
-    return json({ ok: false, error: duplicate ? "duplicate_code" : "save_failed", message: duplicate ? "That school code is already in use." : message }, duplicate ? 409 : 500);
+    const duplicateSubdomain = /subdomain/i.test(message) && /duplicate|unique|already/i.test(message);
+    const duplicateCode = !duplicateSubdomain && /duplicate|unique|school_code/i.test(message);
+    const duplicate = duplicateSubdomain || duplicateCode;
+    const duplicateMessage = duplicateSubdomain
+      ? "That school portal subdomain is already in use."
+      : "That school code is already in use.";
+    return json({ ok: false, error: duplicateSubdomain ? "duplicate_subdomain" : duplicateCode ? "duplicate_code" : "save_failed", message: duplicate ? duplicateMessage : message }, duplicate ? 409 : 500);
   }
 
   if (action === "update") return json(saved);

@@ -1473,6 +1473,39 @@ let PAYSTACK_PUBLIC_KEY='';
 let PAYSTACK_CONFIG={loaded:false,public_mode:'unknown',public_key_present:false,secret_present:false,mode_mismatch:false};
 const SCHOOL_CODE=null; // schools are resolved automatically from the index number
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false}});
+const PORTAL_ROOT_DOMAIN='quickadmissiongh.com';
+const RESERVED_PORTAL_SUBDOMAINS=new Set(['www','admin','api','mail','ftp','support','staging','app','dashboard','cdn','static','assets','auth','login','portal','superadmin','super-admin','school-admin']);
+function currentPortalSubdomain(){
+  const host=String((window.location&&window.location.hostname)||'').toLowerCase().replace(/\.$/,'');
+  if(!host||host===PORTAL_ROOT_DOMAIN||host==='www.'+PORTAL_ROOT_DOMAIN||!host.endsWith('.'+PORTAL_ROOT_DOMAIN))return '';
+  const label=host.slice(0,-(PORTAL_ROOT_DOMAIN.length+1));
+  return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(label)&&!RESERVED_PORTAL_SUBDOMAINS.has(label)?label:'';
+}
+const TENANT_PORTAL={subdomain:currentPortalSubdomain(),checked:false,school:null,error:'',promise:null};
+function tenantPortalRequested(){return !!TENANT_PORTAL.subdomain;}
+function tenantSchoolId(){return TENANT_PORTAL.school&&TENANT_PORTAL.school.id?String(TENANT_PORTAL.school.id):'';}
+async function resolveTenantSchool(){
+  if(!tenantPortalRequested())return null;
+  if(TENANT_PORTAL.checked)return TENANT_PORTAL.school;
+  if(TENANT_PORTAL.promise)return TENANT_PORTAL.promise;
+  TENANT_PORTAL.promise=(async function(){
+    try{
+      const {data,error}=await sb.rpc('resolve_school_by_subdomain',{p_subdomain:TENANT_PORTAL.subdomain});
+      if(error)throw error;
+      const row=Array.isArray(data)?data[0]:data;
+      TENANT_PORTAL.school=row&&row.id?row:null;
+      TENANT_PORTAL.error=TENANT_PORTAL.school?'':'not_found';
+    }catch(e){
+      TENANT_PORTAL.school=null;
+      TENANT_PORTAL.error='unavailable';
+      console.warn('School portal lookup failed',e);
+    }finally{
+      TENANT_PORTAL.checked=true;
+    }
+    return TENANT_PORTAL.school;
+  })();
+  return TENANT_PORTAL.promise;
+}
 (function(){var b=document.getElementById('envBadge');if(!b)return;var prod=SUPABASE_URL.indexOf('datxaylostmyroleisdl')>-1;b.textContent=prod?'LIVE':'DEV / DEMO';b.className='env-badge'+(prod?'':' dev');})();
 const stepLabels=['Placement','Personal','Parent / Guardian','Review'];
 const REGIONS=['Ahafo','Ashanti','Bono','Bono East','Central','Eastern','Greater Accra','North East','Northern','Oti','Savannah','Upper East','Upper West','Volta','Western','Western North'];
@@ -1532,7 +1565,7 @@ function syncPortalChrome(){
   const height=Math.max(Math.ceil(topbar.getBoundingClientRect().height),1);
   document.documentElement.style.setProperty('--portal-topbar-height',height+'px');
 }
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));document.body.classList.toggle('student-dashboard-active',id==='s-app');window.scrollTo(0,0);if(id==='s-app')requestAnimationFrame(syncPortalChrome);if(id==='s-purchase'){try{showPendingBanner();}catch(e){}}}
+function showScreen(id){if(tenantPortalRequested()&&TENANT_PORTAL.checked&&!tenantSchoolId()&&id!=='s-login'){toast('This school portal is not available.','warn');id='s-login';}document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));document.body.classList.toggle('student-dashboard-active',id==='s-app');window.scrollTo(0,0);if(id==='s-app')requestAnimationFrame(syncPortalChrome);if(id==='s-purchase'){try{showPendingBanner();}catch(e){}}}
 function studentSessionKey(){
   return [session&&session.school||'',session&&session.index||'',session&&session.token||''].join('::');
 }
@@ -1753,7 +1786,7 @@ async function applySchool(data){
 /* ===== LOGIN ===== */
 async function doLogin(){
   const idx=$('login-index').value.trim(),tok=$('login-token').value.trim().toUpperCase();
-  const sid=$('login-school').value;
+  const sid=tenantSchoolId()||$('login-school').value;
   const btn=$('loginBtn');
   const prevBtn=btn?btn.innerHTML:'';
   $('f-index').classList.remove('err');$('f-token').classList.remove('err');$('f-school').classList.remove('err');
@@ -1783,6 +1816,11 @@ async function bootStudent(){
   const s=getStudentSession();
   if(!s||!s.index||!s.token) return;
   try{
+    const tenant=await resolveTenantSchool();
+    if(tenantPortalRequested()&&(!tenant||String(s.school||'')!==String(tenant.id))){
+      clearStudentSession();
+      return;
+    }
     const {data}=await studentLoginRequest({p_index:s.index,p_token:s.token,p_school:s.school||null});
     if(data&&data.ok){ session=s; STU=data.student; await applySchool(data); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); }
     else { session=null; STU=null; clearStudentSession(); showScreen('s-login'); }
@@ -1961,7 +1999,7 @@ function showPendingBanner(){
 function dismissPending(){ clearPending(); showPendingBanner(); toast('Cleared. If you completed a payment, it stays valid \u2014 use Retrieve token.'); }
 async function payToken(method){
   const idx=$('p-index').value.trim(),name=$('p-name').value.trim();
-  const sid=$('p-school-sel').value;
+  const sid=tenantSchoolId()||$('p-school-sel').value;
   if(!sid){toast('Please select your school first','warn');return;}
   if(admissionClosed(sid)){toast('Admission is closed for this school','warn');return;}
   if(!idx||!name){toast('Enter your index number and name first','warn');return;}
@@ -2046,7 +2084,7 @@ function useNewToken(){$('login-index').value=window._newToken.idx;$('login-toke
 $('r-by').addEventListener('change',e=>$('r-label').textContent=e.target.value==='index'?'Index number':'Payment receipt number');
 async function retrieveToken(){
   const by=$('r-by').value,v=$('r-value').value.trim(); if(!v){toast('Enter a value to search','warn');return;}
-  const rsid=$('r-school').value; if(!rsid){toast('Please select your school first','warn');return;}
+  const rsid=tenantSchoolId()||$('r-school').value; if(!rsid){toast('Please select your school first','warn');return;}
   const {data,error}=await studentPortalRequest('retrieve',{p_by:by,p_value:v,p_school:rsid});
   if(error||!data.ok){toast(data&&data.error?data.error:'No token found');return;}
   window._retRec={idx:data.index,tk:data.token};
@@ -2860,6 +2898,7 @@ function buildSchoolPickerOptions(key,filterText){
   }).join('');
 }
 function openSchoolPicker(key){
+  if(tenantPortalRequested())return;
   const cfg=schoolPickerConfig(key);
   const picker=cfg?$(cfg.picker):null;
   const panel=cfg?$(cfg.panel):null;
@@ -2915,7 +2954,7 @@ function pickSchoolPickerValue(key,value){
   const cfg=schoolPickerConfig(key);
   const select=cfg?$(cfg.select):null;
   if(!select) return;
-  select.value=String(value||'');
+  select.value=tenantSchoolId()||String(value||'');
   closeSchoolPicker(key);
   syncSchoolPicker(key);
   if(cfg&&typeof cfg.onPick==='function') cfg.onPick();
@@ -3078,7 +3117,37 @@ async function loadSchoolsFromPublicTables(){
     };
   });
 }
+function applyTenantSchoolLock(){
+  const schoolId=tenantSchoolId();
+  if(!schoolId)return;
+  document.documentElement.classList.add('tenant-school-locked');
+  Object.keys(SCHOOL_PICKER_CONFIG).forEach(function(key){
+    const cfg=schoolPickerConfig(key);
+    const select=cfg?$(cfg.select):null;
+    const picker=cfg?$(cfg.picker):null;
+    if(select)select.value=schoolId;
+    if(picker){
+      closeSchoolPicker(key);
+      const field=picker.closest('.field');
+      if(field)field.style.display='none';
+    }
+    syncSchoolPicker(key);
+  });
+}
+function showTenantPortalUnavailable(){
+  document.documentElement.classList.add('tenant-school-unavailable');
+  const schoolField=$('f-school');
+  if(schoolField)schoolField.style.display='none';
+  const title=$('portalLoginFormTitle');
+  const subtitle=$('loginFormSub');
+  if(title)title.textContent='School portal unavailable';
+  if(subtitle)subtitle.textContent='This school portal does not exist or has been suspended. Please confirm the address with the school.';
+  setButtonDisabled($('loginBtn'),true);
+  setButtonDisabled($('buyTokenBtn'),true);
+  setButtonDisabled($('buyTokenQuickBtn'),true);
+}
 async function loadSchools(){
+  const tenantSchool=await resolveTenantSchool();
   const ids=['login-school','p-school-sel','r-school'];
   const selected=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)?document.getElementById(id).value:'']));
   let rows=[];
@@ -3104,6 +3173,14 @@ async function loadSchools(){
       loadError=loadError||e;
     }
   }
+  if(tenantPortalRequested()){
+    if(tenantSchool){
+      const match=rows.find(function(row){return String(row.id||row.school_id)===String(tenantSchool.id);});
+      rows=[Object.assign({},tenantSchool,match||{})];
+    }else{
+      rows=[];
+    }
+  }
   SCHOOLS_LIST=rows.slice().sort((a,b)=>{
     const an=String(schoolField(a,['name','school_name'],'')||'');
     const bn=String(schoolField(b,['name','school_name'],'')||'');
@@ -3114,7 +3191,8 @@ async function loadSchools(){
     const el=document.getElementById(id);
     if(!el) return;
     el.innerHTML=SCHOOLS_LIST.length?opts:'<option value="">No schools available</option>';
-    if(selected[id]&&SCHOOLS_LIST.some(s=>String(s.id)===String(selected[id]))) el.value=selected[id];
+    if(tenantSchoolId())el.value=tenantSchoolId();
+    else if(selected[id]&&SCHOOLS_LIST.some(s=>String(s.id)===String(selected[id]))) el.value=selected[id];
   });
   Object.keys(SCHOOL_PICKER_CONFIG).forEach(function(key){
     buildSchoolPickerOptions(key,'');
@@ -3128,6 +3206,8 @@ async function loadSchools(){
     });
     console.warn('School directory load failed',loadError);
   }
+  if(tenantSchoolId())applyTenantSchoolLock();
+  else if(tenantPortalRequested())showTenantPortalUnavailable();
   onLoginSchoolChange();
 }
 function schoolStatus(id){
@@ -3156,6 +3236,7 @@ function setAdmissionClosedView(closed){
   }
 }
 function chooseAnotherLoginSchool(){
+  if(tenantPortalRequested())return;
   const school=$('login-school');
   if(school) school.value='';
   onLoginSchoolChange();
@@ -3164,7 +3245,9 @@ function chooseAnotherLoginSchool(){
   if(typeof toggleLoginSchoolPicker==='function') toggleLoginSchoolPicker();
 }
 function onLoginSchoolChange(){
-  const sid=$('login-school')?$('login-school').value:'';
+  const lockedId=tenantSchoolId();
+  if(lockedId&&$('login-school'))$('login-school').value=lockedId;
+  const sid=lockedId||($('login-school')?$('login-school').value:'');
   const s=getSelectedSchool();
   const schoolName=String(schoolField(s,['name','school_name'],LOGIN_DEFAULTS.title));
   const schoolCharge=Number(schoolField(s,['service_charge'],LOGIN_DEFAULTS.charge));
@@ -3251,7 +3334,7 @@ window.addEventListener('storage',function(evt){
     var v=pi.value.trim(); if(!box)return;
     if(!v){box.style.display='none';return;}
     try{
-      var psid=document.getElementById('p-school-sel'); var sidv=psid?psid.value:null;
+      var psid=document.getElementById('p-school-sel'); var sidv=tenantSchoolId()||(psid?psid.value:null);
       var {data}=await studentPortalRequest('lookup',{p_index:v,p_school:sidv||null});
       if(data&&data.ok){ box.innerHTML='Applying to <b>'+safeHtml(data.name)+'</b> - service charge GHS '+Number(data.charge||0).toFixed(2); box.className='notice info'; box.style.display='block'; }
       else { box.innerHTML='We could not match this index to a participating school. Check the number, or contact your school office.'; box.className='notice warn'; box.style.display='block'; }
