@@ -38,6 +38,18 @@ function parseAllowedOrigins(extra: string[] = []) {
   ]);
 }
 
+function isQuickAdmissionPortalOrigin(origin: string) {
+  try {
+    const url = new URL(origin);
+    const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
+    return url.protocol === "https:"
+      && !url.port
+      && (hostname === "quickadmissiongh.com" || hostname.endsWith(".quickadmissiongh.com"));
+  } catch {
+    return false;
+  }
+}
+
 function allowedOriginValue(origin: string | null, options: SecurityOptions = {}) {
   if (!origin) return "*";
   const normalized = normalizeOrigin(origin);
@@ -45,7 +57,7 @@ function allowedOriginValue(origin: string | null, options: SecurityOptions = {}
     return options.allowNullOrigin === false ? "" : "null";
   }
   const allowedOrigins = parseAllowedOrigins(options.allowedOrigins ?? []);
-  return allowedOrigins.has(normalized) ? normalized : "";
+  return allowedOrigins.has(normalized) || isQuickAdmissionPortalOrigin(normalized) ? normalized : "";
 }
 
 export function corsHeaders(req: Request, options: SecurityOptions = {}) {

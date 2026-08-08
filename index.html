@@ -1062,6 +1062,115 @@
     fill:#002B4C!important;
     stroke:#002B4C!important;
   }
+  body.platform-directory-active .env-badge{display:none!important}
+  body #s-login #schoolDirectoryPage[hidden],
+  body #s-login .tenant-portal-only[hidden],
+  body.platform-directory-active #s-login .tenant-portal-only{display:none!important}
+  body #s-login .school-directory-page{
+    min-height:calc(100vh - var(--portal-footer-height));
+    min-height:calc(100dvh - var(--portal-footer-height));
+    display:flex;flex-direction:column;
+    background:
+      radial-gradient(circle at 12% 14%,rgba(245,158,113,.3),transparent 28%),
+      radial-gradient(circle at 88% 88%,rgba(192,235,255,.9),transparent 32%),
+      linear-gradient(145deg,#fff 0%,#f5fbff 55%,#e9f7fc 100%)!important;
+    color:#002B4C!important;
+  }
+  body #s-login .school-directory-header{
+    width:min(1180px,calc(100% - 32px));margin:0 auto;padding:22px 0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  body #s-login .school-directory-brand{
+    display:flex;align-items:center;gap:13px;color:#002B4C!important;text-decoration:none!important;
+  }
+  body #s-login .school-directory-logo{
+    width:54px;height:54px;display:grid;place-items:center;overflow:hidden;
+    background:#fff!important;border:1px solid #001619!important;border-radius:15px;
+  }
+  body #s-login .school-directory-logo img{width:100%;height:100%;object-fit:contain;padding:6px}
+  body #s-login .school-directory-brand strong{
+    display:block;font-family:'Space Grotesk',sans-serif;font-size:20px;color:#002B4C!important;
+    -webkit-text-fill-color:#002B4C!important;
+  }
+  body #s-login .school-directory-brand span{
+    display:block;margin-top:2px;font-size:11px;font-weight:800;letter-spacing:.11em;
+    text-transform:uppercase;color:#002B4C!important;opacity:.72;
+  }
+  body #s-login .school-directory-main{
+    width:min(760px,calc(100% - 32px));margin:auto;padding:34px 0 70px;
+  }
+  body #s-login .school-directory-copy{text-align:center;margin:0 auto 28px}
+  body #s-login .school-directory-kicker{
+    display:inline-flex;align-items:center;gap:8px;padding:7px 11px;margin-bottom:15px;
+    border:1px solid #001619;border-radius:999px;background:rgba(245,158,113,.4)!important;
+    color:#002B4C!important;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  }
+  body #s-login .school-directory-copy h1{
+    margin:0;font-family:'Space Grotesk',sans-serif;font-size:clamp(34px,6vw,56px);line-height:1.03;
+    color:#002B4C!important;-webkit-text-fill-color:#002B4C!important;
+  }
+  body #s-login .school-directory-copy p{
+    max-width:590px;margin:14px auto 0;color:#315066!important;font-size:clamp(14px,2vw,17px);line-height:1.65;
+  }
+  body #s-login .school-directory-card{
+    position:relative;padding:28px;background:rgba(255,255,255,.92)!important;color:#002B4C!important;
+    border:1px solid #001619!important;border-radius:20px!important;box-shadow:0 24px 58px rgba(0,43,76,.14)!important;
+  }
+  body #s-login .school-directory-card label{
+    display:block;margin-bottom:9px;color:#002B4C!important;font-size:14px;font-weight:800;
+  }
+  body #s-login .directory-school-control{
+    display:grid;grid-template-columns:50px minmax(0,1fr);align-items:center;min-height:58px;
+    background:#fff!important;border:1px solid #001619!important;border-radius:12px!important;
+  }
+  body #s-login .directory-school-icon{
+    align-self:stretch;display:grid;place-items:center;color:#002B4C!important;border-right:1px solid rgba(0,22,25,.2);
+  }
+  body #s-login .directory-school-icon svg{width:21px;height:21px}
+  body #s-login #directorySchoolTrigger{
+    min-height:56px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:0 15px!important;background:#fff!important;color:#002B4C!important;border:0!important;
+    border-radius:0 11px 11px 0!important;box-shadow:none!important;text-align:left;
+  }
+  body #s-login #directorySchoolTrigger *,
+  body #s-login #directorySchoolTriggerText{
+    color:#002B4C!important;-webkit-text-fill-color:#002B4C!important;stroke:#002B4C!important;
+  }
+  body #s-login #directorySchoolPanel{
+    position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:80;padding:10px;
+    background:#fff!important;border:1px solid #001619!important;border-radius:14px!important;
+    box-shadow:0 24px 46px rgba(0,43,76,.18)!important;
+  }
+  body #s-login #directorySchoolSearch{
+    width:100%;min-height:46px;margin-bottom:8px;padding:0 13px!important;background:#fff!important;
+    color:#002B4C!important;border:1px solid #001619!important;border-radius:10px!important;
+  }
+  body #s-login #directorySchoolOptions{max-height:280px;overflow-y:auto}
+  body #s-login #directorySchoolOptions .login-school-option{
+    background:#fff!important;color:#002B4C!important;border:1px solid transparent!important;
+  }
+  body #s-login #directorySchoolOptions .login-school-option:hover,
+  body #s-login #directorySchoolOptions .login-school-option.active{
+    background:#C0EBFF!important;border-color:#001619!important;
+  }
+  body #s-login #directorySchoolOptions .login-school-option:disabled{
+    opacity:.5;cursor:not-allowed;
+  }
+  body #s-login .school-directory-status{
+    min-height:22px;margin:12px 2px 0;color:#315066!important;font-size:12px;line-height:1.6;
+  }
+  body #s-login .school-directory-note{
+    display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px;
+    color:#315066!important;font-size:12px;text-align:center;
+  }
+  body #s-login .school-directory-note svg{width:16px;height:16px;flex:none}
+  @media(max-width:600px){
+    body #s-login .school-directory-header{padding:16px 0}
+    body #s-login .school-directory-logo{width:48px;height:48px}
+    body #s-login .school-directory-main{width:min(100% - 20px,760px);padding:24px 0 48px}
+    body #s-login .school-directory-card{padding:20px;border-radius:16px!important}
+    body #s-login .school-directory-copy{margin-bottom:22px}
+  }
 </style>
 <link rel="stylesheet" href="assets/css/global-layout-fix.css?v=20260804-wheel-scroll-30">
 <link rel="stylesheet" href="assets/css/system-footer.css?v=20260801-content-height-5">
@@ -1074,7 +1183,43 @@
 
 <!-- ===== LOGIN ===== -->
 <div class="screen active" id="s-login">
-  <header class="qa-site-header">
+  <section class="school-directory-page" id="schoolDirectoryPage" hidden aria-labelledby="schoolDirectoryTitle">
+    <header class="school-directory-header">
+      <div class="school-directory-brand">
+        <div class="school-directory-logo"><img src="logo-icon.svg" alt="QuickAdmissionGH logo"></div>
+        <div><strong>QuickAdmissionGH</strong><span>Ghana School Admission Portal</span></div>
+      </div>
+    </header>
+    <main class="school-directory-main">
+      <div class="school-directory-copy">
+        <span class="school-directory-kicker">School portal directory</span>
+        <h1 id="schoolDirectoryTitle">Select your school</h1>
+        <p>Choose your school to open its secure admission portal, where you can buy or retrieve a token and continue your admission.</p>
+      </div>
+      <section class="school-directory-card" aria-label="School selection">
+        <label for="directory-school">School</label>
+        <div class="directory-school-control">
+          <div class="directory-school-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.7V20h13V9.7"/><path d="M9 20v-5h6v5"/></svg></div>
+          <div class="login-school-picker" id="directorySchoolPicker">
+            <button class="login-school-trigger" id="directorySchoolTrigger" type="button" onclick="toggleSchoolPicker('directory')" aria-haspopup="listbox" aria-expanded="false">
+              <span class="login-school-trigger-text is-placeholder" id="directorySchoolTriggerText">Loading schools...</span>
+              <svg class="login-school-trigger-caret" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 7 5 6 5-6"/></svg>
+            </button>
+            <div class="login-school-panel" id="directorySchoolPanel" hidden>
+              <span class="login-school-search-title">Search school</span>
+              <input id="directorySchoolSearch" class="login-school-search" type="search" placeholder="Type a school name or code..." oninput="filterSchoolPickerOptions('directory',this.value)" onkeydown="handleSchoolPickerSearchKey('directory',event)" autocomplete="off">
+              <div class="login-school-options" id="directorySchoolOptions" role="listbox"></div>
+            </div>
+            <select id="directory-school" hidden aria-hidden="true" tabindex="-1"><option value="">Loading schools...</option></select>
+          </div>
+        </div>
+        <p class="school-directory-status" id="schoolDirectoryStatus" aria-live="polite">Loading participating schools...</p>
+      </section>
+      <p class="school-directory-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 5 6v5c0 4.3 2.6 8.3 7 10 4.4-1.7 7-5.7 7-10V6l-7-3Z"/><path d="m9.5 12 1.7 1.7 3.7-3.7"/></svg>You will be redirected to the selected school&rsquo;s official portal.</p>
+    </main>
+  </section>
+
+  <header class="qa-site-header tenant-portal-only">
     <div class="qa-header-inner">
       <a href="#admission-form" class="qa-brand">
         <div class="qa-brand-icon" id="schCrest">
@@ -1096,7 +1241,7 @@
     </div>
   </header>
 
-  <main class="qa-page-shell">
+  <main class="qa-page-shell tenant-portal-only">
     <section class="qa-hero-panel">
       <div class="qa-hero-content">
         <div class="qa-eyebrow">
@@ -1196,7 +1341,7 @@
     </section>
   </main>
 
-  <div class="qa-tutorial-modal" id="tutorialModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
+  <div class="qa-tutorial-modal tenant-portal-only" id="tutorialModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
     <div class="qa-tutorial-modal-overlay" data-close-tutorial></div>
     <div class="qa-tutorial-modal-content">
       <div class="qa-tutorial-modal-header">
@@ -1483,7 +1628,22 @@ function currentPortalSubdomain(){
 }
 const TENANT_PORTAL={subdomain:currentPortalSubdomain(),checked:false,school:null,error:'',promise:null};
 function tenantPortalRequested(){return !!TENANT_PORTAL.subdomain;}
+function platformDirectoryRequested(){return !tenantPortalRequested();}
 function tenantSchoolId(){return TENANT_PORTAL.school&&TENANT_PORTAL.school.id?String(TENANT_PORTAL.school.id):'';}
+function configurePortalEntryView(){
+  const directory=document.getElementById('schoolDirectoryPage');
+  const tenantOnly=document.querySelectorAll('.tenant-portal-only');
+  const showDirectory=platformDirectoryRequested();
+  document.body.classList.toggle('platform-directory-active',showDirectory);
+  if(directory){
+    directory.hidden=!showDirectory;
+    directory.setAttribute('aria-hidden',showDirectory?'false':'true');
+  }
+  tenantOnly.forEach(function(node){
+    node.hidden=showDirectory;
+    node.setAttribute('aria-hidden',showDirectory?'true':'false');
+  });
+}
 async function resolveTenantSchool(){
   if(!tenantPortalRequested())return null;
   if(TENANT_PORTAL.checked)return TENANT_PORTAL.school;
@@ -2822,6 +2982,30 @@ function schoolField(s,keys,fallback){
   if(value!=='') return value;
   return fallback;
 }
+function schoolPortalSubdomain(s){
+  const value=String(schoolField(s,['subdomain','portal_subdomain'],'')||'').trim().toLowerCase();
+  if(!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(value))return '';
+  return RESERVED_PORTAL_SUBDOMAINS.has(value)?'':value;
+}
+function redirectToSelectedSchool(){
+  const select=document.getElementById('directory-school');
+  const selectedValue=select?String(select.value||''):'';
+  const school=(SCHOOLS_LIST||[]).find(function(row){return String(row.id||row.school_id)===selectedValue;});
+  const status=document.getElementById('schoolDirectoryStatus');
+  if(!school){
+    if(status)status.textContent='Select a school from the list.';
+    return;
+  }
+  const subdomain=schoolPortalSubdomain(school);
+  if(!subdomain){
+    if(status)status.textContent='This school\'s portal address has not been configured yet.';
+    return;
+  }
+  const schoolName=String(schoolField(school,['name','school_name'],'the selected school'));
+  if(status)status.textContent='Opening '+schoolName+'...';
+  const target='https://'+subdomain+'.'+PORTAL_ROOT_DOMAIN+'/';
+  window.setTimeout(function(){window.location.assign(target);},120);
+}
 function schoolShortLabel(s){
   const code=String(schoolField(s,['code','school_code'],'')||'').trim();
   if(code) return code.toUpperCase();
@@ -2835,6 +3019,7 @@ function selectedLoginSchoolLabel(){
   return s?String(schoolField(s,['name','school_name'],'Unnamed school')):'-- Select your school --';
 }
 const SCHOOL_PICKER_CONFIG={
+  directory:{select:'directory-school',picker:'directorySchoolPicker',panel:'directorySchoolPanel',search:'directorySchoolSearch',options:'directorySchoolOptions',trigger:'directorySchoolTrigger',triggerText:'directorySchoolTriggerText',onPick:function(){ redirectToSelectedSchool(); }},
   login:{select:'login-school',picker:'loginSchoolPicker',panel:'loginSchoolPanel',search:'loginSchoolSearch',options:'loginSchoolOptions',trigger:'loginSchoolTrigger',triggerText:'loginSchoolTriggerText',onPick:function(){ onLoginSchoolChange(); }},
   purchase:{select:'p-school-sel',picker:'purchaseSchoolPicker',panel:'purchaseSchoolPanel',search:'purchaseSchoolSearch',options:'purchaseSchoolOptions',trigger:'purchaseSchoolTrigger',triggerText:'purchaseSchoolTriggerText'},
   retrieve:{select:'r-school',picker:'retrieveSchoolPicker',panel:'retrieveSchoolPanel',search:'retrieveSchoolSearch',options:'retrieveSchoolOptions',trigger:'retrieveSchoolTrigger',triggerText:'retrieveSchoolTriggerText'}
@@ -2894,7 +3079,11 @@ function buildSchoolPickerOptions(key,filterText){
     const isActive=String(s.id)===String(selected);
     const name=safeHtml(schoolField(s,['name','school_name'],'Unnamed school'));
     const code=safeHtml(schoolField(s,['code','school_code'],''));
-    return `<button class="login-school-option${isActive?' active':''}" type="button" onclick="pickSchoolPickerValue('${escapeAttr(String(key))}','${escapeAttr(String(s.id))}')"><span><strong>${name}</strong>${code&&code!=='&mdash;'?`<small>${code}</small>`:''}</span></button>`;
+    const subdomain=schoolPortalSubdomain(s);
+    const directoryMeta=key==='directory'?(subdomain?subdomain+'.'+PORTAL_ROOT_DOMAIN:'Portal address pending'):'';
+    const meta=directoryMeta||(code&&code!=='&mdash;'?code:'');
+    const canOpen=key!=='directory'||!!subdomain;
+    return `<button class="login-school-option${isActive?' active':''}" type="button"${canOpen?` onclick="pickSchoolPickerValue('${escapeAttr(String(key))}','${escapeAttr(String(s.id))}')"`:' disabled'}><span><strong>${name}</strong>${meta?`<small>${safeHtml(meta)}</small>`:''}</span></button>`;
   }).join('');
 }
 function openSchoolPicker(key){
@@ -2903,10 +3092,12 @@ function openSchoolPicker(key){
   const picker=cfg?$(cfg.picker):null;
   const panel=cfg?$(cfg.panel):null;
   const search=cfg?$(cfg.search):null;
+  const trigger=cfg?$(cfg.trigger):null;
   if(!picker||!panel) return;
   Object.keys(SCHOOL_PICKER_CONFIG).forEach(function(name){ if(name!==key) closeSchoolPicker(name); });
   picker.classList.add('open');
   panel.hidden=false;
+  if(trigger)trigger.setAttribute('aria-expanded','true');
   if(search){
     search.value='';
     buildSchoolPickerOptions(key,'');
@@ -2920,8 +3111,10 @@ function closeSchoolPicker(key){
   const picker=cfg?$(cfg.picker):null;
   const panel=cfg?$(cfg.panel):null;
   const search=cfg?$(cfg.search):null;
+  const trigger=cfg?$(cfg.trigger):null;
   if(picker) picker.classList.remove('open');
   if(panel) panel.hidden=true;
+  if(trigger)trigger.setAttribute('aria-expanded','false');
   if(search) search.value='';
 }
 function toggleSchoolPicker(key,forceOpen){
@@ -3074,7 +3267,7 @@ function updateBlueBannerHelpdesk(){
 async function loadSchoolsFromPublicTables(){
   const schoolsRes=await sb
     .from('schools')
-    .select('id,name,school_code,code,phone,email,helpdesk,crest_url')
+    .select('id,name,school_code,code,subdomain,phone,email,helpdesk,crest_url')
     .eq('status','active')
     .order('name',{ascending:true})
     .limit(10000);
@@ -3100,6 +3293,7 @@ async function loadSchoolsFromPublicTables(){
       school_name:firstNonEmpty(school.name),
       school_code:firstNonEmpty(school.school_code,school.code),
       code:firstNonEmpty(school.code,school.school_code),
+      subdomain:firstNonEmpty(school.subdomain),
       phone:firstNonEmpty(school.phone),
       email:firstNonEmpty(school.email),
       helpdesk:firstNonEmpty(school.helpdesk,cfg.helpdesk_line),
@@ -3148,7 +3342,7 @@ function showTenantPortalUnavailable(){
 }
 async function loadSchools(){
   const tenantSchool=await resolveTenantSchool();
-  const ids=['login-school','p-school-sel','r-school'];
+  const ids=['directory-school','login-school','p-school-sel','r-school'];
   const selected=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)?document.getElementById(id).value:'']));
   let rows=[];
   let loadError=null;
@@ -3200,11 +3394,20 @@ async function loadSchools(){
   });
   if(loadError&&!SCHOOLS_LIST.length){
     const msg='Could not load schools. Check your internet connection and refresh.';
-    ['loginSchoolOptions','purchaseSchoolOptions','retrieveSchoolOptions'].forEach(function(id){
+    ['directorySchoolOptions','loginSchoolOptions','purchaseSchoolOptions','retrieveSchoolOptions'].forEach(function(id){
       const host=$(id);
       if(host) host.innerHTML='<div class="login-school-empty">'+safeHtml(msg)+'</div>';
     });
     console.warn('School directory load failed',loadError);
+  }
+  const directoryStatus=$('schoolDirectoryStatus');
+  if(directoryStatus&&platformDirectoryRequested()){
+    const readyCount=SCHOOLS_LIST.filter(function(s){return !!schoolPortalSubdomain(s);}).length;
+    directoryStatus.textContent=loadError&&!SCHOOLS_LIST.length
+      ? 'Could not load schools. Check your internet connection and refresh.'
+      : readyCount
+        ? readyCount+' school portal'+(readyCount===1?' is':'s are')+' available.'
+        : 'No school portal is available yet.';
   }
   if(tenantSchoolId())applyTenantSchoolLock();
   else if(tenantPortalRequested())showTenantPortalUnavailable();
@@ -3309,7 +3512,9 @@ function onLoginSchoolChange(){
 }
 async function initStudentPortal(){
   try{
-    await Promise.allSettled([loadPaystackConfig(),loadSchools(),bootStudent()]);
+    configurePortalEntryView();
+    if(platformDirectoryRequested()) await loadSchools();
+    else await Promise.allSettled([loadPaystackConfig(),loadSchools(),bootStudent()]);
   }finally{
     finishStudentBoot();
   }

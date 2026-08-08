@@ -268,7 +268,7 @@ async function listDirectory(admin: ReturnType<typeof createClient>) {
   if (directoryCache && directoryCache.expiresAt > Date.now()) return directoryCache.value;
   const schoolsRes = await admin
     .from("schools")
-    .select("id,name,school_code,code,phone,email,helpdesk,crest_url")
+    .select("id,name,school_code,code,subdomain,phone,email,helpdesk,crest_url")
     .eq("status", "active")
     .order("name", { ascending: true })
     .limit(10_000);
@@ -313,6 +313,7 @@ async function listDirectory(admin: ReturnType<typeof createClient>) {
       school_name: firstText(school.name),
       school_code: firstText(school.school_code, school.code),
       code: firstText(school.code, school.school_code),
+      subdomain: firstText(school.subdomain),
       phone: firstText(school.phone),
       email: firstText(school.email),
       helpdesk: firstText(school.helpdesk, config.helpdesk_line),
