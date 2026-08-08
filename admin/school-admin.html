@@ -4028,12 +4028,13 @@ function mapAdminStudentRow(row,index){
   var dt=created?new Date(created):null;
   var progId=pRev[row.programme_id]||null, classId=cRev[row.class_id]||null, houseId=hRev[row.house_id]||null;
   var local=students.find(function(item){ return String(item._id)===String(row.id); });
+  var records=row.records&&typeof row.records==='object'?row.records:{};
   return {id:local?local.id:1000000+index,_id:row.id,index:row.bece_index||'',name:row.full_name||'(no name)',gender:row.gender||'',
     progId:progId,classId:classId,houseId:houseId,status:row.status||'pending',adm:row.admission_no||'-',permAdm:row.permanent_admission_number||'',
     verificationStatus:row.verification_status||'pending',verifiedAt:row.verified_at||'',verifiedBy:row.verified_by||'',
-    passportPhoto:row.passport_photo_url||'',reg:created.slice(0,10),submittedAt:row.submitted_at||'',personalDone:!!row.personal_done,programmeDone:!!row.programme_done,undertakingDone:!!row.undertaking_done,
-    time:dt&&!isNaN(dt.getTime())?dt.toTimeString().slice(0,8):'-',sms:(row.records&&row.records.sms_contact)||row.parent_phone||'-',smsRaw:(row.records&&row.records.sms_contact)||row.parent_phone||'',prog:row.programme_name||row.placement_programme||'',enrol:(row.records&&row.records.enrolment_code)||'-',form:row.enrolment_form_url||null,
-    dob:(row.records&&row.records.dob)||'',parent:row.parent_name||(row.records&&row.records.guardian)||'-',res:row.residential_status||(row.records&&((row.records.residential_status||row.records.residential)))||'-',rec:row.records||{},pay:row.payment_status||'unpaid',submitted:!!row.submitted_at,loggedIn:false};
+    passportPhoto:records.passport_photo_path||records.passport_photo_url||records.photo_url||'',reg:created.slice(0,10),submittedAt:row.submitted_at||'',personalDone:!!row.personal_done,programmeDone:!!row.programme_done,undertakingDone:!!row.undertaking_done,
+    time:dt&&!isNaN(dt.getTime())?dt.toTimeString().slice(0,8):'-',sms:records.sms_contact||row.parent_phone||'-',smsRaw:records.sms_contact||row.parent_phone||'',prog:row.programme_name||row.placement_programme||'',enrol:records.enrolment_code||'-',form:records.enrolment_form_path||row.enrolment_form_url||records.enrolment_form_url||null,
+    dob:records.dob||'',parent:row.parent_name||records.guardian||'-',res:row.residential_status||(records.residential_status||records.residential)||'-',rec:records,pay:row.payment_status||'unpaid',submitted:!!row.submitted_at,loggedIn:false};
 }
 async function loadRegisteredPage(reset){
   if(!SB_SCHOOL||!SB_SCHOOL.id) return;
@@ -4091,7 +4092,7 @@ function regFiltered(){
   rows=rows.slice().sort((a,b)=>((a[k]||'').toString()).localeCompare((b[k]||'').toString(),undefined,{numeric:true})*dir);
   return rows;
 }
-function formCell(s){ return s.form?`<img class="enrol-thumb" src="${escapeAttr(s.form)}" alt="">`:`<span class="enrol-none">?</span>`; }
+function formCell(s){ return s.form?`<button class="act" type="button" onclick="openStudentUploadedFile('${escapeAttr(s._id)}','enrolment')">Open</button>`:`<span class="enrol-none">?</span>`; }
 function regCell(k,s){ if(k==='form')return formCell(s); if(k==='name')return `<span class="nm">${safeHtml(s.name)}</span>`; if(['index','adm','enrol','time'].indexOf(k)>-1)return `<span class="mono">${safeHtml(s[k])}</span>`; return safeHtml(s[k],'&mdash;'); }
 function renderRegisteredRows(){
   var rows=regFiltered();
@@ -4126,6 +4127,23 @@ function renderRegistered(){
   renderRegisteredRows();
 }
 function toggleRegExpand(id){ showRegisteredStudentDetails(id); }
+async function openStudentUploadedFile(studentId,fileType){
+  if(!studentId||!SB_SCHOOL||!SB_SCHOOL.id){toast('The student file is not available.');return;}
+  var viewer=null;
+  try{
+    viewer=window.open('about:blank','_blank');
+    if(viewer&&viewer.document) viewer.document.body.innerHTML='<p style="font:16px Arial;padding:24px;color:#002b4c">Opening secure student file...</p>';
+  }catch(e){}
+  var result=await invokeFnDetailed('admin-students-list',{action:'signed_file_url',school_id:SB_SCHOOL.id,student_id:studentId,file_type:fileType});
+  var data=result.data,error=result.error;
+  if(error||!data||data.ok===false||!data.url){
+    if(viewer&&!viewer.closed)viewer.close();
+    toast((data&&data.message)||(error&&error.message)||'Could not open the uploaded file.');
+    return;
+  }
+  if(viewer&&!viewer.closed) viewer.location.replace(data.url);
+  else window.open(data.url,'_blank','noopener');
+}
 function showRegisteredStudentDetails(id){
   const s=REG_STATE.rows.find(x=>x.id===id)||students.find(x=>x.id===id); if(!s)return;
   const h=houseById(s.houseId),c=classById(s.classId),r=s.rec||{};
@@ -4136,8 +4154,8 @@ function showRegisteredStudentDetails(id){
     ['Date of Birth',r.dob||s.dob],['Region',r.region],['District',r.district],['Religion',r.religion],['Denomination',r.denomination],
     ['Father',r.father_name],['Mother',r.mother_name],['Guardian',r.guardian]
   ];
-  const form=s.form?`<div class="field"><label>Enrolment Form</label><a class="btn btn-ghost btn-sm" href="${escapeAttr(s.form)}" target="_blank" rel="noopener">Open uploaded form</a></div>`:'';
-  const photo=r.passport_photo_url?`<div class="field"><label>Passport Photo</label><img src="${escapeAttr(r.passport_photo_url)}" alt="Passport photo" style="width:104px;height:124px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"></div>`:'';
+  const form=s.form?`<div class="field"><label>Enrolment Form</label><button class="btn btn-ghost btn-sm" type="button" onclick="openStudentUploadedFile('${escapeAttr(s._id)}','enrolment')">Open uploaded form</button></div>`:'';
+  const photo=s.passportPhoto?`<div class="field"><label>Passport Photo</label><button class="btn btn-ghost btn-sm" type="button" onclick="openStudentUploadedFile('${escapeAttr(s._id)}','passport')">Open passport photo</button></div>`:'';
   const m=$('modal');
   m.innerHTML=`<div class="modal-head"><div><h2>${safeHtml(s.name)}</h2><p><span class="code">${safeHtml(s.index)}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body"><div class="grid-2 student-info-grid">${rows.map(function(row){return `<div class="kv"><b>${safeHtml(row[0])}:</b>${safeHtml(row[1],'-')}</div>`;}).join('')}${photo}${form}</div></div>

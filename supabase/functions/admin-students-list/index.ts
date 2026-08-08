@@ -30,6 +30,33 @@ function programmeKey(value: unknown) {
   return text(value).toUpperCase().replace(/[^A-Z0-9]+/g, "");
 }
 
+function decodedPath(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function storageObjectPath(value: unknown) {
+  const source = text(value);
+  if (!source) return "";
+  const direct = source.match(/^enrolment-forms\/(.+)$/i);
+  if (direct) return decodedPath(direct[1].split("?")[0]);
+  const storageUrl = source.match(/\/storage\/v1\/object\/(?:public|sign|authenticated)\/enrolment-forms\/(.+?)(?:\?|$)/i);
+  if (storageUrl) return decodedPath(storageUrl[1]);
+  if (/^(?:passport-photos\/)?[^?#]+\.(?:jpe?g|png)$/i.test(source)) return decodedPath(source.split("?")[0]);
+  return "";
+}
+
+function firstStoragePath(...values: unknown[]) {
+  for (const value of values) {
+    const path = storageObjectPath(value);
+    if (path) return path;
+  }
+  return "";
+}
+
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
   return !!error || data?.allowed !== false;
@@ -101,6 +128,35 @@ Deno.serve(async (req: Request) => {
   }
   if (!await rateAllowed(admin, `admin-students-list:${text(profile.id)}:${schoolId}`, 120, 60)) {
     return json({ ok: false, error: "rate_limited", message: "Too many student-list requests. Please wait a minute and try again." }, 429);
+  }
+
+  const action = text(body.action).toLowerCase();
+  if (action === "signed_file_url") {
+    const studentId = text(body.student_id);
+    const fileType = text(body.file_type).toLowerCase();
+    if (!studentId || !["enrolment", "passport"].includes(fileType)) {
+      return json({ ok: false, error: "validation", message: "A valid student and file type are required." }, 400);
+    }
+    const { data: student, error: studentError } = await admin
+      .from("students")
+      .select("id,school_id,enrolment_form_url,records")
+      .eq("id", studentId)
+      .eq("school_id", schoolId)
+      .maybeSingle();
+    if (studentError) return json({ ok: false, error: "query_failed", message: studentError.message }, 500);
+    if (!student) return json({ ok: false, error: "not_found", message: "Student record was not found." }, 404);
+    const records = student.records && typeof student.records === "object" && !Array.isArray(student.records)
+      ? student.records as JsonRecord
+      : {};
+    const path = fileType === "passport"
+      ? firstStoragePath(records.passport_photo_path, records.passport_photo_url, records.photo_url)
+      : firstStoragePath(records.enrolment_form_path, student.enrolment_form_url, records.enrolment_form_url);
+    if (!path) return json({ ok: false, error: "not_found", message: "The uploaded file is not available." }, 404);
+    const { data: signed, error: signError } = await admin.storage.from("enrolment-forms").createSignedUrl(path, 60 * 10);
+    if (signError || !signed?.signedUrl) {
+      return json({ ok: false, error: "sign_failed", message: signError?.message || "Could not create a secure file link." }, 500);
+    }
+    return json({ ok: true, url: signed.signedUrl, expires_in: 600, file_type: fileType });
   }
 
   const page = asPage(body.page, 1, 1_000_000);

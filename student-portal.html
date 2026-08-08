@@ -2016,9 +2016,8 @@ async function handleEnrFile(inp){
     removeEnr();
     return;
   }
-  const {data:pub}=sb.storage.from('enrolment-forms').getPublicUrl(path);
   app.enrUploaded=true;
-  app.fields.enrolment_form_url = pub.publicUrl;
+  app.fields.enrolment_form_url = 'enrolment-forms/'+path;
   app.fields.enrolment_form_path = path;
   app.fields.enrolment_uploaded = true;
   const kb=Math.max(1,Math.round(file.size/1024));
@@ -2045,10 +2044,9 @@ async function handlePassportFile(inp){
   const path='passport-photos/'+(STU.index||'student')+'_'+Date.now()+'.'+ext;
   const {error}=await sb.storage.from('enrolment-forms').upload(path,file,{contentType:file.type||'image/jpeg',upsert:true});
   if(error){ toast('Passport upload failed - '+error.message); resetPassportUploadUi(); return; }
-  const {data:pub}=sb.storage.from('enrolment-forms').getPublicUrl(path);
   const previewUrl=URL.createObjectURL(file);
   app.photoUploaded=true;
-  app.fields.passport_photo_url=pub.publicUrl;
+  app.fields.passport_photo_url='enrolment-forms/'+path;
   app.fields.passport_photo_path=path;
   app.fields.passport_photo_uploaded=true;
   $('photoWrap').innerHTML=`<div class="file-done"><span class="fi"><img src="${escapeHtml(previewUrl)}" alt="" style="width:48px;height:54px;object-fit:cover;border-radius:6px"></span><div><b>${escapeHtml(file.name)}</b><small>Passport photo uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
