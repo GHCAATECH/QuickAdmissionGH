@@ -2092,6 +2092,91 @@ body:not(.sidebar-open) {
   }
 }
 
+/* Mobile admin tables never wrap. Content determines the table width and the
+   existing wrapper provides the horizontal scrollbar. */
+@media screen and (max-width: 768px) {
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) > table {
+    width: max-content !important;
+    min-width: 100% !important;
+    max-width: none !important;
+    table-layout: auto !important;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) > table > :where(thead, tbody, tfoot) > tr > :where(th, td),
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) > table > :where(thead, tbody, tfoot) > tr > :where(th, td) * {
+    width: auto;
+    max-width: none !important;
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) :where(.row-actions, .table-actions, .action-group, .class-subject-preview) {
+    width: max-content !important;
+    max-width: none !important;
+    flex-wrap: nowrap !important;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) :where(button, .btn, .act, .qa, .btn-grn) {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .finance-settlement-wrap > .finance-settlement-table,
+  #view-verified-students .verified-table-wrap > #verifiedStudentsTable,
+  #view-verify-students .tbl-wrap > table {
+    width: max-content !important;
+    table-layout: auto !important;
+  }
+}
+
 /* Placement List mobile layout. The shared admin header remains governed by
    the common shell rules so every other page keeps the same header. */
 @media screen and (max-width: 640px) {
@@ -2521,5 +2606,40 @@ body:not(.sidebar-open) {
     min-height: 40px;
     padding-inline: 2px;
     font-size: 9px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) > table {
+    width: max-content !important;
+    min-width: 100% !important;
+    max-width: none !important;
+    table-layout: auto !important;
+  }
+
+  .finance-settlement-wrap > .finance-settlement-table :where(th, td),
+  .finance-settlement-wrap > .finance-settlement-table :where(th, td) * {
+    width: auto;
+    max-width: none !important;
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+  }
+
+  .finance-settlement-wrap .finance-request-btn,
+  .finance-settlement-wrap .finance-action-note {
+    width: auto !important;
+    max-width: none !important;
+    white-space: nowrap !important;
   }
 }
