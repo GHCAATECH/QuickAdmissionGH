@@ -2280,3 +2280,91 @@ body:not(.sidebar-open) {
     width: auto !important;
   }
 }
+
+/* Verified Students mobile filter card: preserve the compact reference layout
+   while leaving the desktop and tablet filter grids unchanged. */
+@media screen and (max-width: 640px) {
+  #view-verified-students .verified-filter-panel {
+    padding: 16px 14px !important;
+  }
+
+  #view-verified-students .verified-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px 10px;
+  }
+
+  #view-verified-students .verified-filter-grid .field:nth-child(-n + 6) {
+    grid-column: 1 / -1;
+  }
+
+  #view-verified-students .verified-filter-grid .field:nth-child(7),
+  #view-verified-students .verified-filter-grid .field:nth-child(8) {
+    grid-column: auto;
+  }
+
+  #view-verified-students .verified-filter-grid .field label {
+    margin-bottom: 7px;
+    font-size: clamp(11px, 3.3vw, 13px);
+    line-height: 1.25;
+  }
+
+  #view-verified-students .verified-filter-grid input,
+  #view-verified-students .verified-filter-grid select {
+    height: 48px;
+    min-height: 48px;
+    padding: 9px 11px;
+    font-size: clamp(12px, 3.5vw, 14px);
+  }
+
+  #view-verified-students .verified-filter-actions {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 7px;
+    width: 100%;
+    margin-top: 18px;
+    padding-top: 16px;
+    justify-content: stretch;
+    border-top: 1px solid #002b4c;
+  }
+
+  #view-verified-students .verified-filter-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 42px;
+    padding: 7px 4px;
+    border: 1px solid #002b4c !important;
+    border-radius: 7px;
+    background: #ffffff !important;
+    color: #002b4c !important;
+    -webkit-text-fill-color: #002b4c !important;
+    box-shadow: none !important;
+    font-size: clamp(9px, 2.65vw, 11px);
+    font-weight: 700;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  #view-verified-students .verified-filter-panel {
+    padding-inline: 10px !important;
+  }
+
+  #view-verified-students .verified-filter-grid {
+    gap: 12px 8px;
+  }
+
+  #view-verified-students .verified-filter-actions {
+    gap: 5px;
+  }
+
+  #view-verified-students .verified-filter-actions .btn {
+    min-height: 40px;
+    padding-inline: 2px;
+    font-size: 9px;
+  }
+}
