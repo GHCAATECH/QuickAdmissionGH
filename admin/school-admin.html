@@ -3182,15 +3182,18 @@ function filteredStudents(){
   return source.filter(s=>(s.name.toLowerCase().includes(q)||s.index.includes(q))&&(pr==='all'||s.progId==pr));
 }
 function submittedStudentTotal(){ return summaryNumber('submitted',submittedStudents().length); }
+function displayedAdmissionNumber(s){ return (s&&(s.permAdm||s.adm))||'-'; }
+function displayedClassName(s){ const c=s&&s.classId?classById(s.classId):null; return (c&&c.name)||(s&&s.className)||''; }
+function displayedHouseName(s){ const h=s&&s.houseId?houseById(s.houseId):null; return (h&&h.name)||(s&&s.houseName)||(s&&s.house)||''; }
 function renderStudentsRows(){
   const rows=filteredStudents();
   const showHouse=canViewStudentHouse();
   $('stuRows').innerHTML=rows.length?rows.map(s=>{
-    const h=houseById(s.houseId),c=classById(s.classId);
+    const h=houseById(s.houseId),className=displayedClassName(s),houseName=displayedHouseName(s);
     return `<tr><td><span class="checkbox ${selected.has(s.id)?'on':''}" onclick="toggleSel(${s.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span></td>
-    <td class="mono" style="font-size:12px">${safeHtml(s.adm)}</td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td>
-    <td>${safeHtml(studentProgrammeName(s),'-')}</td><td>${c?escapeHtml(c.name):'<span style="color:var(--muted)">&mdash;</span>'}</td>
-    ${showHouse?`<td>${h?`<span class="dot-color" style="background:${h.color}"></span>${escapeHtml(h.name)}`:'<span style="color:var(--muted)">&mdash;</span>'}</td>`:''}
+    <td class="mono" style="font-size:12px">${safeHtml(displayedAdmissionNumber(s))}</td><td class="mono">${safeHtml(s.index)}</td><td class="nm">${safeHtml(s.name)}</td>
+    <td>${safeHtml(studentProgrammeName(s),'-')}</td><td>${className?safeHtml(className):'<span style="color:var(--muted)">&mdash;</span>'}</td>
+    ${showHouse?`<td>${houseName?`${h?`<span class="dot-color" style="background:${h.color}"></span>`:''}${safeHtml(houseName)}`:'<span style="color:var(--muted)">&mdash;</span>'}</td>`:''}
     <td><div class="row-actions"><button class="act" onclick="viewStudent(${s.id})">Edit</button></div></td></tr>`;
   }).join(''):emptyRow(showHouse?8:7,'No students match your filters.');
   updateBulk();updateSelAll();
@@ -3295,12 +3298,13 @@ function viewStudent(id){
   const gender=normalizeStudentGender(s.gender);
   const residential=normalizeResidentialStatus(s.res);
   const houseOpts=editHouseOptions(gender,residential,s.houseId);
+  const hasPermanentAdmission=!!String(s.permAdm||'').trim();
   m.innerHTML=`<div class="modal-head"><div><h2>${safeHtml(s.name)}</h2><p><span class="code">${safeHtml(s.index)}</span></p></div><button class="modal-x" onclick="closeModal()">×</button></div>
   <div class="modal-body"><div class="grid-2">
     <div class="field"><label>Full name</label><input id="es_name" value="${escapeAttr(s.name)}"></div>
     <div class="field"><label>Gender</label><select id="es_gender" onchange="refreshEditHouseOptions()"><option value="M" ${gender==='M'?'selected':''}>Male</option><option value="F" ${gender==='F'?'selected':''}>Female</option></select></div>
     <div class="field"><label>Residential status</label><select id="es_residential" onchange="refreshEditHouseOptions()" required><option value="">Select status</option><option value="Boarding" ${residential==='Boarding'?'selected':''}>Boarding</option><option value="Day" ${residential==='Day'?'selected':''}>Day</option></select></div>
-    <div class="field"><label>Admission No</label><input id="es_adm" value="${escapeAttr(s.adm)}"></div>
+    <div class="field"><label>${hasPermanentAdmission?'Permanent Admission No':'Admission No'}</label><input id="es_adm" value="${escapeAttr(displayedAdmissionNumber(s))}" ${hasPermanentAdmission?'disabled':''}></div>
     <div class="field"><label>SMS Contact</label><input id="es_sms" value="${escapeAttr(s.sms)}"></div>
     <div class="field"><label>Programme</label><select id="es_prog" onchange="refreshEditClassOptions()">${progOpts}</select></div>
     <div class="field"><label>Class</label><select id="es_class">${classOpts}</select></div>
@@ -3364,11 +3368,13 @@ async function saveStudent(id){
   const oldGender=normalizeStudentGender(s.gender);
   const oldResidential=normalizeResidentialStatus(s.res);
   const nextRecords=Object.assign({},s.rec||{},{residential_status:newResidential,residential:newResidential});
-  const update={full_name:newName,gender:newGender,admission_no:newAdm,parent_phone:newSms||null,
+  const hasPermanentAdmission=!!String(s.permAdm||'').trim();
+  const update={full_name:newName,gender:newGender,parent_phone:newSms||null,
     programme_id:pMap[newProgId]||null,
     class_id:newClassId?cMap[newClassId]:null,
     house_id:newHouseId?hMap[newHouseId]:null,
     records:nextRecords};
+  if(!hasPermanentAdmission) update.admission_no=newAdm;
   const placementUpdate=await invokeFnDetailed('admin-placement-list',{action:'update',school_id:SB_SCHOOL.id,index_number:s.index,patch:{gender:genderLabel(newGender),residential_status:newResidential}});
   if(placementUpdate.error||!placementUpdate.data||placementUpdate.data.ok===false){toast('Save failed: '+((placementUpdate.data&&placementUpdate.data.message)||(placementUpdate.error&&placementUpdate.error.message)||'Could not update placement record.'));return;}
   const {error}=await sb.from('students').update(update).eq('id',s._id);
@@ -3376,8 +3382,10 @@ async function saveStudent(id){
     await invokeFnDetailed('admin-placement-list',{action:'update',school_id:SB_SCHOOL.id,index_number:s.index,patch:{gender:genderLabel(oldGender),residential_status:oldResidential||null}});
     toast('Save failed: '+error.message);return;
   }
+  const savedClass=newClassId?classById(newClassId):null;
+  const savedHouse=newHouseId?houseById(newHouseId):null;
   const copies=[...(students||[]),...(MANAGE_STATE.rows||[]),...(REG_STATE.rows||[])].filter(x=>String(x._id)===String(s._id));
-  copies.forEach(function(item){item.name=newName;item.gender=newGender;item.res=newResidential;item.adm=newAdm||'—';item.sms=newSms||'—';item.smsRaw=newSms||'';item.progId=newProgId;item.prog=cleanSmsText((progById(newProgId)||{}).name)||item.prog||'';item.classId=newClassId;item.houseId=newHouseId;item.rec=nextRecords;});
+  copies.forEach(function(item){item.name=newName;item.gender=newGender;item.res=newResidential;if(!hasPermanentAdmission)item.adm=newAdm||'—';item.sms=newSms||'—';item.smsRaw=newSms||'';item.progId=newProgId;item.prog=cleanSmsText((progById(newProgId)||{}).name)||item.prog||'';item.classId=newClassId;item.className=(savedClass&&savedClass.name)||'';item.houseId=newHouseId;item.houseUuid=newHouseId?hMap[newHouseId]:'';item.houseName=(savedHouse&&savedHouse.name)||'';item.house=item.houseName;item.rec=nextRecords;});
   notifyStudentPortalRefresh('student-update',{index:s.index});
   closeModal();renderStudents();toast('Student record saved');
 }
@@ -4030,7 +4038,7 @@ function mapAdminStudentRow(row,index){
   var local=students.find(function(item){ return String(item._id)===String(row.id); });
   var records=row.records&&typeof row.records==='object'?row.records:{};
   return {id:local?local.id:1000000+index,_id:row.id,index:row.bece_index||'',name:row.full_name||'(no name)',gender:row.gender||'',
-    progId:progId,classId:classId,houseId:houseId,status:row.status||'pending',adm:row.admission_no||'-',permAdm:row.permanent_admission_number||'',
+    progId:progId,classId:classId,houseId:houseId,className:row.class_name||'',houseName:row.house_name||'',house:row.house_name||'',houseUuid:row.house_id||'',status:row.status||'pending',adm:row.permanent_admission_number||row.admission_no||'-',permAdm:row.permanent_admission_number||'',
     verificationStatus:row.verification_status||'pending',verifiedAt:row.verified_at||'',verifiedBy:row.verified_by||'',
     passportPhoto:records.passport_photo_path||records.passport_photo_url||records.photo_url||'',reg:created.slice(0,10),submittedAt:row.submitted_at||'',personalDone:!!row.personal_done,programmeDone:!!row.programme_done,undertakingDone:!!row.undertaking_done,
     time:dt&&!isNaN(dt.getTime())?dt.toTimeString().slice(0,8):'-',sms:records.sms_contact||row.parent_phone||'-',smsRaw:records.sms_contact||row.parent_phone||'',prog:row.programme_name||row.placement_programme||'',enrol:records.enrolment_code||'-',form:records.enrolment_form_path||row.enrolment_form_url||records.enrolment_form_url||null,
@@ -4107,11 +4115,11 @@ function renderRegisteredRows(){
     regCols.forEach(k=>{ if(!regHidden.has(k)) html+=`<td>${regCell(k,s)}</td>`; });
     html+='</tr>';
     if(open){
-      var h=houseById(s.houseId),c=classById(s.classId);
+      var className=displayedClassName(s),houseName=displayedHouseName(s);
       html+=`<tr class="reg-detail"><td colspan="${visible}"><div class="reg-detail-in">
         <div class="kv"><b>Programme</b>${safeHtml(studentProgrammeName(s),'-')}</div>
-        <div class="kv"><b>Class</b>${c?escapeHtml(c.name):'Not allocated'}</div>
-        ${showHouse?`<div class="kv"><b>House</b>${h?escapeHtml(h.name):'Not allocated'}</div>`:''}
+        <div class="kv"><b>Class</b>${className?safeHtml(className):'Not allocated'}</div>
+        ${showHouse?`<div class="kv"><b>House</b>${houseName?safeHtml(houseName):'Not allocated'}</div>`:''}
         <div class="kv"><b>Gender</b>${s.gender==='M'?'Male':(s.gender==='F'?'Female':'&mdash;')}</div>
         <div class="kv"><b>Residential</b>${safeHtml(s.res,'&mdash;')}</div>
         <div class="kv"><b>Parent / Guardian</b>${safeHtml(s.parent,'&mdash;')}</div>
@@ -4146,10 +4154,10 @@ async function openStudentUploadedFile(studentId,fileType){
 }
 function showRegisteredStudentDetails(id){
   const s=REG_STATE.rows.find(x=>x.id===id)||students.find(x=>x.id===id); if(!s)return;
-  const h=houseById(s.houseId),c=classById(s.classId),r=s.rec||{};
+  const className=displayedClassName(s),houseName=displayedHouseName(s),r=s.rec||{};
   const rows=[
-    ['JHS Index No',s.index],['Admission No',s.adm],['Student Name',s.name],['Gender',s.gender==='M'?'Male':(s.gender==='F'?'Female':s.gender)],
-    ['Programme',studentProgrammeName(s)],['Class',c?c.name:'Not allocated'],['House',h?h.name:'Not allocated'],['Residential',s.res],
+    ['JHS Index No',s.index],['Admission No',displayedAdmissionNumber(s)],['Student Name',s.name],['Gender',s.gender==='M'?'Male':(s.gender==='F'?'Female':s.gender)],
+    ['Programme',studentProgrammeName(s)],['Class',className||'Not allocated'],['House',houseName||'Not allocated'],['Residential',s.res],
     ['SMS Contact',s.sms],['Enrolment Code',s.enrol],['Date Registered',s.reg],['Time',s.time],
     ['Date of Birth',r.dob||s.dob],['Region',r.region],['District',r.district],['Religion',r.religion],['Denomination',r.denomination],
     ['Father',r.father_name],['Mother',r.mother_name],['Guardian',r.guardian]
@@ -4207,8 +4215,8 @@ function exportRegisteredPdf(rowsOverride){
   if(showHouse) headers.push('House');
   headers=headers.concat(['Date Registered','Time','SMS Contact','Enrolment Code','Enrolment Form']);
   var dataRows=rows.map(function(s){
-    var row=[s.index||'',s.adm||'',s.name||'',studentProgrammeName(s)||'',(classById(s.classId)||{}).name||'Not allocated'];
-    if(showHouse) row.push((houseById(s.houseId)||{}).name||'Not allocated');
+    var row=[s.index||'',displayedAdmissionNumber(s),s.name||'',studentProgrammeName(s)||'',displayedClassName(s)||'Not allocated'];
+    if(showHouse) row.push(displayedHouseName(s)||'Not allocated');
     row.push(s.reg||'',s.time||'',s.sms||'',s.enrol||'',s.form?'Uploaded':'Missing');
     return row;
   });
@@ -4306,8 +4314,8 @@ function repVal(id){var e=document.getElementById(id);return e?e.value:'';}
 function repMode(){var r=document.querySelector('input[name="rep_mode"]:checked');return r?r.value:'full';}
 function inRange(s){var f=repVal('rep_from'),t=repVal('rep_to');if(f&&s.reg<f)return false;if(t&&s.reg>t)return false;return true;}
 function pN(s){return studentProgrammeName(s);}
-function cN(s){return (classById(s.classId)||{}).name||'—';}
-function hN(s){return (houseById(s.houseId)||{}).name||'—';}
+function cN(s){return displayedClassName(s)||'—';}
+function hN(s){return displayedHouseName(s)||'—';}
 async function runReport(type,fmt){
   if(SB_SCHOOL&&SB_SCHOOL.id&&!STUDENT_CACHE_STATE.loaded){ toast('Preparing submitted student records…'); await ensureStudentCache(); }
   var rows=[],headers=[],title='',data=submittedStudents();
@@ -4315,7 +4323,7 @@ async function runReport(type,fmt){
   if(type==='programme'||type==='cssps'){
     var pid=repVal('rep_prog'); if(pid)data=data.filter(s=>String(s.progId)===pid);
     if(repMode()==='summary'){ headers=['Programme','Students']; var by={}; data.forEach(s=>{var n=pN(s);by[n]=(by[n]||0)+1;}); rows=Object.keys(by).map(k=>[k,by[k]]); title=(type==='cssps'?'CSSPS Enrolment':'Programme')+' Summary'; }
-    else { headers=['JHS Index No','Admission #','Student Name','Gender','Programme','Class','House','Date Registered','SMS Contact','Enrolment Code']; rows=data.map(s=>[s.index,s.adm,s.name,s.gender,pN(s),cN(s),hN(s),s.reg,s.sms,s.enrol]); title=(type==='cssps'?'CSSPS Enrolment Report':'Programme Report'); }
+    else { headers=['JHS Index No','Admission #','Student Name','Gender','Programme','Class','House','Date Registered','SMS Contact','Enrolment Code']; rows=data.map(s=>[s.index,displayedAdmissionNumber(s),s.name,s.gender,pN(s),cN(s),hN(s),s.reg,s.sms,s.enrol]); title=(type==='cssps'?'CSSPS Enrolment Report':'Programme Report'); }
   } else if(type==='house'){
     var hid=repVal('rep_house'),bd=repVal('rep_board'); if(hid)data=data.filter(s=>String(s.houseId)===hid); if(bd)data=data.filter(s=>s.res===bd);
     headers=['JHS Index No','Student Name','Gender','House','Boarding','Programme','Class']; rows=data.map(s=>[s.index,s.name,s.gender,hN(s),s.res,pN(s),cN(s)]); title='House Report';
@@ -4328,7 +4336,7 @@ async function runReport(type,fmt){
   } else if(type==='saprosoft'){
     headers=['INDEX','ADMISSION NO','SURNAME','FULL NAME','GENDER','DATE OF BIRTH','PLACE OF BIRTH','NATIONALITY','RELIGION','DENOMINATION','AGGREGATE','RAW SCORE','ENROLMENT CODE','JHS ATTENDED','JHS TYPE','PROGRAMME','CLASS','HOUSE','RESIDENTIAL','PERMANENT ADDRESS','TOWN','REGION','DISTRICT','INTEREST','GHANA CARD/NHIS','SMS CONTACT','WHATSAPP','OTHER PHONE','EMAIL','FATHER NAME','FATHER OCCUPATION','MOTHER NAME','MOTHER OCCUPATION','GUARDIAN','GUARDIAN PHONE','DIGITAL ADDRESS','DATE REGISTERED','RECORDS SUBMITTED'];
     rows=data.map(s=>{ var r=s.rec||{}; var done=!!(r.father_name||r.dob||r.enrolment_code);
-      return [s.index, s.adm, (r.surname||s.name||''), (s.name||''), s.gender,
+      return [s.index, displayedAdmissionNumber(s), (r.surname||s.name||''), (s.name||''), s.gender,
         (r.dob||s.dob||''), r.place_of_birth||'', r.nationality||'', r.religion||'', r.denomination||'',
         (r.aggregate!=null?r.aggregate:''), r.raw_score||'', (r.enrolment_code||s.enrol||'').toUpperCase(), r.jhs_attended||'', r.jhs_type||'',
         pN(s), (r.class_name||cN(s)), hN(s), s.res||'',
@@ -4424,8 +4432,17 @@ function changeVerificationPage(delta){ const next=(VERIFY_STATE.page||1)+delta;
 function verificationRecordById(id){ const fromSearch=(VERIFY_STATE.rows||[]).find(function(row){ return String(row.id)===String(id); }); if(fromSearch) return fromSearch; const fromCurrentPage=(VERIFIED_STATE.rows||[]).find(function(row){ return String(row.id)===String(id); }); if(fromCurrentPage) return fromCurrentPage; const fromVerified=(VERIFIED_STATE.allRows||[]).find(function(row){ return String(row.id)===String(id); }); if(fromVerified) return fromVerified; return null; }
 function verificationInfoGrid(row){ return [['Student Name',row.full_name],['JHS Index Number',row.bece_index],['Programme',row.programme||'—'],['Class',row.class_name||'—'],['Residential Status',row.residential_status||'—'],['House',row.house_name||'—'],['Student Phone',row.student_phone||'—'],['Guardian Contact',row.guardian_contact||'—'],['Verification Status',verificationStatusLabel(row.verification_status)],['Permanent Admission Number',row.permanent_admission_number||'—']]; }
 function openVerifyStudentModal(id){ const row=verificationRecordById(id); if(!row) return toast('Student not found'); const rowId=escapeAttr(id||''); const photo=row.passport_photo_url?'<img class="verify-modal-photo" src="'+escapeAttr(row.passport_photo_url)+'" alt="Passport">':'<div class="verify-modal-photo" style="display:grid;place-items:center;color:var(--muted);font-size:12px">No photo</div>'; const grid=verificationInfoGrid(row).map(function(item){ return '<div class="kv"><b>'+safeHtml(item[0])+':</b>'+safeHtml(item[1],'-')+'</div>'; }).join(''); $('modal').innerHTML='<div class="modal-head"><div><h2>Confirm Student Verification</h2><p>The admission number and house allocation will be saved together after confirmation.</p></div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body"><div class="verify-slip-grid">'+photo+'<div><div class="grid-2 student-info-grid">'+grid+'</div><div class="panel panel-pad" style="margin:12px 0 0;background:#fff8e6;border:1px solid rgba(199,134,26,.22)"><b>Warning:</b> The first student successfully verified receives the first available permanent admission number for this school and admission year.</div></div></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="verifyConfirmBtn" onclick="confirmVerifyStudent(\''+rowId+'\')">Confirm Verification</button></div>'; $('overlay').classList.add('show'); }
-async function confirmVerifyStudent(id){ if(VERIFY_STATE.submitting) return; const btn=$('verifyConfirmBtn'); VERIFY_STATE.submitting=true; if(btn){ btn.disabled=true; btn.textContent='Verifying…'; } const {data,error}=await verificationAction('verify',{student_id:id}); VERIFY_STATE.submitting=false; if(btn){ btn.disabled=false; btn.textContent='Confirm Verification'; } if(error||!data||data.ok===false){ toast((data&&data.message)||(error&&error.message)||'Verification failed'); return; } const record=verificationRecordById(id); if(record){ record.verification_status='verified'; record.permanent_admission_number=data.permanent_admission_number||record.permanent_admission_number; record.house_id=data.house_id||record.house_id; record.house_name=data.house_name||record.house_name; record.verified_at=data.verified_at||new Date().toISOString(); } syncLocalVerificationRecord(id,{verificationStatus:'verified',permAdm:data.permanent_admission_number||'',houseId:data.house_id||'',houseName:data.house_name||'',verifiedAt:data.verified_at||new Date().toISOString()}); closeModal(); showVerificationSuccess(data.permanent_admission_number||'',record||verificationRecordById(id)); await Promise.all([loadVerificationCounts(),loadVerificationSearch(true,VERIFY_STATE.page||1),loadVerifiedStudents(VERIFIED_STATE.page||1)]); toast('Student verified and house allocated successfully'); }
-function syncLocalVerificationRecord(id,patch){ const row=(students||[]).find(function(item){ return String(item._id)===String(id); }); if(!row) return; if(patch.verificationStatus!==undefined) row.verificationStatus=patch.verificationStatus; if(patch.permAdm!==undefined) row.permAdm=patch.permAdm; if(patch.houseId!==undefined) row.houseId=patch.houseId; if(patch.houseName!==undefined) row.house=patch.houseName; if(patch.verifiedAt!==undefined) row.verifiedAt=patch.verifiedAt; }
+async function confirmVerifyStudent(id){ if(VERIFY_STATE.submitting) return; const btn=$('verifyConfirmBtn'); VERIFY_STATE.submitting=true; if(btn){ btn.disabled=true; btn.textContent='Verifying…'; } const {data,error}=await verificationAction('verify',{student_id:id}); VERIFY_STATE.submitting=false; if(btn){ btn.disabled=false; btn.textContent='Confirm Verification'; } if(error||!data||data.ok===false){ toast((data&&data.message)||(error&&error.message)||'Verification failed'); return; } const record=verificationRecordById(id); if(record){ record.verification_status='verified'; record.permanent_admission_number=data.permanent_admission_number||record.permanent_admission_number; record.house_id=data.house_id||record.house_id; record.house_name=data.house_name||record.house_name; record.verified_at=data.verified_at||new Date().toISOString(); } syncLocalVerificationRecord(id,{verificationStatus:'verified',permAdm:data.permanent_admission_number||'',houseId:data.house_id||'',houseName:data.house_name||'',verifiedAt:data.verified_at||new Date().toISOString()}); renderStudentsRows(); renderRegisteredRows(); closeModal(); showVerificationSuccess(data.permanent_admission_number||'',record||verificationRecordById(id)); await Promise.all([loadVerificationCounts(),loadVerificationSearch(true,VERIFY_STATE.page||1),loadVerifiedStudents(VERIFIED_STATE.page||1)]); toast('Student verified and house allocated successfully'); }
+function syncLocalVerificationRecord(id,patch){
+  const copies=[...(students||[]),...(MANAGE_STATE.rows||[]),...(REG_STATE.rows||[])].filter(function(item){ return String(item._id)===String(id); });
+  copies.forEach(function(row){
+    if(patch.verificationStatus!==undefined) row.verificationStatus=patch.verificationStatus;
+    if(patch.permAdm!==undefined){ row.permAdm=patch.permAdm; if(patch.permAdm) row.adm=patch.permAdm; }
+    if(patch.houseId!==undefined&&patch.houseId){ row.houseUuid=patch.houseId; row.houseId=hRev[patch.houseId]||row.houseId||null; }
+    if(patch.houseName!==undefined){ row.houseName=patch.houseName; row.house=patch.houseName; }
+    if(patch.verifiedAt!==undefined) row.verifiedAt=patch.verifiedAt;
+  });
+}
 function showVerificationSuccess(permanentNo,row){ const record=row||{}; const canPrint=can('print_verification_slip'); const admissionNo=escapeAttr(permanentNo||record.permanent_admission_number||''); const rowId=escapeAttr(record.id||''); $('modal').innerHTML='<div class="modal-head"><div><h2>Student verified successfully.</h2><p>Admission number and house allocation saved.</p></div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body"><div class="panel panel-pad" style="margin:0;background:#effcf4;border:1px solid rgba(22,101,52,.18)"><div style="font-size:13px;color:#166534;font-weight:700">Permanent Admission Number</div><div class="mono" style="font-size:28px;font-weight:800;color:#0f5132;margin-top:8px">'+safeHtml(permanentNo||record.permanent_admission_number||'—')+'</div><div style="font-size:13px;color:#166534;font-weight:700;margin-top:14px">House Allocation</div><div style="font-size:20px;font-weight:800;color:#0f5132;margin-top:5px">'+safeHtml(record.house_name||'—')+'</div></div><div class="grid-2 student-info-grid" style="margin-top:14px">'+verificationInfoGrid(record).map(function(item){ return '<div class="kv"><b>'+safeHtml(item[0])+':</b>'+safeHtml(item[1],'-')+'</div>'; }).join('')+'</div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="copyVerificationNumber(\''+admissionNo+'\')">Copy Number</button>'+(canPrint?'<button class="btn btn-primary" onclick="printVerificationSlipById(\''+rowId+'\')">Print Verification Slip</button>':'')+'</div>'; $('overlay').classList.add('show'); }
 function showVerificationSuccessById(id){ const row=verificationRecordById(id); if(!row) return toast('Student not found'); showVerificationSuccess(row.permanent_admission_number,row); }
 function copyVerificationNumber(value){ if(!value) return toast('No number to copy'); if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(value).then(function(){ toast('Permanent admission number copied'); }).catch(function(){ toast(value); }); } else { toast(value); } }
@@ -5125,7 +5142,7 @@ async function loadSchoolData(prof){
   // House-scoped user: only see that house and its students
   if(SB_HOUSE){ stu.data=(stu.data||[]).filter(s=>s.house_id===SB_HOUSE); hs.data=(hs.data||[]).filter(h=>h.id===SB_HOUSE); }
 
-  const progNameByUuid={}; pMap={};hMap={};cMap={};pRev={};hRev={};cRev={};
+  const progNameByUuid={},classNameByUuid={},houseNameByUuid={}; pMap={};hMap={};cMap={};pRev={};hRev={};cRev={};
   const plcByIdx={}; (plc.data||[]).forEach(p=>plcByIdx[p.index_number]=p);
   const submittedRawStudents=(stu.data||[]).filter(hasSubmittedPersonalRecord);
   function rawStudentMatchesProgramme(s,p){
@@ -5139,12 +5156,12 @@ async function loadSchoolData(prof){
   }
   const programmeCounts=SB_STUDENT_SUMMARY.programmes||{}, houseCounts=SB_STUDENT_SUMMARY.houses||{}, classCounts=SB_STUDENT_SUMMARY.classes||{};
   programmes=(progs.data||[]).map((p,i)=>{const id=i+1;pMap[id]=p.id;pRev[p.id]=id;progNameByUuid[p.id]=p.name||'';return {id,_id:p.id,code:p.code,name:p.name,subjects:p.subjects||'',cap:p.capacity,enr:Number(programmeCounts[p.id]||0)};});
-  houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,priority:h.priority||'',gender:h.gender||'',rtype:h.residential_type||'',occ:Number(houseCounts[h.id]||0)};});
-  classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:Number(classCounts[c.id]||0)};});
+  houses=(hs.data||[]).map((h,i)=>{const id=i+1;hMap[id]=h.id;hRev[h.id]=id;houseNameByUuid[h.id]=h.name||'';return {id,_id:h.id,name:h.name,color:h.color,motto:h.motto,cap:h.capacity,priority:h.priority||'',gender:h.gender||'',rtype:h.residential_type||'',occ:Number(houseCounts[h.id]||0)};});
+  classes=(cls.data||[]).map((c,i)=>{const id=i+1;cMap[id]=c.id;cRev[c.id]=id;classNameByUuid[c.id]=c.name||'';return {id,_id:c.id,name:c.name,code:c.code,cap:c.capacity,subjects:c.subjects||'',progId:c.programme_id?pRev[c.programme_id]:'',occ:Number(classCounts[c.id]||0)};});
   students=(stu.data||[]).map((s,i)=>{ const pl=plcByIdx[s.bece_index]||{}; const rec=s.records||{}; const regAt=s.submitted_at||s.created_at||''; const dt=regAt?new Date(regAt):null; const sms=preferredStudentSms(s,pl);
     return {id:i+1,_id:s.id,index:s.bece_index,name:s.full_name||'(no name)',gender:s.gender||'M',
-      progId:pRev[s.programme_id]||null,classId:cRev[s.class_id]||null,houseId:hRev[s.house_id]||null,
-      status:s.status,adm:s.admission_no||'-',permAdm:s.permanent_admission_number||'',verificationStatus:s.verification_status||'pending',verifiedAt:s.verified_at||'',verifiedBy:s.verified_by||'',passportPhoto:(rec.passport_photo_url||s.passport_photo_url||''),reg:(regAt||'').slice(0,10),submittedAt:s.submitted_at||'',personalDone:!!s.personal_done,programmeDone:!!s.programme_done,undertakingDone:!!s.undertaking_done,
+      progId:pRev[s.programme_id]||null,classId:cRev[s.class_id]||null,houseId:hRev[s.house_id]||null,className:classNameByUuid[s.class_id]||'',houseName:houseNameByUuid[s.house_id]||'',house:houseNameByUuid[s.house_id]||'',houseUuid:s.house_id||'',
+      status:s.status,adm:s.permanent_admission_number||s.admission_no||'-',permAdm:s.permanent_admission_number||'',verificationStatus:s.verification_status||'pending',verifiedAt:s.verified_at||'',verifiedBy:s.verified_by||'',passportPhoto:(rec.passport_photo_url||s.passport_photo_url||''),reg:(regAt||'').slice(0,10),submittedAt:s.submitted_at||'',personalDone:!!s.personal_done,programmeDone:!!s.programme_done,undertakingDone:!!s.undertaking_done,
       time: dt?dt.toTimeString().slice(0,8):'-',
       sms: sms||'-',
       prog: cleanSmsText(progNameByUuid[s.programme_id])||cleanSmsText(pl.programme)||cleanSmsText(rec.programme)||'',
