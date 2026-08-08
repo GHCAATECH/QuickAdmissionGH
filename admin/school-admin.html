@@ -1856,7 +1856,7 @@
       <section class="view" id="view-verified-students">
         <div class="verify-summary-grid verified-summary-grid" id="verifiedSummaryCards"></div>
         <div class="panel panel-pad verified-filter-panel">
-          <div class="panel-head verified-filter-head"><div><h3>Verified Students Filters</h3><div class="sub">Filters also apply to exports.</div></div><div class="verified-filter-actions"><button class="btn btn-primary btn-sm" type="button" onclick="applyVerifiedFilters()">Apply Filters</button><button class="btn btn-ghost btn-sm" type="button" onclick="clearVerifiedFilters()">Clear Filters</button><button class="btn btn-ghost btn-sm" type="button" onclick="exportVerifiedStudentsExcel()">Export Excel</button><button class="btn btn-ghost btn-sm" type="button" onclick="exportVerifiedStudentsPdf()">Export PDF</button></div></div>
+          <div class="panel-head verified-filter-head"><div><h3>Verified Students Filters</h3><div class="sub">Filters also apply to exports.</div></div></div>
           <div class="grid-3 verified-filter-grid">
             <div class="field"><label>Search</label><input id="verf_search" placeholder="Name, index or permanent number"></div>
             <div class="field"><label>Gender</label><select id="verf_gender"><option value="">All</option><option value="M">Male</option><option value="F">Female</option></select></div>
@@ -1868,6 +1868,7 @@
             <div class="field"><label>Verification date to</label><input id="verf_date_to" type="date"></div>
           </div>
           <div class="verify-active-filters" id="verifiedActiveFilters"></div>
+          <div class="verified-filter-actions"><button class="btn btn-primary btn-sm" type="button" onclick="applyVerifiedFilters()">Apply Filters</button><button class="btn btn-ghost btn-sm" type="button" onclick="clearVerifiedFilters()">Clear Filters</button><button class="btn btn-ghost btn-sm" type="button" onclick="exportVerifiedStudentsExcel()">Export Excel</button><button class="btn btn-ghost btn-sm" type="button" onclick="exportVerifiedStudentsPdf()">Export PDF</button></div>
         </div>
         <div class="panel verified-table-panel">
           <div class="panel-head verified-table-head"><div><h3>Verified Students</h3><div class="sub"><span id="verifiedResultCount">0</span> matching students</div></div><div class="verify-meta" id="verifiedPagerMeta">Page 1 of 1 · 25 per page</div></div>
