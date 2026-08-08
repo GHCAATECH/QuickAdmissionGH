@@ -1172,7 +1172,7 @@
 <link rel="stylesheet" href="assets/css/system-footer.css?v=20260801-content-height-5">
 <link rel="stylesheet" href="assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <link rel="stylesheet" href="assets/css/session-loader.css?v=20260808-light-loader-1">
-<link rel="stylesheet" href="assets/css/index-directory.css?v=20260808-ios-scroll-fix-3">
+<link rel="stylesheet" href="assets/css/index-directory.css?v=20260808-ios-scroll-lock-4">
 <script src="assets/js/global-layout-fix.js?v=20260804-readable-login-fit-19" defer></script>
 </head>
 <body class="booting system-footer-page">
@@ -1699,12 +1699,23 @@ const TENANT_PORTAL={subdomain:currentPortalSubdomain(),checked:false,school:nul
 function tenantPortalRequested(){return !!TENANT_PORTAL.subdomain;}
 function platformDirectoryRequested(){return !tenantPortalRequested();}
 function tenantSchoolId(){return TENANT_PORTAL.school&&TENANT_PORTAL.school.id?String(TENANT_PORTAL.school.id):'';}
+function syncDirectoryViewport(){
+  if(!platformDirectoryRequested()){
+    document.documentElement.style.removeProperty('--directory-viewport-height');
+    return;
+  }
+  const viewportHeight=window.visualViewport&&window.visualViewport.height
+    ? window.visualViewport.height
+    : window.innerHeight;
+  document.documentElement.style.setProperty('--directory-viewport-height',Math.ceil(viewportHeight)+'px');
+}
 function configurePortalEntryView(){
   const directory=document.getElementById('schoolDirectoryPage');
   const tenantOnly=document.querySelectorAll('.tenant-portal-only');
   const showDirectory=platformDirectoryRequested();
   document.documentElement.classList.toggle('platform-directory-active',showDirectory);
   document.body.classList.toggle('platform-directory-active',showDirectory);
+  syncDirectoryViewport();
   if(directory){
     directory.hidden=!showDirectory;
     directory.setAttribute('aria-hidden',showDirectory?'false':'true');
@@ -3590,6 +3601,9 @@ async function initStudentPortal(){
 initStudentPortal();
 window.addEventListener('resize',syncPortalChrome,{passive:true});
 window.addEventListener('orientationchange',syncPortalChrome,{passive:true});
+window.addEventListener('resize',syncDirectoryViewport,{passive:true});
+window.addEventListener('orientationchange',syncDirectoryViewport,{passive:true});
+if(window.visualViewport)window.visualViewport.addEventListener('resize',syncDirectoryViewport,{passive:true});
 if('ResizeObserver' in window){
   const portalTopbar=document.querySelector('#s-app .ptopbar');
   if(portalTopbar)new ResizeObserver(syncPortalChrome).observe(portalTopbar);

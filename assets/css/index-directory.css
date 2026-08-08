@@ -731,17 +731,42 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
 }
 
 @media (max-width: 820px) {
-  html.platform-directory-active,
-  body.platform-directory-active,
-  body.platform-directory-active #s-login,
-  body.platform-directory-active #s-login .school-directory-page {
-    height: auto !important;
+  html.platform-directory-active {
+    width: 100% !important;
+    height: var(--directory-viewport-height, 100dvh) !important;
     min-height: 0 !important;
-    max-height: none !important;
+    max-height: var(--directory-viewport-height, 100dvh) !important;
+    overflow: hidden !important;
   }
 
-  body.platform-directory-active #s-login,
-  body.platform-directory-active #s-login .school-directory-page {
+  body.system-footer-page.platform-directory-active {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: var(--directory-viewport-height, 100dvh) !important;
+    min-height: 0 !important;
+    max-height: var(--directory-viewport-height, 100dvh) !important;
+    overflow: hidden !important;
+  }
+
+  body.system-footer-page.platform-directory-active > #s-login.screen.active {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: var(--directory-viewport-height, 100dvh) !important;
+    min-height: 0 !important;
+    max-height: var(--directory-viewport-height, 100dvh) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  body.system-footer-page.platform-directory-active > #s-login.screen.active .school-directory-page {
+    height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
     overflow: visible !important;
   }
 
