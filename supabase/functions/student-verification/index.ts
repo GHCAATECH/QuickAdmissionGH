@@ -86,6 +86,11 @@ function sanitizeSearch(value: string) {
   return value.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+function positiveInteger(value: unknown, fallback: number, maximum: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.min(Math.max(Math.floor(parsed), 1), maximum) : fallback;
+}
+
 function normalizedGender(value: unknown) {
   const key = safeText(value).toLowerCase();
   if (["m", "male", "boy"].includes(key)) return "m";
@@ -114,7 +119,7 @@ function studentText(record: JsonRecord, keys: string[]) {
   return "";
 }
 
-function studentMatchesQuery(student: JsonRecord, query: string) {
+function studentMatchesQuery(student: JsonRecord, query: string, placement: JsonRecord = {}) {
   if (!query) return true;
   const q = sanitizeSearch(query);
   const records = student.records && typeof student.records === "object" && !Array.isArray(student.records)
@@ -132,6 +137,10 @@ function studentMatchesQuery(student: JsonRecord, query: string) {
     safeText(records.guardian_phone),
     safeText(records.whatsapp),
     safeText(records.other_phone),
+    safeText(placement.student_name),
+    safeText(placement.index_number),
+    safeText(placement.sms_contact),
+    safeText(placement.enrolment_code),
   ].join(" \n").toLowerCase();
   return haystack.includes(q);
 }
@@ -263,7 +272,7 @@ async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolI
     admin.from("classrooms").select("id,name").eq("school_id", schoolId).limit(5_000),
     admin.from("houses").select("id,name").eq("school_id", schoolId).limit(5_000),
     admin.from("profiles").select("id,full_name,email").eq("school_id", schoolId).limit(5_000),
-    admin.from("placement_list").select("index_number,student_name,gender,residential_status,programme,sms_contact").eq("school_id", schoolId).order("index_number").limit(5_000),
+    admin.from("placement_list").select("index_number,student_name,gender,residential_status,programme,sms_contact,enrolment_code").eq("school_id", schoolId).order("index_number").limit(5_000),
   ]);
   const school = (schoolRes.data ?? {}) as JsonRecord;
   const cfg = (cfgRes.data ?? {}) as JsonRecord;
@@ -300,31 +309,43 @@ async function loadSchoolContext(admin: ReturnType<typeof createClient>, schoolI
   return value;
 }
 
-async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId: string, query: string) {
-  const cacheKey = `${schoolId}:${sanitizeSearch(query)}`;
+async function searchCandidates(admin: ReturnType<typeof createClient>, schoolId: string, query: string, requestedPage: unknown, requestedPageSize: unknown) {
+  const page = positiveInteger(requestedPage, 1, 1_000_000);
+  const pageSize = positiveInteger(requestedPageSize, 50, 50);
+  const search = sanitizeSearch(query);
+  const cacheKey = `${schoolId}:${search}:${page}:${pageSize}`;
   const cached = verificationSearchCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
-  let studentQuery = admin
+  const studentQuery = admin
     .from("students")
-    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,records")
+    .select("id,school_id,programme_id,class_id,house_id,full_name,bece_index,permanent_admission_number,gender,parent_phone,submitted_at,created_at,verification_status,verified_at,verified_by,records", { count: "exact" })
     .eq("school_id", schoolId)
     .not("submitted_at", "is", null)
     .or("status.is.null,status.neq.rejected")
     .in("verification_status", ["pending", "documents_incomplete"])
     .order("submitted_at", { ascending: false });
-  const search = sanitizeSearch(query);
-  if (search) {
-    const escaped = search.replace(/[%_]/g, (value) => `\\${value}`);
-    studentQuery = studentQuery.or(`full_name.ilike.%${escaped}%,bece_index.ilike.%${escaped}%,permanent_admission_number.ilike.%${escaped}%`);
-  }
-  const { data, error } = await studentQuery.limit(100);
-  if (error) throw new Error("Could not search students.");
   const context = await loadSchoolContext(admin, schoolId);
-  const rows = (data ?? [])
-    .map((row) => row as JsonRecord)
-    .filter((row) => studentMatchesQuery(row, query))
-    .map((row) => toStudentSummary(row, context));
-  const result = { ok: true, rows: await Promise.all(rows.slice(0, 60).map((row) => signStudentFiles(admin, row))) };
+  let summaries: JsonRecord[] = [];
+  let total = 0;
+  if (search) {
+    const { data, error } = await studentQuery.limit(5_000);
+    if (error) throw new Error("Could not search students.");
+    summaries = (data ?? [])
+      .map((row) => row as JsonRecord)
+      .filter((row) => studentMatchesQuery(row, query, context.placements.get(safeText(row.bece_index)) ?? {}))
+      .map((row) => toStudentSummary(row, context));
+    total = summaries.length;
+    const start = (page - 1) * pageSize;
+    summaries = summaries.slice(start, start + pageSize);
+  } else {
+    const start = (page - 1) * pageSize;
+    const { data, count, error } = await studentQuery.range(start, start + pageSize - 1);
+    if (error) throw new Error("Could not load students for verification.");
+    total = count ?? 0;
+    summaries = (data ?? []).map((row) => toStudentSummary(row as JsonRecord, context));
+  }
+  const rows = await Promise.all(summaries.map((row) => signStudentFiles(admin, row)));
+  const result = { ok: true, page, page_size: pageSize, total, total_pages: Math.max(Math.ceil(total / pageSize), 1), rows };
   verificationSearchCache.set(cacheKey, { expiresAt: Date.now() + 10_000, value: result });
   if (verificationSearchCache.size > 500) {
     const oldest = verificationSearchCache.keys().next().value;
@@ -448,7 +469,7 @@ Deno.serve(async (req: Request) => {
   try {
     if (action === 'search') {
       if (!hasPerm(profile, 'verify_students')) return json({ ok: false, error: 'forbidden', message: 'You do not have permission to verify students.' }, 403);
-      return json(await searchCandidates(admin, schoolId, safeText(body.query)));
+      return json(await searchCandidates(admin, schoolId, safeText(body.query), body.page, body.page_size));
     }
 
     if (action === 'summary') {
