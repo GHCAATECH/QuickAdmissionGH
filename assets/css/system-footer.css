@@ -155,3 +155,16 @@ body.system-footer-page > :is(
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* Keep the School Admin footer at the viewport bottom on short views while
+   allowing it to follow naturally after longer dashboard content. */
+body.system-footer-page.school-admin-page {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+}
+
+body.system-footer-page.school-admin-page > footer.system-footer {
+  margin-top: auto !important;
+}
