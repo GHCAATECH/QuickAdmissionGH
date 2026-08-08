@@ -1,5 +1,26 @@
 "use strict";
 
+function usesMobileViewportLayout() {
+  return window.matchMedia("(max-width: 1024px)").matches;
+}
+
+function platformDirectoryOwnsScroll() {
+  return Boolean(document.body?.classList.contains("platform-directory-active"));
+}
+
+function syncGlobalMobileViewport() {
+  if (!usesMobileViewportLayout() || platformDirectoryOwnsScroll()) {
+    document.documentElement.style.removeProperty("--qa-mobile-viewport-height");
+    return;
+  }
+
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty(
+    "--qa-mobile-viewport-height",
+    `${Math.ceil(viewportHeight)}px`
+  );
+}
+
 /**
  * Display one application view and hide all others.
  * Kept global so legacy inline handlers can use it if needed.
@@ -26,11 +47,11 @@ function showView(viewId) {
   selectedView.classList.add("active");
   selectedView.setAttribute("aria-hidden", "false");
 
-  window.scrollTo({
-    top: 0,
-    left: 0,
-    behavior: "auto",
-  });
+  if (usesMobileViewportLayout() && !platformDirectoryOwnsScroll()) {
+    document.body.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  } else {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }
 }
 
 window.showView = window.showView || showView;
@@ -95,15 +116,24 @@ function updateLoginScreenScrollbarMode() {
 
   if (document.body) {
     document.body.classList.toggle("qa-login-screen-active", loginScreenActive);
+
+    if (platformDirectoryOwnsScroll()) {
+      document.documentElement.style.removeProperty("overflow-y");
+      document.body.style.removeProperty("overflow-x");
+      document.body.style.removeProperty("overflow-y");
+      return;
+    }
+
+    const mobileLayout = usesMobileViewportLayout();
     document.documentElement.style.setProperty(
       "overflow-y",
-      adminGatePresent ? "scroll" : "auto",
+      mobileLayout ? "hidden" : adminGatePresent ? "scroll" : "auto",
       "important"
     );
     document.body.style.setProperty("overflow-x", "clip", "important");
     document.body.style.setProperty(
       "overflow-y",
-      "visible",
+      mobileLayout ? "auto" : "visible",
       "important"
     );
   }
@@ -178,20 +208,63 @@ function scheduleDesktopLoginFit() {
  */
 function forceScrollableLayout() {
   const adminGatePresent = Boolean(document.getElementById("authGate"));
+  const mobileLayout = usesMobileViewportLayout();
+
+  if (platformDirectoryOwnsScroll()) {
+    ["height", "min-height", "max-height", "overflow-x", "overflow-y"].forEach(
+      (property) => document.documentElement.style.removeProperty(property)
+    );
+    if (document.body) {
+      ["height", "min-height", "max-height", "overflow-x", "overflow-y"].forEach(
+        (property) => document.body.style.removeProperty(property)
+      );
+    }
+    return;
+  }
+
+  syncGlobalMobileViewport();
 
   document.documentElement.dataset.qaLayoutFix =
-    "20260804-readable-login-fit-19";
+    "20260808-mobile-scroll-owner-20";
 
-  document.documentElement.style.setProperty("height", "auto", "important");
+  document.documentElement.style.setProperty(
+    "height",
+    mobileLayout ? "var(--qa-mobile-viewport-height, 100dvh)" : "auto",
+    "important"
+  );
+  document.documentElement.style.setProperty(
+    "min-height",
+    mobileLayout ? "0" : "100%",
+    "important"
+  );
+  document.documentElement.style.setProperty(
+    "max-height",
+    mobileLayout ? "var(--qa-mobile-viewport-height, 100dvh)" : "none",
+    "important"
+  );
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");
   document.documentElement.style.setProperty(
     "overflow-y",
-    adminGatePresent ? "scroll" : "auto",
+    mobileLayout ? "hidden" : adminGatePresent ? "scroll" : "auto",
     "important"
   );
 
   if (document.body && !document.body.classList.contains("modal-open")) {
-    document.body.style.setProperty("height", "auto", "important");
+    document.body.style.setProperty(
+      "height",
+      mobileLayout ? "var(--qa-mobile-viewport-height, 100dvh)" : "auto",
+      "important"
+    );
+    document.body.style.setProperty(
+      "min-height",
+      mobileLayout ? "0" : "auto",
+      "important"
+    );
+    document.body.style.setProperty(
+      "max-height",
+      mobileLayout ? "var(--qa-mobile-viewport-height, 100dvh)" : "none",
+      "important"
+    );
     document.body.style.setProperty(
       "overflow-x",
       "clip",
@@ -199,8 +272,17 @@ function forceScrollableLayout() {
     );
     document.body.style.setProperty(
       "overflow-y",
-      "visible",
+      mobileLayout ? "auto" : "visible",
       "important"
+    );
+    document.body.style.setProperty(
+      "overscroll-behavior-y",
+      mobileLayout ? "contain" : "auto",
+      "important"
+    );
+    document.body.style.setProperty(
+      "-webkit-overflow-scrolling",
+      mobileLayout ? "touch" : "auto"
     );
   }
 
@@ -235,7 +317,11 @@ function forceScrollableLayout() {
 
     element.style.setProperty("height", "auto", "important");
     element.style.setProperty("max-height", "none", "important");
-    element.style.setProperty("overflow-x", "hidden", "important");
+    element.style.setProperty(
+      "overflow-x",
+      mobileLayout ? "clip" : "hidden",
+      "important"
+    );
     element.style.setProperty("overflow-y", "visible", "important");
   });
 
@@ -332,12 +418,7 @@ function removeEmptyLayoutBlocks() {
 function initialiseLayoutFix() {
   removeInvalidInlineHeights();
   removeEmptyLayoutBlocks();
-  forceScrollableLayout();
-
-  document.documentElement.style.removeProperty("height");
-  if (document.body) {
-    document.body.style.removeProperty("min-height");
-  }
+  syncGlobalMobileViewport();
   forceScrollableLayout();
 }
 
@@ -366,6 +447,13 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("orientationchange", () => {
   window.setTimeout(initialiseLayoutFix, 150);
 });
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", () => {
+    syncGlobalMobileViewport();
+    forceScrollableLayout();
+  }, { passive: true });
+}
 
 let resizeTimer;
 

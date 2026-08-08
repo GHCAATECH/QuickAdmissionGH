@@ -1334,3 +1334,66 @@ body {
     gap: 6px;
   }
 }
+
+/* =========================================================
+   MOBILE VIEWPORT SCROLL OWNERSHIP
+
+   iPhone browsers can expose a second document scroll range when `html` and
+   `body` both grow with dynamic viewport units. Keep the root fixed to the
+   visible viewport and let `body` own the system-wide mobile scroll. The
+   public school directory has its own equivalent scroll surface.
+========================================================= */
+@media screen and (max-width: 1024px) {
+  html:not(.platform-directory-active) {
+    width: 100% !important;
+    height: var(--qa-mobile-viewport-height, 100dvh) !important;
+    min-height: 0 !important;
+    max-height: var(--qa-mobile-viewport-height, 100dvh) !important;
+    overflow: hidden !important;
+    overscroll-behavior-y: none !important;
+  }
+
+  html:not(.platform-directory-active) body {
+    position: relative !important;
+    width: 100% !important;
+    height: var(--qa-mobile-viewport-height, 100dvh) !important;
+    min-height: 0 !important;
+    max-height: var(--qa-mobile-viewport-height, 100dvh) !important;
+    overflow-x: clip !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html:not(.platform-directory-active) body.modal-open {
+    overflow-y: hidden !important;
+  }
+
+  /* Long administrator login cards must expand their gate instead of being
+     centred inside a flex item that shrinks to one viewport. */
+  html:not(.platform-directory-active) body #authGate {
+    flex: 0 0 auto !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Top-level application screens remain part of the body flow. Using
+     overflow-x:hidden here would make overflow-y:visible compute to `auto`
+     and create a non-scrollable inner pane that absorbs touch gestures. */
+  html:not(.platform-directory-active) body > :is(
+    .screen.active,
+    .app,
+    #authGate,
+    main,
+    .main
+  ) {
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+  }
+
+  /* Hidden translated toast elements otherwise extend iPhone Chrome's body
+     scroll range even though they are fully transparent. */
+  html:not(.platform-directory-active) body > .toast:not(.show) {
+    display: none !important;
+  }
+}
