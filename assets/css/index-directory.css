@@ -1,8 +1,13 @@
 /* Public school directory. Tenant/subdomain student portals keep their existing UI. */
+html.platform-directory-active,
+body.platform-directory-active {
+  overscroll-behavior-y: none !important;
+  background: #062a58 !important;
+}
+
 body.platform-directory-active {
   overflow-x: hidden !important;
   overflow-y: auto !important;
-  background: #f5f7fb !important;
   color: #071f43 !important;
 }
 
@@ -726,6 +731,20 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
 }
 
 @media (max-width: 820px) {
+  html.platform-directory-active,
+  body.platform-directory-active,
+  body.platform-directory-active #s-login,
+  body.platform-directory-active #s-login .school-directory-page {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  body.platform-directory-active #s-login,
+  body.platform-directory-active #s-login .school-directory-page {
+    overflow: visible !important;
+  }
+
   body.platform-directory-active #s-login .school-directory-header-inner {
     min-height: 74px;
     flex-wrap: wrap;
