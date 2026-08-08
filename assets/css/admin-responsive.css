@@ -2059,8 +2059,9 @@ body:not(.sidebar-open) {
   }
 }
 
-/* Placement and classroom records stay on one line at every viewport size.
-   Tables grow naturally and their wrappers scroll instead of wrapping cells. */
+/* Placement, classroom, and managed-student records stay on one line at every
+   viewport size. Tables scroll inside their wrappers instead of wrapping. */
+#view-manage-students .tbl-wrap,
 #view-classes .tbl-wrap,
 #view-placement .placement-list-panel > .tbl-wrap {
   width: 100%;
@@ -2070,6 +2071,7 @@ body:not(.sidebar-open) {
   -webkit-overflow-scrolling: touch;
 }
 
+#view-manage-students .tbl-wrap > table,
 #view-classes .tbl-wrap > table,
 #view-placement .placement-list-panel > .tbl-wrap > table {
   width: max-content !important;
@@ -2078,6 +2080,8 @@ body:not(.sidebar-open) {
   table-layout: auto !important;
 }
 
+#view-manage-students .tbl-wrap > table :where(th, td),
+#view-manage-students .tbl-wrap > table :where(th, td) *,
 #view-classes .tbl-wrap > table :where(th, td),
 #view-classes .tbl-wrap > table :where(th, td) *,
 #view-placement .placement-list-panel > .tbl-wrap > table :where(th, td),
