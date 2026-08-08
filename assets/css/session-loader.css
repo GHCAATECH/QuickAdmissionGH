@@ -1,0 +1,189 @@
+/* Shared session-restoration screen for student, school-admin and super-admin portals. */
+#bootSplash.boot-splash,
+#bootSplash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000 !important;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+  overflow: hidden;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)) !important;
+  background: #eef8fc !important;
+  color: #002b4c !important;
+  animation: none !important;
+}
+
+body.booting #bootSplash,
+body.auth-booting #bootSplash,
+body.redirecting #bootSplash {
+  display: flex !important;
+}
+
+#bootSplash .boot-splash-card,
+#bootSplash .boot-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: min(100%, 360px);
+  padding: clamp(25px, 5vw, 32px) clamp(20px, 5vw, 30px) 26px;
+  border: 1px solid #b8d9e5 !important;
+  border-radius: 12px;
+  background: #ffffff !important;
+  color: #002b4c !important;
+  box-shadow: 0 24px 60px -34px rgba(0, 43, 76, 0.38) !important;
+  text-align: center;
+  backdrop-filter: none !important;
+}
+
+#bootSplash .boot-splash-art {
+  display: block;
+  width: clamp(92px, 24vw, 118px);
+  height: auto;
+  overflow: visible;
+}
+
+#bootSplash .boot-ring {
+  fill: none;
+  transform-origin: 64px 64px;
+}
+
+#bootSplash .boot-ring-outer {
+  stroke: #0e83b7;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 18 10;
+  animation: sessionRingClockwise 3.2s linear infinite !important;
+}
+
+#bootSplash .boot-ring-inner {
+  stroke: #159263;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 8 9;
+  opacity: 0.68;
+  animation: sessionRingCounter 4.2s linear infinite !important;
+}
+
+#bootSplash .boot-orbit-dot {
+  fill: #159263;
+  transform-origin: 64px 64px;
+  animation: sessionRingClockwise 2.1s linear infinite !important;
+}
+
+#bootSplash .boot-shield {
+  fill: #e8f7f1;
+  stroke: #08704d;
+  stroke-width: 4;
+  stroke-linejoin: round;
+  transform-origin: 64px 64px;
+  animation: sessionShieldPulse 1.8s ease-in-out infinite !important;
+}
+
+#bootSplash .boot-check {
+  fill: none;
+  stroke: #08704d;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: sessionCheckDraw 1.8s ease-in-out infinite !important;
+}
+
+#bootSplash .boot-splash-copy {
+  display: grid;
+  gap: 5px;
+  color: #002b4c !important;
+}
+
+#bootSplash .boot-splash-copy strong,
+#bootSplash .boot-splash-copy span {
+  color: #002b4c !important;
+  -webkit-text-fill-color: #002b4c !important;
+  text-shadow: none !important;
+}
+
+#bootSplash .boot-splash-copy strong {
+  font-size: clamp(16px, 4.5vw, 19px);
+  line-height: 1.25;
+}
+
+#bootSplash .boot-splash-copy span {
+  font-size: clamp(12px, 3.5vw, 14px);
+  font-weight: 500;
+  opacity: 0.78;
+}
+
+#bootSplash .boot-splash-progress {
+  width: min(100%, 230px);
+  height: 5px;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 3px;
+  background: #dcecf2 !important;
+}
+
+#bootSplash .boot-splash-progress span {
+  display: block;
+  width: 44%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0e83b7, #159263) !important;
+  animation: sessionProgressTravel 1.45s ease-in-out infinite !important;
+}
+
+@keyframes sessionRingClockwise {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sessionRingCounter {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes sessionShieldPulse {
+  0%, 100% { transform: scale(0.96); }
+  50% { transform: scale(1.025); }
+}
+
+@keyframes sessionCheckDraw {
+  0%, 16% { stroke-dashoffset: 34; opacity: 0.25; }
+  48%, 82% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: -34; opacity: 0.25; }
+}
+
+@keyframes sessionProgressTravel {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(340%); }
+}
+
+@media (max-width: 480px) {
+  #bootSplash .boot-splash-card,
+  #bootSplash .boot-card {
+    width: min(100%, 320px);
+    border-radius: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #bootSplash .boot-ring-outer,
+  #bootSplash .boot-ring-inner,
+  #bootSplash .boot-orbit-dot,
+  #bootSplash .boot-shield,
+  #bootSplash .boot-check,
+  #bootSplash .boot-splash-progress span {
+    animation: none !important;
+  }
+
+  #bootSplash .boot-check {
+    stroke-dashoffset: 0;
+  }
+
+  #bootSplash .boot-splash-progress span {
+    width: 100%;
+  }
+}

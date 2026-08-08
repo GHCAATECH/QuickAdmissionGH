@@ -527,12 +527,8 @@
   .disc-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
   .disc-actions .btn:disabled{opacity:.5;cursor:not-allowed}
   @media(max-width:520px){.disc-actions{flex-direction:column-reverse}.disc-actions .btn{width:100%;justify-content:center}}
-  .boot-splash{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  .boot-splash{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;background:#eef8fc}
   body.booting .boot-splash{display:flex}
-  .boot-card{display:flex;align-items:center;gap:12px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
-  .boot-spinner{width:18px;height:18px;border:2px solid var(--primary-soft);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
-  .boot-copy{font-size:13px;font-weight:600;color:var(--ink-soft)}
-  @keyframes spin{to{transform:rotate(360deg)}}
   @media(max-width:1024px){
     #s-login{
       height:auto;
@@ -777,11 +773,27 @@
 <link rel="stylesheet" href="assets/css/global-layout-fix.css?v=20260804-wheel-scroll-30">
 <link rel="stylesheet" href="assets/css/system-footer.css?v=20260801-content-height-5">
 <link rel="stylesheet" href="assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
+<link rel="stylesheet" href="assets/css/session-loader.css?v=20260808-light-loader-1">
 <script src="assets/js/global-layout-fix.js?v=20260804-readable-login-fit-19" defer></script>
 </head>
 <body class="booting student-portal-page system-footer-page">
 <div class="env-badge" id="envBadge">LIVE</div>
-<div class="boot-splash" id="bootSplash"><div class="boot-card"><span class="boot-spinner" aria-hidden="true"></span><span class="boot-copy">Loading your session...</span></div></div>
+<div class="boot-splash" id="bootSplash" role="status" aria-live="polite" aria-label="Restoring your secure student session">
+  <div class="boot-card boot-splash-card">
+    <svg class="boot-splash-art" viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+      <circle class="boot-ring boot-ring-outer" cx="64" cy="64" r="52"></circle>
+      <circle class="boot-ring boot-ring-inner" cx="64" cy="64" r="43"></circle>
+      <g class="boot-orbit-dot"><circle cx="64" cy="12" r="4"></circle></g>
+      <path class="boot-shield" d="M64 31 91 41v20c0 17-10 29-27 37-17-8-27-20-27-37V41l27-10Z"></path>
+      <path class="boot-check" d="m50 64 9 9 20-21"></path>
+    </svg>
+    <div class="boot-splash-copy">
+      <strong>Restoring your secure session</strong>
+      <span>Preparing your student portal...</span>
+    </div>
+    <div class="boot-splash-progress" aria-hidden="true"><span></span></div>
+  </div>
+</div>
 
 <!-- ===== LOGIN ===== -->
 <div class="screen active" id="s-login">

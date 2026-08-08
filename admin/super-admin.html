@@ -702,10 +702,27 @@
     }
   }
 </style>
+<link rel="stylesheet" href="../assets/css/session-loader.css?v=20260808-light-loader-1">
 <script src="../assets/js/global-layout-fix.js?v=20260804-readable-login-fit-19" defer></script>
 <script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
 </head>
 <body class="auth-booting system-footer-page super-admin-page">
+<div class="boot-splash" id="bootSplash" role="status" aria-live="polite" aria-label="Restoring your secure super admin session">
+  <div class="boot-card boot-splash-card">
+    <svg class="boot-splash-art" viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+      <circle class="boot-ring boot-ring-outer" cx="64" cy="64" r="52"></circle>
+      <circle class="boot-ring boot-ring-inner" cx="64" cy="64" r="43"></circle>
+      <g class="boot-orbit-dot"><circle cx="64" cy="12" r="4"></circle></g>
+      <path class="boot-shield" d="M64 31 91 41v20c0 17-10 29-27 37-17-8-27-20-27-37V41l27-10Z"></path>
+      <path class="boot-check" d="m50 64 9 9 20-21"></path>
+    </svg>
+    <div class="boot-splash-copy">
+      <strong>Restoring your secure session</strong>
+      <span>Preparing the platform workspace...</span>
+    </div>
+    <div class="boot-splash-progress" aria-hidden="true"><span></span></div>
+  </div>
+</div>
 <div class="app">
   <!-- ============ SIDEBAR ============ -->
   <aside class="sidebar" id="sidebar">
