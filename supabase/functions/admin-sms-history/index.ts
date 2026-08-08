@@ -4,7 +4,6 @@ import { guardRequest, jsonResponse } from "../_shared/security.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 type JsonRecord = Record<string, unknown>;
-const smsHistoryCache = new Map<string, { expiresAt: number; value: unknown }>();
 const text = (value: unknown) => String(value ?? "").trim();
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
@@ -36,16 +35,47 @@ Deno.serve(async (req: Request) => {
   const schoolId = text(body.school_id || profile.school_id);
   if (!schoolId || !canRead(profile, schoolId)) return json({ ok: false, error: "forbidden", message: "You cannot access SMS history for this school." }, 403);
   if (!await rateAllowed(admin, `admin-sms-history:${text(profile.id)}:${schoolId}`, 60, 60)) return json({ ok: false, error: "rate_limited", message: "Too many SMS-history requests. Please wait a minute and try again." }, 429);
-  const cached = smsHistoryCache.get(schoolId);
-  if (cached && cached.expiresAt > Date.now()) return json(cached.value);
-  let result = await admin.from("sms_logs").select("sent_at,recipient_group,recipients,message,status").eq("school_id", schoolId).is("external_id", null).order("sent_at", { ascending: false }).range(0, 499);
-  if (result.error) result = await admin.from("sms_log").select("sent_at,recipient_group,recipients,message,status").eq("school_id", schoolId).order("sent_at", { ascending: false }).range(0, 499);
-  if (result.error) return json({ ok: false, error: "query_failed", message: result.error.message }, 500);
-  const payload = { ok: true, school_id: schoolId, rows: result.data ?? [] };
-  smsHistoryCache.set(schoolId, { expiresAt: Date.now() + 10_000, value: payload });
-  if (smsHistoryCache.size > 100) {
-    const oldest = smsHistoryCache.keys().next().value;
-    if (oldest) smsHistoryCache.delete(oldest);
+  const [historyResult, deliveriesResult] = await Promise.all([
+    admin
+      .from("sms_logs")
+      .select("sent_at,recipient_group,recipients,message,status")
+      .eq("school_id", schoolId)
+      .is("external_id", null)
+      .order("sent_at", { ascending: false })
+      .range(0, 499),
+    admin
+      .from("sms_logs")
+      .select("external_id")
+      .eq("school_id", schoolId)
+      .eq("recipient_group", "bulk-recipient")
+      .in("status", ["sent", "pending"])
+      .not("external_id", "is", null)
+      .range(0, 4999),
+  ]);
+
+  if (historyResult.error) {
+    const legacyResult = await admin
+      .from("sms_log")
+      .select("sent_at,recipient_group,recipients,message,status")
+      .eq("school_id", schoolId)
+      .order("sent_at", { ascending: false })
+      .range(0, 499);
+    if (legacyResult.error) return json({ ok: false, error: "query_failed", message: legacyResult.error.message }, 500);
+    return json({ ok: true, school_id: schoolId, rows: legacyResult.data ?? [], delivered_indices: [] });
   }
-  return json(payload);
+  if (deliveriesResult.error) {
+    return json({ ok: false, error: "query_failed", message: deliveriesResult.error.message }, 500);
+  }
+
+  const deliveredIndices = [...new Set(
+    (deliveriesResult.data ?? [])
+      .map((row) => text(row.external_id).toUpperCase())
+      .filter(Boolean),
+  )];
+  return json({
+    ok: true,
+    school_id: schoolId,
+    rows: historyResult.data ?? [],
+    delivered_indices: deliveredIndices,
+  });
 });

@@ -37,6 +37,10 @@ function safeString(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function normalizeStudentIndex(value: unknown) {
+  return safeString(value).toUpperCase();
+}
+
 async function rateAllowed(key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
   return !!error || data?.allowed !== false;
@@ -65,18 +69,14 @@ type BulkCandidate = {
   recipient: string;
   message: string;
   studentId: string | null;
-  externalId: string | null;
+  externalId: string;
 };
 
-function bulkCandidateIdentifier(candidate: BulkCandidate) {
-  return safeString(candidate.externalId) || safeString(candidate.studentId);
+function bulkCandidateKey(candidate: BulkCandidate) {
+  return normalizeStudentIndex(candidate.externalId);
 }
 
-function bulkCandidateKey(candidate: BulkCandidate) {
-  const identifier = bulkCandidateIdentifier(candidate);
-  if (!identifier) return "";
-  return identifier;
-}
+type ReservedBulkCandidate = BulkCandidate & { logId: number };
 
 function extractBalance(payload: unknown) {
   if (!payload || typeof payload !== "object") return null;
@@ -199,30 +199,40 @@ async function syncSchoolBalance(schoolId: string, balance: number | null) {
   }
 }
 
-async function getExistingBulkDeliveryKeys(schoolId: string, candidates: BulkCandidate[]) {
-  const externalIds = [...new Set(candidates.map((candidate) => safeString(candidate.externalId)).filter(Boolean))];
-  const studentIds = [...new Set(candidates.map((candidate) => safeString(candidate.studentId)).filter(Boolean))];
-  if (!externalIds.length && !studentIds.length) return new Set<string>();
+async function reserveBulkCandidates(
+  schoolId: string,
+  senderId: string,
+  sentBy: string,
+  templateName: string | null,
+  candidates: BulkCandidate[],
+) {
+  const { data, error } = await admin.rpc("reserve_bulk_sms_recipients", {
+    p_school_id: schoolId,
+    p_sender_id: senderId,
+    p_sent_by: sentBy,
+    p_template_name: templateName,
+    p_candidates: candidates.map((candidate) => ({
+      student_id: candidate.studentId,
+      external_id: candidate.externalId,
+      phone: candidate.recipient,
+      message: candidate.message,
+    })),
+  });
+  if (error) throw new Error(`Could not reserve SMS recipients: ${error.message}`);
 
-  const [externalRes, studentRes] = await Promise.all([
-    externalIds.length
-      ? admin.from("sms_logs").select("external_id").eq("school_id", schoolId).eq("recipient_group", "bulk-recipient").in("status", ["sent", "pending"]).in("external_id", externalIds)
-      : Promise.resolve({ data: [], error: null }),
-    studentIds.length
-      ? admin.from("sms_logs").select("student_id").eq("school_id", schoolId).eq("recipient_group", "bulk-recipient").in("status", ["sent", "pending"]).in("student_id", studentIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-
-  if (externalRes.error) throw new Error(externalRes.error.message);
-  if (studentRes.error) throw new Error(studentRes.error.message);
-
-  const keys = new Set<string>();
-  for (const row of [...(externalRes.data ?? []), ...(studentRes.data ?? [])]) {
+  const reservations = new Map<string, number>();
+  for (const row of data ?? []) {
     const record = row as Record<string, unknown>;
-    const identifier = safeString(record.external_id) || safeString(record.student_id);
-    if (identifier) keys.add(identifier);
+    const key = normalizeStudentIndex(record.external_id);
+    const logId = Number(record.log_id);
+    if (key && Number.isFinite(logId)) reservations.set(key, logId);
   }
-  return keys;
+
+  return candidates.reduce<ReservedBulkCandidate[]>((reserved, candidate) => {
+    const logId = reservations.get(bulkCandidateKey(candidate));
+    if (logId != null) reserved.push({ ...candidate, logId });
+    return reserved;
+  }, []);
 }
 
 async function handleSubmissionConfirmation(req: Request, body: Record<string, unknown>) {
@@ -488,13 +498,13 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     const studentId = safeString(
       (row as Record<string, unknown>).student_id ?? (row as Record<string, unknown>).studentId,
     ) || null;
-    const externalId = safeString(
+    const externalId = normalizeStudentIndex(
       (row as Record<string, unknown>).student_index ??
       (row as Record<string, unknown>).index ??
       (row as Record<string, unknown>).external_id ??
       (row as Record<string, unknown>).externalId,
-    ) || null;
-    if (!recipient || !message) continue;
+    );
+    if (!recipient || !message || !externalId) continue;
     const candidate: BulkCandidate = { recipient, message, studentId, externalId };
     const candidateKey = bulkCandidateKey(candidate);
     if (requestKeys.has(candidateKey)) continue;
@@ -506,17 +516,20 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     return smsJson(req, { ok: false, error: "validation", message: "No valid recipients were supplied." }, 400);
   }
 
-  const existingKeys = await getExistingBulkDeliveryKeys(schoolId, candidates);
-  const sendableCandidates: BulkCandidate[] = [];
-  let skipped = 0;
-  for (const candidate of candidates) {
-    const candidateKey = bulkCandidateKey(candidate);
-    if (candidateKey && existingKeys.has(candidateKey)) {
-      skipped += 1;
-      continue;
-    }
-    sendableCandidates.push(candidate);
-  }
+  const sentBy = safeString(profile?.full_name) || "Admin";
+  const templateName = safeString(body.template_name) || null;
+  const sendableCandidates = await reserveBulkCandidates(
+    schoolId,
+    senderId,
+    sentBy,
+    templateName,
+    candidates,
+  );
+  const reservedKeys = new Set(sendableCandidates.map(bulkCandidateKey));
+  const skippedIndexes = candidates
+    .filter((candidate) => !reservedKeys.has(bulkCandidateKey(candidate)))
+    .map((candidate) => candidate.externalId);
+  const skipped = skippedIndexes.length;
 
   if (!sendableCandidates.length) {
     return smsJson(req, {
@@ -527,11 +540,14 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
       skipped,
       balance: null,
       sender_id: senderId,
+      sent_indices: [],
+      failed_indices: [],
+      skipped_indices: skippedIndexes,
       message: "All matching students already received this SMS.",
     });
   }
 
-  const grouped = new Map<string, BulkCandidate[]>();
+  const grouped = new Map<string, ReservedBulkCandidate[]>();
   for (const candidate of sendableCandidates) {
     const list = grouped.get(candidate.message) ?? [];
     list.push(candidate);
@@ -542,11 +558,23 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
   let failed = 0;
   let balance: number | null = null;
   const providerResponses: unknown[] = [];
-  const recipientLogs: Record<string, unknown>[] = [];
+  const sentIndexes: string[] = [];
+  const failedIndexes: string[] = [];
 
   for (const [message, batchCandidates] of grouped.entries()) {
     const recipients = batchCandidates.map((candidate) => candidate.recipient);
-    const result = await sendArkeselSms({ sender: senderId, message, recipients });
+    let result: Awaited<ReturnType<typeof sendArkeselSms>>;
+    try {
+      result = await sendArkeselSms({ sender: senderId, message, recipients });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "SMS provider request failed.";
+      result = {
+        ok: false,
+        status: 0,
+        payload: { error: "provider_unreachable", message: errorMessage },
+        rawText: errorMessage,
+      };
+    }
     providerResponses.push({
       message,
       recipients,
@@ -557,26 +585,17 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     const batchStatus = responseStatus(result);
     if (batchStatus === "sent") sent += recipients.length;
     else failed += recipients.length;
-    for (const candidate of batchCandidates) {
-      recipientLogs.push({
-        school_id: schoolId,
-        student_id: candidate.studentId,
-        recipient_group: "bulk-recipient",
-        recipients: 1,
-        phone: candidate.recipient,
-        sender_id: senderId,
-        message: candidate.message,
+    const batchIndexes = batchCandidates.map((candidate) => candidate.externalId);
+    if (batchStatus === "sent") sentIndexes.push(...batchIndexes);
+    else failedIndexes.push(...batchIndexes);
+    const { error: logUpdateError } = await admin
+      .from("sms_logs")
+      .update({
         status: batchStatus,
-        sent_by: safeString(profile?.full_name) || "Admin",
-        template_name: safeString(body.template_name) || null,
         api_response: result.payload ?? { raw: result.rawText, http_status: result.status },
-        external_id: candidate.externalId,
-      });
-    }
-  }
-
-  if (recipientLogs.length) {
-    await admin.from("sms_logs").insert(recipientLogs);
+      })
+      .in("id", batchCandidates.map((candidate) => candidate.logId));
+    if (logUpdateError) throw new Error(`Could not update SMS delivery logs: ${logUpdateError.message}`);
   }
 
   const status = failed === 0 ? "sent" : sent > 0 ? "pending" : "failed";
@@ -589,8 +608,8 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     sender_id: senderId,
     message: templateMessage,
     status,
-    sent_by: safeString(profile?.full_name) || "Admin",
-    template_name: safeString(body.template_name) || null,
+    sent_by: sentBy,
+    template_name: templateName,
     api_response: { batches: providerResponses, skipped },
   });
 
@@ -604,6 +623,9 @@ async function handleBulkSms(req: Request, body: Record<string, unknown>) {
     skipped,
     balance,
     sender_id: senderId,
+    sent_indices: sentIndexes,
+    failed_indices: failedIndexes,
+    skipped_indices: skippedIndexes,
     message:
       failed > 0
         ? (sent > 0

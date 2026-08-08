@@ -2158,6 +2158,7 @@ let smsHistory=[
   {date:'2026-06-06',group:'All',recip:46,msg:'Complete your application before 15 June.',status:'pending'},
 ];
 let SMS_HISTORY_STATE={loaded:false,loading:false};
+let smsDeliveredIndexes=new Set();
 const FINANCE_IT_RATE=5;
 const FINANCE_HEAD_RATE=7.5;
 const FINANCE_CHARGE_RATE=.01;
@@ -3065,7 +3066,7 @@ async function deleteAllStudentRecords(){
       if(paths.length) await sb.storage.from('enrolment-forms').remove(paths);
     }catch(e){}
   }
-  placement=[]; students=[]; payments=[]; smsHistory=[]; activityLog=[]; selected&&selected.clear&&selected.clear();
+  placement=[]; students=[]; payments=[]; smsHistory=[]; smsDeliveredIndexes=new Set(); activityLog=[]; selected&&selected.clear&&selected.clear();
   if(SB_CFG) Object.assign(SB_CFG,{finance_settled_students:0,finance_settled_at:null,finance_claim_count:0});
   if(typeof renderPlacement==='function')renderPlacement();
   if(typeof renderStudents==='function')renderStudents();
@@ -3658,18 +3659,19 @@ function renderFinance(){
 
 /* ===== SMS ===== */
 var smsPrefillProgramme='all';
+function canonicalSmsIndex(value){return String(value||'').trim().toUpperCase();}
 function buildSmsProgrammes(){
   var sel=$('smsProgramme'); if(!sel)return;
   var cur=sel.value||smsPrefillProgramme||'all';
-  var counts={};
+  var programmeNames={};
   placement.forEach(function(row){
     var key=cleanSmsText(row.prog)||'Unassigned';
-    counts[key]=(counts[key]||0)+1;
+    programmeNames[key]=true;
   });
   var esc=function(v){ return String(v||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"'); };
   var opts=['<option value="all">- Select -</option>'];
-  Object.keys(counts).sort(function(a,b){ return a.localeCompare(b); }).forEach(function(name){
-    opts.push('<option value="'+esc(name)+'">'+esc(name)+' ('+counts[name]+')</option>');
+  Object.keys(programmeNames).sort(function(a,b){ return a.localeCompare(b); }).forEach(function(name){
+    opts.push('<option value="'+esc(name)+'">'+esc(name)+' ('+smsTargets(name).length+')</option>');
   });
   sel.innerHTML=opts.join('');
   if(cur && Array.from(sel.options).some(function(o){ return o.value===cur; })) sel.value=cur;
@@ -3684,8 +3686,8 @@ function smsGroupLabel(){
 function smsTargetName(row){
   return studentDisplayNameByIndex(row.index,row.name||'Student');
 }
-function smsTargets(){
-  var prog=($('smsProgramme')&&$('smsProgramme').value)||'all';
+function smsTargets(programmeOverride){
+  var prog=arguments.length?programmeOverride:(($('smsProgramme')&&$('smsProgramme').value)||'all');
   var list=placement.slice();
   if(prog!=='all') list=list.filter(function(row){ return cleanSmsText(row.prog)===prog; });
   var merged={}, dup=0;
@@ -3697,9 +3699,10 @@ function smsTargets(){
     dup++;
     if(!validPhone(merged[idx].phone) && validPhone(phone)) merged[idx]={row:row, phone:phone};
   });
-  var targets=[], missing=0;
+  var targets=[], missing=0, sent=0;
   Object.keys(merged).forEach(function(idx){
     var item=merged[idx], phone=cleanSmsText(item.phone);
+    if(smsDeliveredIndexes.has(canonicalSmsIndex(idx))){ sent++; return; }
     var student=students.find(function(row){ return String(row.index)===String(idx); })||null;
     if(!validPhone(phone)){ missing++; return; }
     targets.push({index:idx,studentId:(student&&student._id)||null,name:smsTargetName(item.row),prog:cleanSmsText(item.row.prog),sms:phone});
@@ -3708,6 +3711,7 @@ function smsTargets(){
   targets.total=list.length;
   targets.missing=missing;
   targets.duplicates=dup;
+  targets.sent=sent;
   return targets;
 }
 function smsParts(t){return Math.max(1,Math.ceil((t||'').length/160));}
@@ -3752,9 +3756,11 @@ function updateSms(){
   var pv=$('smsPreview');
   if(pv){
     if(n){
-      pv.textContent=n+' recipient'+(n===1?'':'s')+' ready from '+smsGroupLabel()+'. '+(targets.missing||0)+' without SMS contact'+((targets.duplicates||0)?' - '+targets.duplicates+' duplicate record(s) removed':'')+'.';
+      pv.textContent=n+' recipient'+(n===1?'':'s')+' ready from '+smsGroupLabel()+'. '+(targets.sent||0)+' already sent by index, '+(targets.missing||0)+' without SMS contact'+((targets.duplicates||0)?' - '+targets.duplicates+' duplicate record(s) removed':'')+'.';
     }else{
-      pv.textContent='No recipients with a valid SMS contact in the selected programme.';
+      pv.textContent=(targets.sent||0)
+        ? '0 recipients ready from '+smsGroupLabel()+'. All '+targets.sent+' student'+(targets.sent===1?' has':'s have')+' already received the SMS.'
+        : 'No recipients with a valid SMS contact in the selected programme.';
     }
     pv.className='sms-preview'+(n?'':' empty'); }
 }
@@ -3781,17 +3787,18 @@ sendSms=async function(){
       messages:messages
     });
     if(error||(data&&data.error)){toast('SMS send failed: '+((data&&data.message)||(error&&error.message)||'error'));return;}
-    if(data&&data.balance!=null&&!Number.isNaN(Number(data.balance))) smsBalance=Number(data.balance);
+    if(data&&data.balance!=null&&!Number.isNaN(Number(data.balance))){ smsBalance=Number(data.balance); if(SB_CFG)SB_CFG.sms_balance=smsBalance; }
+    [].concat((data&&data.sent_indices)||[],(data&&data.skipped_indices)||[]).forEach(function(index){
+      var key=canonicalSmsIndex(index); if(key)smsDeliveredIndexes.add(key);
+    });
     const sentCount=Number((data&&data.sent)||0);
     const failedCount=Number((data&&data.failed)||0);
     const skippedCount=Number((data&&data.skipped)||0);
     if(sentCount||failedCount){
       smsHistory.unshift({date:new Date().toISOString().slice(0,10),group,recip:sentCount+failedCount,msg:tpl,status:(data&&data.status)||'sent'});
       document.getElementById('smsBody').value=''; if($('smsTpl')) $('smsTpl').value=''; renderSms(); renderStats();
-      await loadSchoolData({full_name:SB_ADMIN_NAME,role:(SB_PERMS==null?'super_admin':'school_admin'),permissions:SB_PERMS,school_id:(SB_SCHOOL&&SB_SCHOOL.id)||null});
-      go('sms');
     }
-    if(skippedCount && !sentCount && !failedCount){ toast((data&&data.message)||('All matching students already received this SMS.')); }
+    if(skippedCount && !sentCount && !failedCount){ renderSms(); toast((data&&data.message)||('All matching students already received this SMS.')); }
     else if(failedCount && sentCount){ toast('SMS finished: '+sentCount+' sent, '+failedCount+' failed'+(skippedCount?(', '+skippedCount+' skipped (already sent)'):'')+'.'); }
     else if(failedCount){ toast('SMS finished: '+failedCount+' failed'+(skippedCount?(', '+skippedCount+' skipped (already sent)'):'')+'.'); }
     else if(skippedCount){ toast((data&&data.message)||('SMS finished: '+sentCount+' sent, '+skippedCount+' skipped (already sent).')); }
@@ -3816,6 +3823,7 @@ async function loadSmsHistory(){
   if(res&&res.error){toast('Could not load SMS history: '+res.error.message);return;}
   if(!res||!res.data||res.data.ok===false){toast('Could not load SMS history: '+((res&&res.data&&res.data.message)||'unknown error'));return;}
   smsHistory=(res.data.rows||[]).map(function(s){return {date:(s.sent_at||'').slice(0,10),group:s.recipient_group,recip:s.recipients,msg:s.message,status:s.status};});
+  smsDeliveredIndexes=new Set((res.data.delivered_indices||[]).map(canonicalSmsIndex).filter(Boolean));
   SMS_HISTORY_STATE.loaded=true;
   renderSms();
 }
@@ -5243,7 +5251,7 @@ async function loadSchoolData(prof){
   financePaymentsLoadError='';
   payments=[];
   FINANCE_PAYMENTS_STATE={loaded:false,loading:false,total:0};
-  smsHistory=[]; SMS_HISTORY_STATE={loaded:false,loading:false};
+  smsHistory=[]; smsDeliveredIndexes=new Set(); SMS_HISTORY_STATE={loaded:false,loading:false};
   activityLog=[]; ACTIVITY_LOG_STATE={loaded:false,loading:false};
 
   admissionOpen=admissionStatusIsOpen(SB_CFG.admission_status);
