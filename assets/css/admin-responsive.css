@@ -2052,6 +2052,160 @@ body:not(.sidebar-open) {
   }
 }
 
+/* School Admin mobile header: one stable row shared by every dashboard view. */
+@media screen and (max-width: 640px) {
+  body .topbar {
+    display: grid !important;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100%;
+    min-width: 0;
+    min-height: 64px;
+    padding: 8px 10px !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden;
+  }
+
+  body .topbar .hamburger {
+    display: inline-flex !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 48px;
+    min-height: 48px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body .topbar .hamburger svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  body .topbar .pagetitle {
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    overflow: hidden;
+    color: inherit;
+    font-size: clamp(13px, 4vw, 17px);
+    line-height: 1.2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  body .topbar .pagetitle small {
+    display: none !important;
+  }
+
+  body .topbar .topbar-right {
+    display: grid !important;
+    grid-template-columns: auto 40px auto;
+    align-items: center !important;
+    justify-content: end !important;
+    gap: 6px !important;
+    width: auto !important;
+    min-width: 0;
+    margin: 0 !important;
+    flex-wrap: nowrap !important;
+  }
+
+  body .topbar .adm-badge {
+    display: inline-flex;
+    min-width: 0;
+    min-height: 44px;
+    padding: 7px 9px;
+    gap: 6px;
+    border-radius: 8px;
+    font-size: clamp(9px, 2.7vw, 11px);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  body .topbar .adm-badge .d {
+    width: 7px;
+    min-width: 7px;
+    height: 7px;
+  }
+
+  body .topbar .icon-btn {
+    display: inline-grid !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    place-items: center;
+  }
+
+  body .topbar .icon-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  body .topbar .topbar-right > .btn {
+    display: inline-flex;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 44px;
+    padding: 8px 10px;
+    justify-content: center;
+    font-size: clamp(9px, 2.8vw, 11px);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  body .topbar .topbar-right > .btn svg {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  body .topbar {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 5px !important;
+    min-height: 58px;
+    padding-inline: 6px !important;
+  }
+
+  body .topbar .hamburger {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  body .topbar .pagetitle {
+    font-size: 12px;
+  }
+
+  body .topbar .topbar-right {
+    grid-template-columns: auto 36px auto;
+    gap: 4px !important;
+  }
+
+  body .topbar .adm-badge {
+    min-height: 40px;
+    padding-inline: 5px;
+    gap: 4px;
+    font-size: 8px;
+  }
+
+  body .topbar .icon-btn {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  body .topbar .topbar-right > .btn {
+    min-height: 40px;
+    padding-inline: 6px;
+    font-size: 9px;
+  }
+}
+
 @media screen and (max-width: 480px) {
   :where(.form-actions, .modal-actions, .modal-foot) > :where(button, .btn, .act, .qa, .btn-grn) {
     flex: 1 1 100%;
