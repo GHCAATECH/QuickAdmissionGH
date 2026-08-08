@@ -2140,6 +2140,36 @@ body:not(.sidebar-open) {
   word-break: normal !important;
 }
 
+/* SMS credit balance needs explicit contrast against the system-wide theme. */
+#view-sms .credit-box {
+  background: #002b4c !important;
+  color: #ffffff !important;
+  border: 1px solid #001d33 !important;
+}
+
+#view-sms .credit-box > small,
+#view-sms .credit-box > #smsBalance {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+#view-sms .credit-box > .sms-buy-credits-btn {
+  background: #001d33 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border-color: #ffffff !important;
+  font-weight: 800;
+}
+
+#view-sms .credit-box > .sms-buy-credits-btn:hover,
+#view-sms .credit-box > .sms-buy-credits-btn:focus-visible {
+  background: #ffffff !important;
+  color: #002b4c !important;
+  -webkit-text-fill-color: #002b4c !important;
+  border-color: #ffffff !important;
+}
+
 /* School Admin mobile header: one stable row shared by every dashboard view. */
 @media screen and (max-width: 640px) {
   body .topbar {
