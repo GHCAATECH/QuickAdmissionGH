@@ -136,7 +136,7 @@ Open the small **Super Admin** link under the student login card and sign in.
 | Document won't open | Allow pop-ups for the site, then click again |
 | "Admission is closed" | The school hasn't opened admission yet — contact the school office |
 | Can't log in | Make sure you selected the **correct school**, and the index/token match |
-| Banner/logo not showing | Keep `banner.png` and `veloxis-logo.png` in the same folder as `index.html` |
+| Platform logo not showing | Keep `logo-icon.svg` in the same folder as `index.html` |
 | Phone won't accept my number | Fields take **digits only, 10 max** (e.g. `0244000000`) |
 
 ---
