@@ -4535,7 +4535,7 @@ function go(view){
   $('pagesub').textContent=(view==='dashboard')?('Admission overview for '+((SB_CFG&&SB_CFG.academic_year)||'2025/2026')):titles[view][1];
   if(view==='sms-settings') setupTab(3);
   if(view==='setup') setupTab(0);
-  if(view==='dashboard'){renderStats();renderRecent();refreshDashboardSummary(true);}
+  if(view==='dashboard'){renderStats();renderRecent();refreshDashboardSummary(true);loadVerificationCounts();}
   if(view==='programmes')renderProg();
   if(view==='houses')renderHouses();
   if(view==='classes')renderClasses();
