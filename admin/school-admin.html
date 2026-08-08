@@ -38,10 +38,9 @@
   .app{display:grid;grid-template-columns:248px minmax(0,1fr);height:100vh;min-height:100dvh;overflow:hidden}
   body.auth-booting .app{display:none!important}
   body.auth-booting #authGate{opacity:0;visibility:hidden;pointer-events:none}
-  #bootSplash{position:fixed;inset:0;z-index:221;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(85% 85% at 50% 0%,rgba(133,223,255,.28),transparent 58%),radial-gradient(80% 90% at 0% 100%,rgba(31,101,255,.32),transparent 55%),radial-gradient(90% 90% at 100% 100%,rgba(14,63,134,.42),transparent 50%),linear-gradient(180deg,#27a5f7 0%,#157ae0 44%,#0f55c6 100%)}
+  #bootSplash{position:fixed;inset:0;z-index:221;display:none;align-items:center;justify-content:center;padding:20px;background:#eef8fc;color:#002b4c}
   body.auth-booting #bootSplash{display:flex}
-  .boot-splash-card{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:18px;background:rgba(8,32,77,.24);border:1px solid rgba(255,255,255,.2);box-shadow:0 24px 55px -28px rgba(8,19,46,.55),inset 0 1px 0 rgba(255,255,255,.12);color:#f7fbff;font-size:13px;font-weight:600;backdrop-filter:blur(12px)}
-  .boot-splash-spinner{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.28);border-top-color:#fff;animation:gateSpin .8s linear infinite;flex:none}
+  .boot-splash-card{display:flex;flex-direction:column;align-items:center;gap:16px;width:min(100%,360px);padding:30px 28px 26px;border-radius:12px;background:#fff;border:1px solid #b8d9e5;box-shadow:0 24px 60px -34px rgba(0,43,76,.38);color:#002b4c;text-align:center}
   #authGate.gate-screen{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:clamp(14px,2.2vh,28px);padding-top:calc(clamp(14px,2.2vh,28px) + env(safe-area-inset-top));padding-right:calc(clamp(14px,2.2vh,28px) + env(safe-area-inset-right));padding-bottom:calc(clamp(14px,2.2vh,28px) + env(safe-area-inset-bottom));padding-left:calc(clamp(14px,2.2vh,28px) + env(safe-area-inset-left));overflow-y:auto;overflow-x:hidden;background:radial-gradient(85% 85% at 50% 0%,rgba(133,223,255,.28),transparent 58%),radial-gradient(80% 90% at 0% 100%,rgba(31,101,255,.32),transparent 55%),radial-gradient(90% 90% at 100% 100%,rgba(14,63,134,.42),transparent 50%),linear-gradient(180deg,#27a5f7 0%,#157ae0 44%,#0f55c6 100%)}
   .gate-shell.school-admin-login-wrapper{width:100%;max-width:1400px;min-height:calc(100vh - 2 * clamp(14px,2.2vh,28px));min-height:calc(100dvh - 2 * clamp(14px,2.2vh,28px));display:flex;align-items:center;justify-content:center;padding:0;background:transparent;border:none;box-shadow:none;backdrop-filter:none;overflow:visible}
   .school-admin-login-card{position:relative;width:100%;max-width:620px;max-height:calc(100dvh - 2 * clamp(14px,2.2vh,28px));padding:clamp(30px,5vh,52px) clamp(30px,3.6vw,48px) clamp(28px,4.6vh,48px);border-radius:38px;border:1px solid rgba(255,255,255,.28);background:linear-gradient(180deg,rgba(132,230,255,.3) 0%,rgba(59,162,255,.24) 46%,rgba(15,85,198,.28) 100%),rgba(42,146,238,.24);box-shadow:0 34px 80px -32px rgba(4,25,96,.72),0 20px 40px -24px rgba(6,38,132,.56),inset 0 1px 0 rgba(255,255,255,.24);backdrop-filter:blur(22px);overflow:hidden;isolation:isolate;display:flex;flex-direction:column;justify-content:center}
@@ -1474,7 +1473,7 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260804-wheel-scroll-30">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-sidebar-profile-bottom-17">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-light-session-loader-18">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260808-school-admin-bottom-6">
 <link rel="stylesheet" href="../assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <style>
@@ -1503,7 +1502,22 @@
 <script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
 </head>
 <body class="auth-booting system-footer-page school-admin-page">
-<div id="bootSplash"><div class="boot-splash-card"><span class="boot-splash-spinner"></span><span>Restoring your secure school session...</span></div></div>
+<div id="bootSplash" role="status" aria-live="polite" aria-label="Restoring your secure school session">
+  <div class="boot-splash-card">
+    <svg class="boot-splash-art" viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+      <circle class="boot-ring boot-ring-outer" cx="64" cy="64" r="52"></circle>
+      <circle class="boot-ring boot-ring-inner" cx="64" cy="64" r="43"></circle>
+      <g class="boot-orbit-dot"><circle cx="64" cy="12" r="4"></circle></g>
+      <path class="boot-shield" d="M64 31 91 41v20c0 17-10 29-27 37-17-8-27-20-27-37V41l27-10Z"></path>
+      <path class="boot-check" d="m50 64 9 9 20-21"></path>
+    </svg>
+    <div class="boot-splash-copy">
+      <strong>Restoring your secure session</strong>
+      <span>Preparing your school workspace...</span>
+    </div>
+    <div class="boot-splash-progress" aria-hidden="true"><span></span></div>
+  </div>
+</div>
 <div id="authGate" class="gate-screen is-checking">
   <main class="qa-login-shell">
     <section class="qa-brand-panel">
