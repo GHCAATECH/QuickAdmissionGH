@@ -2091,3 +2091,192 @@ body:not(.sidebar-open) {
     gap: 6px;
   }
 }
+
+/* =====================================================
+   MOBILE TABLE PRESERVATION
+   Keep every school-admin and super-admin table in its desktop table form.
+   Wide tables scroll inside their own wrapper at the bottom.
+===================================================== */
+
+@media screen and (max-width: 768px) {
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: scroll !important;
+    overflow-y: hidden !important;
+    padding-bottom: 4px;
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+    scrollbar-color: #002b4c #c0ebff;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  )::-webkit-scrollbar {
+    display: block;
+    height: 11px;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  )::-webkit-scrollbar-track {
+    background: #c0ebff;
+    border-top: 1px solid #002b4c;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  )::-webkit-scrollbar-thumb {
+    min-width: 44px;
+    background: #002b4c;
+    border: 2px solid #c0ebff;
+    border-radius: 999px;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) > table {
+    display: table !important;
+    width: 100% !important;
+    min-width: 720px !important;
+    max-width: none !important;
+    table-layout: auto;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) > table > thead {
+    display: table-header-group !important;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) > table > tbody {
+    display: table-row-group !important;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) > table > :where(thead, tbody, tfoot) > tr {
+    display: table-row !important;
+    width: auto !important;
+    min-width: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  :where(
+    .tbl-wrap,
+    .table-wrap,
+    .table-responsive,
+    .table-wrapper,
+    .data-table-wrapper,
+    .table-container,
+    .verified-table-wrap,
+    .finance-settlement-wrap
+  ) > table > :where(thead, tbody, tfoot) > tr > :where(th, td) {
+    display: table-cell !important;
+    width: auto !important;
+    min-width: 0 !important;
+    grid-template-columns: none !important;
+    vertical-align: middle;
+  }
+
+  #view-verified-students .verified-table-wrap,
+  #view-verify-students .tbl-wrap {
+    padding: 0 0 4px !important;
+    overflow-x: scroll !important;
+    overflow-y: hidden !important;
+  }
+
+  #view-verified-students #verifiedStudentsTable {
+    min-width: 1320px !important;
+  }
+
+  #view-verify-students .tbl-wrap > table,
+  .finance-settlement-wrap > table {
+    min-width: 980px !important;
+  }
+
+  #view-verified-students #verifiedStudentsTable tbody td::before,
+  #view-verify-students tbody td::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  #view-verified-students #verifiedStudentsTable .row-actions,
+  #view-verify-students .row-actions {
+    display: flex !important;
+    flex-wrap: wrap;
+    width: max-content !important;
+    min-width: 0 !important;
+    grid-template-columns: none !important;
+  }
+
+  #view-verified-students #verifiedStudentsTable .row-actions .act,
+  #view-verify-students .row-actions .act {
+    width: auto !important;
+  }
+}
