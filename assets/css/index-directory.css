@@ -848,7 +848,7 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
   }
 
   body.platform-directory-active #s-login .school-directory-hero-copy h1 {
-    font-size: 34px !important;
+    font-size: 28px !important;
   }
 
   body.platform-directory-active #s-login .school-directory-hero-subtitle {
@@ -896,19 +896,7 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
   }
 }
 
-@media (max-width: 420px) {
-  body.platform-directory-active #s-login .school-directory-brand strong {
-    font-size: 19px !important;
-  }
-
-  body.platform-directory-active #s-login .school-directory-brand span {
-    font-size: 8px !important;
-  }
-
-  body.platform-directory-active #s-login .school-directory-contact-phone {
-    display: none;
-  }
-
+@media (max-width: 520px) {
   body.platform-directory-active #s-login .school-directory-hero-content {
     display: block;
     text-align: center;
@@ -922,6 +910,21 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
     justify-content: center;
   }
 
+  body.platform-directory-active #s-login .school-directory-hero-description {
+    margin-right: auto;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  body.platform-directory-active #s-login .school-directory-brand strong {
+    font-size: 19px !important;
+  }
+
+  body.platform-directory-active #s-login .school-directory-brand span {
+    font-size: 8px !important;
+  }
+
   body.platform-directory-active #s-login .school-directory-card-title {
     display: flex;
     flex-direction: column;
@@ -933,7 +936,11 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
 }
 
 @media (max-width: 360px) {
+  body.platform-directory-active #s-login .school-directory-brand strong {
+    font-size: 18px !important;
+  }
+
   body.platform-directory-active #s-login .school-directory-hero-copy h1 {
-    font-size: 27px !important;
+    font-size: 24px !important;
   }
 }
