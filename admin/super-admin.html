@@ -656,6 +656,7 @@
   #authGate .qa-form-control:focus{box-shadow:0 0 0 4px rgba(192,235,255,.65)!important}
   #authGate .qa-toggle-password{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:42px;height:36px;border:0!important;background:transparent!important;color:#002B4C!important;font-size:12px;font-weight:800;padding:0!important}
   #authGate .qa-login-btn{width:100%!important;height:52px;margin-top:8px;border:1px solid #001619!important;border-radius:12px;background:#002B4C!important;color:#C0EBFF!important;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px}
+  #authGate .qa-login-btn:disabled{opacity:.68!important;cursor:wait!important;transform:none!important}
   #authGate .qa-access-note{margin-top:20px;padding:15px;border:1px solid #001619;border-radius:12px;background:rgba(245,158,113,.22)!important;font-size:13px;line-height:1.6;color:#002B4C!important}
   #authGate .qa-access-note strong{display:block;margin-bottom:4px;color:#002B4C!important}
   #authGate .qa-back-link{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:13px;font-weight:800;color:#002B4C!important;text-decoration:none}
@@ -2054,6 +2055,7 @@ function smsTargets(){
 }
 
 /* ---- AUTH GATE ---- */
+let superAdminLoginPending=false;
 (function buildGate(){
   document.body.classList.add('auth-gate-visible');
   document.querySelector('.app').style.display='none';
@@ -2075,7 +2077,7 @@ function smsTargets(){
     </section>
     <section class="qa-login-panel">
       <div class="qa-login-card">
-        <div class="qa-session-status"><span class="qa-pulse"></span>Secure session ready</div>
+        <div class="qa-session-status"><span class="qa-pulse"></span><span id="ag_session_status_text">Secure session ready</span></div>
         <h2>Super Admin Login</h2>
         <p>Use the email address and password assigned to your platform super-admin account.</p>
         <form id="superAdminLoginForm">
@@ -2125,12 +2127,47 @@ async function bootSuperSession(){
 }
 async function superLogin(){
   const btn=document.getElementById('ag_btn'),err=document.getElementById('ag_err');
-  btn.textContent='Signing in...'; err.style.display='none';
-  const {data,error}=await sb.auth.signInWithPassword({email:sval('ag_email').trim(),password:sval('ag_pass')});
-  if(error){err.textContent=error.message;err.style.display='block';btn.textContent='LOGIN →';return;}
-  const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',data.user.id).single();
-  if(!prof||prof.role!=='super_admin'){err.textContent='This account is not a super admin.';err.style.display='block';btn.textContent='LOGIN →';await sb.auth.signOut();return;}
-  try{ await enterSuper(data.user.id); }catch(e){ err.textContent='Could not load platform data.'; err.style.display='block'; btn.textContent='LOGIN →'; return; }
+  const status=document.getElementById('ag_session_status_text');
+  if(superAdminLoginPending||!btn||!err)return;
+  const email=sval('ag_email').trim();
+  const password=sval('ag_pass');
+  if(!email||!password){err.textContent='Enter both email and password.';err.style.display='block';return;}
+  superAdminLoginPending=true;
+  btn.textContent='SIGNING IN...';
+  if(status)status.textContent='Signing in securely...';
+  btn.disabled=true;
+  btn.setAttribute('aria-busy','true');
+  err.style.display='none';
+  try{
+    await new Promise(function(resolve){requestAnimationFrame(resolve);});
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error){err.textContent=error.message||'Could not sign in.';err.style.display='block';return;}
+    btn.textContent='VERIFYING ACCOUNT...';
+    if(status)status.textContent='Verifying your account...';
+    const {data:prof,error:profileError}=await sb.from('profiles').select('role,full_name').eq('id',data.user.id).single();
+    if(profileError){err.textContent=profileError.message||'Could not load account profile.';err.style.display='block';try{await sb.auth.signOut();}catch(ignore){}return;}
+    if(!prof||prof.role!=='super_admin'){
+      err.textContent='This account is not a super admin.';
+      err.style.display='block';
+      await sb.auth.signOut();
+      return;
+    }
+    btn.textContent='LOADING DASHBOARD...';
+    if(status)status.textContent='Loading the platform dashboard...';
+    await enterSuper(data.user.id);
+  }catch(e){
+    err.textContent=(e&&e.message)||'Sign-in failed. Check your internet connection and try again.';
+    err.style.display='block';
+    try{await sb.auth.signOut();}catch(ignore){}
+  }finally{
+    if(document.getElementById('authGate')){
+      superAdminLoginPending=false;
+      if(status)status.textContent='Secure session ready';
+      btn.textContent='LOGIN →';
+      btn.disabled=false;
+      btn.removeAttribute('aria-busy');
+    }
+  }
 }
 async function logout(){ if(!confirm('Log out of the Super Admin portal?'))return; try{ await sb.auth.signOut(); }catch(e){} location.reload(); }
 

@@ -1459,6 +1459,7 @@
   #authGate.gate-screen .qa-form-control::placeholder{color:#6b7a89!important;opacity:1}
   #authGate.gate-screen .qa-toggle-password:hover{background:transparent!important;color:#002B4C!important}
   #authGate.gate-screen .qa-login-btn:hover{background:#001d33!important;color:#C0EBFF!important}
+  #authGate.gate-screen .qa-login-btn:disabled{opacity:.68!important;cursor:wait!important;transform:none!important}
   #authGate.gate-screen .qa-back-link:hover{text-decoration:underline;color:#002B4C!important}
   @media(max-width:850px){
     #authGate.gate-screen .qa-login-shell{width:100%;grid-template-columns:1fr}
@@ -1498,10 +1499,10 @@
     </section>
     <section class="qa-login-panel">
       <div class="qa-login-card">
-        <div class="qa-session-status"><span class="qa-pulse"></span>Secure session ready</div>
+        <div class="qa-session-status"><span class="qa-pulse"></span><span id="ag_session_status_text">Secure session ready</span></div>
         <h2>School Admin Login</h2>
         <p>Use the email address and password assigned to your school-admin account.</p>
-        <form onsubmit="event.preventDefault();">
+        <form id="schoolAdminLoginForm" novalidate>
           <div class="qa-field">
             <label for="ag_email">Email address</label>
             <div class="qa-input-wrap"><span class="qa-input-icon">&#9993;</span><input type="email" id="ag_email" class="qa-form-control" placeholder="you@school.gh" autocomplete="username" required></div>
@@ -1512,7 +1513,7 @@
           </div>
           <div class="gate-status"><span class="gate-spinner"></span>Checking for an existing secure session...</div>
           <div id="ag_err" class="gate-error"></div>
-          <button type="button" class="qa-login-btn" id="ag_btn">LOGIN &rarr;</button>
+          <button type="submit" class="qa-login-btn" id="ag_btn">LOGIN &rarr;</button>
         </form>
         <div class="qa-access-note"><strong>Need access?</strong>Contact the platform owner or your school account owner to create or reconnect your school-admin login.</div>
         <a href="../index.html" class="qa-back-link">&larr; Return to admission portal</a>
@@ -4874,6 +4875,7 @@ function loadDefaultSmsTemplate(){
 }
 
 /* ---- AUTH GATE ---- */
+let schoolAdminLoginPending=false;
 (function buildGate(){
   document.body.classList.add('auth-gate-visible');
   document.querySelector('.app').style.display='none';
@@ -4886,8 +4888,10 @@ function loadDefaultSmsTemplate(){
     gate.classList.remove('is-checking');
     gate.classList.add('is-ready');
   };
-  document.getElementById('ag_btn').addEventListener('click',adminLogin);
-  document.getElementById('ag_pass').addEventListener('keydown',e=>{if(e.key==='Enter')adminLogin();});
+  document.getElementById('schoolAdminLoginForm').addEventListener('submit',function(event){
+    event.preventDefault();
+    adminLogin();
+  });
   bootSession().finally(function(){
     setGateReady();
   });
@@ -4924,6 +4928,8 @@ async function bootSession(){
 async function adminLogin(){
   const btn=document.getElementById('ag_btn'), err=document.getElementById('ag_err');
   const gate=document.getElementById('authGate');
+  const status=document.getElementById('ag_session_status_text');
+  if(schoolAdminLoginPending||!btn||!err||!gate)return;
   const email=val('ag_email').trim();
   const password=val('ag_pass');
   if(!email||!password){
@@ -4931,21 +4937,27 @@ async function adminLogin(){
     err.style.display='block';
     return;
   }
-  if(gate){ gate.classList.add('is-checking'); gate.classList.remove('is-ready'); }
-  btn.textContent='LOGGING IN...';
+  schoolAdminLoginPending=true;
+  btn.textContent='SIGNING IN...';
+  if(status)status.textContent='Signing in securely...';
   btn.disabled=true;
+  btn.setAttribute('aria-busy','true');
   err.style.display='none';
   try{
+    await new Promise(function(resolve){requestAnimationFrame(resolve);});
     const {data,error}=await sb.auth.signInWithPassword({email,password});
     if(error){
       err.textContent=error.message||'Could not sign in.';
       err.style.display='block';
       return;
     }
+    btn.textContent='VERIFYING ACCOUNT...';
+    if(status)status.textContent='Verifying your account...';
     const {data:prof,error:profError}=await sb.from('profiles').select('full_name,role,school_id,permissions').eq('id',data.user.id).single();
     if(profError){
       err.textContent=profError.message||'Could not load account profile.';
       err.style.display='block';
+      try{await sb.auth.signOut();}catch(ignore){}
       return;
     }
     if(!prof||(prof.role!=='school_admin'&&prof.role!=='super_admin')){
@@ -4955,6 +4967,8 @@ async function adminLogin(){
       return;
     }
     try{
+      btn.textContent='LOADING DASHBOARD...';
+      if(status)status.textContent='Loading your school dashboard...';
       await enterAdmin(prof,data.user.id);
       return;
     }catch(e){
@@ -4969,12 +4983,13 @@ async function adminLogin(){
     return;
   }finally{
     if(document.getElementById('authGate')){
-      gate.classList.remove('is-checking');
-      gate.classList.add('is-ready');
+      schoolAdminLoginPending=false;
+      if(status)status.textContent='Secure session ready';
     }
     if(document.getElementById('ag_btn')){
       btn.textContent='LOGIN →';
       btn.disabled=false;
+      btn.removeAttribute('aria-busy');
     }
   }
 }
