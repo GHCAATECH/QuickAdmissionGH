@@ -88,6 +88,22 @@ function canReadStudents(profile: JsonRecord | null, schoolId: string) {
   return values.students === true || values.students === "true" || values.co_admin === true || values.co_admin === "true";
 }
 
+function canManageStudents(profile: JsonRecord | null, schoolId: string) {
+  if (!profile) return false;
+  const role = text(profile.role);
+  if (role === "super_admin") return true;
+  if (role !== "school_admin" || text(profile.school_id) !== schoolId) return false;
+  const permissions = profile.permissions;
+  if (permissions == null) return true;
+  if (typeof permissions !== "object" || Array.isArray(permissions)) return false;
+  const values = permissions as JsonRecord;
+  return values.co_admin === true || values.co_admin === "true";
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 function mapById(rows: unknown[] | null | undefined, nameKeys: string[]) {
   const result = new Map<string, string>();
   for (const row of rows ?? []) {
@@ -157,6 +173,95 @@ Deno.serve(async (req: Request) => {
       return json({ ok: false, error: "sign_failed", message: signError?.message || "Could not create a secure file link." }, 500);
     }
     return json({ ok: true, url: signed.signedUrl, expires_in: 600, file_type: fileType });
+  }
+
+  if (action === "update") {
+    if (!canManageStudents(profile, schoolId)) {
+      return json({ ok: false, error: "forbidden", message: "Only the school owner or a co-admin can edit student records." }, 403);
+    }
+    const studentId = text(body.student_id);
+    const requestedPatch = body.patch;
+    if (!studentId || !isUuid(studentId) || !requestedPatch || typeof requestedPatch !== "object" || Array.isArray(requestedPatch)) {
+      return json({ ok: false, error: "validation", message: "A valid student and update are required." }, 400);
+    }
+    const patch = requestedPatch as JsonRecord;
+    const { data: current, error: currentError } = await admin
+      .from("students")
+      .select("id,school_id,full_name,gender,admission_no,permanent_admission_number,parent_phone,programme_id,class_id,house_id,records")
+      .eq("id", studentId)
+      .eq("school_id", schoolId)
+      .maybeSingle();
+    if (currentError) return json({ ok: false, error: "query_failed", message: currentError.message }, 500);
+    if (!current) return json({ ok: false, error: "not_found", message: "Student record was not found." }, 404);
+
+    const update: JsonRecord = {};
+    if (Object.prototype.hasOwnProperty.call(patch, "full_name")) {
+      const fullName = text(patch.full_name).replace(/\s+/g, " ").slice(0, 160);
+      if (!fullName) return json({ ok: false, error: "validation", message: "Student name is required." }, 400);
+      update.full_name = fullName;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "gender")) {
+      const gender = text(patch.gender).toUpperCase();
+      if (!["M", "F"].includes(gender)) return json({ ok: false, error: "validation", message: "Select a valid gender." }, 400);
+      update.gender = gender;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "parent_phone")) {
+      const phone = text(patch.parent_phone).slice(0, 30);
+      update.parent_phone = phone || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "admission_no")) {
+      if (text(current.permanent_admission_number)) {
+        return json({ ok: false, error: "locked", message: "The permanent admission number cannot be edited here." }, 409);
+      }
+      const admissionNo = text(patch.admission_no).slice(0, 80);
+      update.admission_no = admissionNo || null;
+    }
+
+    for (const key of ["programme_id", "class_id", "house_id"]) {
+      if (!Object.prototype.hasOwnProperty.call(patch, key)) continue;
+      const value = text(patch[key]);
+      if (value && !isUuid(value)) return json({ ok: false, error: "validation", message: `Invalid ${key.replace("_id", "")}.` }, 400);
+      update[key] = value || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "records")) {
+      if (!patch.records || typeof patch.records !== "object" || Array.isArray(patch.records)) {
+        return json({ ok: false, error: "validation", message: "Student records must be a valid object." }, 400);
+      }
+      const existingRecords = current.records && typeof current.records === "object" && !Array.isArray(current.records)
+        ? current.records as JsonRecord
+        : {};
+      update.records = { ...existingRecords, ...(patch.records as JsonRecord) };
+    }
+    if (!Object.keys(update).length) return json({ ok: false, error: "validation", message: "No supported changes were supplied." }, 400);
+
+    const programmeId = Object.prototype.hasOwnProperty.call(update, "programme_id") ? text(update.programme_id) : text(current.programme_id);
+    const classId = Object.prototype.hasOwnProperty.call(update, "class_id") ? text(update.class_id) : text(current.class_id);
+    const houseId = Object.prototype.hasOwnProperty.call(update, "house_id") ? text(update.house_id) : text(current.house_id);
+    const [programmeResult, classResult, houseResult] = await Promise.all([
+      programmeId ? admin.from("programmes").select("id").eq("id", programmeId).eq("school_id", schoolId).maybeSingle() : Promise.resolve({ data: null, error: null }),
+      classId ? admin.from("classrooms").select("id,programme_id").eq("id", classId).eq("school_id", schoolId).maybeSingle() : Promise.resolve({ data: null, error: null }),
+      houseId ? admin.from("houses").select("id").eq("id", houseId).eq("school_id", schoolId).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    ]);
+    const relationError = programmeResult.error || classResult.error || houseResult.error;
+    if (relationError) return json({ ok: false, error: "query_failed", message: relationError.message }, 500);
+    if (programmeId && !programmeResult.data) return json({ ok: false, error: "validation", message: "The selected programme does not belong to this school." }, 400);
+    if (classId && !classResult.data) return json({ ok: false, error: "validation", message: "The selected class does not belong to this school." }, 400);
+    if (houseId && !houseResult.data) return json({ ok: false, error: "validation", message: "The selected house does not belong to this school." }, 400);
+    if (classResult.data && programmeId && text(classResult.data.programme_id) !== programmeId) {
+      return json({ ok: false, error: "validation", message: "The selected class is not linked to the selected programme." }, 400);
+    }
+
+    const { data: saved, error: saveError } = await admin
+      .from("students")
+      .update(update)
+      .eq("id", studentId)
+      .eq("school_id", schoolId)
+      .select("id,full_name,gender,admission_no,permanent_admission_number,parent_phone,programme_id,class_id,house_id,records")
+      .maybeSingle();
+    if (saveError) return json({ ok: false, error: "save_failed", message: saveError.message }, 500);
+    if (!saved) return json({ ok: false, error: "not_found", message: "Student record was not found." }, 404);
+    listCache.clear();
+    return json({ ok: true, student: saved });
   }
 
   const page = asPage(body.page, 1, 1_000_000);

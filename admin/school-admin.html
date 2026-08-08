@@ -3377,10 +3377,10 @@ async function saveStudent(id){
   if(!hasPermanentAdmission) update.admission_no=newAdm;
   const placementUpdate=await invokeFnDetailed('admin-placement-list',{action:'update',school_id:SB_SCHOOL.id,index_number:s.index,patch:{gender:genderLabel(newGender),residential_status:newResidential}});
   if(placementUpdate.error||!placementUpdate.data||placementUpdate.data.ok===false){toast('Save failed: '+((placementUpdate.data&&placementUpdate.data.message)||(placementUpdate.error&&placementUpdate.error.message)||'Could not update placement record.'));return;}
-  const {error}=await sb.from('students').update(update).eq('id',s._id);
-  if(error){
+  const studentUpdate=await invokeFnDetailed('admin-students-list',{action:'update',school_id:SB_SCHOOL.id,student_id:s._id,patch:update});
+  if(studentUpdate.error||!studentUpdate.data||studentUpdate.data.ok===false){
     await invokeFnDetailed('admin-placement-list',{action:'update',school_id:SB_SCHOOL.id,index_number:s.index,patch:{gender:genderLabel(oldGender),residential_status:oldResidential||null}});
-    toast('Save failed: '+error.message);return;
+    toast('Save failed: '+((studentUpdate.data&&studentUpdate.data.message)||(studentUpdate.error&&studentUpdate.error.message)||'Could not update the student record.'));return;
   }
   const savedClass=newClassId?classById(newClassId):null;
   const savedHouse=newHouseId?houseById(newHouseId):null;
