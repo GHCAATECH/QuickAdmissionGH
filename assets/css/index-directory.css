@@ -740,27 +740,28 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
   }
 
   body.system-footer-page.platform-directory-active {
-    position: fixed !important;
-    inset: 0 !important;
+    position: relative !important;
+    inset: auto !important;
     width: 100% !important;
     height: var(--directory-viewport-height, 100dvh) !important;
     min-height: 0 !important;
     max-height: var(--directory-viewport-height, 100dvh) !important;
-    overflow: hidden !important;
-  }
-
-  body.system-footer-page.platform-directory-active > #s-login.screen.active {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: var(--directory-viewport-height, 100dvh) !important;
-    min-height: 0 !important;
-    max-height: var(--directory-viewport-height, 100dvh) !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
     overflow-y: auto !important;
     overscroll-behavior-y: contain !important;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+  }
+
+  body.system-footer-page.platform-directory-active > #s-login.screen.active {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
+    overflow-x: clip !important;
+    overflow-y: visible !important;
   }
 
   body.system-footer-page.platform-directory-active > #s-login.screen.active .school-directory-page {
@@ -768,6 +769,10 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
     min-height: 100% !important;
     max-height: none !important;
     overflow: visible !important;
+  }
+
+  body.system-footer-page.platform-directory-active > .toast:not(.show) {
+    display: none !important;
   }
 
   body.platform-directory-active #s-login .school-directory-header-inner {
