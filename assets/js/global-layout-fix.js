@@ -214,10 +214,81 @@ function fitDesktopLoginToViewport() {
 }
 
 let loginFitTimer;
+let adminFooterFlowFrame;
 
 function scheduleDesktopLoginFit() {
   window.clearTimeout(loginFitTimer);
   loginFitTimer = window.setTimeout(fitDesktopLoginToViewport, 60);
+}
+
+/**
+ * Keep mobile admin content inside the app shell so the body footer cannot
+ * appear between a view header and overflowing tables or cards.
+ */
+function syncAdminMobileFooterFlow() {
+  const body = document.body;
+  const isAdminPage = Boolean(
+    body?.classList.contains("school-admin-page") ||
+      body?.classList.contains("super-admin-page")
+  );
+
+  if (!isAdminPage || !usesMobileViewportLayout()) return;
+  if (
+    body.classList.contains("auth-booting") ||
+    body.classList.contains("auth-gate-visible") ||
+    document.getElementById("authGate")
+  ) {
+    return;
+  }
+
+  const app = body.querySelector(":scope > .app");
+  const main = app?.querySelector(":scope > .main");
+  const content = main?.querySelector(":scope > .content");
+  const activeView = content?.querySelector(":scope > .view.active");
+  const footer = body.querySelector(":scope > footer.system-footer");
+
+  if (!app || !main || !content || !footer) return;
+
+  [app, main, content, activeView].filter(Boolean).forEach((element) => {
+    element.style.setProperty("height", "auto", "important");
+    element.style.setProperty("max-height", "none", "important");
+    element.style.setProperty("overflow-y", "visible", "important");
+  });
+
+  app.style.setProperty("min-height", "0", "important");
+  footer.style.setProperty("position", "static", "important");
+  footer.style.setProperty("inset", "auto", "important");
+  footer.style.setProperty("clear", "both", "important");
+
+  // Read after clearing the previous floor so moving to a shorter view can
+  // shrink the document again. scrollHeight includes asynchronously added rows.
+  void app.offsetHeight;
+
+  const mainHeight = main.offsetTop + Math.max(main.offsetHeight, main.scrollHeight);
+  const contentHeight =
+    main.offsetTop +
+    content.offsetTop +
+    Math.max(content.offsetHeight, content.scrollHeight);
+  const viewHeight = activeView
+    ? main.offsetTop +
+      content.offsetTop +
+      activeView.offsetTop +
+      Math.max(activeView.offsetHeight, activeView.scrollHeight)
+    : 0;
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  const viewportFloor = Math.max(0, viewportHeight - footer.offsetHeight);
+  const requiredHeight = Math.ceil(
+    Math.max(viewportFloor, mainHeight, contentHeight, viewHeight)
+  );
+
+  app.style.setProperty("min-height", `${requiredHeight}px`, "important");
+}
+
+function scheduleAdminMobileFooterFlow() {
+  window.cancelAnimationFrame(adminFooterFlowFrame);
+  adminFooterFlowFrame = window.requestAnimationFrame(
+    syncAdminMobileFooterFlow
+  );
 }
 
 /**
@@ -439,6 +510,7 @@ function initialiseLayoutFix() {
   removeEmptyLayoutBlocks();
   syncGlobalMobileViewport();
   forceScrollableLayout();
+  scheduleAdminMobileFooterFlow();
 }
 
 document.addEventListener("DOMContentLoaded", initialiseLayoutFix);
@@ -446,6 +518,7 @@ document.addEventListener("DOMContentLoaded", initialiseLayoutFix);
 const layoutMutationObserver = new MutationObserver(() => {
   updateLoginScreenScrollbarMode();
   scheduleDesktopLoginFit();
+  scheduleAdminMobileFooterFlow();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -471,6 +544,7 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", () => {
     syncGlobalMobileViewport();
     forceScrollableLayout();
+    scheduleAdminMobileFooterFlow();
   }, { passive: true });
 }
 

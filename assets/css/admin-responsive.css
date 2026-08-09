@@ -2946,3 +2946,62 @@ body:not(.sidebar-open) {
   background: rgba(192, 235, 255, 0.28);
   border-radius: 3px;
 }
+
+/* Super Admin tables retain their desktop row structure at every width.
+   Cell content stays on one line and each table scrolls inside its wrapper. */
+body.super-admin-page :where(
+  .tbl-wrap,
+  .table-wrap,
+  .table-responsive,
+  .table-wrapper,
+  .data-table-wrapper,
+  .table-container,
+  .finance-settlement-wrap
+) {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.super-admin-page :where(
+  .tbl-wrap,
+  .table-wrap,
+  .table-responsive,
+  .table-wrapper,
+  .data-table-wrapper,
+  .table-container,
+  .finance-settlement-wrap
+) > table {
+  width: max-content !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  table-layout: auto !important;
+}
+
+body.super-admin-page :where(
+  .tbl-wrap,
+  .table-wrap,
+  .table-responsive,
+  .table-wrapper,
+  .data-table-wrapper,
+  .table-container,
+  .finance-settlement-wrap
+) > table :where(th, td),
+body.super-admin-page :where(
+  .tbl-wrap,
+  .table-wrap,
+  .table-responsive,
+  .table-wrapper,
+  .data-table-wrapper,
+  .table-container,
+  .finance-settlement-wrap
+) > table :where(th, td) * {
+  max-width: none !important;
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
+}
