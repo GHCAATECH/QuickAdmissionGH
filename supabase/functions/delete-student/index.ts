@@ -11,7 +11,7 @@ function safeString(value: unknown) {
 
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 
 function storageObjectPath(value: unknown) {

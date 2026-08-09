@@ -17,6 +17,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
 
 type SecurityOptions = {
   allowNullOrigin?: boolean;
+  allowedContentTypes?: string[];
   allowedOrigins?: string[];
   maxBodyBytes?: number;
   methods?: string[];
@@ -115,10 +116,11 @@ export function guardRequest(req: Request, options: SecurityOptions = {}) {
 
   if (req.method !== "GET" && req.method !== "HEAD") {
     const contentType = String(req.headers.get("content-type") ?? "").toLowerCase();
-    if (!contentType.includes("application/json")) {
+    const allowedContentTypes = options.allowedContentTypes ?? ["application/json"];
+    if (!allowedContentTypes.some((allowed) => contentType.includes(allowed.toLowerCase()))) {
       return jsonResponse(
         req,
-        { ok: false, error: "unsupported_media_type", message: "Requests must use application/json." },
+        { ok: false, error: "unsupported_media_type", message: "Request content type is not supported." },
         415,
         options,
       );

@@ -47,12 +47,26 @@ async function resolveProfile(admin: ReturnType<typeof createClient>, req: Reque
   return { user: userData.user, profile: profile as JsonRecord | null };
 }
 
-function hasSchoolAccess(profile: JsonRecord | null, schoolId: string) {
+function permissionEnabled(value: unknown) {
+  return value === true || value === "true" || value === 1 || value === "1";
+}
+
+function unsafeTemplateMarkup(value: string) {
+  return /<\s*(?:script|iframe|object|embed|meta|base|link|style|form|input|button|textarea|select|option|svg|math)\b/i.test(value)
+    || /\son[a-z0-9_-]+\s*=/i.test(value)
+    || /\b(?:javascript|vbscript)\s*:/i.test(value)
+    || /\bsrcdoc\s*=/i.test(value)
+    || /(?:expression\s*\(|@import|-moz-binding|behavior\s*:)/i.test(value);
+}
+
+function canManageSchool(profile: JsonRecord | null, schoolId: string) {
   if (!profile) return false;
   const role = safeText(profile.role).toLowerCase().replace(/\s+/g, "_");
   if (role === "super_admin") return true;
-  if (role !== "school_admin") return false;
-  return safeText(profile.school_id) === schoolId;
+  if (role !== "school_admin" || safeText(profile.school_id) !== schoolId) return false;
+  if (profile.permissions == null) return true;
+  if (typeof profile.permissions !== "object" || Array.isArray(profile.permissions)) return false;
+  return permissionEnabled((profile.permissions as JsonRecord).co_admin);
 }
 
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
@@ -61,7 +75,7 @@ async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, 
     p_limit: limit,
     p_window_seconds: seconds,
   });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 
 async function upsertSchoolConfig(admin: ReturnType<typeof createClient>, schoolId: string, patch: JsonRecord) {
@@ -135,8 +149,8 @@ Deno.serve(async (req: Request) => {
   if (!schoolId) return json({ ok: false, error: "validation", message: "school_id is required." }, 400);
 
   const { profile } = await resolveProfile(admin, req);
-  if (!hasSchoolAccess(profile, schoolId)) {
-    return json({ ok: false, error: "forbidden", message: "You cannot manage settings for this school." }, 403);
+  if (!canManageSchool(profile, schoolId)) {
+    return json({ ok: false, error: "forbidden", message: "Only the school owner, a co-admin, or a super admin can change school settings." }, 403);
   }
   if (!await rateAllowed(admin, `manage-school-settings:${safeText(profile?.id)}:${schoolId}`, 120, 60)) {
     return json({ ok: false, error: "rate_limited", message: "Too many settings updates. Please wait a minute and try again." }, 429);
@@ -236,9 +250,14 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "templates") {
+      const letterTemplate = safeText(patchInput.letter_template);
+      const recordsTemplate = safeText(patchInput.records_template);
+      if (unsafeTemplateMarkup(letterTemplate) || unsafeTemplateMarkup(recordsTemplate)) {
+        return json({ ok: false, error: "unsafe_template", message: "Template HTML contains active or unsafe content." }, 400);
+      }
       const patch: JsonRecord = {
-        letter_template: safeText(patchInput.letter_template),
-        records_template: safeText(patchInput.records_template),
+        letter_template: letterTemplate,
+        records_template: recordsTemplate,
       };
       const saved = await upsertSchoolConfig(admin, schoolId, patch);
       return json({ ok: true, config: pickPatch(saved, ["school_id", "letter_template", "records_template"]) });

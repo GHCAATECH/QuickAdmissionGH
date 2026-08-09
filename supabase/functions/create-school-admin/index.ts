@@ -87,7 +87,7 @@ async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, 
     p_limit: limit,
     p_window_seconds: seconds,
   });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 
 async function logActivity(admin: ReturnType<typeof createClient>, schoolId: string, actor: string, action: string) {
@@ -117,23 +117,6 @@ async function persistProfileForUser(
       role: "school_admin",
       permissions,
     }, { onConflict: "id" });
-}
-
-async function findAuthUserByEmail(admin: ReturnType<typeof createClient>, email: string) {
-  let page = 1;
-  const perPage = 1000;
-
-  while (page <= 20) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
-    if (error) return { user: null, error };
-    const users = data?.users ?? [];
-    const match = users.find((candidate) => normalizeEmail(candidate.email) === email);
-    if (match) return { user: match, error: null };
-    if (users.length < perPage) break;
-    page += 1;
-  }
-
-  return { user: null, error: null };
 }
 
 Deno.serve(async (req: Request) => {
@@ -231,30 +214,20 @@ Deno.serve(async (req: Request) => {
     },
   });
 
-  let authUser = createdUser?.user ?? null;
-
+  const authUser = createdUser?.user ?? null;
   if (createError || !authUser) {
     const message = createError?.message || "Could not create the login.";
     const duplicate = /already|exists|registered|duplicate/i.test(message);
-    if (duplicate) {
-      const existing = await findAuthUserByEmail(admin, email);
-      if (existing.error) {
-        return json({ ok: false, error: "lookup_failed", message: existing.error.message }, 500);
-      }
-      if (existing.user) {
-        authUser = existing.user;
-      }
-    }
-    if (!authUser) {
-      return json(
-        {
-          ok: false,
-          error: duplicate ? "duplicate_email" : "create_failed",
-          message: duplicate ? "That email already has a login." : message,
-        },
-        duplicate ? 409 : 500,
-      );
-    }
+    return json(
+      {
+        ok: false,
+        error: duplicate ? "duplicate_email" : "create_failed",
+        message: duplicate
+          ? "That email already belongs to an existing account. Use a different email or manage the existing account from its current school."
+          : message,
+      },
+      duplicate ? 409 : 500,
+    );
   }
 
   const { error: profileError } = await persistProfileForUser(

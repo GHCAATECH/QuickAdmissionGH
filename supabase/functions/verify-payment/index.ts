@@ -4,8 +4,11 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { guardRequest, jsonResponse } from "../_shared/security.ts";
 function genToken(): string {
-  const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let t = "AS";
-  for (let i = 0; i < 6; i++) t += c[Math.floor(Math.random() * c.length)];
+  const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(14);
+  crypto.getRandomValues(bytes);
+  let t = "AS";
+  for (const byte of bytes) t += c[byte % c.length];
   return t;
 }
 function getSecret(): string {
@@ -46,7 +49,7 @@ function paystackMode(key: string): "live" | "test" | "unknown" {
 }
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 
 Deno.serve(async (req: Request) => {

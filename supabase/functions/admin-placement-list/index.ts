@@ -26,7 +26,7 @@ function hasOwn(source: JsonRecord, key: string) {
 }
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
@@ -39,7 +39,11 @@ async function resolveProfile(admin: ReturnType<typeof createClient>, req: Reque
 function canRead(profile: JsonRecord | null, schoolId: string) {
   if (!profile) return false;
   if (text(profile.role) === "super_admin") return true;
-  return text(profile.role) === "school_admin" && text(profile.school_id) === schoolId;
+  if (text(profile.role) !== "school_admin" || text(profile.school_id) !== schoolId) return false;
+  if (profile.permissions == null) return true;
+  if (typeof profile.permissions !== "object" || Array.isArray(profile.permissions)) return false;
+  const permissions = profile.permissions as JsonRecord;
+  return truthy(permissions.placement) || truthy(permissions.co_admin);
 }
 function canWrite(profile: JsonRecord | null, schoolId: string) {
   if (!profile) return false;

@@ -8,7 +8,7 @@ async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, 
     p_limit: limit,
     p_window_seconds: seconds,
   });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 
 Deno.serve(async (req) => {

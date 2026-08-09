@@ -33,12 +33,18 @@ async function resolveProfile(admin: ReturnType<typeof createClient>, req: Reque
   return { user: userData.user, profile: profile as JsonRecord | null };
 }
 
-function hasSchoolAccess(profile: JsonRecord | null, schoolId: string) {
+function permissionEnabled(value: unknown) {
+  return value === true || value === "true" || value === 1 || value === "1";
+}
+
+function canManageSchool(profile: JsonRecord | null, schoolId: string) {
   if (!profile) return false;
   const role = safeText(profile.role).toLowerCase().replace(/\s+/g, "_");
   if (role === "super_admin") return true;
-  if (role !== "school_admin") return false;
-  return safeText(profile.school_id) === schoolId;
+  if (role !== "school_admin" || safeText(profile.school_id) !== schoolId) return false;
+  if (profile.permissions == null) return true;
+  if (typeof profile.permissions !== "object" || Array.isArray(profile.permissions)) return false;
+  return permissionEnabled((profile.permissions as JsonRecord).co_admin);
 }
 
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
@@ -47,7 +53,7 @@ async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, 
     p_limit: limit,
     p_window_seconds: seconds,
   });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 
 async function ensureProgrammeBelongsToSchool(admin: ReturnType<typeof createClient>, schoolId: string, programmeId: string | null) {
@@ -83,8 +89,8 @@ Deno.serve(async (req: Request) => {
   if (!schoolId) return json({ ok: false, error: "validation", message: "school_id is required." }, 400);
 
   const { profile } = await resolveProfile(admin, req);
-  if (!hasSchoolAccess(profile, schoolId)) {
-    return json({ ok: false, error: "forbidden", message: "You cannot manage structures for this school." }, 403);
+  if (!canManageSchool(profile, schoolId)) {
+    return json({ ok: false, error: "forbidden", message: "Only the school owner, a co-admin, or a super admin can change academic structures." }, 403);
   }
   if (!await rateAllowed(admin, `manage-school-structure:${safeText(profile?.id)}:${schoolId}`, 120, 60)) {
     return json({ ok: false, error: "rate_limited", message: "Too many structure updates. Please wait a minute and try again." }, 429);

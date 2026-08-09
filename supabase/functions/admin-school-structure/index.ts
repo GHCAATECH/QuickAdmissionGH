@@ -8,6 +8,7 @@ type JsonRecord = Record<string, unknown>;
 const structureCache = new Map<string, { expiresAt: number; value: unknown }>();
 
 function text(value: unknown) { return String(value ?? "").trim(); }
+function truthy(value: unknown) { return value === true || value === "true" || value === 1 || value === "1"; }
 
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", {
@@ -15,7 +16,7 @@ async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, 
     p_limit: limit,
     p_window_seconds: seconds,
   });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
@@ -24,7 +25,7 @@ async function resolveProfile(admin: ReturnType<typeof createClient>, req: Reque
   const { data: authData, error: authError } = await admin.auth.getUser(token);
   if (authError || !authData.user) return null;
   const { data: profile } = await admin.from("profiles")
-    .select("id,role,school_id")
+    .select("id,role,school_id,permissions")
     .eq("id", authData.user.id)
     .maybeSingle();
   return profile as JsonRecord | null;
@@ -33,7 +34,12 @@ async function resolveProfile(admin: ReturnType<typeof createClient>, req: Reque
 function canRead(profile: JsonRecord | null, schoolId: string) {
   if (!profile) return false;
   const role = text(profile.role).toLowerCase().replace(/\s+/g, "_");
-  return role === "super_admin" || (role === "school_admin" && text(profile.school_id) === schoolId);
+  if (role === "super_admin") return true;
+  if (role !== "school_admin" || text(profile.school_id) !== schoolId) return false;
+  if (profile.permissions == null) return true;
+  if (typeof profile.permissions !== "object" || Array.isArray(profile.permissions)) return false;
+  const permissions = profile.permissions as JsonRecord;
+  return truthy(permissions.structure) || truthy(permissions.co_admin);
 }
 
 Deno.serve(async (req: Request) => {

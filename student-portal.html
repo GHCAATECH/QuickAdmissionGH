@@ -9,6 +9,7 @@
 <link rel="icon" type="image/svg+xml" href="logo-icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="assets/js/template-sanitizer.js?v=20260809-security-1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="https://js.paystack.co/v1/inline.js"></script>
@@ -883,7 +884,7 @@
           </div>
           <div class="portal-info-item">
             <div class="portal-info-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/><path d="M12 14v2"/></svg></div>
-            <div><b>Enter your credentials</b><span>Provide your BECE index number and 8-character admission token to sign in.</span></div>
+            <div><b>Enter your credentials</b><span>Provide your BECE index number and admission token to sign in.</span></div>
           </div>
         </div>
         <div class="portal-token-note">
@@ -925,17 +926,17 @@
           <label for="login-index">BECE index number</label>
           <div class="login-input-shell">
             <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h8"/><path d="M8 14h3"/></svg></div>
-            <input class="input-mono" id="login-index" placeholder="100000000026" value="100000000026" maxlength="14" autocomplete="username">
+            <input class="input-mono" id="login-index" placeholder="Enter your BECE index number" maxlength="14" autocomplete="username">
           </div>
           <span class="err-msg" id="err-index">We couldn't find this index number on the placement list.</span>
         </div>
 
         <div class="field" id="f-token">
-          <label for="login-token">Admission token <span class="hint">(8 characters)</span></label>
+          <label for="login-token">Admission token</label>
           <div class="login-token-row">
             <div class="login-input-shell">
               <div class="login-input-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></svg></div>
-              <input class="input-mono" id="login-token" placeholder="XXXXXXXX" maxlength="8" value="AS7K9X2Q" autocomplete="current-password">
+              <input class="input-mono" id="login-token" type="password" placeholder="Enter admission token" maxlength="32" autocomplete="current-password">
             </div>
             <button class="btn btn-accent" id="buyTokenBtn" type="button" onclick="showScreen('s-purchase')">Buy token</button>
           </div>
@@ -1424,13 +1425,16 @@ function qagTabKey(key){
   return 'qag_tab_state::'+qagTabScope()+'::'+key;
 }
 function getStudentSession(){
-  try{return JSON.parse(localStorage.getItem(qagTabKey('qag_student'))||'null');}catch(e){return null;}
+  try{
+    localStorage.removeItem(qagTabKey('qag_student'));
+    return JSON.parse(sessionStorage.getItem(qagTabKey('qag_student'))||'null');
+  }catch(e){return null;}
 }
 function setStudentSession(next){
-  try{localStorage.setItem(qagTabKey('qag_student'),JSON.stringify(next));}catch(e){}
+  try{sessionStorage.setItem(qagTabKey('qag_student'),JSON.stringify(next));}catch(e){}
 }
 function clearStudentSession(){
-  try{localStorage.removeItem(qagTabKey('qag_student'));}catch(e){}
+  try{sessionStorage.removeItem(qagTabKey('qag_student'));localStorage.removeItem(qagTabKey('qag_student'));}catch(e){}
 }
 function readSubmissionSuccess(){
   try{return JSON.parse(sessionStorage.getItem(qagTabKey('qag_submission_success'))||'null');}catch(e){return null;}
@@ -2092,6 +2096,20 @@ function applyFeatureVisibility(){
   onReligionChange();
 }
 function uploadEnr(){ const inp=$('enrFileInput'); if(inp) inp.click(); }
+async function uploadStudentFile(kind,file){
+  if(!session||!session.index||!session.token||!session.school) return {ok:false,message:'Please log in again'};
+  const form=new FormData();
+  form.append('school_id',session.school);
+  form.append('index',session.index);
+  form.append('token',session.token);
+  form.append('kind',kind);
+  form.append('file',file,file.name||kind);
+  try{
+    const response=await fetch(SUPABASE_URL+'/functions/v1/student-upload',{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},body:form});
+    const data=await response.json().catch(()=>null);
+    return data||{ok:false,message:'Upload service returned an invalid response'};
+  }catch(error){return {ok:false,message:(error&&error.message)||'Upload service is unavailable'};}
+}
 async function handleEnrFile(inp){
   const file=inp.files&&inp.files[0]; inp.value='';
   if(!file) return;
@@ -2100,17 +2118,15 @@ async function handleEnrFile(inp){
   if(file.size > 5*1024*1024){ toast('File too large - max 5 MB'); return; }
   if(!STU||!session){ toast('Please log in again'); return; }
   $('enrWrap').innerHTML='<div class="dropzone"><b>Uploading...</b><small>Please wait</small></div>';
-  const ext = /\.jpe?g$/i.test(file.name) ? file.name.split('.').pop() : 'jpg';
-  const path = (STU.index||'student')+'_'+Date.now()+'.'+ext;
-  const {error}=await sb.storage.from('enrolment-forms').upload(path, file, {contentType:file.type||'image/jpeg', upsert:true});
-  if(error){
-    toast('Upload failed - '+error.message);
+  const result=await uploadStudentFile('enrolment',file);
+  if(!result.ok){
+    toast('Upload failed - '+(result.message||result.error||'unknown error'));
     removeEnr();
     return;
   }
   app.enrUploaded=true;
-  app.fields.enrolment_form_url = 'enrolment-forms/'+path;
-  app.fields.enrolment_form_path = path;
+  app.fields.enrolment_form_url = result.storage_ref;
+  app.fields.enrolment_form_path = result.path;
   app.fields.enrolment_uploaded = true;
   const kb=Math.max(1,Math.round(file.size/1024));
   $('enrWrap').innerHTML=`<div class="file-done"><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div><b>${file.name.replace(/[<>"]/g,'')}</b><small>Uploaded - ${kb} KB</small></div><button class="x" onclick="removeEnr()">Remove</button></div>`;
@@ -2132,14 +2148,12 @@ async function handlePassportFile(inp){
   if(file.size > 2*1024*1024){ toast('Photo too large - max 2 MB'); return; }
   if(!STU||!session){ toast('Please log in again'); return; }
   $('photoWrap').innerHTML='<div class="dropzone"><b>Uploading photo...</b><small>Please wait</small></div>';
-  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-  const path='passport-photos/'+(STU.index||'student')+'_'+Date.now()+'.'+ext;
-  const {error}=await sb.storage.from('enrolment-forms').upload(path,file,{contentType:file.type||'image/jpeg',upsert:true});
-  if(error){ toast('Passport upload failed - '+error.message); resetPassportUploadUi(); return; }
+  const result=await uploadStudentFile('passport',file);
+  if(!result.ok){ toast('Passport upload failed - '+(result.message||result.error||'unknown error')); resetPassportUploadUi(); return; }
   const previewUrl=URL.createObjectURL(file);
   app.photoUploaded=true;
-  app.fields.passport_photo_url='enrolment-forms/'+path;
-  app.fields.passport_photo_path=path;
+  app.fields.passport_photo_url=result.storage_ref;
+  app.fields.passport_photo_path=result.path;
   app.fields.passport_photo_uploaded=true;
   $('photoWrap').innerHTML=`<div class="file-done passport-photo-done"><span class="fi passport-preview-frame"><img src="${escapeHtml(previewUrl)}" alt="Passport photo"></span><div><b>${escapeHtml(file.name)}</b><small>Passport photo uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
   setStudentPassportAvatar(previewUrl);
@@ -2353,11 +2367,11 @@ function admissionNumberValue(){return String((STU&&(STU.permanent_admission_num
 function houseAllocationValue(){return String((STU&&(STU.house_name||STU.house))||'').trim();}
 function recordsTableHTML(){
   const s=STU, r=(s.records||{});
-  const row=(l,v)=>'<tr><td class="lbl">'+l+'</td><td>'+(v||'-')+'</td></tr>';
+  const row=(l,v)=>'<tr><td class="lbl">'+safeHtml(l)+'</td><td>'+safeHtml(v,'-')+'</td></tr>';
   const RN=['i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii','xiii','xiv','xv','xvi','xvii','xviii','xix','xx'];
   let n=0;
-  const rowN=(l,v)=>'<tr><td class="lbl"><span class="rn">'+(RN[n++]||(n))+'.</span> '+l+'</td><td>'+((v==null||v==='')?'-':v)+'</td></tr>';
-  const section=(letter,title)=>{ n=0; return '<tr><td class="sec-h" colspan="2">'+letter+'. '+title+'</td></tr>'; };
+  const rowN=(l,v)=>'<tr><td class="lbl"><span class="rn">'+(RN[n++]||(n))+'.</span> '+safeHtml(l)+'</td><td>'+safeHtml(v,'-')+'</td></tr>';
+  const section=(letter,title)=>{ n=0; return '<tr><td class="sec-h" colspan="2">'+safeHtml(letter)+'. '+safeHtml(title)+'</td></tr>'; };
   return '<table class="records-table">'
     +section('A','Placement')
     +rowN('Full name',studentName(s))+rowN('Gender',s.gender)+rowN('JHS Index No.',s.index)
@@ -2469,7 +2483,7 @@ function normalizeTemplateHeader(tpl,kind){
 function resolveDocTemplate(kind,tpl){
   // A saved template is authoritative. Re-normalizing custom HTML here used to
   // restore headers and fields that the school had removed in the editor.
-  const raw=String(tpl||'').trim();
+  const raw=window.QATemplateSanitizer.sanitize(String(tpl||'')).trim();
   const fallback=kind==='letter'?LETTER_DEFAULT:RECORDS_DEFAULT;
   if(!raw) return fallback;
   if(kind==='letter' && raw===LEGACY_LETTER_DEFAULT) return LETTER_DEFAULT;
@@ -2489,8 +2503,9 @@ function fillTemplate(tpl){
   let out=String(tpl).replace(/\{RECORDS_TABLE\}/g, recordsTableHTML());
   const qurl=buildQR(qrText(),108);
   out=out.replace(/\{QR_CODE\}/g, qurl?'<img src="'+qurl+'" style="width:108px;height:108px" alt="QR code">':'');
-  out=out.replace(/\{([A-Z_]+)\}/g,(m,k)=> (k in v)? (v[k]==null?'':String(v[k])) : m);
-  return out;
+  const htmlVars=new Set(['CREST','CREST_TOP','CREST_CENTER']);
+  out=out.replace(/\{([A-Z_]+)\}/g,(m,k)=> (k in v)? (htmlVars.has(k)?String(v[k]||''):escapeHtml(v[k])) : m);
+  return window.QATemplateSanitizer.sanitize(out);
 }
 function personalRecordComplete(){
   return !!(STU&&(

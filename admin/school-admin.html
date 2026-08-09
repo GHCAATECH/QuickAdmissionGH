@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="../assets/js/template-sanitizer.js?v=20260809-security-1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
@@ -1473,7 +1474,7 @@
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260808-mobile-scroll-owner-31">
-<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-sidebar-profile-bottom-18">
+<link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260809-verification-shell-19">
 <link rel="stylesheet" href="../assets/css/system-footer.css?v=20260809-admin-allocation-footer-10">
 <link rel="stylesheet" href="../assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <style>
@@ -3250,8 +3251,8 @@ async function applyBulk(){
     if(current+moving>capacity){toast('The selected students exceed the remaining capacity in '+house.name+'.');return;}
   }
   const patch={};if(cl)patch.class_id=cMap[+cl]||null;if(ho)patch.house_id=hMap[+ho]||null;
-  const {error}=await sb.from('students').update(patch).in('id',chosen.map(s=>s._id));
-  if(error){toast('Bulk allocation failed: '+error.message);return;}
+  const result=await updateStudentAssignments(chosen.map(s=>s._id),patch);
+  if(!result.ok){toast('Bulk allocation failed: '+result.message);return;}
   const uuids=new Set(chosen.map(s=>String(s._id)));
   [...students,...(MANAGE_STATE.rows||[]),...(REG_STATE.rows||[])].forEach(s=>{if(uuids.has(String(s._id))){if(cl)s.classId=+cl;if(ho)s.houseId=+ho;}});
   if(ho)notifyStudentPortalRefresh('house-bulk-assign',{indexes:chosen.map(s=>s.index)});
@@ -3295,7 +3296,7 @@ function refreshEditHouseOptions(){
   if(hint) hint.textContent=sel.options.length>1?'Only houses matching gender and residential status are shown.':'No configured house matches this gender and residential status.';
 }
 function positionManageStudentEditor(){
-  const overlay=$('overlay'); if(!overlay||(!overlay.classList.contains('manage-student-editor')&&!overlay.classList.contains('verified-student-details')&&!overlay.classList.contains('class-subject-details')&&!overlay.classList.contains('user-account-editor')))return;
+  const overlay=$('overlay'); if(!overlay||(!overlay.classList.contains('manage-student-editor')&&!overlay.classList.contains('student-verification-dialog')&&!overlay.classList.contains('verified-student-details')&&!overlay.classList.contains('class-subject-details')&&!overlay.classList.contains('user-account-editor')))return;
   const topbar=document.querySelector('.topbar'), sidebar=$('sidebar'), footer=document.querySelector('body > footer.system-footer');
   const desktop=window.matchMedia('(min-width:1025px)').matches;
   const top=topbar?Math.max(0,topbar.getBoundingClientRect().bottom):0;
@@ -3441,6 +3442,13 @@ function allocationStudentOrder(a,b){
   const indexDiff=String((a&&a.index)||'').localeCompare(String((b&&b.index)||''),undefined,{numeric:true,sensitivity:'base'});
   return indexDiff||String((a&&a.name)||'').localeCompare(String((b&&b.name)||''),undefined,{sensitivity:'base'});
 }
+async function updateStudentAssignments(studentIds,patch){
+  const result=await invokeFnDetailed('admin-students-list',{action:'batch_update',school_id:SB_SCHOOL&&SB_SCHOOL.id,student_ids:studentIds,patch:patch});
+  if(result.error||!result.data||result.data.ok===false){
+    return {ok:false,message:(result.data&&result.data.message)||(result.error&&result.error.message)||'Could not update student allocations'};
+  }
+  return {ok:true,data:result.data};
+}
 function fillSelKeep(sel,html){ if(!sel)return; const cur=sel.value; sel.innerHTML=html; if(cur&&[...sel.options].some(o=>o.value===cur)) sel.value=cur; }
 
 function renderHouseAlloc(){
@@ -3468,8 +3476,8 @@ async function haAssignSelected(){
   const capacity=Math.max(Number(h.cap)||0,0), current=students.filter(s=>s.houseId===hid).length, room=Math.max(capacity-current,0);
   if(selectedStudents.length>room){toast('Only '+room+' place'+(room===1?' is':'s are')+' available in '+h.name+'.');return;}
   const ids=selectedStudents.map(s=>s.id), uuids=selectedStudents.map(s=>s._id);
-  const {error}=await sb.from('students').update({house_id:hMap[hid]}).in('id',uuids);
-  if(error){toast('Assign failed: '+error.message);return;}
+  const result=await updateStudentAssignments(uuids,{house_id:hMap[hid]});
+  if(!result.ok){toast('Assign failed: '+result.message);return;}
   students.forEach(s=>{if(haSel.has(s.id))s.houseId=hid;});
   notifyStudentPortalRefresh('house-assign',{indexes:studentIndexListFromIds(ids)});
   activityLog.unshift({time:'Just now',action:'Allocated '+ids.length+' students to '+h.name,by:(SB_ADMIN_NAME||'Admin')});
@@ -3478,8 +3486,8 @@ async function haAssignSelected(){
 async function haRemove(id){
   if(roGuard())return;
   const s=students.find(x=>x.id===id); if(!s)return;
-  const {error}=await sb.from('students').update({house_id:null}).eq('id',s._id);
-  if(error){toast('Failed: '+error.message);return;}
+  const result=await updateStudentAssignments([s._id],{house_id:null});
+  if(!result.ok){toast('Failed: '+result.message);return;}
   notifyStudentPortalRefresh('house-remove',{index:s.index});
   s.houseId=null; renderHouseAlloc(); toast('Removed from house');
 }
@@ -3495,8 +3503,8 @@ async function haAutoFill(){
   const pool=students.filter(s=>!s.houseId && houseEligibleForStudent(h,s)).sort(allocationStudentOrder).slice(0,room);
   if(!pool.length){toast('No matching unassigned students');return;}
   const uuids=pool.map(s=>s._id);
-  const {error}=await sb.from('students').update({house_id:hMap[hid]}).in('id',uuids);
-  if(error){toast('Auto-fill failed: '+error.message);return;}
+  const result=await updateStudentAssignments(uuids,{house_id:hMap[hid]});
+  if(!result.ok){toast('Auto-fill failed: '+result.message);return;}
   pool.forEach(s=>s.houseId=hid);
   notifyStudentPortalRefresh('house-autofill',{indexes:pool.map(function(s){ return s.index; })});
   activityLog.unshift({time:'Just now',action:'Auto-filled '+pool.length+' students into '+h.name,by:(SB_ADMIN_NAME||'Admin')});
@@ -3528,8 +3536,8 @@ async function haAutoAssignAll(){
   for(const h of orderedHouses){
     const candidates=assignments.get(h.id)||[];
     if(!candidates.length)continue;
-    const {error}=await sb.from('students').update({house_id:hMap[h.id]}).in('id',candidates.map(s=>s._id));
-    if(error){renderHouseAlloc();toast('Auto-assignment stopped at '+h.name+': '+error.message);return;}
+    const result=await updateStudentAssignments(candidates.map(s=>s._id),{house_id:hMap[h.id]});
+    if(!result.ok){renderHouseAlloc();toast('Auto-assignment stopped at '+h.name+': '+result.message);return;}
     candidates.forEach(s=>{s.houseId=h.id;assignedIndexes.push(s.index);});
     assigned+=candidates.length;
   }
@@ -3560,8 +3568,8 @@ async function caAssignSelected(){
   const ids=[...caSel], chosen=ids.map(i=>students.find(s=>s.id===i)).filter(Boolean);
   if(chosen.some(function(s){return String(effectiveStudentProgrammeId(s)||'')!==String(c.progId);})){toast('One or more selected students do not belong to this class programme.');return;}
   const uuids=chosen.map(s=>s._id);
-  const {error}=await sb.from('students').update({class_id:cMap[cid]}).in('id',uuids);
-  if(error){toast('Assign failed: '+error.message);return;}
+  const result=await updateStudentAssignments(uuids,{class_id:cMap[cid]});
+  if(!result.ok){toast('Assign failed: '+result.message);return;}
   students.forEach(s=>{if(caSel.has(s.id))s.classId=cid;});
   notifyStudentPortalRefresh('class-assign',{indexes:studentIndexListFromIds(ids)});
   activityLog.unshift({time:'Just now',action:'Allocated '+ids.length+' students to '+c.name,by:(SB_ADMIN_NAME||'Admin')});
@@ -3570,8 +3578,8 @@ async function caAssignSelected(){
 async function caRemove(id){
   if(roGuard())return;
   const s=students.find(x=>x.id===id); if(!s)return;
-  const {error}=await sb.from('students').update({class_id:null}).eq('id',s._id);
-  if(error){toast('Failed: '+error.message);return;}
+  const result=await updateStudentAssignments([s._id],{class_id:null});
+  if(!result.ok){toast('Failed: '+result.message);return;}
   notifyStudentPortalRefresh('class-remove',{index:s.index});
   s.classId=null; renderClassAlloc(); toast('Removed from class');
 }
@@ -3584,8 +3592,8 @@ async function caAutoFill(){
   const pool=students.filter(s=>!s.classId && String(effectiveStudentProgrammeId(s)||'')===String(c.progId)).slice(0,room);
   if(!pool.length){toast('No matching unassigned students');return;}
   const uuids=pool.map(s=>s._id);
-  const {error}=await sb.from('students').update({class_id:cMap[cid]}).in('id',uuids);
-  if(error){toast('Auto-fill failed: '+error.message);return;}
+  const result=await updateStudentAssignments(uuids,{class_id:cMap[cid]});
+  if(!result.ok){toast('Auto-fill failed: '+result.message);return;}
   pool.forEach(s=>s.classId=cid);
   notifyStudentPortalRefresh('class-autofill',{indexes:pool.map(function(s){ return s.index; })});
   activityLog.unshift({time:'Just now',action:'Auto-filled '+pool.length+' students into '+c.name,by:(SB_ADMIN_NAME||'Admin')});
@@ -4485,7 +4493,15 @@ function renderVerificationSearch(){ const body=$('verifySearchRows'); const met
 function changeVerificationPage(delta){ const next=(VERIFY_STATE.page||1)+delta; if(next<1||next>(VERIFY_STATE.totalPages||1)) return; loadVerificationSearch(false,next); }
 function verificationRecordById(id){ const fromSearch=(VERIFY_STATE.rows||[]).find(function(row){ return String(row.id)===String(id); }); if(fromSearch) return fromSearch; const fromCurrentPage=(VERIFIED_STATE.rows||[]).find(function(row){ return String(row.id)===String(id); }); if(fromCurrentPage) return fromCurrentPage; const fromVerified=(VERIFIED_STATE.allRows||[]).find(function(row){ return String(row.id)===String(id); }); if(fromVerified) return fromVerified; return null; }
 function verificationInfoGrid(row){ return [['Student Name',row.full_name],['JHS Index Number',row.bece_index],['Programme',row.programme||'—'],['Class',row.class_name||'—'],['Residential Status',row.residential_status||'—'],['House',row.house_name||'—'],['Student Phone',row.student_phone||'—'],['Guardian Contact',row.guardian_contact||'—'],['Verification Status',verificationStatusLabel(row.verification_status)],['Permanent Admission Number',row.permanent_admission_number||'—']]; }
-function openVerifyStudentModal(id){ const row=verificationRecordById(id); if(!row) return toast('Student not found'); const rowId=escapeAttr(id||''); const photo=row.passport_photo_url?'<img class="verify-modal-photo" src="'+escapeAttr(row.passport_photo_url)+'" alt="Passport">':'<div class="verify-modal-photo" style="display:grid;place-items:center;color:var(--muted);font-size:12px">No photo</div>'; const grid=verificationInfoGrid(row).map(function(item){ return '<div class="kv"><b>'+safeHtml(item[0])+':</b>'+safeHtml(item[1],'-')+'</div>'; }).join(''); $('modal').innerHTML='<div class="modal-head"><div><h2>Confirm Student Verification</h2><p>The admission number and house allocation will be saved together after confirmation.</p></div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body"><div class="verify-slip-grid">'+photo+'<div><div class="grid-2 student-info-grid">'+grid+'</div><div class="panel panel-pad" style="margin:12px 0 0;background:#fff8e6;border:1px solid rgba(199,134,26,.22)"><b>Warning:</b> The first student successfully verified receives the first available permanent admission number for this school and admission year.</div></div></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="verifyConfirmBtn" onclick="confirmVerifyStudent(\''+rowId+'\')">Confirm Verification</button></div>'; $('overlay').classList.add('show'); }
+function showVerificationWorkspaceModal(){
+  if(window.matchMedia('(min-width:1025px)').matches){
+    const app=document.querySelector('.app');
+    if(app) app.classList.remove('sidebar-hidden','sidebar-collapsed');
+  }
+  $('overlay').classList.add('show','student-verification-dialog');
+  requestAnimationFrame(positionManageStudentEditor);
+}
+function openVerifyStudentModal(id){ const row=verificationRecordById(id); if(!row) return toast('Student not found'); const rowId=escapeAttr(id||''); const photo=row.passport_photo_url?'<img class="verify-modal-photo" src="'+escapeAttr(row.passport_photo_url)+'" alt="Passport">':'<div class="verify-modal-photo" style="display:grid;place-items:center;color:var(--muted);font-size:12px">No photo</div>'; const grid=verificationInfoGrid(row).map(function(item){ return '<div class="kv"><b>'+safeHtml(item[0])+':</b>'+safeHtml(item[1],'-')+'</div>'; }).join(''); $('modal').innerHTML='<div class="modal-head"><div><h2>Confirm Student Verification</h2><p>The admission number and house allocation will be saved together after confirmation.</p></div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body"><div class="verify-slip-grid">'+photo+'<div><div class="grid-2 student-info-grid">'+grid+'</div><div class="panel panel-pad" style="margin:12px 0 0;background:#fff8e6;border:1px solid rgba(199,134,26,.22)"><b>Warning:</b> The first student successfully verified receives the first available permanent admission number for this school and admission year.</div></div></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="verifyConfirmBtn" onclick="confirmVerifyStudent(\''+rowId+'\')">Confirm Verification</button></div>'; showVerificationWorkspaceModal(); }
 async function confirmVerifyStudent(id){ if(VERIFY_STATE.submitting) return; const btn=$('verifyConfirmBtn'); VERIFY_STATE.submitting=true; if(btn){ btn.disabled=true; btn.textContent='Verifying…'; } const {data,error}=await verificationAction('verify',{student_id:id}); VERIFY_STATE.submitting=false; if(btn){ btn.disabled=false; btn.textContent='Confirm Verification'; } if(error||!data||data.ok===false){ toast((data&&data.message)||(error&&error.message)||'Verification failed'); return; } const record=verificationRecordById(id); if(record){ record.verification_status='verified'; record.permanent_admission_number=data.permanent_admission_number||record.permanent_admission_number; record.house_id=data.house_id||record.house_id; record.house_name=data.house_name||record.house_name; record.verified_at=data.verified_at||new Date().toISOString(); } syncLocalVerificationRecord(id,{verificationStatus:'verified',permAdm:data.permanent_admission_number||'',houseId:data.house_id||'',houseName:data.house_name||'',verifiedAt:data.verified_at||new Date().toISOString()}); applyVerificationCountDelta(1); renderStudentsRows(); renderRegisteredRows(); closeModal(); showVerificationSuccess(data.permanent_admission_number||'',record||verificationRecordById(id)); await Promise.all([loadVerificationCounts(),loadVerificationSearch(true,VERIFY_STATE.page||1),loadVerifiedStudents(VERIFIED_STATE.page||1,true)]); toast('Student verified and house allocated successfully'); }
 function syncLocalVerificationRecord(id,patch){
   const copies=[...(students||[]),...(MANAGE_STATE.rows||[]),...(REG_STATE.rows||[])].filter(function(item){ return String(item._id)===String(id); });
@@ -4499,7 +4515,7 @@ function syncLocalVerificationRecord(id,patch){
     if(patch.verifiedAt!==undefined) row.verifiedAt=patch.verifiedAt;
   });
 }
-function showVerificationSuccess(permanentNo,row){ const record=row||{}; const canPrint=can('print_verification_slip'); const admissionNo=escapeAttr(permanentNo||record.permanent_admission_number||''); const rowId=escapeAttr(record.id||''); $('modal').innerHTML='<div class="modal-head"><div><h2>Student verified successfully.</h2><p>Admission number and house allocation saved.</p></div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body"><div class="panel panel-pad" style="margin:0;background:#effcf4;border:1px solid rgba(22,101,52,.18)"><div style="font-size:13px;color:#166534;font-weight:700">Permanent Admission Number</div><div class="mono" style="font-size:28px;font-weight:800;color:#0f5132;margin-top:8px">'+safeHtml(permanentNo||record.permanent_admission_number||'—')+'</div><div style="font-size:13px;color:#166534;font-weight:700;margin-top:14px">House Allocation</div><div style="font-size:20px;font-weight:800;color:#0f5132;margin-top:5px">'+safeHtml(record.house_name||'—')+'</div></div><div class="grid-2 student-info-grid" style="margin-top:14px">'+verificationInfoGrid(record).map(function(item){ return '<div class="kv"><b>'+safeHtml(item[0])+':</b>'+safeHtml(item[1],'-')+'</div>'; }).join('')+'</div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="copyVerificationNumber(\''+admissionNo+'\')">Copy Number</button>'+(canPrint?'<button class="btn btn-primary" onclick="printVerificationSlipById(\''+rowId+'\')">Print Verification Slip</button>':'')+'</div>'; $('overlay').classList.add('show'); }
+function showVerificationSuccess(permanentNo,row){ const record=row||{}; const canPrint=can('print_verification_slip'); const admissionNo=escapeAttr(permanentNo||record.permanent_admission_number||''); const rowId=escapeAttr(record.id||''); $('modal').innerHTML='<div class="modal-head"><div><h2>Student verified successfully.</h2><p>Admission number and house allocation saved.</p></div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body"><div class="panel panel-pad" style="margin:0;background:#effcf4;border:1px solid rgba(22,101,52,.18)"><div style="font-size:13px;color:#166534;font-weight:700">Permanent Admission Number</div><div class="mono" style="font-size:28px;font-weight:800;color:#0f5132;margin-top:8px">'+safeHtml(permanentNo||record.permanent_admission_number||'—')+'</div><div style="font-size:13px;color:#166534;font-weight:700;margin-top:14px">House Allocation</div><div style="font-size:20px;font-weight:800;color:#0f5132;margin-top:5px">'+safeHtml(record.house_name||'—')+'</div></div><div class="grid-2 student-info-grid" style="margin-top:14px">'+verificationInfoGrid(record).map(function(item){ return '<div class="kv"><b>'+safeHtml(item[0])+':</b>'+safeHtml(item[1],'-')+'</div>'; }).join('')+'</div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="copyVerificationNumber(\''+admissionNo+'\')">Copy Number</button>'+(canPrint?'<button class="btn btn-primary" onclick="printVerificationSlipById(\''+rowId+'\')">Print Verification Slip</button>':'')+'</div>'; showVerificationWorkspaceModal(); }
 function showVerificationSuccessById(id){ const row=verificationRecordById(id); if(!row) return toast('Student not found'); showVerificationSuccess(row.permanent_admission_number,row); }
 function copyVerificationNumber(value){ if(!value) return toast('No number to copy'); if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(value).then(function(){ toast('Permanent admission number copied'); }).catch(function(){ toast(value); }); } else { toast(value); } }
 function setVerifiedSelectValue(select,value){ if(!select)return ''; const wanted=String(value||''); const exists=Array.from(select.options||[]).some(function(option){ return String(option.value)===wanted; }); select.value=exists?wanted:''; return select.value; }
@@ -4557,7 +4573,7 @@ function openVerifiedStudentDetails(id){ const row=verificationRecordById(id); i
 function buildVerificationSlipHtml(row,title){ const crest=row.school_crest?'<img src="'+escapeAttr(row.school_crest)+'" alt="School logo" style="width:82px;height:82px;object-fit:contain">':''; const photo=row.passport_photo_url?'<img src="'+escapeAttr(row.passport_photo_url)+'" alt="Passport" style="width:110px;height:132px;object-fit:cover;border-radius:12px;border:1px solid #d1d5db">':''; const meta=[['Student full name',row.full_name],['Permanent admission number',row.permanent_admission_number||'—'],['JHS index number',row.bece_index],['Programme',row.programme||'—'],['Class',row.class_name||'—'],['Residential status',row.residential_status||'—'],['House',row.house_name||'—'],['Verification date',(row.verified_at||'').slice(0,10)||'—'],['Verified by',row.verified_by_name||'—']]; return '<html><head><title>'+safeHtml(title)+'</title><style>@page{size:A4;margin:14mm}body{font-family:Arial,sans-serif;color:#0f172a;padding:18px}table{width:100%;border-collapse:collapse}td{border:1px solid #d1d5db;padding:8px 10px;font-size:12px}.head{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:16px;border-radius:16px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#fff}.head h1{margin:0;font-size:22px}.head p{margin:4px 0 0;font-size:12px;color:rgba(255,255,255,.92)}.grid{display:grid;grid-template-columns:130px 1fr;gap:18px;align-items:start}.sign{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:34px}.line{margin-top:42px;border-top:1px solid #1f2937;padding-top:6px;font-size:12px}</style></head><body><div class="head">'+crest+'<div><h1>'+safeHtml(row.school_name||exportSchoolName())+'</h1><p>'+safeHtml(title)+'</p><p>Academic Year: '+safeHtml(row.academic_year||exportAdmissionYear()||'—')+'</p></div></div><div class="grid">'+(photo||'<div></div>')+'<table>'+meta.map(function(item){ return '<tr><td style="width:32%;font-weight:700">'+safeHtml(item[0])+'</td><td>'+safeHtml(item[1],'-')+'</td></tr>'; }).join('')+'</table></div><div class="sign"><div><div class="line">Admission Officer Signature</div></div><div><div class="line">Head of School Signature</div></div></div></body></html>'; }
 function printVerificationSlipById(id){ const row=verificationRecordById(id); if(!row) return toast('Student not found'); const w=window.open('','_blank'); if(!w){ toast('Allow pop-ups to print / save PDF'); return; } w.document.write(buildVerificationSlipHtml(row,'Verification Slip')); w.document.close(); setTimeout(function(){ w.print(); },300); }
 function reprintAdmissionLetterById(id){ const row=verificationRecordById(id); if(!row) return toast('Student not found'); const w=window.open('','_blank'); if(!w){ toast('Allow pop-ups to print / save PDF'); return; } const crest=row.school_crest?'<img src="'+escapeAttr(row.school_crest)+'" alt="School logo" style="width:72px;height:72px;object-fit:contain">':''; w.document.write('<html><head><title>Admission Letter</title><style>@page{size:A4;margin:15mm}body{font-family:Arial,sans-serif;color:#111827;padding:24px}.head{display:flex;align-items:center;gap:12px;border-bottom:2px solid #111827;padding-bottom:12px;margin-bottom:18px}.title{font-size:24px;font-weight:800}.meta{font-size:12px;color:#4b5563}.letter{font-size:14px;line-height:1.7}.sign{margin-top:40px;border-top:1px solid #111827;padding-top:8px;width:260px}</style></head><body><div class="head">'+crest+'<div><div class="title">'+safeHtml(row.school_name||exportSchoolName())+'</div><div class="meta">Admission Letter · Academic Year '+safeHtml(row.academic_year||exportAdmissionYear()||'—')+'</div></div></div><div class="letter"><p>Date: '+safeHtml(new Date().toLocaleDateString('en-GB'))+'</p><p>Dear <b>'+safeHtml(row.full_name)+'</b>,</p><p>This is to confirm that your admission to <b>'+safeHtml(row.school_name||exportSchoolName())+'</b> has been verified on campus.</p><p>Your permanent admission number is <b>'+safeHtml(row.permanent_admission_number||'—')+'</b>.</p><p>You are enrolled under the programme <b>'+safeHtml(row.programme||'—')+'</b>'+(row.class_name?(' in class <b>'+safeHtml(row.class_name)+'</b>'):'')+'. '+(row.house_name?('House allocation: <b>'+safeHtml(row.house_name)+'</b>. '):'')+'Residential status: <b>'+safeHtml(row.residential_status||'—')+'</b>.</p><p>Please keep this letter together with your verification slip for school records.</p><div class="sign">'+safeHtml(exportHeadLabel())+'</div></div></body></html>'); w.document.close(); setTimeout(function(){ w.print(); },300); }
-function reverseVerificationById(id){ const row=verificationRecordById(id); if(!row) return toast('Student not found'); const rowId=escapeAttr(id||''); $('modal').innerHTML='<div class="modal-head"><div><h2>Reverse Verification</h2><p>This action returns the student to pending verification. A note is optional.</p></div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body"><div class="panel panel-pad" style="margin:0;background:#fff1f2;border:1px solid rgba(153,27,27,.16)"><b>Warning:</b> The permanent admission number, programme and house assignment will be released. The current classroom will stay assigned. Choose a programme that is linked to this classroom before verifying the student again. The next verification fills the lowest admission-number gap and allocates a house afresh using occupancy and configured priority.</div><div class="grid-2 student-info-grid" style="margin-top:14px">'+verificationInfoGrid(row).slice(0,6).map(function(item){ return '<div class="kv"><b>'+safeHtml(item[0])+':</b>'+safeHtml(item[1],'-')+'</div>'; }).join('')+'</div><div class="field" style="margin-top:14px"><label>Note (optional)</label><textarea id="verification_reverse_reason" rows="4" placeholder="Add a note about this reversal"></textarea></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="confirmReverseVerification(\''+rowId+'\')">Reverse Verification</button></div>'; $('overlay').classList.add('show'); }
+function reverseVerificationById(id){ const row=verificationRecordById(id); if(!row) return toast('Student not found'); const rowId=escapeAttr(id||''); $('modal').innerHTML='<div class="modal-head"><div><h2>Reverse Verification</h2><p>This action returns the student to pending verification. A note is optional.</p></div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body"><div class="panel panel-pad" style="margin:0;background:#fff1f2;border:1px solid rgba(153,27,27,.16)"><b>Warning:</b> The permanent admission number, programme and house assignment will be released. The current classroom will stay assigned. Choose a programme that is linked to this classroom before verifying the student again. The next verification fills the lowest admission-number gap and allocates a house afresh using occupancy and configured priority.</div><div class="grid-2 student-info-grid" style="margin-top:14px">'+verificationInfoGrid(row).slice(0,6).map(function(item){ return '<div class="kv"><b>'+safeHtml(item[0])+':</b>'+safeHtml(item[1],'-')+'</div>'; }).join('')+'</div><div class="field" style="margin-top:14px"><label>Note (optional)</label><textarea id="verification_reverse_reason" rows="4" placeholder="Add a note about this reversal"></textarea></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="confirmReverseVerification(\''+rowId+'\')">Reverse Verification</button></div>'; showVerificationWorkspaceModal(); }
 async function confirmReverseVerification(id){ const reason=(document.getElementById('verification_reverse_reason')&&document.getElementById('verification_reverse_reason').value||'').trim(); const {data,error}=await verificationAction('reverse',{student_id:id,reason}); if(error||!data||data.ok===false){ toast((data&&data.message)||(error&&error.message)||'Could not reverse verification'); return; } syncLocalVerificationRecord(id,{verificationStatus:'pending',permAdm:'',programmeId:'',houseId:'',houseName:'',verifiedAt:''}); applyVerificationCountDelta(-1); closeModal(); await Promise.all([loadVerificationCounts(),loadVerificationSearch(true),loadVerifiedStudents(VERIFIED_STATE.page||1,true)]); toast('Verification reversed; admission number, programme and house released. Classroom retained.'); }
 async function exportVerifiedStudentsExcel(){ if(!can('export_verified_students')) return toast('You do not have permission to export verified students'); const {data,error}=await verificationAction('list_verified',{filters:Object.assign({},VERIFIED_STATE.filters||collectVerifiedFilters(),{page:1,page_size:5000})}); if(error||!data||!Array.isArray(data.all_rows)||!data.all_rows.length){ toast('No verified students match the current filters'); return; } const rows=data.all_rows; const headers=['S/N','Permanent Admission Number','JHS Index Number','Student Name','Gender','Programme','Class','Residential Status','House','Student Contact','Guardian Contact','Verification Date','Verified By']; const body=rows.map(function(row,idx){ return [idx+1,row.permanent_admission_number||'',row.bece_index||'',row.full_name||'',row.gender||'',row.programme||'',row.class_name||'',row.residential_status||'',row.house_name||'',row.student_phone||'',row.guardian_contact||'',(row.verified_at||'').slice(0,10),row.verified_by_name||'']; }); downloadExcelRows('verified-students-'+((rows[0]&&rows[0].school_code)||'SCHOOL')+'-'+(exportAdmissionYear()||new Date().getFullYear()),'Verified Students',headers,body,'Verified Students Report',rows.length); }
 async function exportVerifiedStudentsPdf(){ if(!can('export_verified_students')) return toast('You do not have permission to export verified students'); const {data,error}=await verificationAction('list_verified',{filters:Object.assign({},VERIFIED_STATE.filters||collectVerifiedFilters(),{page:1,page_size:5000})}); if(error||!data||!Array.isArray(data.all_rows)||!data.all_rows.length){ toast('No verified students match the current filters'); return; } const rows=data.all_rows; const headers=['S/N','Permanent Admission Number','JHS Index Number','Student Name','Gender','Programme','Class','Residential Status','House','Verification Date','Verified By']; const tableRows=rows.map(function(row,idx){ return [idx+1,row.permanent_admission_number||'',row.bece_index||'',row.full_name||'',row.gender||'',row.programme||'',row.class_name||'',row.residential_status||'',row.house_name||'',(row.verified_at||'').slice(0,10),row.verified_by_name||'']; }); const crest=(rows[0]&&rows[0].school_crest)||''; const schoolName=(rows[0]&&rows[0].school_name)||exportSchoolName(); const admissionYear=(rows[0]&&rows[0].academic_year)||exportAdmissionYear(); const filters=activeFilterPills(VERIFIED_STATE.filters||{}); const generated=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); const w=window.open('','_blank'); if(!w){ toast('Allow pop-ups to print / save PDF'); return; } w.document.write('<html><head><title>Verified Students Report</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,sans-serif;color:#111827;padding:18px 20px 10px}.pdf-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#ffffff}.pdf-brand{display:flex;align-items:center;gap:12px}.pdf-brand img{width:62px;height:62px;object-fit:contain}.pdf-title{font-size:24px;font-weight:800;line-height:1.1}.pdf-sub{font-size:12px;color:rgba(255,255,255,.9);margin-top:4px}.pdf-meta{text-align:right;font-size:12px;color:#ffffff}.pdf-filters{margin:10px 0 12px;font-size:12px;color:#334155}.pdf-filters span{display:inline-block;margin:0 8px 8px 0;padding:5px 8px;border-radius:999px;background:#e8f0ff;color:#123a78;font-weight:700}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #111827;padding:6px 7px;vertical-align:top;text-align:left}th{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#fff;font-weight:700}tbody tr:nth-child(even){background:#fafafa}.pdf-foot{margin-top:18px;font-size:11px;color:#4b5563;display:flex;justify-content:space-between;gap:18px}.sign{display:flex;justify-content:space-between;gap:30px;margin-top:32px}.sign div{width:240px;border-top:1px solid #1f2937;padding-top:8px}</style></head><body><div class="pdf-head"><div class="pdf-brand">'+(crest?'<img src="'+escapeAttr(crest)+'" alt="">':'')+'<div><div class="pdf-title">'+safeHtml(schoolName)+'</div><div class="pdf-sub">Verified Students Report · Academic Year '+safeHtml(admissionYear||'—')+'</div></div></div><div class="pdf-meta"><div><b>Generated:</b> '+safeHtml(generated)+'</div><div><b>Total records:</b> '+rows.length+'</div></div></div><div class="pdf-filters">'+(filters.length?filters.map(function(item){ return '<span>'+safeHtml(item)+'</span>'; }).join(''):'<span>All verified students</span>')+'</div><table><thead><tr>'+headers.map(function(h){ return '<th>'+safeHtml(h)+'</th>'; }).join('')+'</tr></thead><tbody>'+tableRows.map(function(r){ return '<tr>'+r.map(function(c){ return '<td>'+safeHtml(c==null?'':String(c),'&mdash;')+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table><div class="sign"><div>Admission Officer</div><div>Head of School</div></div><div class="pdf-foot"><div>'+safeHtml(exportHeadLabel())+'</div><div>Page 1 of 1</div></div></body></html>'); w.document.close(); setTimeout(function(){ w.print(); },350); }
@@ -4622,7 +4638,7 @@ document.addEventListener('input',function(e){
 });
 
 /* ===== MODAL / SIDEBAR ===== */
-function closeModal(){const overlay=$('overlay');overlay.classList.remove('show','manage-student-editor','verified-student-details','class-subject-details','user-account-editor');overlay.style.removeProperty('--manage-editor-top');overlay.style.removeProperty('--manage-editor-left');overlay.style.removeProperty('--manage-editor-bottom');}
+function closeModal(){const overlay=$('overlay');overlay.classList.remove('show','manage-student-editor','student-verification-dialog','verified-student-details','class-subject-details','user-account-editor');overlay.style.removeProperty('--manage-editor-top');overlay.style.removeProperty('--manage-editor-left');overlay.style.removeProperty('--manage-editor-bottom');}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
 function resetAdminScroll(){
   window.scrollTo(0,0);
@@ -5540,7 +5556,7 @@ const TPL_VARS=['CREST','CREST_TOP','CREST_CENTER','SCHOOL_NAME','SCHOOL_ADDRESS
 let TPL={letter:'',records:''}, tplCur='letter', tplRange=null, tplLoaded=false, tplBound=false, tplSelectedFloat=null;
 const TPL_EMPTY_MARKER='<div data-template-empty="1"></div>';
 function tplStoredHTML(html){
-  const raw=String(html||'').trim();
+  const raw=window.QATemplateSanitizer.sanitize(String(html||'')).trim();
   if(!raw) return TPL_EMPTY_MARKER;
   const probe=document.createElement('div');
   probe.innerHTML=raw;
@@ -5549,7 +5565,7 @@ function tplStoredHTML(html){
   return (text||visibleObject)?raw:TPL_EMPTY_MARKER;
 }
 function tplEditorDisplayHTML(html){
-  const raw=String(html||'').trim();
+  const raw=window.QATemplateSanitizer.sanitize(String(html||'')).trim();
   return raw===TPL_EMPTY_MARKER?'':raw;
 }
 function tplSelectionRoot(){
@@ -5963,7 +5979,13 @@ function permChecks(p){
 }
 function collectPerms(scopeId){ const o={}; document.querySelectorAll('#'+scopeId+' input[data-perm]').forEach(c=>{o[c.dataset.perm]=c.checked;}); return o; }
 function permToggleAll(on){ document.querySelectorAll('#u_perms input[data-perm]').forEach(c=>c.checked=on); }
-function genPass2(){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)];const el=$('u_pass');if(el)el.value=p;}
+function secureTemporaryPassword(length){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const bytes=new Uint8Array(Math.max(Number(length)||12,8));
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes,function(byte){return c[byte%c.length];}).join('');
+}
+function genPass2(){const el=$('u_pass');if(el)el.value=secureTemporaryPassword(12);}
 function openCreateUser(){
   const m=$('modal');
   m.innerHTML=`<div class="modal-head"><div><h2>Add school user</h2><p>Creates a login for ${safeHtml(SB_SCHOOL?SB_SCHOOL.name:'this school')}</p></div><button class="modal-x" onclick="closeModal()">×</button></div>
@@ -6021,7 +6043,7 @@ async function saveUserPerms(id){
 async function resetUserPwd(id){
   if(roGuard())return;
   const u=schoolUsers.find(x=>x.id===id); if(!u)return;
-  const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)];
+  const p=secureTemporaryPassword(12);
   if(!confirm('Reset password for '+(u.full_name||u.email)+'?\nNew password: '+p+'\n\nCopy it now — share it with the user.'))return;
   const {data,error}=await invokeFnDetailed('manage-user',{action:'password',user_id:id,password:p});
   if(error||(data&&data.error)){toast('Could not reset: '+((data&&data.message)||(error&&error.message)||'error'));return;}

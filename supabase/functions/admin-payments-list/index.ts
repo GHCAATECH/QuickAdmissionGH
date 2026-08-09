@@ -6,6 +6,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 type JsonRecord = Record<string, unknown>;
 const text = (value: unknown) => String(value ?? "").trim();
+const truthy = (value: unknown) => value === true || value === "true" || value === 1 || value === "1";
 function pageValue(value: unknown, fallback: number, max: number) { const n = Number(value); return Number.isFinite(n) ? Math.min(Math.max(Math.floor(n), 1), max) : fallback; }
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
@@ -18,11 +19,15 @@ async function resolveProfile(admin: ReturnType<typeof createClient>, req: Reque
 function canRead(profile: JsonRecord | null, schoolId: string) {
   if (!profile) return false;
   if (text(profile.role) === "super_admin") return true;
-  return text(profile.role) === "school_admin" && text(profile.school_id) === schoolId;
+  if (text(profile.role) !== "school_admin" || text(profile.school_id) !== schoolId) return false;
+  if (profile.permissions == null) return true;
+  if (typeof profile.permissions !== "object" || Array.isArray(profile.permissions)) return false;
+  const permissions = profile.permissions as JsonRecord;
+  return truthy(permissions.finance) || truthy(permissions.co_admin);
 }
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 
 Deno.serve(async (req: Request) => {

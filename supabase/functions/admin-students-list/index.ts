@@ -59,7 +59,7 @@ function firstStoragePath(...values: unknown[]) {
 
 async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, limit: number, seconds: number) {
   const { data, error } = await admin.rpc("consume_api_rate_limit", { p_bucket_key: key, p_limit: limit, p_window_seconds: seconds });
-  return !!error || data?.allowed !== false;
+  return !error && data?.allowed !== false;
 }
 
 async function resolveProfile(admin: ReturnType<typeof createClient>, req: Request) {
@@ -173,6 +173,69 @@ Deno.serve(async (req: Request) => {
       return json({ ok: false, error: "sign_failed", message: signError?.message || "Could not create a secure file link." }, 500);
     }
     return json({ ok: true, url: signed.signedUrl, expires_in: 600, file_type: fileType });
+  }
+
+  if (action === "batch_update") {
+    if (!canManageStudents(profile, schoolId)) {
+      return json({ ok: false, error: "forbidden", message: "Only the school owner or a co-admin can allocate students." }, 403);
+    }
+    const rawIds = body.student_ids;
+    const requestedPatch = body.patch;
+    if (!Array.isArray(rawIds) || rawIds.length < 1 || rawIds.length > 5_000
+      || rawIds.some((value) => !isUuid(text(value)))
+      || !requestedPatch || typeof requestedPatch !== "object" || Array.isArray(requestedPatch)) {
+      return json({ ok: false, error: "validation", message: "Supply between 1 and 5,000 valid student IDs and a valid allocation update." }, 400);
+    }
+    const studentIds = [...new Set(rawIds.map((value) => text(value)))];
+    const patch = requestedPatch as JsonRecord;
+    const update: JsonRecord = {};
+    for (const key of ["class_id", "house_id"]) {
+      if (!Object.prototype.hasOwnProperty.call(patch, key)) continue;
+      const value = text(patch[key]);
+      if (value && !isUuid(value)) {
+        return json({ ok: false, error: "validation", message: `Invalid ${key.replace("_id", "")}.` }, 400);
+      }
+      update[key] = value || null;
+    }
+    if (!Object.keys(update).length) {
+      return json({ ok: false, error: "validation", message: "Only class and house allocations can be changed in bulk." }, 400);
+    }
+
+    const classId = text(update.class_id);
+    const houseId = text(update.house_id);
+    const [studentsResult, classResult, houseResult] = await Promise.all([
+      admin.from("students").select("id,programme_id").eq("school_id", schoolId).in("id", studentIds),
+      classId ? admin.from("classrooms").select("id,programme_id").eq("id", classId).eq("school_id", schoolId).maybeSingle() : Promise.resolve({ data: null, error: null }),
+      houseId ? admin.from("houses").select("id").eq("id", houseId).eq("school_id", schoolId).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    ]);
+    const lookupError = studentsResult.error || classResult.error || houseResult.error;
+    if (lookupError) return json({ ok: false, error: "query_failed", message: lookupError.message }, 500);
+    if ((studentsResult.data ?? []).length !== studentIds.length) {
+      return json({ ok: false, error: "not_found", message: "One or more students do not belong to this school." }, 404);
+    }
+    if (classId && !classResult.data) {
+      return json({ ok: false, error: "validation", message: "The selected class does not belong to this school." }, 400);
+    }
+    if (houseId && !houseResult.data) {
+      return json({ ok: false, error: "validation", message: "The selected house does not belong to this school." }, 400);
+    }
+    const classProgrammeId = text(classResult.data?.programme_id);
+    if (classProgrammeId && (studentsResult.data ?? []).some((student) => text(student.programme_id) !== classProgrammeId)) {
+      return json({ ok: false, error: "validation", message: "Every selected student must belong to the class programme." }, 400);
+    }
+
+    const { data: saved, error: saveError } = await admin
+      .from("students")
+      .update(update)
+      .eq("school_id", schoolId)
+      .in("id", studentIds)
+      .select("id,class_id,house_id");
+    if (saveError) return json({ ok: false, error: "save_failed", message: saveError.message }, 500);
+    if ((saved ?? []).length !== studentIds.length) {
+      return json({ ok: false, error: "save_incomplete", message: "Not every student allocation was updated." }, 409);
+    }
+    listCache.clear();
+    return json({ ok: true, students: saved, updated: saved?.length ?? 0 });
   }
 
   if (action === "update") {

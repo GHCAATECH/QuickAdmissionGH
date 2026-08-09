@@ -1430,7 +1430,12 @@ function renderSchools(){
   $('badge-schools').textContent=schools.filter(s=>s.status!=='suspended').length;
 }
 function aInit(n){return ((n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('')||'?').toUpperCase();}
-function genStr(n){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<(n||10);i++)p+=c[Math.floor(Math.random()*c.length)];return p;}
+function genStr(n){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const bytes=new Uint8Array(Math.max(Number(n)||10,8));
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes,function(byte){return c[byte%c.length];}).join('');
+}
 function renderAdmins(){
   if(!admins.length){$('adminRows').innerHTML=emptyRow(7,'No admin accounts yet. Use "Create admin".');return;}
   $('adminRows').innerHTML=admins.map(a=>`<tr>
@@ -1834,7 +1839,7 @@ function openCreateAdmin(){
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="a_btn" onclick="createAdmin()">Create admin</button></div>`;
   $('overlay').classList.add('show');
 }
-function genPass(){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)];const el=$('a_pass');if(el)el.value=p;}
+function genPass(){const el=$('a_pass');if(el)el.value=genStr(12);}
 function closeModal(){$('overlay').classList.remove('show');}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
 
