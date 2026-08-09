@@ -1134,9 +1134,9 @@
 
               <div class="sub-h">Enrolment data - Part 2 <span class="req-note">enter exactly as captured on your CSSPS enrolment form</span></div>
               <div class="grid-2"><div class="field"><label>Raw Score <span class="rq">*</span></label><input type="number" id="pf-raw" placeholder="e.g. 232"></div><div class="field"><label>Enrolment Code <span class="rq">*</span></label><input id="pf-enrol" class="input-mono" placeholder="ENRXXXXXX"></div></div>
-              <div class="field"><label>Enrolment Form upload <span class="hint">(.jpg / .jpeg - max 2 MB)</span> <span class="rq">*</span></label>
+              <div class="field"><label>Enrolment Form upload <span class="hint">(.jpg / .jpeg - max 5 MB)</span> <span class="rq">*</span></label>
                 <input type="file" id="enrFileInput" accept="image/jpeg,.jpg,.jpeg" style="display:none" onchange="handleEnrFile(this)">
-                <div id="enrWrap"><div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only - up to 2 MB - enrolment code must be visible</small></div></div></div>
+                <div id="enrWrap"><div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only - up to 5 MB - enrolment code must be visible</small></div></div></div>
               <div class="grid-2"><div class="field"><label>Name of JHS Attended <span class="rq">*</span></label><input id="pf-jhs" placeholder="e.g. KANESHIE KINGSWAY 2 BASIC"></div><div class="field"><label>JHS Type <span class="rq">*</span></label><select id="pf-jhstype"><option value="">Select...</option><option>PUBLIC</option><option>PRIVATE</option></select></div></div>
               <div class="step-nav"><span></span><button class="btn btn-primary" onclick="stepNext(0)">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
             </div></div></section>
@@ -2097,7 +2097,7 @@ async function handleEnrFile(inp){
   if(!file) return;
   const isJpg = file.type==='image/jpeg' || file.type==='image/jpg' || /\.jpe?g$/i.test(file.name);
   if(!isJpg){ toast('Please upload a JPG image'); return; }
-  if(file.size > 2*1024*1024){ toast('File too large - max 2 MB'); return; }
+  if(file.size > 5*1024*1024){ toast('File too large - max 5 MB'); return; }
   if(!STU||!session){ toast('Please log in again'); return; }
   $('enrWrap').innerHTML='<div class="dropzone"><b>Uploading...</b><small>Please wait</small></div>';
   const ext = /\.jpe?g$/i.test(file.name) ? file.name.split('.').pop() : 'jpg';
@@ -2116,7 +2116,7 @@ async function handleEnrFile(inp){
   $('enrWrap').innerHTML=`<div class="file-done"><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div><b>${file.name.replace(/[<>"]/g,'')}</b><small>Uploaded - ${kb} KB</small></div><button class="x" onclick="removeEnr()">Remove</button></div>`;
   toast('Enrolment form uploaded');
 }
-function removeEnr(){app.enrUploaded=false;app.fields.enrolment_form_url='';app.fields.enrolment_form_path='';app.fields.enrolment_uploaded=false;$('enrWrap').innerHTML=`<div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only - up to 2 MB - enrolment code must be visible</small></div>`;}
+function removeEnr(){app.enrUploaded=false;app.fields.enrolment_form_url='';app.fields.enrolment_form_path='';app.fields.enrolment_uploaded=false;$('enrWrap').innerHTML=`<div class="dropzone" onclick="uploadEnr()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><b>Tap to upload your enrolment form</b><small>JPG only - up to 5 MB - enrolment code must be visible</small></div>`;}
 function resetPassportUploadUi(){
   const wrap=$('photoWrap'); if(!wrap)return;
   app.photoUploaded=false;
