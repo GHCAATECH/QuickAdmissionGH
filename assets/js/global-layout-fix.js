@@ -1,10 +1,5 @@
 "use strict";
 
-const QA_SYSTEM_FOOTER_LOGO = new URL(
-  "../../logo-icon.svg",
-  document.currentScript?.src || window.location.href
-).href;
-
 function enhanceSystemFooters() {
   document
     .querySelectorAll("body > footer.system-footer")
@@ -14,32 +9,6 @@ function enhanceSystemFooters() {
       footer.dataset.qaIndexFooter = "true";
       footer.classList.add("qa-index-footer");
       footer.innerHTML = `
-        <div class="qa-index-footer-main">
-          <div class="qa-index-footer-brand">
-            <div class="qa-index-footer-logo">
-              <img src="${QA_SYSTEM_FOOTER_LOGO}" alt="QuickAdmissionGH logo">
-            </div>
-            <div>
-              <h2>QuickAdmissionGH</h2>
-              <p>Connecting students to a secure, transparent and convenient Senior High School admission process across Ghana.</p>
-            </div>
-          </div>
-          <div class="qa-index-footer-support" aria-label="QuickAdmissionGH support">
-            <h3>Support</h3>
-            <a href="tel:0256744028">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/></svg>
-              <span>0256744028</span>
-            </a>
-            <a href="mailto:admissions@quickadmissiongh.com">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-              <span>admissions@quickadmissiongh.com</span>
-            </a>
-            <span class="qa-index-footer-hours">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-              <span>Monday - Friday: 8:00 AM - 5:00 PM</span>
-            </span>
-          </div>
-        </div>
         <div class="qa-index-footer-bottom">
           <div class="qa-index-footer-bottom-inner">
             <span>&copy; 2026 QuickAdmissionGH. All rights reserved.</span>
