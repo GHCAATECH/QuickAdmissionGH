@@ -112,9 +112,7 @@ Deno.serve(async (req: Request) => {
         message: "This payment reference belongs to a different student record.",
       }, 409);
     }
-    if (st?.admission_token) return json({ ok: true, token: st.admission_token, reused: true, reference, school_id: st.school_id || existingPay.school_id });
-  }
-  if (existingPay) {
+  } else if (existingPay) {
     return json({
       ok: false,
       error: "reference_incomplete",
@@ -188,6 +186,13 @@ Deno.serve(async (req: Request) => {
     sid = (s2 as string) || null;
   }
   if (!sid) return json({ ok: false, error: "not_placed", message: "Index not on any placement list." }, 400);
+  if (existingPay?.school_id && safeString(existingPay.school_id) !== sid) {
+    return json({
+      ok: false,
+      error: "reference_mismatch",
+      message: "This payment reference belongs to a different school.",
+    }, 409);
+  }
   if (metadataSchoolId && metadataSchoolId !== sid) {
     return json({
       ok: false,
@@ -263,7 +268,10 @@ Deno.serve(async (req: Request) => {
     if (se || !stu) return json({ ok: false, error: "save_failed", message: se?.message }, 400);
     studentId = stu.id;
   }
-  const { error: paymentError } = await admin.from("payments").insert({
+  if (existingPay?.student_id && safeString(existingPay.student_id) !== studentId) {
+    return json({ ok: false, error: "reference_mismatch", message: "This payment reference belongs to a different student record." }, 409);
+  }
+  const paymentRecord = {
     school_id: sid,
     student_id: studentId,
     reference,
@@ -274,7 +282,10 @@ Deno.serve(async (req: Request) => {
     email: body.email,
     status: "completed",
     paid_at: new Date().toISOString(),
-  });
+  };
+  const { error: paymentError } = existingPay
+    ? await admin.from("payments").update(paymentRecord).eq("id", existingPay.id).eq("student_id", studentId)
+    : await admin.from("payments").insert(paymentRecord);
   if (paymentError) {
     if (paymentError.code === "23505") {
       const { data: racedPayment } = await admin
