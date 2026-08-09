@@ -226,6 +226,18 @@ body.platform-directory-active #s-login .school-directory-hero-copy {
   min-width: 0;
 }
 
+body.platform-directory-active #s-login .school-directory-hero-text-panel {
+  width: fit-content;
+  max-width: 100%;
+  padding: clamp(18px, 2vw, 26px) clamp(20px, 2.4vw, 32px);
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 8px;
+  background: rgba(6, 42, 88, 0.78) !important;
+  box-shadow: 0 18px 38px rgba(6, 42, 88, 0.2) !important;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
 body.platform-directory-active #s-login .school-directory-welcome {
   display: flex;
   align-items: center;
@@ -249,10 +261,10 @@ body.platform-directory-active #s-login .school-directory-welcome::after {
 
 body.platform-directory-active #s-login .school-directory-hero-copy h1 {
   margin: 0;
-  color: #071f43 !important;
-  -webkit-text-fill-color: #071f43 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 56px !important;
+  font-size: 45px !important;
   font-weight: 700;
   line-height: 0.98;
   letter-spacing: 0;
@@ -261,8 +273,8 @@ body.platform-directory-active #s-login .school-directory-hero-copy h1 {
 
 body.platform-directory-active #s-login .school-directory-hero-subtitle {
   margin: 14px 0 0;
-  color: #071f43 !important;
-  -webkit-text-fill-color: #071f43 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 20px !important;
   font-weight: 700;
@@ -272,8 +284,8 @@ body.platform-directory-active #s-login .school-directory-hero-subtitle {
 body.platform-directory-active #s-login .school-directory-hero-description {
   max-width: 600px;
   margin: 15px 0 0;
-  color: #314158 !important;
-  -webkit-text-fill-color: #314158 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
   font-size: 15px !important;
   line-height: 1.55;
 }
@@ -729,7 +741,7 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
   }
 
   body.platform-directory-active #s-login .school-directory-hero-copy h1 {
-    font-size: 48px !important;
+    font-size: 38px !important;
   }
 }
 
@@ -898,7 +910,7 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
   }
 
   body.platform-directory-active #s-login .school-directory-hero-copy h1 {
-    font-size: 28px !important;
+    font-size: 26px !important;
   }
 
   body.platform-directory-active #s-login .school-directory-hero-subtitle {
@@ -958,6 +970,11 @@ body.platform-directory-active #s-login .school-directory-footer-bottom-inner st
 
   body.platform-directory-active #s-login .school-directory-welcome {
     justify-content: center;
+  }
+
+  body.platform-directory-active #s-login .school-directory-hero-text-panel {
+    width: 100%;
+    padding: 18px 16px;
   }
 
   body.platform-directory-active #s-login .school-directory-hero-description {
