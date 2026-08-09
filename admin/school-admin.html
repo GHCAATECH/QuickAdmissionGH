@@ -1474,7 +1474,7 @@
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260808-mobile-scroll-owner-31">
 <link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260808-sidebar-profile-bottom-18">
-<link rel="stylesheet" href="../assets/css/system-footer.css?v=20260809-centered-footer-8">
+<link rel="stylesheet" href="../assets/css/system-footer.css?v=20260809-admin-allocation-footer-9">
 <link rel="stylesheet" href="../assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <style>
   body .current-user-badge {
@@ -4549,6 +4549,7 @@ function go(view){
   closeReports();
   if(!can(VIEW_CAP[view])){ view=firstAllowedView(); }
   const actualView=view==='sms-settings'?'setup':view;
+  document.body.classList.toggle('qa-admin-footer-bottom-view',['manage-students','house-alloc','class-alloc'].includes(view));
   document.querySelectorAll('.nav-item,.nav-sub').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
   // open the category containing the active view, collapse the rest
   document.querySelectorAll('#nav .nav-group').forEach(g=>g.classList.remove('open'));

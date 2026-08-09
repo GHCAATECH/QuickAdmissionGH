@@ -196,6 +196,13 @@ body.system-footer-page > footer.system-footer.qa-index-footer {
   flex: 0 0 auto;
 }
 
+/* Keep short management and allocation views visually anchored to the
+   bottom without fixing the footer over longer tables. */
+body.system-footer-page.school-admin-page.qa-admin-footer-bottom-view
+  > footer.system-footer.qa-index-footer {
+  margin-top: auto !important;
+}
+
 body.system-footer-page > footer.system-footer.qa-index-footer *,
 body.system-footer-page > footer.system-footer.qa-index-footer h2,
 body.system-footer-page > footer.system-footer.qa-index-footer h3,
