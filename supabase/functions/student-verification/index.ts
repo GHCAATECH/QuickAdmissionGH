@@ -501,7 +501,6 @@ Deno.serve(async (req: Request) => {
       const studentId = safeText(body.student_id);
       if (!studentId) return json({ ok: false, error: 'validation', message: 'student_id is required.' }, 400);
       const reason = safeText(body.reason);
-      if (!reason) return json({ ok: false, error: 'validation', message: 'A reversal reason is required.' }, 400);
       const data = await runRpc(admin, 'reverse_student_verification_backend', {
         p_student_id: studentId,
         p_actor_id: profile.id,
