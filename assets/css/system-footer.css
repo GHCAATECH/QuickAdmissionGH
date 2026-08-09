@@ -168,3 +168,201 @@ body.system-footer-page.school-admin-page {
 body.system-footer-page.school-admin-page > footer.system-footer {
   margin-top: auto !important;
 }
+
+/* =====================================================
+   INDEX-STYLE FOOTER USED THROUGHOUT THE SYSTEM
+===================================================== */
+body.system-footer-page > footer.system-footer.qa-index-footer {
+  display: block !important;
+  visibility: visible !important;
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  transform: none !important;
+  border: 0 !important;
+  border-top: 2px solid #d9a323 !important;
+  background: #062a58 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Arial, sans-serif;
+  text-align: left !important;
+  flex: 0 0 auto;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer *,
+body.system-footer-page > footer.system-footer.qa-index-footer h2,
+body.system-footer-page > footer.system-footer.qa-index-footer h3,
+body.system-footer-page > footer.system-footer.qa-index-footer p,
+body.system-footer-page > footer.system-footer.qa-index-footer a,
+body.system-footer-page > footer.system-footer.qa-index-footer span {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 42px;
+  width: min(1240px, calc(100% - 40px));
+  margin: 0 auto !important;
+  padding: 22px 0 18px !important;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-logo {
+  width: 68px;
+  height: 68px;
+  flex: 0 0 68px;
+  padding: 5px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #ffffff !important;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer h2 {
+  margin: 0 0 5px !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer p {
+  max-width: 420px;
+  margin: 0 !important;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.55;
+  opacity: 0.82;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-support {
+  padding-left: 42px;
+  border-left: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-support h3 {
+  margin: 0 0 8px !important;
+  color: #f4bd37 !important;
+  -webkit-text-fill-color: #f4bd37 !important;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-support > a,
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-hours {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 27px;
+  margin: 0 !important;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-support svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.23) !important;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-bottom-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: min(1240px, calc(100% - 40px));
+  min-height: 46px;
+  margin: 0 auto !important;
+  padding: 10px 0 max(10px, env(safe-area-inset-bottom)) !important;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-bottom-inner strong {
+  color: #f4bd37 !important;
+  -webkit-text-fill-color: #f4bd37 !important;
+}
+
+@media (max-width: 640px) {
+  body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    width: calc(100% - 28px);
+    padding: 22px 0 18px !important;
+  }
+
+  body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-brand {
+    align-items: flex-start;
+  }
+
+  body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-support {
+    padding: 18px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.24) !important;
+    border-left: 0 !important;
+  }
+
+  body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-bottom-inner {
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: calc(100% - 28px);
+    min-height: 76px;
+    padding: 12px 0 max(12px, env(safe-area-inset-bottom)) !important;
+    text-align: center;
+  }
+}
+
+@media (max-width: 360px) {
+  body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-brand {
+    gap: 12px;
+  }
+
+  body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-logo {
+    width: 58px;
+    height: 58px;
+    flex-basis: 58px;
+  }
+
+  body.system-footer-page > footer.system-footer.qa-index-footer h2 {
+    font-size: 18px;
+  }
+
+  body.system-footer-page > footer.system-footer.qa-index-footer p,
+  body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-support > a,
+  body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-hours {
+    font-size: 11px;
+  }
+}
