@@ -809,6 +809,7 @@
 <link rel="stylesheet" href="assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <link rel="stylesheet" href="assets/css/session-loader.css?v=20260808-light-loader-1">
 <link rel="stylesheet" href="assets/css/table-nowrap.css?v=20260809-system-nowrap-1">
+<link rel="stylesheet" href="assets/css/passport-photo.css?v=20260809-passport-avatar-1">
 <script src="assets/js/global-layout-fix.js?v=20260809-admin-footer-flow-24" defer></script>
 </head>
 <body class="booting student-portal-page system-footer-page">
@@ -1391,6 +1392,30 @@ async function studentSignedFileUrl(pathOrUrl){
 }
 const progById=id=>PROGRAMMES.find(p=>p.id===id);
 const initials=n=>{const w=(n||'').trim().split(' ').filter(Boolean);return ((w[0]&&w[0][0]||'?')+(w[1]&&w[1][0]||'')).toUpperCase();};
+function setStudentAvatarFallback(name){
+  const fallback=initials(name||'Applicant');
+  ['sbAvatar','wuAvatar'].forEach(function(id){
+    const avatar=$(id);
+    if(!avatar)return;
+    avatar.classList.remove('has-passport-photo');
+    avatar.replaceChildren();
+    avatar.textContent=fallback;
+  });
+}
+function setStudentPassportAvatar(src){
+  const photoSrc=String(src||'').trim();
+  if(!photoSrc)return;
+  ['sbAvatar','wuAvatar'].forEach(function(id){
+    const avatar=$(id);
+    if(!avatar)return;
+    const image=document.createElement('img');
+    image.src=photoSrc;
+    image.alt='Passport photo';
+    image.addEventListener('error',function(){ setStudentAvatarFallback(studentName(STU)||'Applicant'); },{once:true});
+    avatar.classList.add('has-passport-photo');
+    avatar.replaceChildren(image);
+  });
+}
 function qagTabScope(){
   try{ if(window.parent&&window.parent!==window&&window.parent.name) return window.parent.name; }catch(e){}
   try{ return window.name||'qag_tab_fallback'; }catch(e){ return 'qag_tab_fallback'; }
@@ -1654,12 +1679,11 @@ function hydrate(){
   const smsContact=studentContact(s);
   if(smsContact)s.contact=smsContact;
   $('sbName').textContent=displayName;
-  $('sbAvatar').textContent=initials(displayName);
+  setStudentAvatarFallback(displayName);
   { const url=schoolCrest(); const im=$('sbCrestImg'), tx=$('sbCrestText'), box=$('sbCrest');
     if(url){ if(im){im.src=url;im.style.display='block';} if(tx)tx.style.display='none'; if(box)box.classList.add('has-img'); }
     else { if(im)im.style.display='none'; if(tx)tx.style.display=''; if(box)box.classList.remove('has-img'); } }
   $('wuName').textContent=displayName;
-  $('wuAvatar').textContent=initials(displayName);
   $('wuSchoolNo').textContent='Admission Number: '+(s.school_no||'______________________________');
   app.done=s.submitted?[true,true,true]:[!!s.personal_done,!!s.programme_done,!!s.undertaking_done];
   app.classId=s.class_id||null;
@@ -2117,7 +2141,8 @@ async function handlePassportFile(inp){
   app.fields.passport_photo_url='enrolment-forms/'+path;
   app.fields.passport_photo_path=path;
   app.fields.passport_photo_uploaded=true;
-  $('photoWrap').innerHTML=`<div class="file-done"><span class="fi"><img src="${escapeHtml(previewUrl)}" alt="" style="width:48px;height:54px;object-fit:cover;border-radius:6px"></span><div><b>${escapeHtml(file.name)}</b><small>Passport photo uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
+  $('photoWrap').innerHTML=`<div class="file-done passport-photo-done"><span class="fi passport-preview-frame"><img src="${escapeHtml(previewUrl)}" alt="Passport photo"></span><div><b>${escapeHtml(file.name)}</b><small>Passport photo uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
+  setStudentPassportAvatar(previewUrl);
   toast('Passport photo uploaded');
 }
 
@@ -2172,7 +2197,8 @@ async function refreshPassportPreview(r){
   if(!wrap||!r)return;
   const src=await studentSignedFileUrl(r.passport_photo_path||r.passport_photo_url);
   if(!src)return;
-  wrap.innerHTML=`<div class="file-done"><span class="fi"><img src="${escapeHtml(src)}" alt="" style="width:48px;height:54px;object-fit:cover;border-radius:6px"></span><div><b>passport-photo</b><small>Uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
+  wrap.innerHTML=`<div class="file-done passport-photo-done"><span class="fi passport-preview-frame"><img src="${escapeHtml(src)}" alt="Passport photo"></span><div><b>passport-photo</b><small>Uploaded</small></div><button class="x" onclick="resetPassportUploadUi()">Remove</button></div>`;
+  setStudentPassportAvatar(src);
 }
 function rev(t,rows,step){return `<div class="rev-block"><div class="rev-head"><span class="t">${safeHtml(t)}</span><a onclick="goStep(${step})" style="font-size:11.5px">edit</a></div><dl class="rev-body">${rows.map(r=>`<dt>${safeHtml(r[0])}</dt><dd>${safeHtml(r[1],'-')}</dd>`).join('')}</dl></div>`;}
 function buildReview(){

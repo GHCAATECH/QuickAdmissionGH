@@ -1,0 +1,49 @@
+/* Passport photos use a fixed portrait frame in the form and on the dashboard. */
+#photoWrap .file-done.passport-photo-done {
+  min-height: 92px;
+  padding: 8px 12px;
+}
+
+#photoWrap .file-done .passport-preview-frame {
+  display: block !important;
+  width: 58px !important;
+  min-width: 58px !important;
+  height: 74px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  flex: 0 0 58px !important;
+  border: 1px solid rgba(0, 43, 76, 0.24) !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+}
+
+#photoWrap .passport-preview-frame img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  background: #ffffff !important;
+}
+
+#sbAvatar.has-passport-photo,
+#wuAvatar.has-passport-photo {
+  padding: 0 !important;
+  overflow: hidden !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background: #ffffff !important;
+}
+
+#sbAvatar.has-passport-photo img,
+#wuAvatar.has-passport-photo img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: inherit;
+  background: #ffffff !important;
+}
