@@ -1499,6 +1499,7 @@
   }
 </style>
 <link rel="stylesheet" href="../assets/css/session-loader.css?v=20260808-light-loader-1">
+<link rel="stylesheet" href="../assets/css/table-nowrap.css?v=20260809-system-nowrap-1">
 <script src="../assets/js/global-layout-fix.js?v=20260809-admin-footer-flow-24" defer></script>
 <script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
 </head>
@@ -1956,7 +1957,7 @@
             </div>
             <div class="finance-rate-note">Request form comes next. Transaction charge estimated at 1%.</div>
           </div>
-          <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table"><thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">Successful Payments /<br>Placement Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00]<br>Head [GHC7.50]</span></th><th>Total</th><th>Claim Status</th><th><span class="finance-head-stack">Successful Payments<br>Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead><tbody id="financeSettlementRows"></tbody></table></div>
+          <div class="tbl-wrap finance-settlement-wrap"><table class="finance-settlement-table"><thead><tr><th>S/N</th><th><span class="finance-head-stack">Name of School</span></th><th><span class="finance-head-stack">Successful Payments / Placement Students</span></th><th><span class="finance-head-stack">IT/Contact Person [GHC5.00] / Head [GHC7.50]</span></th><th>Total</th><th>Claim Status</th><th><span class="finance-head-stack">Successful Payments Paid</span></th><th><span class="finance-head-stack">Amount Paid</span></th></tr></thead><tbody id="financeSettlementRows"></tbody></table></div>
         </div>
         <div class="panel"><div class="panel-head"><div><h3>Transactions</h3><div class="sub">Token purchases</div></div><div class="finance-transactions-tools"><div class="finance-transactions-search"><input id="financePaySearch" placeholder="Search student, index, txn..." onkeydown="if(event.key==='Enter')applyFinancePaymentSearch()"><button class="btn btn-ghost btn-sm" type="button" onclick="applyFinancePaymentSearch()">Search</button></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" type="button" onclick="downloadFinancePaymentsCSV()">CSV</button><button class="btn btn-ghost btn-sm" type="button" onclick="printFinancePayments()">PDF</button></div></div></div>
           <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Student</th><th>Index No</th><th>Amount</th><th>Method</th><th>Status</th><th>Txn ID</th></tr></thead><tbody id="payRows"></tbody></table></div>
