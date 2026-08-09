@@ -469,6 +469,9 @@
     }
     body.student-dashboard-active #panel-form .stepcard{padding-left:0!important;padding-right:0!important}
     body.student-dashboard-active #panel-form .card2-body{padding:18px 14px}
+    body.student-dashboard-active #panel-form #pf-dob{display:block;inline-size:100%!important;width:100%!important;min-inline-size:0!important;min-width:0!important;max-width:100%!important;box-sizing:border-box}
+    body.student-dashboard-active #panel-form #pf-dob::-webkit-date-and-time-value{min-width:0;text-align:left}
+    body.student-dashboard-active #panel-form #pf-dob::-webkit-datetime-edit{min-width:0;padding:0}
     body.student-dashboard-active #panel-form .sub-h{display:flex;flex-direction:column;align-items:flex-start;gap:4px;line-height:1.35}
     body.student-dashboard-active #panel-form .req-note{display:block;margin-left:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
     body.student-dashboard-active #panel-form .cls-wrap{width:100%;min-width:0;max-width:100%;overflow-x:hidden}
@@ -1662,7 +1665,7 @@
 
             <!-- STEP 1 - PERSONAL -->
             <section class="stepcard" data-step="1"><div class="card2"><div class="card2-head"><h2>Personal data</h2><p>Some fields are mandatory.</p></div><div class="card2-body">
-              <div class="grid-2"><div class="field"><label>Date of Birth <span class="rq">*</span></label><input type="date" id="pf-dob"></div><div class="field"><label>Place of Birth <span class="rq">*</span></label><input id="pf-pob"></div></div>
+              <div class="grid-2"><div class="field"><label>Date of Birth <span class="rq">*</span></label><input type="date" id="pf-dob" autocomplete="bday"></div><div class="field"><label>Place of Birth <span class="rq">*</span></label><input id="pf-pob"></div></div>
               <div class="grid-2"><div class="field"><label>Nationality <span class="rq">*</span></label><select id="pf-nat" onchange="toggleOther('pf-nat')"></select><input id="pf-nat-other" placeholder="Please specify nationality" style="display:none;margin-top:6px"></div><div class="field"><label>Religion <span class="rq">*</span></label><select id="pf-rel" onchange="onReligionChange()"><option value="">Select...</option><option value="Christianity">Christian</option><option>Islam</option><option>Traditional African Religions</option><option>Buddhism</option><option>Hinduism</option><option>Judaism</option><option>Atheism/Agnosticism</option><option>Other</option></select><input id="pf-rel-other" placeholder="Please specify religion" style="display:none;margin-top:6px"></div></div>
               <div class="grid-2"><div class="field" id="pf-den-field" style="display:none"><label>Religious Denomination <span class="rq">*</span></label><select id="pf-den" onchange="toggleOther('pf-den')"><option value="">Select...</option><option>Catholic</option><option>Methodist</option><option>Anglican</option><option>Presbyterian</option><option>Pentecostal</option><option>Baptist</option><option>Lutheran</option><option>Seventh-Day Adventist</option><option>Evangelical Charismatic</option><option>Church of Christ</option><option>Other</option></select><input id="pf-den-other" placeholder="Please specify denomination" style="display:none;margin-top:6px"></div><div class="field"><label>Permanent Address <span class="rq">*</span></label><input id="pf-addr" placeholder="House / digital address"></div></div>
               <div class="grid-3"><div class="field"><label>Town <span class="rq">*</span></label><input id="pf-town"></div><div class="field"><label>Region <span class="rq">*</span></label><select id="pf-region"></select></div><div class="field"><label>District <span class="rq">*</span></label><input id="pf-district" list="pf-district-list" placeholder="Start typing your district"><datalist id="pf-district-list"></datalist></div></div>
@@ -2366,6 +2369,24 @@ function refreshRail(){
 }
 function goStep(i){app.current=i;document.querySelectorAll('.stepcard').forEach(c=>c.classList.toggle('active',c.dataset.step==i));if(i===3)buildReview();refreshRail();window.scrollTo(0,0);}
 function val(id){var e=$(id);return e?e.value.trim():'';}
+function maxDobValue(){
+  const now=new Date();
+  return [now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+}
+function normalizeDobValue(value){
+  const raw=String(value||'').trim();
+  if(!raw)return '';
+  let match=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/),year,month,day;
+  if(match){year=Number(match[1]);month=Number(match[2]);day=Number(match[3]);}
+  else{
+    match=raw.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+    if(!match)return '';
+    day=Number(match[1]);month=Number(match[2]);year=Number(match[3]);
+  }
+  const checked=new Date(year,month-1,day);
+  if(checked.getFullYear()!==year||checked.getMonth()!==month-1||checked.getDate()!==day)return '';
+  return [String(year).padStart(4,'0'),String(month).padStart(2,'0'),String(day).padStart(2,'0')].join('-');
+}
 function need(ids){for(const id of ids){if(!val(id)){const e=$(id);if(e){e.focus();e.style.borderColor='var(--danger)';setTimeout(()=>e.style.borderColor='',1500);}return false;}}return true;}
 const FIELD_STATE_KEYS={
   'pf-raw':'raw_score','pf-enrol':'enrolment_code','pf-jhs':'jhs_attended','pf-jhstype':'jhs_type',
@@ -2385,7 +2406,8 @@ function storedFieldValue(id){
 }
 function fieldValue(id,useStored){
   const live=OTHER_VALUE_IDS.has(id)?otherVal(id).trim():val(id);
-  return live||((useStored&&storedFieldValue(id))||'');
+  const value=live||((useStored&&storedFieldValue(id))||'');
+  return id==='pf-dob'?normalizeDobValue(value):value;
 }
 function firstMissing(ids,useStored){
   for(const id of ids){ if(!fieldValue(id,useStored)) return id; }
@@ -2418,6 +2440,7 @@ function validateStep(step,opts){
   if(step===1){
     const missing=firstMissing(['pf-dob','pf-pob','pf-nat','pf-rel','pf-addr','pf-town','pf-region','pf-district','pf-interest'],useStored);
     if(missing) return failStep(step,'Please complete the required personal fields',missing,silent);
+    if(fieldValue('pf-dob',useStored)>maxDobValue()) return failStep(step,'Date of birth cannot be in the future','pf-dob',silent);
     if(isChristianReligion()&&!fieldValue('pf-den',useStored)) return failStep(step,'Please select your religious denomination','pf-den',silent);
     if(allowClassSelection()&&!app.classId&&eligibleStudentClasses().length) return failStep(step,'Please select a class','',silent);
   }
@@ -2436,6 +2459,7 @@ function syncStepCompletion(){
 function buildPickers(){
   $('pf-region').innerHTML='<option value="">Select...</option>'+REGIONS.map(r=>`<option>${r}</option>`).join('');
   $('pf-nat').innerHTML=NATIONALITIES.map(n=>`<option ${n==='Ghanaian'?'selected':''}>${n}</option>`).join('');
+  const dob=$('pf-dob');if(dob)dob.max=maxDobValue();
   var districtList=$('pf-district-list');
   if(districtList) districtList.innerHTML=DISTRICTS.map(function(d){ return `<option value="${d}"></option>`; }).join('');
 }
@@ -2673,7 +2697,7 @@ function prefillRecords(r){
   if(!r)return;
   const set=(id,v)=>{const e=$(id);if(e&&v!=null)e.value=v;};
   set('pf-raw',r.raw_score);set('pf-enrol',r.enrolment_code);set('pf-jhs',r.jhs_attended);set('pf-jhstype',r.jhs_type);
-  set('pf-dob',r.dob);set('pf-pob',r.place_of_birth);setSelectMaybeOther('pf-nat',r.nationality);setSelectMaybeOther('pf-rel',r.religion);setSelectMaybeOther('pf-den',r.denomination);
+  set('pf-dob',normalizeDobValue(r.dob));set('pf-pob',r.place_of_birth);setSelectMaybeOther('pf-nat',r.nationality);setSelectMaybeOther('pf-rel',r.religion);setSelectMaybeOther('pf-den',r.denomination);
   set('pf-addr',r.address);set('pf-town',r.town);set('pf-region',r.region);set('pf-district',r.district);setSelectMaybeOther('pf-interest',r.interest);set('pf-card',r.ghana_card);
   set('pf-sms',r.sms_contact);set('pf-wa',r.whatsapp);set('pf-other',r.other_phone);set('pf-email',r.email);
   set('pf-fname',r.father_name);set('pf-focc',r.father_occupation);set('pf-fphone',r.father_phone);set('pf-mname',r.mother_name);set('pf-mocc',r.mother_occupation);set('pf-mphone',r.mother_phone);
