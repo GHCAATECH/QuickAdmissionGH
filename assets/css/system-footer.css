@@ -203,6 +203,21 @@ body.system-footer-page.school-admin-page.qa-admin-footer-bottom-view
   margin-top: auto !important;
 }
 
+/* The admin shell itself must occupy the remaining viewport on short tables.
+   This prevents empty page background from appearing below the footer. */
+body.system-footer-page.school-admin-page.qa-admin-footer-bottom-view > .app,
+body.system-footer-page.school-admin-page:has(
+    #view-manage-students.active,
+    #view-house-alloc.active,
+    #view-class-alloc.active
+  )
+  > .app {
+  height: auto !important;
+  min-height: calc(100vh - var(--system-footer-height, 46px)) !important;
+  min-height: calc(100dvh - var(--system-footer-height, 46px)) !important;
+  max-height: none !important;
+}
+
 body.system-footer-page > footer.system-footer.qa-index-footer *,
 body.system-footer-page > footer.system-footer.qa-index-footer h2,
 body.system-footer-page > footer.system-footer.qa-index-footer h3,
