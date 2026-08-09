@@ -409,6 +409,8 @@
   .cls-subject-summary{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px}
   .cls-subject-summary span{display:inline;white-space:normal}
   .cls-subject-more{flex:none;padding:4px 8px;border:1px solid var(--primary);border-radius:999px;background:var(--surface);color:var(--primary);font-size:10.5px;font-weight:700;line-height:1.2}
+  /* Keep the Personal Records grid from inheriting the class table's desktop width. */
+  .form-wrap>div,.stepcard,.card2,.card2-body,#classSelectBlock,#houseSelectBlock{min-width:0;max-width:100%}
   .subject-combo-overlay{position:fixed;inset:0;z-index:160;display:none;align-items:flex-start;justify-content:center;padding:clamp(70px,10vh,110px) 14px calc(var(--portal-footer-height) + 18px);overflow-y:auto;background:rgba(0,43,76,.48)}
   .subject-combo-overlay.open{display:flex}
   .subject-combo-dialog{width:min(520px,100%);max-height:calc(100dvh - var(--portal-footer-height) - 100px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:0 24px 60px -20px rgba(0,43,76,.55);overflow:hidden}
@@ -454,11 +456,40 @@
     .step-nav{flex-direction:column-reverse}
     .step-nav .btn{width:100%}
     .rev-body{grid-template-columns:1fr}
+    body.student-dashboard-active #panel-form .form-wrap,
+    body.student-dashboard-active #panel-form .form-wrap>div,
+    body.student-dashboard-active #panel-form .stepcard,
+    body.student-dashboard-active #panel-form .card2,
+    body.student-dashboard-active #panel-form .card2-body,
+    body.student-dashboard-active #panel-form #classSelectBlock,
+    body.student-dashboard-active #panel-form #houseSelectBlock{
+      width:100%;
+      min-width:0;
+      max-width:100%;
+    }
+    body.student-dashboard-active #panel-form .stepcard{padding-left:0!important;padding-right:0!important}
+    body.student-dashboard-active #panel-form .card2-body{padding:18px 14px}
+    body.student-dashboard-active #panel-form .sub-h{display:flex;flex-direction:column;align-items:flex-start;gap:4px;line-height:1.35}
+    body.student-dashboard-active #panel-form .req-note{display:block;margin-left:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+    body.student-dashboard-active #panel-form .cls-wrap{width:100%;min-width:0;max-width:100%;overflow-x:hidden}
+    body.student-dashboard-active #panel-form .cls-table{width:100%;min-width:0;max-width:100%;table-layout:fixed}
+    body.student-dashboard-active #panel-form .cls-table th,
+    body.student-dashboard-active #panel-form .cls-table td{padding:9px 8px;white-space:normal!important;overflow-wrap:anywhere}
+    body.student-dashboard-active #panel-form .cls-table th:nth-child(1),
+    body.student-dashboard-active #panel-form .cls-table td:nth-child(1){width:42%}
+    body.student-dashboard-active #panel-form .cls-table th:nth-child(2),
+    body.student-dashboard-active #panel-form .cls-table td:nth-child(2){width:43%}
+    body.student-dashboard-active #panel-form .cls-table th:nth-child(3),
+    body.student-dashboard-active #panel-form .cls-table td:nth-child(3){width:15%;padding-left:4px;padding-right:4px;text-align:center}
+    body.student-dashboard-active #panel-form .cls-table th:nth-child(3){font-size:9px;white-space:nowrap!important}
+    body.student-dashboard-active #panel-form .cls-row td:first-child{display:table-cell;white-space:normal!important}
+    body.student-dashboard-active #panel-form .cls-radio{display:inline-block;vertical-align:middle;margin-right:6px}
+    body.student-dashboard-active #panel-form .cls-combo{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
   }
   @media(max-width:480px){
     .pmain{padding:14px 12px 24px}
     .ptopbar{padding:10px 10px 12px}
-    .welcome .wh,.doc-card,.sidecard,.stepcard{padding-left:14px;padding-right:14px}
+    .welcome .wh,.doc-card,.sidecard{padding-left:14px;padding-right:14px}
     .steps{gap:10px}
   }
   @media(max-width:360px){
