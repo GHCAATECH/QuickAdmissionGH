@@ -48,7 +48,7 @@ body.platform-directory-active #s-login .school-directory-header-inner {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 28px;
 }
 
@@ -692,14 +692,17 @@ body.platform-directory-active #s-login .school-directory-footer-bottom {
 
 body.platform-directory-active #s-login .school-directory-footer-bottom-inner {
   width: min(1240px, calc(100% - 40px));
-  min-height: 46px;
+  min-height: 64px;
   margin: 0 auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 0;
   color: rgba(255, 255, 255, 0.84) !important;
   font-size: 11px;
+  text-align: center;
 }
 
 body.platform-directory-active #s-login .school-directory-footer-bottom-inner strong {
