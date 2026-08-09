@@ -48,7 +48,7 @@ body.platform-directory-active #s-login .school-directory-header-inner {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 28px;
 }
 

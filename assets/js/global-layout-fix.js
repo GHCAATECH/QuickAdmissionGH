@@ -12,7 +12,6 @@ function enhanceSystemFooters() {
         <div class="qa-index-footer-bottom">
           <div class="qa-index-footer-bottom-inner">
             <span>&copy; 2026 QuickAdmissionGH. All rights reserved.</span>
-            <span>Powered by <strong>AXIOMBYTE HUB</strong></span>
           </div>
         </div>`;
     });

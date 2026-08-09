@@ -300,7 +300,7 @@ body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-
 body.system-footer-page > footer.system-footer.qa-index-footer .qa-index-footer-bottom-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 18px;
   width: min(1240px, calc(100% - 40px));
   min-height: 46px;
