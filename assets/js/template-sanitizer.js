@@ -32,7 +32,7 @@
       Array.from(element.attributes).forEach(function (attribute) {
         const name = attribute.name.toLowerCase();
         const value = attribute.value;
-        if (name.startsWith('on') || ['srcdoc', 'formaction', 'action', 'poster', 'srcset', 'xmlns', 'id', 'name'].includes(name)) {
+        if (name.startsWith('on') || name.startsWith('data-qa-on') || ['srcdoc', 'formaction', 'action', 'poster', 'srcset', 'xmlns', 'id', 'name'].includes(name)) {
           element.removeAttribute(attribute.name);
           return;
         }
