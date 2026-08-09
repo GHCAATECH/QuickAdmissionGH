@@ -3434,6 +3434,9 @@ function houseMatchesGender(h,s){return !!h&&normalizeStudentGender(h.gender)!==
 function houseMatchesResidential(h,s){return !!h&&normalizeResidentialStatus(h.rtype)!==''&&normalizeResidentialStatus(h.rtype)===normalizeResidentialStatus(s&&s.res);}
 function houseEligibleForStudent(h,s){return houseMatchesGender(h,s)&&houseMatchesResidential(h,s);}
 function allocationStudentOrder(a,b){
+  const aTime=Date.parse((a&&a.submittedAt)||''), bTime=Date.parse((b&&b.submittedAt)||'');
+  if(Number.isFinite(aTime)&&Number.isFinite(bTime)&&aTime!==bTime)return aTime-bTime;
+  if(Number.isFinite(aTime)!==Number.isFinite(bTime))return Number.isFinite(aTime)?-1:1;
   const indexDiff=String((a&&a.index)||'').localeCompare(String((b&&b.index)||''),undefined,{numeric:true,sensitivity:'base'});
   return indexDiff||String((a&&a.name)||'').localeCompare(String((b&&b.name)||''),undefined,{sensitivity:'base'});
 }
@@ -3506,15 +3509,27 @@ async function haAutoAssignAll(){
   const orderedHouses=sortLocalHouses(houses).filter(h=>houseAllocationIssue(h)==='');
   const skipped=houses.length-orderedHouses.length;
   if(!orderedHouses.length){toast('Set a gender, residential type, priority and capacity for each house first.');return;}
+  const plannedOccupancy=new Map(orderedHouses.map(h=>[h.id,students.filter(s=>s.houseId===h.id).length]));
+  const assignments=new Map(orderedHouses.map(h=>[h.id,[]]));
+  students.filter(s=>!s.houseId).sort(allocationStudentOrder).forEach(function(student){
+    const eligible=orderedHouses.filter(function(h){
+      return houseEligibleForStudent(h,student)&&(plannedOccupancy.get(h.id)||0)<Math.max(Number(h.cap)||0,0);
+    }).sort(function(a,b){
+      const occupancyDiff=(plannedOccupancy.get(a.id)||0)-(plannedOccupancy.get(b.id)||0);
+      return occupancyDiff||housePriorityValue(a)-housePriorityValue(b)||String(a.name||'').localeCompare(String(b.name||''),undefined,{sensitivity:'base'});
+    });
+    const selected=eligible[0];
+    if(!selected)return;
+    assignments.get(selected.id).push(student);
+    plannedOccupancy.set(selected.id,(plannedOccupancy.get(selected.id)||0)+1);
+  });
   let assigned=0; const assignedIndexes=[];
   for(const h of orderedHouses){
-    const hid=h.id, capacity=Math.max(Number(h.cap)||0,0), current=students.filter(s=>s.houseId===hid).length, room=Math.max(capacity-current,0);
-    if(!room)continue;
-    const candidates=students.filter(s=>!s.houseId&&houseEligibleForStudent(h,s)).sort(allocationStudentOrder).slice(0,room);
+    const candidates=assignments.get(h.id)||[];
     if(!candidates.length)continue;
-    const {error}=await sb.from('students').update({house_id:hMap[hid]}).in('id',candidates.map(s=>s._id));
+    const {error}=await sb.from('students').update({house_id:hMap[h.id]}).in('id',candidates.map(s=>s._id));
     if(error){renderHouseAlloc();toast('Auto-assignment stopped at '+h.name+': '+error.message);return;}
-    candidates.forEach(s=>{s.houseId=hid;assignedIndexes.push(s.index);});
+    candidates.forEach(s=>{s.houseId=h.id;assignedIndexes.push(s.index);});
     assigned+=candidates.length;
   }
   if(assignedIndexes.length)notifyStudentPortalRefresh('house-autoassign-all',{indexes:assignedIndexes});
