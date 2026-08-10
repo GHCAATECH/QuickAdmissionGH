@@ -331,7 +331,6 @@
   function runProgram(program, element, event) {
     for (const statement of splitTopLevel(program, ';')) {
       runStatement(statement, element, event);
-      if (event.cancelBubble) break;
     }
   }
 
