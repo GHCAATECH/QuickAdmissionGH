@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://js.paystack.co; script-src-attr 'none'; connect-src 'self' https://*.supabase.co https://api.paystack.co https://sms.arkesel.com; frame-src 'self' https://js.paystack.co https://checkout.paystack.com;">
-<script src="assets/js/csp-event-dispatcher.js?v=20260810-view-more-fix-1"></script>
+<script src="assets/js/csp-event-dispatcher.js?v=20260810-token-otp-1"></script>
 <title>QuickAdmissionGH</title>
 <link rel="icon" type="image/svg+xml" href="logo-icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1482,7 +1482,7 @@
       <div class="notice warn" id="p-pending" style="display:none"></div>
       <div class="notice info" id="p-school" style="display:none"></div>
       <div class="field"><label>Full name</label><input id="p-name" placeholder="As shown on placement form"></div>
-      <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:13px"><div class="field"><label>Phone</label><input id="p-phone" placeholder="024..."></div><div class="field"><label>Email <span class="hint">(optional)</span></label><input id="p-email" placeholder="you@email.com"></div></div>
+      <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:13px"><div class="field"><label>Parent Contact</label><input id="p-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="024..." required><div class="hint">Used to verify any future token retrieval.</div></div><div class="field"><label>Email <span class="hint">(optional)</span></label><input id="p-email" type="email" autocomplete="email" placeholder="you@email.com"></div></div>
       <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px">Choose a payment method</label>
       <div class="pay-methods">
         <button class="pay-opt" data-qa-onclick="payToken('Paystack')"><span class="b" style="background:#0ba4db">P</span>Paystack</button>
@@ -1526,10 +1526,12 @@
       </div>
       <div class="field"><label>Search by</label><select id="r-by"><option value="index">Index number</option><option value="receipt">Payment receipt number</option></select></div>
       <div class="field"><label id="r-label">Index number</label><input class="input-mono" id="r-value" placeholder="100000000026"></div>
-      <button class="btn btn-primary btn-block" data-qa-onclick="retrieveToken()">Find my token</button>
-      <div id="retrieve-result" style="margin-top:16px;display:none">
-        <div class="token-show"><small>Your admission token</small><div class="tk" id="ret-token">-</div></div>
-        <button class="btn btn-ghost btn-block" data-qa-onclick="useRetrieved()">Use this token to log in</button>
+      <button class="btn btn-primary btn-block" id="retrieve-request-btn" data-qa-onclick="retrieveToken()">Send verification code</button>
+      <div id="retrieve-result" style="margin-top:16px;display:none" aria-live="polite">
+        <div class="notice info" id="r-otp-hint">A 6-digit code was sent to the saved Parent Contact.</div>
+        <div class="field"><label for="r-otp">Verification code</label><input class="input-mono" id="r-otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter 6-digit code"></div>
+        <button class="btn btn-primary btn-block" id="retrieve-verify-btn" data-qa-onclick="verifyRetrievedOtp()">Verify and continue</button>
+        <button class="btn btn-ghost btn-block" type="button" data-qa-onclick="retrieveToken()">Send a new code</button>
       </div>
     </div>
     <div class="helpline">Helpline - <a href="tel:0256744028" class="mono">0256744028</a></div>
@@ -1667,7 +1669,7 @@
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toastMsg"></span></div>
 
 <script src="district-list.js"></script>
-<script src="assets/js/pages/index-2.js?v=20260809-csp-1"></script>
+<script src="assets/js/pages/index-2.js?v=20260810-token-otp-1"></script>
 <footer class="system-footer">Copyright &copy; 2026 AXIOMBYTE HUB. All rights reserved. &middot; Version 1.0</footer>
 </body>
 </html>

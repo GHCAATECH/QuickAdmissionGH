@@ -20,6 +20,13 @@ function getPublicKey(): string {
 function safeString(value: unknown): string {
   return String(value ?? "").trim();
 }
+function normalizePhone(value: unknown): string {
+  const digits = safeString(value).replace(/\D/g, "");
+  if (digits.startsWith("233") && digits.length === 12) return digits;
+  if (digits.startsWith("0") && digits.length === 10) return `233${digits.slice(1)}`;
+  if (digits.length === 9) return `233${digits}`;
+  return "";
+}
 function programmeKey(value: unknown): string {
   return safeString(value).toUpperCase().replace(/[^A-Z0-9]+/g, "");
 }
@@ -82,6 +89,10 @@ Deno.serve(async (req: Request) => {
   const index = (body.index || "").trim();
   const school = (body.school || "").trim();
   if (!reference || !index) return json({ ok: false, error: "missing" }, 400);
+  const parentContact = normalizePhone(body.phone);
+  if (!parentContact) {
+    return json({ ok: false, error: "parent_contact", message: "A valid Parent Contact is required for secure token retrieval." }, 400);
+  }
 
   const admin = createClient(url, service);
   const forwarded = safeString(req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip"));
@@ -91,11 +102,15 @@ Deno.serve(async (req: Request) => {
   }
   const { data: existingPay, error: existingPayError } = await admin
     .from("payments")
-    .select("id, student_id, school_id")
+    .select("id, student_id, school_id, phone")
     .eq("reference", reference)
     .maybeSingle();
   if (existingPayError) {
     return json({ ok: false, error: "reference_lookup_failed", message: existingPayError.message }, 500);
+  }
+  const existingPaymentPhone = normalizePhone(existingPay?.phone);
+  if (existingPaymentPhone && existingPaymentPhone !== parentContact) {
+    return json({ ok: false, error: "parent_contact_mismatch", message: "This payment reference belongs to a different Parent Contact." }, 409);
   }
   if (existingPay?.student_id) {
     const { data: st } = await admin
@@ -250,20 +265,21 @@ Deno.serve(async (req: Request) => {
   }
 
   const { data: prior } = await admin.from("students")
-    .select("id,admission_token,full_name,gender,programme_id").eq("school_id", sid).eq("bece_index", index).maybeSingle();
+    .select("id,admission_token,full_name,gender,programme_id,parent_phone").eq("school_id", sid).eq("bece_index", index).maybeSingle();
   let studentId: string; let token: string;
   if (prior?.id) {
     studentId = prior.id; token = prior.admission_token || genToken();
+    const savedParentContact = normalizePhone(prior.parent_phone) || parentContact;
     const { error: updateError } = await admin.from("students").update({ admission_token: token, payment_status: "paid",
       full_name: prior.full_name || resolvedName, gender: prior.gender || resolvedGender, programme_id: prior.programme_id || resolvedProgrammeId,
-      parent_phone: body.phone || null, parent_email: body.email || null }).eq("id", studentId);
+      parent_phone: savedParentContact, parent_email: body.email || null }).eq("id", studentId);
     if (updateError) return json({ ok: false, error: "student_update_failed", message: updateError.message }, 500);
   } else {
     token = genToken();
     const { data: stu, error: se } = await admin.from("students").insert({
       school_id: sid, bece_index: index, admission_token: token,
       full_name: resolvedName, gender: resolvedGender, programme_id: resolvedProgrammeId,
-      parent_phone: body.phone || null, parent_email: body.email || null,
+      parent_phone: parentContact, parent_email: body.email || null,
       payment_status: "paid" }).select("id").single();
     if (se || !stu) return json({ ok: false, error: "save_failed", message: se?.message }, 400);
     studentId = stu.id;
@@ -278,7 +294,7 @@ Deno.serve(async (req: Request) => {
     channel: "paystack",
     amount_pesewas: amount,
     payer_name: body.name,
-    phone: body.phone,
+    phone: existingPaymentPhone || normalizePhone(prior?.parent_phone) || parentContact,
     email: body.email,
     status: "completed",
     paid_at: new Date().toISOString(),

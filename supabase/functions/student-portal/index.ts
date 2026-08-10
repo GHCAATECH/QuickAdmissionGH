@@ -4,6 +4,10 @@ import { guardRequest, jsonResponse } from "../_shared/security.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const ARKESEL_API_KEY = Deno.env.get("ARKESEL_API_KEY") ?? "";
+const ARKESEL_SMS_URL = Deno.env.get("ARKESEL_SMS_URL") ?? "https://sms.arkesel.com/api/v2/sms/send";
+const TOKEN_RETRIEVAL_OTP_SECRET = Deno.env.get("TOKEN_RETRIEVAL_OTP_SECRET") || SUPABASE_SERVICE_ROLE_KEY;
+const TOKEN_RETRIEVAL_OTP_TTL_SECONDS = 5 * 60;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -25,6 +29,57 @@ function firstText(...values: unknown[]): string {
     if (text) return text;
   }
   return "";
+}
+
+function normalizePhone(value: unknown): string {
+  const digits = safeText(value).replace(/\D/g, "");
+  if (digits.startsWith("233") && digits.length === 12) return digits;
+  if (digits.startsWith("0") && digits.length === 10) return `233${digits.slice(1)}`;
+  if (digits.length === 9) return `233${digits}`;
+  return "";
+}
+
+function normalizeSenderId(value: unknown): string {
+  return upperText(value)
+    .replace(/[^A-Z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 11);
+}
+
+function createOtp(): string {
+  const random = new Uint32Array(1);
+  crypto.getRandomValues(random);
+  return String(100000 + (random[0] % 900000));
+}
+
+async function hashOtp(challengeId: string, schoolId: string, index: string, otp: string): Promise<string> {
+  const value = `${TOKEN_RETRIEVAL_OTP_SECRET}|${challengeId}|${schoolId}|${upperText(index)}|${otp}`;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function sendOtpSms(sender: string, phone: string, message: string) {
+  const response = await fetch(ARKESEL_SMS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "api-key": ARKESEL_API_KEY },
+    body: JSON.stringify({ sender, message, recipients: [phone] }),
+  });
+  const rawText = await response.text();
+  let payload: unknown = null;
+  try {
+    payload = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    payload = { raw: rawText.slice(0, 1_000) };
+  }
+  return { ok: response.ok, status: response.status, payload };
+}
+
+function otpSmsAccepted(delivery: { ok: boolean; payload: unknown }): boolean {
+  if (!delivery.ok) return false;
+  if (!delivery.payload || typeof delivery.payload !== "object") return true;
+  const status = safeText((delivery.payload as JsonRecord).status).toLowerCase();
+  return !["failed", "failure", "error"].includes(status);
 }
 
 function pickRecord(source: JsonRecord, keys: string[]) {
@@ -76,8 +131,8 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
   const [schoolRes, configRes, placementRes, studentRes] = await Promise.all([
     admin.from("schools").select("id,name,school_code,status").eq("id", sid).maybeSingle(),
     admin.from("school_config").select("service_charge,accept_online_payment,admission_status").eq("school_id", sid).maybeSingle(),
-    admin.from("placement_list").select("student_name,sms_contact,index_number").eq("school_id", sid).eq("index_number", index).maybeSingle(),
-    admin.from("students").select("full_name,parent_phone,bece_index").eq("school_id", sid).eq("bece_index", index).maybeSingle(),
+    admin.from("placement_list").select("student_name,index_number").eq("school_id", sid).eq("index_number", index).maybeSingle(),
+    admin.from("students").select("full_name,bece_index").eq("school_id", sid).eq("bece_index", index).maybeSingle(),
   ]);
 
   const school = (schoolRes.data ?? {}) as JsonRecord;
@@ -102,7 +157,6 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
     admission_status: firstText(config.admission_status),
     student_name: firstText(placement.student_name, student.full_name),
     placement_name: firstText(placement.student_name, student.full_name),
-    sms_contact: firstText(placement.sms_contact, student.parent_phone),
   };
   lookupCache.set(cacheKey, { expiresAt: Date.now() + 30_000, value: result });
   if (lookupCache.size > 1_000) {
@@ -114,7 +168,7 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
 
 async function hasToken(admin: ReturnType<typeof createClient>, index: string, schoolId: string) {
   const sid = await resolveSchool(admin, index, schoolId);
-  if (!sid) return { ok: true, paid: false, token: null, school_id: null };
+  if (!sid) return { ok: true, paid: false, school_id: null };
 
   const { data } = await admin
     .from("students")
@@ -128,7 +182,6 @@ async function hasToken(admin: ReturnType<typeof createClient>, index: string, s
   return {
     ok: true,
     paid: !!token || status === "PAID" || status === "COMPLETED" || status === "SUCCESS",
-    token: token || null,
     school_id: sid,
   };
 }
@@ -156,45 +209,215 @@ async function schoolStatus(admin: ReturnType<typeof createClient>, schoolId: st
   };
 }
 
-async function retrieveToken(admin: ReturnType<typeof createClient>, by: string, value: string, schoolId: string) {
+async function resolveTokenRetrieval(admin: ReturnType<typeof createClient>, by: string, value: string, schoolId: string) {
+  let paymentPhone = "";
+  let studentId = "";
+
   if (by === "receipt") {
     const { data: payment } = await admin
       .from("payments")
-      .select("reference,student_id,school_id,status")
+      .select("reference,student_id,school_id,status,phone")
       .eq("school_id", schoolId)
       .eq("reference", value)
       .maybeSingle();
 
     const paymentRec = (payment ?? {}) as JsonRecord;
-    const studentId = safeText(paymentRec.student_id);
-    if (!studentId) return { ok: false, error: "No token found" };
-
-    const { data: student } = await admin
-      .from("students")
-      .select("bece_index,admission_token")
-      .eq("id", studentId)
-      .eq("school_id", schoolId)
-      .maybeSingle();
-
-    const studentRec = (student ?? {}) as JsonRecord;
-    const token = safeText(studentRec.admission_token);
-    const index = safeText(studentRec.bece_index);
-    if (!token || !index) return { ok: false, error: "No token found" };
-    return { ok: true, token, index, school_id: schoolId };
+    studentId = safeText(paymentRec.student_id);
+    paymentPhone = safeText(paymentRec.phone);
+    if (!studentId) return null;
   }
 
-  const { data: student } = await admin
+  let studentQuery = admin
     .from("students")
-    .select("bece_index,admission_token")
-    .eq("school_id", schoolId)
-    .eq("bece_index", value)
-    .maybeSingle();
+    .select("id,bece_index,admission_token,parent_phone,full_name")
+    .eq("school_id", schoolId);
+  studentQuery = by === "receipt" ? studentQuery.eq("id", studentId) : studentQuery.eq("bece_index", value);
+  const { data: student } = await studentQuery.maybeSingle();
 
   const studentRec = (student ?? {}) as JsonRecord;
   const token = safeText(studentRec.admission_token);
   const index = safeText(studentRec.bece_index);
-  if (!token || !index) return { ok: false, error: "No token found" };
-  return { ok: true, token, index, school_id: schoolId };
+  studentId = safeText(studentRec.id);
+  if (!studentId || !token || !index) return null;
+
+  const { data: placement } = await admin
+    .from("placement_list")
+    .select("sms_contact")
+    .eq("school_id", schoolId)
+    .eq("index_number", index)
+    .maybeSingle();
+
+  const phone = [studentRec.parent_phone, paymentPhone, placement?.sms_contact]
+    .map(normalizePhone)
+    .find(Boolean) ?? "";
+  return {
+    studentId,
+    index,
+    token,
+    phone,
+    studentName: firstText(studentRec.full_name),
+  };
+}
+
+async function requestTokenRetrievalOtp(
+  admin: ReturnType<typeof createClient>,
+  by: string,
+  value: string,
+  schoolId: string,
+) {
+  if (!ARKESEL_API_KEY) {
+    return { status: 503, body: { ok: false, error: "sms_not_configured", message: "SMS verification is temporarily unavailable. Contact the school helpdesk." } };
+  }
+
+  const target = await resolveTokenRetrieval(admin, by, value, schoolId);
+  if (!target) {
+    return { status: 404, body: { ok: false, error: "not_found", message: "No paid admission token was found for those details." } };
+  }
+  if (!target.phone) {
+    return { status: 409, body: { ok: false, error: "parent_contact_missing", message: "No valid Parent Contact is saved for this student. Contact the school helpdesk." } };
+  }
+
+  const { data: school } = await admin
+    .from("schools")
+    .select("name,school_code,code")
+    .eq("id", schoolId)
+    .maybeSingle();
+  const schoolRec = (school ?? {}) as JsonRecord;
+  const sender = normalizeSenderId(firstText(schoolRec.school_code, schoolRec.code, "QADMISSION"));
+  if (!sender) {
+    return { status: 409, body: { ok: false, error: "sender_missing", message: "This school's SMS Sender ID is not configured." } };
+  }
+
+  const now = new Date();
+  const challengeId = crypto.randomUUID();
+  const otp = createOtp();
+  const codeHash = await hashOtp(challengeId, schoolId, target.index, otp);
+  const expiresAt = new Date(now.getTime() + TOKEN_RETRIEVAL_OTP_TTL_SECONDS * 1_000).toISOString();
+
+  await admin
+    .from("token_retrieval_otps")
+    .update({ consumed_at: now.toISOString() })
+    .eq("school_id", schoolId)
+    .eq("index_number", target.index)
+    .is("consumed_at", null);
+
+  const { error: insertError } = await admin.from("token_retrieval_otps").insert({
+    id: challengeId,
+    school_id: schoolId,
+    student_id: target.studentId,
+    index_number: target.index,
+    code_hash: codeHash,
+    phone_last_two: target.phone.slice(-2),
+    expires_at: expiresAt,
+  });
+  if (insertError) throw new Error(`Could not create verification code: ${insertError.message}`);
+
+  const schoolName = firstText(schoolRec.name, "your school");
+  const smsMessage = `${otp} is your ${schoolName} token retrieval verification code. It expires in 5 minutes. Do not share it.`;
+  let delivery: { ok: boolean; status: number; payload: unknown };
+  try {
+    delivery = await sendOtpSms(sender, target.phone, smsMessage);
+  } catch (error) {
+    delivery = { ok: false, status: 0, payload: { error: error instanceof Error ? error.message : "SMS request failed" } };
+  }
+  const delivered = otpSmsAccepted(delivery);
+
+  const log = {
+    school_id: schoolId,
+    student_id: target.studentId,
+    recipient_group: "token-retrieval-otp",
+    recipients: 1,
+    phone: target.phone,
+    sender_id: sender,
+    message: "One-time token retrieval verification code",
+    status: delivered ? "sent" : "failed",
+    sent_by: "student-portal",
+    template_name: "token-retrieval-otp",
+    api_response: { http_status: delivery.status, accepted: delivered },
+    external_id: upperText(target.index),
+  };
+  await admin.from("sms_logs").insert(log);
+
+  if (!delivered) {
+    await admin.from("token_retrieval_otps").update({ consumed_at: new Date().toISOString() }).eq("id", challengeId);
+    return { status: 502, body: { ok: false, error: "sms_failed", message: "The verification SMS could not be sent. Please try again shortly." } };
+  }
+
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      challenge_id: challengeId,
+      index: target.index,
+      school_id: schoolId,
+      phone_last_two: target.phone.slice(-2),
+      expires_in: TOKEN_RETRIEVAL_OTP_TTL_SECONDS,
+    },
+  };
+}
+
+async function verifyTokenRetrievalOtp(
+  admin: ReturnType<typeof createClient>,
+  challengeId: string,
+  otp: string,
+  index: string,
+  schoolId: string,
+) {
+  const { data: challenge } = await admin
+    .from("token_retrieval_otps")
+    .select("id,student_id,index_number,code_hash,attempts,expires_at,consumed_at")
+    .eq("id", challengeId)
+    .eq("school_id", schoolId)
+    .eq("index_number", index)
+    .maybeSingle();
+  const record = (challenge ?? {}) as JsonRecord;
+  if (!record.id) return { status: 400, body: { ok: false, error: "invalid_challenge", message: "This verification request is invalid. Request a new code." } };
+  if (record.consumed_at) return { status: 409, body: { ok: false, error: "otp_used", message: "This verification code has already been used. Request a new code." } };
+  if (new Date(safeText(record.expires_at)).getTime() <= Date.now()) {
+    return { status: 410, body: { ok: false, error: "otp_expired", message: "This verification code has expired. Request a new code." } };
+  }
+
+  const attempts = Number(record.attempts ?? 0);
+  if (attempts >= 5) return { status: 429, body: { ok: false, error: "otp_locked", message: "Too many incorrect attempts. Request a new code." } };
+  const submittedHash = await hashOtp(challengeId, schoolId, index, otp);
+  if (submittedHash !== safeText(record.code_hash)) {
+    const nextAttempts = Math.min(attempts + 1, 5);
+    await admin.from("token_retrieval_otps").update({ attempts: nextAttempts }).eq("id", challengeId).eq("attempts", attempts);
+    return {
+      status: 400,
+      body: {
+        ok: false,
+        error: "otp_invalid",
+        message: nextAttempts >= 5 ? "Too many incorrect attempts. Request a new code." : `The verification code is incorrect. ${5 - nextAttempts} attempt(s) remaining.`,
+      },
+    };
+  }
+
+  const now = new Date().toISOString();
+  const { data: claimed } = await admin
+    .from("token_retrieval_otps")
+    .update({ consumed_at: now })
+    .eq("id", challengeId)
+    .eq("school_id", schoolId)
+    .eq("index_number", index)
+    .eq("code_hash", submittedHash)
+    .is("consumed_at", null)
+    .gt("expires_at", now)
+    .lt("attempts", 5)
+    .select("student_id,index_number")
+    .maybeSingle();
+  if (!claimed) return { status: 409, body: { ok: false, error: "otp_used", message: "This verification code is no longer valid. Request a new code." } };
+
+  const { data: student } = await admin
+    .from("students")
+    .select("bece_index,admission_token")
+    .eq("id", claimed.student_id)
+    .eq("school_id", schoolId)
+    .eq("bece_index", index)
+    .maybeSingle();
+  const token = safeText(student?.admission_token);
+  if (!token) return { status: 404, body: { ok: false, error: "not_found", message: "The admission token is no longer available." } };
+  return { status: 200, body: { ok: true, token, index, school_id: schoolId } };
 }
 
 async function submitApplication(
@@ -362,7 +585,7 @@ Deno.serve(async (req: Request) => {
 
   if (!action) return json({ ok: false, error: "action", message: "Action is required." }, 400);
 
-  if (["lookup", "has_token", "retrieve", "file_url", "school_status"].includes(action)) {
+  if (["lookup", "has_token", "retrieve", "retrieve_verify", "file_url", "school_status"].includes(action)) {
     const forwarded = safeText(req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip"));
     const ip = (forwarded.split(",")[0] || "unknown").trim().slice(0, 80);
     const value = safeText(body.p_value ?? body.value ?? body.path ?? body.file_path ?? index);
@@ -399,7 +622,33 @@ Deno.serve(async (req: Request) => {
       if (!schoolId) return json({ ok: false, error: "school", message: "School is required." }, 400);
       if (by !== "index" && by !== "receipt") return json({ ok: false, error: "by", message: "Search type is invalid." }, 400);
       if (!value) return json({ ok: false, error: "value", message: "Search value is required." }, 400);
-      return json(await retrieveToken(admin, by, value, schoolId));
+      const forwarded = safeText(req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip"));
+      const ip = (forwarded.split(",")[0] || "unknown").trim().slice(0, 80);
+      const otpIpAllowed = await rateAllowed(admin, `token-otp-request:ip:${ip}`, 10, 600);
+      const otpStudentAllowed = await rateAllowed(admin, `token-otp-request:value:${schoolId}:${by}:${upperText(value).slice(0, 100)}`, 3, 600);
+      if (!otpIpAllowed || !otpStudentAllowed) {
+        return json({ ok: false, error: "rate_limited", message: "Too many verification-code requests. Please wait before trying again." }, 429);
+      }
+      const result = await requestTokenRetrievalOtp(admin, by, value, schoolId);
+      return json(result.body, result.status);
+    }
+
+    if (action === "retrieve_verify") {
+      const challengeId = safeText(body.challenge_id);
+      const otp = safeText(body.otp);
+      if (!schoolId) return json({ ok: false, error: "school", message: "School is required." }, 400);
+      if (!index) return json({ ok: false, error: "index", message: "Index number is required." }, 400);
+      if (!/^[0-9a-f-]{36}$/i.test(challengeId)) return json({ ok: false, error: "challenge", message: "Request a new verification code." }, 400);
+      if (!/^\d{6}$/.test(otp)) return json({ ok: false, error: "otp", message: "Enter the 6-digit verification code." }, 400);
+      const forwarded = safeText(req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip"));
+      const ip = (forwarded.split(",")[0] || "unknown").trim().slice(0, 80);
+      const verifyIpAllowed = await rateAllowed(admin, `token-otp-verify:ip:${ip}`, 30, 300);
+      const verifyChallengeAllowed = await rateAllowed(admin, `token-otp-verify:challenge:${challengeId}`, 8, 300);
+      if (!verifyIpAllowed || !verifyChallengeAllowed) {
+        return json({ ok: false, error: "rate_limited", message: "Too many verification attempts. Request a new code." }, 429);
+      }
+      const result = await verifyTokenRetrievalOtp(admin, challengeId, otp, index, schoolId);
+      return json(result.body, result.status);
     }
 
     if (action === "directory") {

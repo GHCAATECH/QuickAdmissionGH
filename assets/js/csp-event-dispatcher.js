@@ -201,7 +201,7 @@
     'uploadSchoolCrest',
     'uploadSchoolDoc',
     'useNewToken',
-    'useRetrieved',
+    'verifyRetrievedOtp',
     'viewStudent'
   ]);
   const supportedEvents = ['click', 'change', 'input', 'keydown'];

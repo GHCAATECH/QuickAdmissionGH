@@ -581,16 +581,22 @@ function showPendingBanner(){
   else el.style.display='none';
 }
 function dismissPending(){ clearPending(); showPendingBanner(); toast('Cleared. If you completed a payment, it stays valid \u2014 use Retrieve token.'); }
+function validParentContact(value){
+  const digits=String(value||'').replace(/\D/g,'');
+  return digits.length===9||digits.length===10||(digits.startsWith('233')&&digits.length===12);
+}
 async function payToken(method){
   const idx=$('p-index').value.trim(),name=$('p-name').value.trim();
   const sid=tenantSchoolId()||$('p-school-sel').value;
+  const pend=getPending();
+  const parentContact=String($('p-phone').value||pend&&pend.parentContact||'').trim();
   if(!sid){toast('Please select your school first','warn');return;}
   if(admissionClosed(sid)){toast('Admission is closed for this school','warn');return;}
   if(!idx||!name){toast('Enter your index number and name first','warn');return;}
+  if(!validParentContact(parentContact)){toast('Enter a valid Parent Contact for secure token retrieval','warn');$('p-phone').focus();return;}
   if(method!=='Paystack'){toast(method+' isn\u2019t available yet - please use Paystack');return;}
   // recover an unconfirmed payment instead of charging again
-  const pend=getPending();
-  if(pend&&pend.index===idx&&pend.reference){ toast('Found an unconfirmed payment - verifying instead of charging again'); return verifyPayment(pend.reference, idx, name); }
+  if(pend&&pend.index===idx&&pend.reference){ toast('Found an unconfirmed payment - verifying instead of charging again'); return verifyPayment(pend.reference, idx, name, pend.school||sid, parentContact); }
   // already paid? then don't charge again
   const {data:has}=await studentPortalRequest('has_token',{p_index:idx,p_school:sid});
   if(has&&has.ok&&has.paid){ toast('This index has already paid. Use "Retrieve token" to get your token.','warn'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
@@ -616,19 +622,19 @@ async function payToken(method){
       {display_name:'School',variable_name:'school',value:sch.name},
       {display_name:'School ID',variable_name:'school_id',value:sid}
     ]},
-    callback:function(resp){ savePending({reference:resp.reference,index:idx,name:verifiedName,school:sid}); verifyPayment(resp.reference, idx, verifiedName, sid); },
+    callback:function(resp){ savePending({reference:resp.reference,index:idx,name:verifiedName,school:sid,parentContact}); verifyPayment(resp.reference, idx, verifiedName, sid, parentContact); },
     onClose:function(){ toast('Payment window closed'); }
   });
   handler.openIframe();
 }
-function retryVerify(){ const p=getPending(); if(!p||!p.reference){toast('No unconfirmed payment found');return;} verifyPayment(p.reference,p.index,p.name||'',p.school||null); }
+function retryVerify(){ const p=getPending(); if(!p||!p.reference){toast('No unconfirmed payment found');return;} verifyPayment(p.reference,p.index,p.name||'',p.school||null,p.parentContact||''); }
 function normalizedPaymentEmail(idx){
   const raw=$('p-email')?$('p-email').value.trim():'';
   return raw||(String(idx||'applicant').trim()+'@quickadmissiongh.com');
 }
-async function verifyPayment(reference, idx, name, school){
+async function verifyPayment(reference, idx, name, school, parentContact){
   toast('Verifying payment\u2026');
-  if(!school){ const p=getPending(); school=(p&&p.school)||$('p-school-sel').value||null; }
+  if(!school||!parentContact){ const p=getPending(); school=school||(p&&p.school)||$('p-school-sel').value||null; parentContact=parentContact||(p&&p.parentContact)||$('p-phone').value||''; }
   name=(await lookupPlacementName(idx,school))||name;
   const email=normalizedPaymentEmail(idx);
   let data=null, netErr=null;
@@ -636,7 +642,7 @@ async function verifyPayment(reference, idx, name, school){
     const r=await fetch(SUPABASE_URL+'/functions/v1/verify-payment',{
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
-      body:JSON.stringify({reference,index:idx,name,phone:$('p-phone').value,email,school})
+      body:JSON.stringify({reference,index:idx,name,phone:parentContact,email,school})
     });
     data=await r.json().catch(()=>null);
   }catch(e){ netErr=e; }
@@ -651,7 +657,7 @@ async function verifyPayment(reference, idx, name, school){
       msg='Paystack says: '+gs+'. '+(gs==='abandoned'||gs==='failed'?'That payment wasn\u2019t completed - finish the card + OTP step.':'Reference not recognised on this account.');
     }
     else { reason=(data&&(data.message||data.gateway_message||data.error))||'unknown'; msg='Could not verify yet ('+reason+'). Tap Retry verification.'; }
-    savePending({reference,index:idx,name:name||'',reason}); showPendingBanner();
+    savePending({reference,index:idx,name:name||'',school,parentContact,reason}); showPendingBanner();
     toast(msg); return;
   }
   clearPending(); showPendingBanner();
@@ -665,19 +671,45 @@ async function verifyPayment(reference, idx, name, school){
   else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
 }
 function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in - tap Log in');}
-$('r-by').addEventListener('change',e=>$('r-label').textContent=e.target.value==='index'?'Index number':'Payment receipt number');
+let retrieveOtpState=null;
+function resetRetrieveOtp(){
+  retrieveOtpState=null;
+  if($('retrieve-result'))$('retrieve-result').style.display='none';
+  if($('r-otp'))$('r-otp').value='';
+}
+$('r-by').addEventListener('change',e=>{$('r-label').textContent=e.target.value==='index'?'Index number':'Payment receipt number';resetRetrieveOtp();});
+$('r-value').addEventListener('input',resetRetrieveOtp);
+$('r-otp').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6);});
+$('r-otp').addEventListener('keydown',function(event){if(event.key==='Enter'){event.preventDefault();verifyRetrievedOtp();}});
 async function retrieveToken(){
   const by=$('r-by').value,v=$('r-value').value.trim(); if(!v){toast('Enter a value to search','warn');return;}
   const rsid=tenantSchoolId()||$('r-school').value; if(!rsid){toast('Please select your school first','warn');return;}
-  const {data,error}=await studentPortalRequest('retrieve',{p_by:by,p_value:v,p_school:rsid});
-  if(error||!data.ok){toast(data&&data.error?data.error:'No token found');return;}
-  window._retRec={idx:data.index,tk:data.token};
-  const loginSchool=data.school_id||rsid;
-  const loginResult=await studentLoginRequest({p_index:data.index,p_token:data.token,p_school:loginSchool});
-  if(loginResult.data&&loginResult.data.ok){ session={index:data.index,token:data.token,school:loginSchool}; STU=loginResult.data.student; await applySchool(loginResult.data); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome back.'); return; }
-  $('ret-token').textContent=data.token;$('retrieve-result').style.display='block';
+  const button=$('retrieve-request-btn'); if(button){button.disabled=true;button.textContent='Sending code...';}
+  try{
+    const {data,error}=await studentPortalRequest('retrieve',{p_by:by,p_value:v,p_school:rsid});
+    if(error||!data||!data.ok){toast(data&&data.message?data.message:error&&error.message?error.message:'No paid token was found','warn');return;}
+    retrieveOtpState={challengeId:data.challenge_id,index:data.index,school:data.school_id||rsid};
+    $('r-otp-hint').textContent='A 6-digit code was sent to the Parent Contact ending in '+String(data.phone_last_two||'--')+'. It expires in 5 minutes.';
+    $('retrieve-result').style.display='block';
+    $('r-otp').value='';$('r-otp').focus();
+    toast('Verification code sent to Parent Contact ending in '+String(data.phone_last_two||'--'));
+  }finally{if(button){button.disabled=false;button.textContent='Send verification code';}}
 }
-function useRetrieved(){$('login-index').value=window._retRec.idx;$('login-token').value=window._retRec.tk;showScreen('s-login');toast('Token filled in - tap Log in');}
+async function verifyRetrievedOtp(){
+  const otp=$('r-otp').value.trim();
+  if(!retrieveOtpState){toast('Request a verification code first','warn');return;}
+  if(!/^\d{6}$/.test(otp)){toast('Enter the 6-digit verification code','warn');$('r-otp').focus();return;}
+  const button=$('retrieve-verify-btn'); if(button){button.disabled=true;button.textContent='Verifying...';}
+  try{
+    const {data,error}=await studentPortalRequest('retrieve_verify',{challenge_id:retrieveOtpState.challengeId,otp,p_index:retrieveOtpState.index,p_school:retrieveOtpState.school});
+    if(error||!data||!data.ok){toast(data&&data.message?data.message:error&&error.message?error.message:'Verification failed','warn');return;}
+    const loginSchool=data.school_id||retrieveOtpState.school;
+    let loginResult=await studentLoginRequest({p_index:data.index,p_token:data.token,p_school:loginSchool});
+    if(!(loginResult.data&&loginResult.data.ok)){await new Promise(function(resolve){setTimeout(resolve,350);});loginResult=await studentLoginRequest({p_index:data.index,p_token:data.token,p_school:loginSchool});}
+    if(!(loginResult.data&&loginResult.data.ok)){resetRetrieveOtp();toast('Code verified, but sign-in could not be completed. Request a new code and try again.','warn');return;}
+    session={index:data.index,token:data.token,school:loginSchool}; STU=loginResult.data.student; await applySchool(loginResult.data); setStudentSession(session); hydrate(); resetRetrieveOtp(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Parent Contact verified. Welcome back.');
+  }finally{if(button){button.disabled=false;button.textContent='Verify and continue';}}
+}
 
 /* ===== WIZARD ===== */
 function buildSteps(){$('stepsList').innerHTML=stepLabels.map((l,i)=>`<li class="step" data-i="${i}" data-qa-onclick="goStep(${i})"><span class="dot"><span class="num">${i+1}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></span><span class="lbl">${l}</span></li>`).join('');}
@@ -1478,7 +1510,7 @@ const SCHOOL_PICKER_CONFIG={
   directory:{select:'directory-school',picker:'directorySchoolPicker',panel:'directorySchoolPanel',search:'directorySchoolSearch',options:'directorySchoolOptions',trigger:'directorySchoolTrigger',triggerText:'directorySchoolTriggerText',onPick:function(){ redirectToSelectedSchool(); }},
   login:{select:'login-school',picker:'loginSchoolPicker',panel:'loginSchoolPanel',search:'loginSchoolSearch',options:'loginSchoolOptions',trigger:'loginSchoolTrigger',triggerText:'loginSchoolTriggerText',onPick:function(){ onLoginSchoolChange(); }},
   purchase:{select:'p-school-sel',picker:'purchaseSchoolPicker',panel:'purchaseSchoolPanel',search:'purchaseSchoolSearch',options:'purchaseSchoolOptions',trigger:'purchaseSchoolTrigger',triggerText:'purchaseSchoolTriggerText'},
-  retrieve:{select:'r-school',picker:'retrieveSchoolPicker',panel:'retrieveSchoolPanel',search:'retrieveSchoolSearch',options:'retrieveSchoolOptions',trigger:'retrieveSchoolTrigger',triggerText:'retrieveSchoolTriggerText'}
+  retrieve:{select:'r-school',picker:'retrieveSchoolPicker',panel:'retrieveSchoolPanel',search:'retrieveSchoolSearch',options:'retrieveSchoolOptions',trigger:'retrieveSchoolTrigger',triggerText:'retrieveSchoolTriggerText',onPick:function(){ resetRetrieveOtp(); }}
 };
 function schoolPickerConfig(key){
   return SCHOOL_PICKER_CONFIG[key]||null;
