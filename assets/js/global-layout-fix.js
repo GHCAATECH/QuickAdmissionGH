@@ -40,6 +40,7 @@ function syncGlobalMobileViewport() {
 }
 
 const mobileFieldVisibilityTimers = new Set();
+let mobileFieldFocusedAt = 0;
 
 function isEditableFormControl(element) {
   if (!(element instanceof HTMLElement)) return false;
@@ -59,6 +60,32 @@ function mobileFieldScrollOwner(element) {
   return document.body || document.scrollingElement;
 }
 
+function scrollMobileOwnerBy(owner, delta) {
+  if (!owner || Math.abs(delta) < 1) return;
+  const previous = Number(owner.scrollTop || 0);
+  owner.scrollTop = previous + delta;
+  if (owner === document.body && Math.abs(Number(owner.scrollTop || 0) - previous) < 1) {
+    const root = document.scrollingElement || document.documentElement;
+    if (root && root !== owner) root.scrollTop = Number(root.scrollTop || 0) + delta;
+  }
+}
+
+function correctFocusedFieldPosition(field) {
+  if (document.activeElement !== field) return;
+  const viewport = window.visualViewport;
+  const viewportTop = viewport ? viewport.offsetTop : 0;
+  const viewportHeight = viewport ? viewport.height : window.innerHeight;
+  const safeTop = viewportTop + 16;
+  const safeBottom = viewportTop + viewportHeight - 24;
+  const rect = field.getBoundingClientRect();
+  const delta = rect.bottom > safeBottom
+    ? rect.bottom - safeBottom
+    : rect.top < safeTop
+      ? rect.top - safeTop
+      : 0;
+  scrollMobileOwnerBy(mobileFieldScrollOwner(field), delta);
+}
+
 function keepFocusedFieldAboveKeyboard() {
   if (!usesMobileViewportLayout()) return;
   const field = document.activeElement;
@@ -70,21 +97,21 @@ function keepFocusedFieldAboveKeyboard() {
   const safeTop = viewportTop + 16;
   const safeBottom = viewportTop + viewportHeight - 24;
   const rect = field.getBoundingClientRect();
-  if (rect.top >= safeTop && rect.bottom <= safeBottom) return;
+  const recentlyFocused = Date.now() - mobileFieldFocusedAt < 1600;
+  if (!recentlyFocused && rect.top >= safeTop && rect.bottom <= safeBottom) return;
 
-  const delta = rect.bottom > safeBottom
-    ? rect.bottom - safeBottom
-    : rect.top - safeTop;
-  const owner = mobileFieldScrollOwner(field);
-  if (owner && typeof owner.scrollBy === "function") {
-    owner.scrollBy({ top: delta, left: 0, behavior: "smooth" });
-  } else {
-    field.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+  try {
+    field.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+  } catch (error) {
+    correctFocusedFieldPosition(field);
+    return;
   }
+  window.requestAnimationFrame(() => correctFocusedFieldPosition(field));
+  window.setTimeout(() => correctFocusedFieldPosition(field), 90);
 }
 
 function scheduleFocusedFieldVisibility() {
-  [40, 180, 360].forEach((delay) => {
+  [40, 200, 520, 900].forEach((delay) => {
     const timer = window.setTimeout(() => {
       mobileFieldVisibilityTimers.delete(timer);
       keepFocusedFieldAboveKeyboard();
@@ -94,7 +121,10 @@ function scheduleFocusedFieldVisibility() {
 }
 
 document.addEventListener("focusin", (event) => {
-  if (isEditableFormControl(event.target)) scheduleFocusedFieldVisibility();
+  if (isEditableFormControl(event.target)) {
+    mobileFieldFocusedAt = Date.now();
+    scheduleFocusedFieldVisibility();
+  }
 });
 
 document.addEventListener("focusout", () => {
