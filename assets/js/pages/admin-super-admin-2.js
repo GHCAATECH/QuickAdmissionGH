@@ -25,7 +25,18 @@ const superAuthStorage={
   removeItem:function(k){ try{ window.sessionStorage.removeItem(superAuthKey(k)); }catch(e){} }
 };
 clearLegacySuperAuthStorage();
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-super-auth',storage:superAuthStorage}});
+const sb=window.supabase&&typeof window.supabase.createClient==='function'
+  ?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'qag-super-auth',storage:superAuthStorage}})
+  :null;
+const SUPER_AUTH_BOOT_TIMEOUT_MS=8000;
+function superAuthTimeout(promise,message,timeoutMs){
+  return Promise.race([
+    promise,
+    new Promise(function(_,reject){
+      setTimeout(function(){reject(new Error(message||'The secure session check timed out.'));},timeoutMs||SUPER_AUTH_BOOT_TIMEOUT_MS);
+    })
+  ]);
+}
 // Always attach a FRESH user token to privileged Edge Function calls, otherwise an
 // expired session makes the client send the publishable key and the function 401s.
 async function freshToken(){
@@ -150,6 +161,17 @@ function smsTargets(){
 
 /* ---- AUTH GATE ---- */
 let superAdminLoginPending=false;
+function revealSuperAdminLogin(message){
+  const gate=document.getElementById('authGate');
+  const app=document.querySelector('.app');
+  if(!gate)return;
+  document.body.classList.remove('auth-booting');
+  document.body.classList.add('auth-gate-visible');
+  if(app)app.style.display='none';
+  gate.style.display='flex';
+  const status=document.getElementById('ag_session_status_text');
+  if(status)status.textContent=message||'Secure session ready';
+}
 (function buildGate(){
   document.body.classList.add('auth-gate-visible');
   document.querySelector('.app').style.display='none';
@@ -194,15 +216,19 @@ let superAdminLoginPending=false;
   document.body.appendChild(ov);
   document.getElementById('superAdminLoginForm').addEventListener('submit',function(e){e.preventDefault();superLogin();});
   document.getElementById('ag_toggle').addEventListener('click',function(){const p=document.getElementById('ag_pass');if(!p)return;p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'Show':'Hide';});
-  bootSuperSession().finally(function(){
-    const gate=document.getElementById('authGate');
-    if(gate&&document.querySelector('.app').style.display==='none') gate.style.display='flex';
-  });
+  const bootWatchdog=setTimeout(function(){
+    revealSuperAdminLogin('Session check took too long. You can sign in below.');
+  },SUPER_AUTH_BOOT_TIMEOUT_MS+250);
+  bootSuperSession().then(function(restored){
+    if(!restored)revealSuperAdminLogin();
+  }).catch(function(error){
+    revealSuperAdminLogin((error&&error.message)||'Secure session check failed. You can sign in below.');
+  }).finally(function(){clearTimeout(bootWatchdog);});
 })();
 
 async function enterSuper(uid){
   SA_UID=uid;
-  await loadSA();
+  await superAuthTimeout(loadSA(),'The dashboard took too long to load. Please try signing in again.',20000);
   const g=document.getElementById('authGate'); if(g)g.remove();
   document.body.classList.remove('auth-booting');
   document.body.classList.remove('auth-gate-visible');
@@ -210,14 +236,19 @@ async function enterSuper(uid){
   go('dashboard');
 }
 async function bootSuperSession(){
-  try{
-    const {data}=await sb.auth.getSession();
-    const session=data&&data.session;
-    if(!session||!session.user) return;
-    const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',session.user.id).single();
-    if(!prof||prof.role!=='super_admin') return;
-    await enterSuper(session.user.id);
-  }catch(e){}
+  if(!sb)throw new Error('The secure login service did not load. Check your connection and reload the page.');
+  const sessionResult=await superAuthTimeout(sb.auth.getSession(),'The secure session check timed out. You can sign in below.');
+  const session=sessionResult&&sessionResult.data&&sessionResult.data.session;
+  if(!session||!session.user)return false;
+  const profileResult=await superAuthTimeout(
+    sb.from('profiles').select('role,full_name').eq('id',session.user.id).single(),
+    'The account verification check timed out. You can sign in below.'
+  );
+  const prof=profileResult&&profileResult.data;
+  if(profileResult&&profileResult.error)throw profileResult.error;
+  if(!prof||prof.role!=='super_admin')return false;
+  await enterSuper(session.user.id);
+  return true;
 }
 async function superLogin(){
   const btn=document.getElementById('ag_btn'),err=document.getElementById('ag_err');
@@ -226,6 +257,7 @@ async function superLogin(){
   const email=sval('ag_email').trim();
   const password=sval('ag_pass');
   if(!email||!password){err.textContent='Enter both email and password.';err.style.display='block';return;}
+  if(!sb){err.textContent='The secure login service did not load. Check your connection and reload the page.';err.style.display='block';return;}
   superAdminLoginPending=true;
   btn.textContent='SIGNING IN...';
   if(status)status.textContent='Signing in securely...';
@@ -234,16 +266,26 @@ async function superLogin(){
   err.style.display='none';
   try{
     await new Promise(function(resolve){requestAnimationFrame(resolve);});
-    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    const loginResult=await superAuthTimeout(
+      sb.auth.signInWithPassword({email,password}),
+      'Sign-in timed out. Check your connection and try again.'
+    );
+    const data=loginResult&&loginResult.data;
+    const error=loginResult&&loginResult.error;
     if(error){err.textContent=error.message||'Could not sign in.';err.style.display='block';return;}
     btn.textContent='VERIFYING ACCOUNT...';
     if(status)status.textContent='Verifying your account...';
-    const {data:prof,error:profileError}=await sb.from('profiles').select('role,full_name').eq('id',data.user.id).single();
-    if(profileError){err.textContent=profileError.message||'Could not load account profile.';err.style.display='block';try{await sb.auth.signOut();}catch(ignore){}return;}
+    const profileResult=await superAuthTimeout(
+      sb.from('profiles').select('role,full_name').eq('id',data.user.id).single(),
+      'Account verification timed out. Please try again.'
+    );
+    const prof=profileResult&&profileResult.data;
+    const profileError=profileResult&&profileResult.error;
+    if(profileError){err.textContent=profileError.message||'Could not load account profile.';err.style.display='block';try{await superAuthTimeout(sb.auth.signOut(),'Session cleanup timed out.',3000);}catch(ignore){}return;}
     if(!prof||prof.role!=='super_admin'){
       err.textContent='This account is not a super admin.';
       err.style.display='block';
-      await sb.auth.signOut();
+      try{await superAuthTimeout(sb.auth.signOut(),'Session cleanup timed out.',3000);}catch(ignore){}
       return;
     }
     btn.textContent='LOADING DASHBOARD...';
@@ -252,7 +294,7 @@ async function superLogin(){
   }catch(e){
     err.textContent=(e&&e.message)||'Sign-in failed. Check your internet connection and try again.';
     err.style.display='block';
-    try{await sb.auth.signOut();}catch(ignore){}
+    try{await superAuthTimeout(sb.auth.signOut(),'Session cleanup timed out.',3000);}catch(ignore){}
   }finally{
     if(document.getElementById('authGate')){
       superAdminLoginPending=false;
