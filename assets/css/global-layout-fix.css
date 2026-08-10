@@ -1335,34 +1335,27 @@ body {
   }
 }
 
-/* =========================================================
-   MOBILE VIEWPORT SCROLL OWNERSHIP
-
-   iPhone browsers can expose a second document scroll range when `html` and
-   `body` both grow with dynamic viewport units. Keep the root fixed to the
-   visible viewport and let `body` own the system-wide mobile scroll. The
-   public school directory has its own equivalent scroll surface.
-========================================================= */
+/* Keep mobile pages in normal document flow so the browser keyboard cannot
+   create an opaque, viewport-sized layer over focused form controls. */
 @media screen and (max-width: 1024px) {
   html:not(.platform-directory-active) {
     width: 100% !important;
-    height: var(--qa-mobile-viewport-height, 100dvh) !important;
-    min-height: 0 !important;
-    max-height: var(--qa-mobile-viewport-height, 100dvh) !important;
-    overflow: hidden !important;
-    overscroll-behavior-y: none !important;
+    height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
+    overflow-x: clip !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto !important;
   }
 
   html:not(.platform-directory-active) body {
-    position: relative !important;
     width: 100% !important;
-    height: var(--qa-mobile-viewport-height, 100dvh) !important;
-    min-height: 0 !important;
-    max-height: var(--qa-mobile-viewport-height, 100dvh) !important;
+    height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
     overflow-x: clip !important;
-    overflow-y: auto !important;
-    overscroll-behavior-y: contain !important;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: visible !important;
+    overscroll-behavior-y: auto !important;
   }
 
   html:not(.platform-directory-active) body.modal-open {

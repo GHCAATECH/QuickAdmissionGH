@@ -26,19 +26,6 @@ function platformDirectoryOwnsScroll() {
   return Boolean(document.body?.classList.contains("platform-directory-active"));
 }
 
-function syncGlobalMobileViewport() {
-  if (!usesMobileViewportLayout() || platformDirectoryOwnsScroll()) {
-    document.documentElement.style.removeProperty("--qa-mobile-viewport-height");
-    return;
-  }
-
-  const viewportHeight = window.visualViewport?.height || window.innerHeight;
-  document.documentElement.style.setProperty(
-    "--qa-mobile-viewport-height",
-    `${Math.ceil(viewportHeight)}px`
-  );
-}
-
 const mobileFieldVisibilityTimers = new Set();
 let mobileViewportScrollTimer = 0;
 
@@ -312,13 +299,13 @@ function updateLoginScreenScrollbarMode() {
     const mobileLayout = usesMobileViewportLayout();
     document.documentElement.style.setProperty(
       "overflow-y",
-      mobileLayout ? "hidden" : adminGatePresent ? "scroll" : "auto",
+      adminGatePresent && !mobileLayout ? "scroll" : "auto",
       "important"
     );
     document.body.style.setProperty("overflow-x", "clip", "important");
     document.body.style.setProperty(
       "overflow-y",
-      mobileLayout ? "auto" : "visible",
+      "visible",
       "important"
     );
   }
@@ -478,47 +465,45 @@ function forceScrollableLayout() {
     return;
   }
 
-  syncGlobalMobileViewport();
-
   document.documentElement.dataset.qaLayoutFix =
-    "20260808-mobile-scroll-owner-20";
+    "20260810-document-scroll-owner-21";
 
   document.documentElement.style.setProperty(
     "height",
-    mobileLayout ? "var(--qa-mobile-viewport-height, 100dvh)" : "auto",
+    "auto",
     "important"
   );
   document.documentElement.style.setProperty(
     "min-height",
-    mobileLayout ? "0" : "100%",
+    "100%",
     "important"
   );
   document.documentElement.style.setProperty(
     "max-height",
-    mobileLayout ? "var(--qa-mobile-viewport-height, 100dvh)" : "none",
+    "none",
     "important"
   );
   document.documentElement.style.setProperty("overflow-x", "hidden", "important");
   document.documentElement.style.setProperty(
     "overflow-y",
-    mobileLayout ? "hidden" : adminGatePresent ? "scroll" : "auto",
+    adminGatePresent && !mobileLayout ? "scroll" : "auto",
     "important"
   );
 
   if (document.body && !document.body.classList.contains("modal-open")) {
     document.body.style.setProperty(
       "height",
-      mobileLayout ? "var(--qa-mobile-viewport-height, 100dvh)" : "auto",
+      "auto",
       "important"
     );
     document.body.style.setProperty(
       "min-height",
-      mobileLayout ? "0" : "auto",
+      "100%",
       "important"
     );
     document.body.style.setProperty(
       "max-height",
-      mobileLayout ? "var(--qa-mobile-viewport-height, 100dvh)" : "none",
+      "none",
       "important"
     );
     document.body.style.setProperty(
@@ -528,17 +513,17 @@ function forceScrollableLayout() {
     );
     document.body.style.setProperty(
       "overflow-y",
-      mobileLayout ? "auto" : "visible",
+      "visible",
       "important"
     );
     document.body.style.setProperty(
       "overscroll-behavior-y",
-      mobileLayout ? "contain" : "auto",
+      "auto",
       "important"
     );
     document.body.style.setProperty(
       "-webkit-overflow-scrolling",
-      mobileLayout ? "touch" : "auto"
+      "auto"
     );
   }
 
@@ -675,7 +660,6 @@ function initialiseLayoutFix() {
   enhanceSystemFooters();
   removeInvalidInlineHeights();
   removeEmptyLayoutBlocks();
-  syncGlobalMobileViewport();
   forceScrollableLayout();
   scheduleAdminMobileFooterFlow();
 }
@@ -709,7 +693,6 @@ window.addEventListener("orientationchange", () => {
 
 if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", () => {
-    syncGlobalMobileViewport();
     forceScrollableLayout();
     scheduleAdminMobileFooterFlow();
     scheduleFocusedFieldVisibility();
