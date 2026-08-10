@@ -70,8 +70,50 @@ function scrollMobileOwnerBy(owner, delta) {
   }
 }
 
+function shiftFixedLoginCard(field) {
+  const gate = field.closest("#authGate, .gate-screen");
+  if (!gate || window.getComputedStyle(gate).position !== "fixed") return false;
+  const card = field.closest(
+    ".qa-login-card, .school-admin-login-card, .super-login-card, .auth-card, .login-school-panel"
+  );
+  if (!card) return false;
+
+  if (card.dataset.qaKeyboardShiftActive !== "true") {
+    card.dataset.qaKeyboardShiftActive = "true";
+    card.dataset.qaKeyboardOriginalTransform = card.style.transform || "";
+    card.dataset.qaKeyboardShift = "0";
+  }
+
+  const viewport = window.visualViewport;
+  const viewportTop = viewport ? viewport.offsetTop : 0;
+  const viewportHeight = viewport ? viewport.height : window.innerHeight;
+  const safeTop = viewportTop + 12;
+  const safeBottom = viewportTop + viewportHeight - 20;
+  const rect = field.getBoundingClientRect();
+  const currentShift = Number(card.dataset.qaKeyboardShift || 0);
+  let nextShift = currentShift;
+  if (rect.bottom > safeBottom) nextShift += rect.bottom - safeBottom + 12;
+  if (rect.top < safeTop) nextShift = Math.max(0, nextShift - (safeTop - rect.top));
+  nextShift = Math.max(0, Math.round(nextShift));
+  card.dataset.qaKeyboardShift = String(nextShift);
+  card.style.setProperty("transform", `translateY(-${nextShift}px)`, "important");
+  return true;
+}
+
+function restoreFixedLoginCards() {
+  document.querySelectorAll("[data-qa-keyboard-shift-active='true']").forEach((card) => {
+    const original = card.dataset.qaKeyboardOriginalTransform || "";
+    if (original) card.style.setProperty("transform", original);
+    else card.style.removeProperty("transform");
+    delete card.dataset.qaKeyboardShiftActive;
+    delete card.dataset.qaKeyboardOriginalTransform;
+    delete card.dataset.qaKeyboardShift;
+  });
+}
+
 function correctFocusedFieldPosition(field) {
   if (document.activeElement !== field) return;
+  if (shiftFixedLoginCard(field)) return;
   const viewport = window.visualViewport;
   const viewportTop = viewport ? viewport.offsetTop : 0;
   const viewportHeight = viewport ? viewport.height : window.innerHeight;
@@ -130,6 +172,9 @@ document.addEventListener("focusin", (event) => {
 document.addEventListener("focusout", () => {
   mobileFieldVisibilityTimers.forEach((timer) => window.clearTimeout(timer));
   mobileFieldVisibilityTimers.clear();
+  window.setTimeout(() => {
+    if (!isEditableFormControl(document.activeElement)) restoreFixedLoginCards();
+  }, 40);
 });
 
 /**
