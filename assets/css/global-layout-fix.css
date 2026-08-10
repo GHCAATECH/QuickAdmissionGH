@@ -1390,3 +1390,49 @@ body {
     display: none !important;
   }
 }
+
+/* FIX FORM BEING COVERED WHEN MOBILE KEYBOARD OPENS */
+html,
+body {
+  width: 100%;
+  height: auto !important;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+main,
+.page-wrapper,
+.content-wrapper,
+.form-container,
+.login-container {
+  position: relative !important;
+  height: auto !important;
+  min-height: 100dvh;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+@media screen and (max-width: 768px) {
+  main,
+  .page-wrapper,
+  .content-wrapper,
+  .form-container,
+  .login-container {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-bottom: 320px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
