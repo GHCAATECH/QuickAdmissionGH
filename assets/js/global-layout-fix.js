@@ -111,6 +111,23 @@ function restoreFixedLoginCards() {
   });
 }
 
+function studentLoginActionRevealDelta(field, safeTop, safeBottom) {
+  if (!field.matches("#login-index, #login-token")) return 0;
+  const card = field.closest("#s-login #studentLoginPanel");
+  const action = card?.querySelector("#loginBtn");
+  if (!action || action.getClientRects().length === 0) return 0;
+
+  const fieldRect = field.getBoundingClientRect();
+  const actionRect = action.getBoundingClientRect();
+  const actionGap = 12;
+  const hiddenByKeyboard = actionRect.bottom + actionGap - safeBottom;
+  if (hiddenByKeyboard <= 0) return 0;
+
+  // Keep the focused control visible while exposing the login action below it.
+  const availableUpwardTravel = Math.max(0, fieldRect.top - safeTop);
+  return Math.min(hiddenByKeyboard, availableUpwardTravel);
+}
+
 function correctFocusedFieldPosition(field) {
   if (document.activeElement !== field) return false;
   if (shiftFixedLoginCard(field)) return true;
@@ -120,11 +137,14 @@ function correctFocusedFieldPosition(field) {
   const safeTop = viewportTop + 16;
   const safeBottom = viewportTop + viewportHeight - 24;
   const rect = field.getBoundingClientRect();
-  const delta = rect.bottom > safeBottom
+  let delta = rect.bottom > safeBottom
     ? rect.bottom - safeBottom
     : rect.top < safeTop
       ? rect.top - safeTop
       : 0;
+  if (Math.abs(delta) < 1) {
+    delta = studentLoginActionRevealDelta(field, safeTop, safeBottom);
+  }
   if (Math.abs(delta) < 1) return false;
   scrollMobileOwnerBy(mobileFieldScrollOwner(field), delta);
   return true;
@@ -141,7 +161,16 @@ function keepFocusedFieldAboveKeyboard() {
   const safeTop = viewportTop + 16;
   const safeBottom = viewportTop + viewportHeight - 24;
   const rect = field.getBoundingClientRect();
-  if (rect.top >= safeTop && rect.bottom <= safeBottom) return;
+  const loginActionDelta = studentLoginActionRevealDelta(
+    field,
+    safeTop,
+    safeBottom
+  );
+  if (
+    rect.top >= safeTop &&
+    rect.bottom <= safeBottom &&
+    loginActionDelta < 1
+  ) return;
 
   // Move only by the amount that is hidden. Using scrollIntoView({block:
   // "center"}) here creates a feedback loop on iOS because every scripted
