@@ -39,6 +39,69 @@ function syncGlobalMobileViewport() {
   );
 }
 
+const mobileFieldVisibilityTimers = new Set();
+
+function isEditableFormControl(element) {
+  if (!(element instanceof HTMLElement)) return false;
+  if (element.matches("textarea, select, [contenteditable='true']")) return true;
+  return element.matches("input:not([type='hidden']):not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit'])");
+}
+
+function mobileFieldScrollOwner(element) {
+  let parent = element.parentElement;
+  while (parent && parent !== document.body) {
+    const style = window.getComputedStyle(parent);
+    if (/(auto|scroll)/.test(style.overflowY) && parent.scrollHeight > parent.clientHeight + 2) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  return document.body || document.scrollingElement;
+}
+
+function keepFocusedFieldAboveKeyboard() {
+  if (!usesMobileViewportLayout()) return;
+  const field = document.activeElement;
+  if (!isEditableFormControl(field)) return;
+
+  const viewport = window.visualViewport;
+  const viewportTop = viewport ? viewport.offsetTop : 0;
+  const viewportHeight = viewport ? viewport.height : window.innerHeight;
+  const safeTop = viewportTop + 16;
+  const safeBottom = viewportTop + viewportHeight - 24;
+  const rect = field.getBoundingClientRect();
+  if (rect.top >= safeTop && rect.bottom <= safeBottom) return;
+
+  const delta = rect.bottom > safeBottom
+    ? rect.bottom - safeBottom
+    : rect.top - safeTop;
+  const owner = mobileFieldScrollOwner(field);
+  if (owner && typeof owner.scrollBy === "function") {
+    owner.scrollBy({ top: delta, left: 0, behavior: "smooth" });
+  } else {
+    field.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+  }
+}
+
+function scheduleFocusedFieldVisibility() {
+  [40, 180, 360].forEach((delay) => {
+    const timer = window.setTimeout(() => {
+      mobileFieldVisibilityTimers.delete(timer);
+      keepFocusedFieldAboveKeyboard();
+    }, delay);
+    mobileFieldVisibilityTimers.add(timer);
+  });
+}
+
+document.addEventListener("focusin", (event) => {
+  if (isEditableFormControl(event.target)) scheduleFocusedFieldVisibility();
+});
+
+document.addEventListener("focusout", () => {
+  mobileFieldVisibilityTimers.forEach((timer) => window.clearTimeout(timer));
+  mobileFieldVisibilityTimers.clear();
+});
+
 /**
  * Display one application view and hide all others.
  * Kept global so legacy inline handlers can use it if needed.
@@ -545,12 +608,17 @@ if (window.visualViewport) {
     syncGlobalMobileViewport();
     forceScrollableLayout();
     scheduleAdminMobileFooterFlow();
+    scheduleFocusedFieldVisibility();
   }, { passive: true });
+  window.visualViewport.addEventListener("scroll", scheduleFocusedFieldVisibility, { passive: true });
 }
 
 let resizeTimer;
 
 window.addEventListener("resize", () => {
   window.clearTimeout(resizeTimer);
-  resizeTimer = window.setTimeout(initialiseLayoutFix, 150);
+  resizeTimer = window.setTimeout(() => {
+    initialiseLayoutFix();
+    scheduleFocusedFieldVisibility();
+  }, 150);
 });
