@@ -40,7 +40,7 @@ function syncGlobalMobileViewport() {
 }
 
 const mobileFieldVisibilityTimers = new Set();
-let mobileFieldFocusedAt = 0;
+let mobileViewportScrollTimer = 0;
 
 function isEditableFormControl(element) {
   if (!(element instanceof HTMLElement)) return false;
@@ -112,8 +112,8 @@ function restoreFixedLoginCards() {
 }
 
 function correctFocusedFieldPosition(field) {
-  if (document.activeElement !== field) return;
-  if (shiftFixedLoginCard(field)) return;
+  if (document.activeElement !== field) return false;
+  if (shiftFixedLoginCard(field)) return true;
   const viewport = window.visualViewport;
   const viewportTop = viewport ? viewport.offsetTop : 0;
   const viewportHeight = viewport ? viewport.height : window.innerHeight;
@@ -125,7 +125,9 @@ function correctFocusedFieldPosition(field) {
     : rect.top < safeTop
       ? rect.top - safeTop
       : 0;
+  if (Math.abs(delta) < 1) return false;
   scrollMobileOwnerBy(mobileFieldScrollOwner(field), delta);
+  return true;
 }
 
 function keepFocusedFieldAboveKeyboard() {
@@ -139,21 +141,20 @@ function keepFocusedFieldAboveKeyboard() {
   const safeTop = viewportTop + 16;
   const safeBottom = viewportTop + viewportHeight - 24;
   const rect = field.getBoundingClientRect();
-  const recentlyFocused = Date.now() - mobileFieldFocusedAt < 1600;
-  if (!recentlyFocused && rect.top >= safeTop && rect.bottom <= safeBottom) return;
+  if (rect.top >= safeTop && rect.bottom <= safeBottom) return;
 
-  try {
-    field.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-  } catch (error) {
-    correctFocusedFieldPosition(field);
-    return;
-  }
-  window.requestAnimationFrame(() => correctFocusedFieldPosition(field));
-  window.setTimeout(() => correctFocusedFieldPosition(field), 90);
+  // Move only by the amount that is hidden. Using scrollIntoView({block:
+  // "center"}) here creates a feedback loop on iOS because every scripted
+  // scroll emits another visualViewport scroll event while the keyboard is
+  // animating.
+  correctFocusedFieldPosition(field);
 }
 
 function scheduleFocusedFieldVisibility() {
-  [40, 200, 520, 900].forEach((delay) => {
+  mobileFieldVisibilityTimers.forEach((timer) => window.clearTimeout(timer));
+  mobileFieldVisibilityTimers.clear();
+
+  [60, 280, 700].forEach((delay) => {
     const timer = window.setTimeout(() => {
       mobileFieldVisibilityTimers.delete(timer);
       keepFocusedFieldAboveKeyboard();
@@ -164,7 +165,6 @@ function scheduleFocusedFieldVisibility() {
 
 document.addEventListener("focusin", (event) => {
   if (isEditableFormControl(event.target)) {
-    mobileFieldFocusedAt = Date.now();
     scheduleFocusedFieldVisibility();
   }
 });
@@ -685,7 +685,13 @@ if (window.visualViewport) {
     scheduleAdminMobileFooterFlow();
     scheduleFocusedFieldVisibility();
   }, { passive: true });
-  window.visualViewport.addEventListener("scroll", scheduleFocusedFieldVisibility, { passive: true });
+  window.visualViewport.addEventListener("scroll", () => {
+    window.clearTimeout(mobileViewportScrollTimer);
+    mobileViewportScrollTimer = window.setTimeout(
+      keepFocusedFieldAboveKeyboard,
+      90
+    );
+  }, { passive: true });
 }
 
 let resizeTimer;
