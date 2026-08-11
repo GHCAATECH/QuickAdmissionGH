@@ -28,6 +28,42 @@ function platformDirectoryOwnsScroll() {
 
 const mobileFieldVisibilityTimers = new Set();
 let mobileViewportScrollTimer = 0;
+let chromeMobileViewportHeight = window.visualViewport?.height || window.innerHeight;
+
+function isChromeMobileBrowser() {
+  const userAgent = navigator.userAgent || "";
+  return /CriOS\//i.test(userAgent) ||
+    (/Android/i.test(userAgent) && /Chrome\//i.test(userAgent));
+}
+
+function clampChromeMobileDocumentEnd() {
+  if (!isChromeMobileBrowser()) return;
+
+  const root = document.scrollingElement || document.documentElement;
+  const viewportHeight = Math.max(
+    document.documentElement.clientHeight || 0,
+    window.innerHeight || 0,
+    window.visualViewport?.height || 0
+  );
+  const maximumScrollTop = Math.max(0, root.scrollHeight - viewportHeight);
+
+  if (root.scrollTop > maximumScrollTop) {
+    root.scrollTop = maximumScrollTop;
+  }
+}
+
+function scheduleChromeMobileDocumentEndClamp(force = false) {
+  if (!isChromeMobileBrowser()) return;
+
+  const nextHeight = window.visualViewport?.height || window.innerHeight;
+  const viewportExpanded = nextHeight > chromeMobileViewportHeight + 2;
+  chromeMobileViewportHeight = nextHeight;
+  if (!force && !viewportExpanded) return;
+
+  [0, 120, 360].forEach((delay) => {
+    window.setTimeout(clampChromeMobileDocumentEnd, delay);
+  });
+}
 
 function isEditableFormControl(element) {
   if (!(element instanceof HTMLElement)) return false;
@@ -189,7 +225,10 @@ document.addEventListener("focusout", () => {
   mobileFieldVisibilityTimers.forEach((timer) => window.clearTimeout(timer));
   mobileFieldVisibilityTimers.clear();
   window.setTimeout(() => {
-    if (!isEditableFormControl(document.activeElement)) restoreFixedLoginCards();
+    if (!isEditableFormControl(document.activeElement)) {
+      restoreFixedLoginCards();
+      scheduleChromeMobileDocumentEndClamp(true);
+    }
   }, 40);
 });
 
@@ -678,6 +717,7 @@ if (window.visualViewport) {
     forceScrollableLayout();
     scheduleAdminMobileFooterFlow();
     scheduleFocusedFieldVisibility();
+    scheduleChromeMobileDocumentEndClamp();
   }, { passive: true });
   window.visualViewport.addEventListener("scroll", () => {
     window.clearTimeout(mobileViewportScrollTimer);
@@ -687,6 +727,10 @@ if (window.visualViewport) {
     );
   }, { passive: true });
 }
+
+window.addEventListener("pageshow", () => {
+  scheduleChromeMobileDocumentEndClamp(true);
+});
 
 let resizeTimer;
 
