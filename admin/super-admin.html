@@ -41,7 +41,7 @@
   a{color:inherit;text-decoration:none}
 
   /* ---------- App shell ---------- */
-  .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;min-height:100dvh}
+  .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:0}
   body.auth-booting .app{display:none!important}
 
   /* ---------- Sidebar ---------- */
@@ -670,9 +670,9 @@
   body:has(#authGate)>footer{display:block!important;z-index:6001!important}
 </style>
 <link rel="stylesheet" href="../professional-theme.css?v=20260726-school-drop-text">
-<link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260810-mobile-keyboard-form-space">
+<link rel="stylesheet" href="../assets/css/global-layout-fix.css?v=20260811-footer-scroll-flow-1">
 <link rel="stylesheet" href="../assets/css/admin-responsive.css?v=20260809-super-nowrap-tables-10">
-<link rel="stylesheet" href="../assets/css/system-footer.css?v=20260809-centered-footer-8">
+<link rel="stylesheet" href="../assets/css/system-footer.css?v=20260811-footer-scroll-flow-1">
 <link rel="stylesheet" href="../assets/css/mobile-rotation-fix.css?v=20260801-mobile-rotation-1">
 <style>
   /* The super-admin dashboard uses document scrolling after sign-in. Keep
@@ -695,7 +695,7 @@
       overflow:visible!important;
     }
     body.super-admin-page:not(.auth-booting):not(.auth-gate-visible)>.app{
-      min-height:100dvh!important;
+      min-height:0!important;
       align-items:start!important;
     }
     body.super-admin-page:not(.auth-booting):not(.auth-gate-visible)>.app>.main>.content{
@@ -705,7 +705,7 @@
 </style>
 <link rel="stylesheet" href="../assets/css/session-loader.css?v=20260808-light-loader-1">
 <link rel="stylesheet" href="../assets/css/table-nowrap.css?v=20260809-system-nowrap-1">
-<script src="../assets/js/global-layout-fix.js?v=20260810-document-scroll-owner" defer></script>
+<script src="../assets/js/global-layout-fix.js?v=20260811-footer-scroll-flow-1" defer></script>
 <script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
 </head>
 <body class="auth-booting system-footer-page super-admin-page">

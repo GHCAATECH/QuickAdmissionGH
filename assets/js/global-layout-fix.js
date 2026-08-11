@@ -414,28 +414,10 @@ function syncAdminMobileFooterFlow() {
   footer.style.setProperty("inset", "auto", "important");
   footer.style.setProperty("clear", "both", "important");
 
-  // Read after clearing the previous floor so moving to a shorter view can
-  // shrink the document again. scrollHeight includes asynchronously added rows.
-  void app.offsetHeight;
-
-  const mainHeight = main.offsetTop + Math.max(main.offsetHeight, main.scrollHeight);
-  const contentHeight =
-    main.offsetTop +
-    content.offsetTop +
-    Math.max(content.offsetHeight, content.scrollHeight);
-  const viewHeight = activeView
-    ? main.offsetTop +
-      content.offsetTop +
-      activeView.offsetTop +
-      Math.max(activeView.offsetHeight, activeView.scrollHeight)
-    : 0;
-  const viewportHeight = window.visualViewport?.height || window.innerHeight;
-  const viewportFloor = Math.max(0, viewportHeight - footer.offsetHeight);
-  const requiredHeight = Math.ceil(
-    Math.max(viewportFloor, mainHeight, contentHeight, viewHeight)
-  );
-
-  app.style.setProperty("min-height", `${requiredHeight}px`, "important");
+  // The body flex column now supplies the short-page viewport floor. Avoid
+  // writing a pixel min-height from visualViewport: iOS can retain that value
+  // after its keyboard closes and leave a blank scroll range below the footer.
+  app.style.setProperty("min-height", "0", "important");
 }
 
 function scheduleAdminMobileFooterFlow() {
@@ -498,7 +480,7 @@ function forceScrollableLayout() {
     );
     document.body.style.setProperty(
       "min-height",
-      "100%",
+      "100dvh",
       "important"
     );
     document.body.style.setProperty(

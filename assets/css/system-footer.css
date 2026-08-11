@@ -2,10 +2,17 @@
   --system-footer-height: 46px;
 }
 
-/* No viewport-height floor: the document is exactly visible content + footer.
-   Also suppress elastic vertical overscroll where the browser supports it. */
+/* The document is the only vertical scroller. A flex column keeps the footer
+   at the bottom on short pages and lets it follow long content naturally. */
 body.system-footer-page {
-  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+  height: auto !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
   overscroll-behavior-y: none;
 }
 
@@ -78,7 +85,7 @@ body.system-footer-page:has(#authGate) > footer.system-footer {
   margin: 0 !important;
 }
 
-body.system-footer-page:has(#authGate) #authGate {
+body.system-footer-page:has(> #authGate) > #authGate {
   min-height: calc(100vh - var(--system-footer-height)) !important;
   min-height: calc(100dvh - var(--system-footer-height)) !important;
 }
@@ -119,7 +126,8 @@ body.student-dashboard-active #s-app.screen.active .pbody {
 
 body.system-footer-page {
   height: auto !important;
-  min-height: 0 !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
   overflow-y: visible !important;
 }
 
@@ -127,8 +135,12 @@ body.system-footer-page > :is(
   .app,
   .screen.active,
   #s-app.screen.active,
-  #s-login.screen.active
+  #s-login.screen.active,
+  #authGate,
+  .wrap,
+  main
 ) {
+  flex: 1 0 auto;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
@@ -139,7 +151,7 @@ body.system-footer-page > footer.system-footer {
   inset: auto !important;
   height: auto !important;
   min-height: 0 !important;
-  margin: 0 !important;
+  margin: auto 0 0 !important;
   transform: none !important;
 }
 
@@ -156,19 +168,6 @@ body.system-footer-page > :is(
   padding: 0 !important;
 }
 
-/* Keep the School Admin footer at the viewport bottom on short views while
-   allowing it to follow naturally after longer dashboard content. */
-body.system-footer-page.school-admin-page {
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
-}
-
-body.system-footer-page.school-admin-page > footer.system-footer {
-  margin-top: auto !important;
-}
-
 /* =====================================================
    INDEX-STYLE FOOTER USED THROUGHOUT THE SYSTEM
 ===================================================== */
@@ -181,7 +180,7 @@ body.system-footer-page > footer.system-footer.qa-index-footer {
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
-  margin: 0 !important;
+  margin: auto 0 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
   transform: none !important;
@@ -216,6 +215,17 @@ body.system-footer-page.school-admin-page:has(
   min-height: calc(100vh - var(--system-footer-height, 46px)) !important;
   min-height: calc(100dvh - var(--system-footer-height, 46px)) !important;
   max-height: none !important;
+}
+
+body.student-dashboard-active > #s-app.screen.active {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+body.student-dashboard-active > #s-app.screen.active > .pbody {
+  flex: 1 0 auto;
+  height: auto !important;
+  min-height: 0 !important;
 }
 
 body.system-footer-page > footer.system-footer.qa-index-footer *,

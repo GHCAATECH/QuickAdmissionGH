@@ -12,8 +12,10 @@ body.platform-directory-active {
 }
 
 body.platform-directory-active #s-login {
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
+  display: flex !important;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 0 !important;
   overflow: visible !important;
   background: #f5f7fb !important;
 }
@@ -24,8 +26,9 @@ body.system-footer-page.platform-directory-active > footer.system-footer {
 
 body.platform-directory-active #s-login .school-directory-page {
   display: flex;
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 0 !important;
   overflow: visible;
   background: #f5f7fb !important;
   color: #071f43 !important;

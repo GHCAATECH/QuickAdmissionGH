@@ -71,8 +71,7 @@ a {
 .student-wrapper {
   width: 100%;
   max-width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 0;
   height: auto !important;
   margin: 0;
   padding: 0;
@@ -236,7 +235,7 @@ table {
 }
 
 .auth {
-  min-height: 100dvh !important;
+  min-height: 0 !important;
   height: auto !important;
 }
 
@@ -266,8 +265,7 @@ body #s-retrieve .auth {
   display: flex !important;
   align-items: flex-start !important;
   justify-content: center !important;
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
+  min-height: 0 !important;
   height: auto !important;
   padding: clamp(18px, 4vw, 36px) 16px !important;
   overflow-x: hidden !important;
@@ -457,8 +455,7 @@ main > section:last-child:empty,
   .admin-wrapper,
   .student-wrapper {
     width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 0;
     height: auto !important;
     overflow-x: hidden !important;
     overflow-y: visible !important;
@@ -1391,45 +1388,10 @@ body {
   }
 }
 
-/* FIX FORM BEING COVERED WHEN MOBILE KEYBOARD OPENS */
-html,
-body {
-  width: 100%;
-  height: auto !important;
-  min-height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto !important;
-}
-
-body {
-  min-height: 100dvh;
-}
-
-main,
-.page-wrapper,
-.content-wrapper,
-.form-container,
-.login-container {
-  position: relative !important;
-  height: auto !important;
-  min-height: 100dvh;
-  max-height: none !important;
-  overflow: visible !important;
-}
-
+/* Native-sized form controls prevent iOS from zooming the viewport while the
+   document remains the only vertical scroll owner. Do not reserve keyboard
+   space in the layout; visualViewport handling scrolls only the focused field. */
 @media screen and (max-width: 768px) {
-  main,
-  .page-wrapper,
-  .content-wrapper,
-  .form-container,
-  .login-container {
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    padding-bottom: 320px;
-  }
-
   input,
   select,
   textarea {
