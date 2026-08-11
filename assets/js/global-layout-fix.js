@@ -36,6 +36,63 @@ function isChromeMobileBrowser() {
     (/Android/i.test(userAgent) && /Chrome\//i.test(userAgent));
 }
 
+function isChromeOnIOS() {
+  return /CriOS\//i.test(navigator.userAgent || "");
+}
+
+let chromeIOSTouchY = null;
+
+function scrollableTouchAncestorCanContinue(target) {
+  let element = target instanceof Element ? target : null;
+
+  while (element && element !== document.body && element !== document.documentElement) {
+    const style = window.getComputedStyle(element);
+    const scrollable = /(auto|scroll)/.test(style.overflowY);
+    if (
+      scrollable &&
+      element.scrollHeight > element.clientHeight + 1 &&
+      element.scrollTop + element.clientHeight < element.scrollHeight - 1
+    ) {
+      return true;
+    }
+    element = element.parentElement;
+  }
+
+  return false;
+}
+
+function guardChromeIOSDocumentEnd(event) {
+  if (!isChromeOnIOS() || event.touches.length !== 1 || chromeIOSTouchY === null) {
+    return;
+  }
+
+  const nextY = event.touches[0].clientY;
+  const swipingUp = nextY < chromeIOSTouchY;
+  chromeIOSTouchY = nextY;
+  if (!swipingUp || scrollableTouchAncestorCanContinue(event.target)) return;
+
+  const root = document.scrollingElement || document.documentElement;
+  const maximumScrollTop = Math.max(0, root.scrollHeight - root.clientHeight);
+  if (root.scrollTop >= maximumScrollTop - 1) {
+    event.preventDefault();
+    root.scrollTop = maximumScrollTop;
+  }
+}
+
+function initialiseChromeIOSDocumentEndGuard() {
+  if (!isChromeOnIOS()) return;
+
+  document.addEventListener("touchstart", (event) => {
+    chromeIOSTouchY = event.touches.length === 1 ? event.touches[0].clientY : null;
+  }, { passive: true });
+  document.addEventListener("touchmove", guardChromeIOSDocumentEnd, { passive: false });
+  ["touchend", "touchcancel"].forEach((eventName) => {
+    document.addEventListener(eventName, () => {
+      chromeIOSTouchY = null;
+    }, { passive: true });
+  });
+}
+
 function clampChromeMobileDocumentEnd() {
   if (!isChromeMobileBrowser()) return;
 
@@ -685,6 +742,7 @@ function initialiseLayoutFix() {
   scheduleAdminMobileFooterFlow();
 }
 
+initialiseChromeIOSDocumentEndGuard();
 document.addEventListener("DOMContentLoaded", initialiseLayoutFix);
 
 const layoutMutationObserver = new MutationObserver(() => {
