@@ -500,7 +500,7 @@ function forceScrollableLayout() {
     );
     document.body.style.setProperty(
       "overscroll-behavior-y",
-      "auto",
+      "none",
       "important"
     );
     document.body.style.setProperty(

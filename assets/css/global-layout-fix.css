@@ -1342,7 +1342,7 @@ body {
     max-height: none !important;
     overflow-x: clip !important;
     overflow-y: auto !important;
-    overscroll-behavior-y: auto !important;
+    overscroll-behavior-y: none !important;
   }
 
   html:not(.platform-directory-active) body {
@@ -1352,7 +1352,7 @@ body {
     max-height: none !important;
     overflow-x: clip !important;
     overflow-y: visible !important;
-    overscroll-behavior-y: auto !important;
+    overscroll-behavior-y: none !important;
   }
 
   html:not(.platform-directory-active) body.modal-open {
