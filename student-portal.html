@@ -466,8 +466,9 @@
     }
     body.student-dashboard-active #panel-form .stepcard{padding-left:0!important;padding-right:0!important}
     body.student-dashboard-active #panel-form .card2-body{padding:18px 14px}
-    body.student-dashboard-active #panel-form #pf-dob{display:block;inline-size:100%!important;width:100%!important;min-inline-size:0!important;min-width:0!important;max-width:100%!important;box-sizing:border-box}
-    body.student-dashboard-active #panel-form #pf-dob::-webkit-date-and-time-value{min-width:0;text-align:left}
+    body.student-dashboard-active #panel-form .grid-2>.field{width:100%;min-width:0;max-width:100%}
+    body.student-dashboard-active #panel-form #pf-dob{display:block;inline-size:100%!important;width:100%!important;min-inline-size:0!important;min-width:0!important;max-inline-size:100%!important;max-width:100%!important;box-sizing:border-box;overflow:hidden}
+    body.student-dashboard-active #panel-form #pf-dob::-webkit-date-and-time-value{width:100%;min-width:0;text-align:left}
     body.student-dashboard-active #panel-form #pf-dob::-webkit-datetime-edit{min-width:0;padding:0}
     body.student-dashboard-active #panel-form .sub-h{display:flex;flex-direction:column;align-items:flex-start;gap:4px;line-height:1.35}
     body.student-dashboard-active #panel-form .req-note{display:block;margin-left:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
@@ -800,6 +801,13 @@
     fill:#002B4C!important;
     stroke:#002B4C!important;
   }
+  body #s-retrieve #retrieve-request-btn,
+  body #s-retrieve #retrieve-result>.btn{
+    width:min(100%,280px)!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  body #s-retrieve #retrieve-result>.btn+.btn{margin-top:10px!important}
 </style>
 <link rel="stylesheet" href="professional-theme.css?v=20260726-school-drop-text">
 <link rel="stylesheet" href="assets/css/global-layout-fix.css?v=20260811-root-overscroll-2">

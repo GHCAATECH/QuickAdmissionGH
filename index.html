@@ -469,8 +469,9 @@
     }
     body.student-dashboard-active #panel-form .stepcard{padding-left:0!important;padding-right:0!important}
     body.student-dashboard-active #panel-form .card2-body{padding:18px 14px}
-    body.student-dashboard-active #panel-form #pf-dob{display:block;inline-size:100%!important;width:100%!important;min-inline-size:0!important;min-width:0!important;max-width:100%!important;box-sizing:border-box}
-    body.student-dashboard-active #panel-form #pf-dob::-webkit-date-and-time-value{min-width:0;text-align:left}
+    body.student-dashboard-active #panel-form .grid-2>.field{width:100%;min-width:0;max-width:100%}
+    body.student-dashboard-active #panel-form #pf-dob{display:block;inline-size:100%!important;width:100%!important;min-inline-size:0!important;min-width:0!important;max-inline-size:100%!important;max-width:100%!important;box-sizing:border-box;overflow:hidden}
+    body.student-dashboard-active #panel-form #pf-dob::-webkit-date-and-time-value{width:100%;min-width:0;text-align:left}
     body.student-dashboard-active #panel-form #pf-dob::-webkit-datetime-edit{min-width:0;padding:0}
     body.student-dashboard-active #panel-form .sub-h{display:flex;flex-direction:column;align-items:flex-start;gap:4px;line-height:1.35}
     body.student-dashboard-active #panel-form .req-note{display:block;margin-left:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
@@ -973,9 +974,15 @@
     body #s-login .qa-tutorial-video-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media(max-width:700px){
-    body #s-login .qa-header-inner{min-height:68px}
+    body #s-login .qa-header-inner{min-height:68px;gap:8px}
+    body #s-login .qa-brand{flex:1 1 auto;min-width:0}
+    body #s-login .qa-brand-text{min-width:0}
+    body #s-login .qa-brand-text strong{font-size:clamp(14px,4.2vw,17px);line-height:1.15;white-space:normal}
     body #s-login .qa-brand-text span{display:none}
+    body #s-login .qa-header-actions{flex:0 0 auto}
     body #s-login .qa-header-actions .qa-btn-outline{display:none}
+    body #s-login .qa-header-actions .qa-btn:not(.qa-btn-outline){flex:0 0 auto;width:auto;min-width:max-content;padding:0 10px;font-size:12px;gap:6px;white-space:nowrap}
+    body #s-login .qa-header-actions .qa-btn:not(.qa-btn-outline) svg{flex:none}
     body #s-login .qa-page-shell{width:min(100% - 20px,1200px);margin:20px auto;gap:18px}
     body #s-login .qa-hero-panel,
     body #s-login .qa-admission-card{padding:24px;border-radius:18px!important}
@@ -1090,6 +1097,13 @@
     fill:#002B4C!important;
     stroke:#002B4C!important;
   }
+  body #s-retrieve #retrieve-request-btn,
+  body #s-retrieve #retrieve-result>.btn{
+    width:min(100%,280px)!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  body #s-retrieve #retrieve-result>.btn+.btn{margin-top:10px!important}
   body.platform-directory-active .env-badge{display:none!important}
   body #s-login #schoolDirectoryPage[hidden],
   body #s-login .tenant-portal-only[hidden],
