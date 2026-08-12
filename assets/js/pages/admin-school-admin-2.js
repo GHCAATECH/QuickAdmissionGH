@@ -381,14 +381,7 @@ function isSchoolAdminRecoveryUrl(){
   }catch(e){ return false; }
 }
 function schoolAdminRecoveryRedirectUrl(){
-  try{
-    const url=new URL(window.location.href);
-    if(url.protocol!=='http:'&&url.protocol!=='https:')return 'https://www.quickadmissiongh.com/admin/school-admin';
-    url.search='';
-    url.hash='';
-    url.pathname=url.pathname.replace(/\.html$/i,'');
-    return url.toString();
-  }catch(e){ return 'https://www.quickadmissiongh.com/admin/school-admin'; }
+  return 'https://www.quickadmissiongh.com';
 }
 function cleanSchoolAdminRecoveryUrl(){
   try{

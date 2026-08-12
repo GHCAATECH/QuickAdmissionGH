@@ -4,6 +4,93 @@ let PAYSTACK_PUBLIC_KEY='';
 let PAYSTACK_CONFIG={loaded:false,public_mode:'unknown',public_key_present:false,secret_present:false,mode_mismatch:false};
 const SCHOOL_CODE=null; // schools are resolved automatically from the index number
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false}});
+const PASSWORD_RECOVERY_REQUESTED=(function(){
+  try{
+    const query=new URLSearchParams(window.location.search||'');
+    const hash=new URLSearchParams(String(window.location.hash||'').replace(/^#/,''));
+    return query.get('type')==='recovery'||hash.get('type')==='recovery'||query.has('code');
+  }catch(e){return false;}
+})();
+let passwordRecoveryPending=false;
+function setPasswordRecoveryMessage(message,isError){
+  const el=document.getElementById('passwordRecoveryMessage');
+  if(!el)return;
+  el.textContent=message||'';
+  el.classList.toggle('is-error',!!isError);
+  el.style.display=message?'block':'none';
+}
+function showPasswordRecoveryGate(){
+  const gate=document.getElementById('passwordRecoveryGate');
+  if(!gate)return;
+  document.body.classList.remove('booting');
+  document.body.classList.add('password-recovery-active');
+  gate.hidden=false;
+}
+async function initializePasswordRecovery(){
+  showPasswordRecoveryGate();
+  setPasswordRecoveryMessage('Verifying your password reset link...',false);
+  try{
+    const result=await sb.auth.getSession();
+    if(result.error||!result.data||!result.data.session){
+      setPasswordRecoveryMessage('This reset link is invalid or has expired. Return to the appropriate admin login and request a new link.',true);
+      return;
+    }
+    setPasswordRecoveryMessage('Reset link verified. Enter your new password.',false);
+    const password=document.getElementById('recoveryNewPassword');
+    if(password)password.focus();
+  }catch(e){
+    setPasswordRecoveryMessage((e&&e.message)||'Could not verify this reset link.',true);
+  }
+}
+async function completePasswordRecovery(){
+  const password=document.getElementById('recoveryNewPassword');
+  const confirmPassword=document.getElementById('recoveryConfirmPassword');
+  const button=document.getElementById('passwordRecoveryButton');
+  if(passwordRecoveryPending||!password||!confirmPassword||!button)return;
+  if(password.value.length<10||!/[a-z]/.test(password.value)||!/[A-Z]/.test(password.value)||!/[0-9]/.test(password.value)||!(/[^A-Za-z0-9]/.test(password.value))){
+    setPasswordRecoveryMessage('Use at least 10 characters with upper and lowercase letters, a number and a symbol.',true);
+    password.focus();
+    return;
+  }
+  if(password.value!==confirmPassword.value){
+    setPasswordRecoveryMessage('The two passwords do not match.',true);
+    confirmPassword.focus();
+    return;
+  }
+  passwordRecoveryPending=true;
+  button.disabled=true;
+  button.textContent='UPDATING PASSWORD...';
+  setPasswordRecoveryMessage('',false);
+  try{
+    const sessionResult=await sb.auth.getSession();
+    if(sessionResult.error||!sessionResult.data||!sessionResult.data.session)throw new Error('This reset link is invalid or has expired. Request a new link.');
+    const result=await sb.auth.updateUser({password:password.value});
+    if(result.error)throw result.error;
+    try{await sb.auth.signOut();}catch(ignore){}
+    try{window.history.replaceState({},document.title,window.location.pathname);}catch(ignore){}
+    password.value='';
+    confirmPassword.value='';
+    document.getElementById('passwordRecoveryForm').hidden=true;
+    document.getElementById('passwordRecoveryTitle').textContent='Password updated';
+    document.getElementById('passwordRecoveryIntro').textContent='Your password was changed successfully. Continue to the appropriate admin login below.';
+    setPasswordRecoveryMessage('',false);
+  }catch(e){
+    setPasswordRecoveryMessage((e&&e.message)||'Could not update the password. Request a new reset link.',true);
+  }finally{
+    passwordRecoveryPending=false;
+    button.disabled=false;
+    button.textContent='UPDATE PASSWORD';
+  }
+}
+if(PASSWORD_RECOVERY_REQUESTED){
+  sb.auth.onAuthStateChange(function(event){
+    if(event!=='PASSWORD_RECOVERY')return;
+    showPasswordRecoveryGate();
+    setPasswordRecoveryMessage('Reset link verified. Enter your new password.',false);
+  });
+  const recoveryForm=document.getElementById('passwordRecoveryForm');
+  if(recoveryForm)recoveryForm.addEventListener('submit',function(event){event.preventDefault();completePasswordRecovery();});
+}
 const PORTAL_ROOT_DOMAIN='quickadmissiongh.com';
 const RESERVED_PORTAL_SUBDOMAINS=new Set(['www','admin','api','mail','ftp','support','staging','app','dashboard','cdn','static','assets','auth','login','portal','superadmin','super-admin','school-admin']);
 function currentPortalSubdomain(){
@@ -2016,6 +2103,10 @@ function onLoginSchoolChange(){
 }
 async function initStudentPortal(){
   try{
+    if(PASSWORD_RECOVERY_REQUESTED){
+      await initializePasswordRecovery();
+      return;
+    }
     configurePortalEntryView();
     if(platformDirectoryRequested()) await loadSchools();
     else await Promise.allSettled([loadPaystackConfig(),loadSchools(),bootStudent()]);

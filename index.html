@@ -1222,6 +1222,25 @@
 <link rel="stylesheet" href="assets/css/table-nowrap.css?v=20260809-system-nowrap-1">
 <link rel="stylesheet" href="assets/css/passport-photo.css?v=20260809-passport-avatar-1">
 <script src="assets/js/global-layout-fix.js?v=20260811-chrome-scroll-clamp-4" defer></script>
+<style>
+  #passwordRecoveryGate[hidden]{display:none!important}
+  body.password-recovery-active{min-height:100dvh!important;overflow-x:hidden!important;overflow-y:auto!important;background:#c0ebff!important}
+  body.password-recovery-active> :not(#passwordRecoveryGate){display:none!important}
+  #passwordRecoveryGate{min-height:100dvh;padding:24px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 15% 15%,rgba(245,158,113,.4),transparent 34%),linear-gradient(135deg,#c0ebff,#f8fcff);color:#002b4c}
+  #passwordRecoveryGate .recovery-card{width:min(480px,100%);padding:34px;border:1px solid #001619;border-radius:22px;background:rgba(255,255,255,.94);box-shadow:0 24px 70px rgba(0,43,76,.18)}
+  #passwordRecoveryGate h1{margin:0;color:#002b4c!important;font:800 clamp(28px,5vw,38px)/1.15 Arial,sans-serif}
+  #passwordRecoveryGate p{margin:12px 0 26px;color:#526779!important;line-height:1.6}
+  #passwordRecoveryGate label{display:block;margin:0 0 8px;color:#002b4c!important;font-weight:800}
+  #passwordRecoveryGate input{width:100%;height:52px;margin:0 0 18px;padding:0 15px;border:1px solid #001619;border-radius:12px;background:#fff!important;color:#002b4c!important;font-size:16px}
+  #passwordRecoveryGate input:focus{outline:none;box-shadow:0 0 0 4px rgba(0,43,76,.14)}
+  #passwordRecoveryGate .recovery-primary{width:100%;min-height:52px;border:1px solid #001619!important;border-radius:12px;background:#002b4c!important;color:#fff!important;font-weight:800;cursor:pointer}
+  #passwordRecoveryGate .recovery-primary:disabled{opacity:.65;cursor:wait}
+  #passwordRecoveryGate .recovery-message{display:none;margin:0 0 16px;padding:12px 14px;border:1px solid #4e7d64;border-radius:10px;background:#edf9f2!important;color:#174f31!important;font-size:13px;font-weight:700;line-height:1.5}
+  #passwordRecoveryGate .recovery-message.is-error{border-color:#b23a3a;background:#fff0f0!important;color:#8a2222!important}
+  #passwordRecoveryGate .recovery-links{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:20px}
+  #passwordRecoveryGate .recovery-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 14px;border:1px solid #002b4c;border-radius:10px;background:#fff!important;color:#002b4c!important;font-weight:800;text-decoration:none}
+  @media(max-width:520px){#passwordRecoveryGate{padding:12px}#passwordRecoveryGate .recovery-card{padding:24px 18px;border-radius:18px}#passwordRecoveryGate .recovery-links{display:grid;grid-template-columns:1fr}#passwordRecoveryGate .recovery-links a{width:100%}}
+</style>
 </head>
 <body class="booting system-footer-page">
 <div class="env-badge" id="envBadge">LIVE</div>
@@ -1241,6 +1260,25 @@
     <div class="boot-splash-progress" aria-hidden="true"><span></span></div>
   </div>
 </div>
+
+<main id="passwordRecoveryGate" hidden aria-labelledby="passwordRecoveryTitle">
+  <section class="recovery-card">
+    <h1 id="passwordRecoveryTitle">Reset your password</h1>
+    <p id="passwordRecoveryIntro">Verify the recovery link, then choose a new password for your admin account.</p>
+    <form id="passwordRecoveryForm" novalidate>
+      <label for="recoveryNewPassword">New password</label>
+      <input type="password" id="recoveryNewPassword" autocomplete="new-password" minlength="10" placeholder="At least 10 characters" required>
+      <label for="recoveryConfirmPassword">Confirm new password</label>
+      <input type="password" id="recoveryConfirmPassword" autocomplete="new-password" minlength="10" placeholder="Repeat the new password" required>
+      <div id="passwordRecoveryMessage" class="recovery-message" role="status" aria-live="polite"></div>
+      <button type="submit" class="recovery-primary" id="passwordRecoveryButton">UPDATE PASSWORD</button>
+    </form>
+    <nav class="recovery-links" aria-label="Admin login links">
+      <a href="admin/school-admin">School Admin Login</a>
+      <a href="admin/super-admin">Super Admin Login</a>
+    </nav>
+  </section>
+</main>
 
 <!-- ===== LOGIN ===== -->
 <div class="screen active" id="s-login">
@@ -1679,7 +1717,7 @@
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toastMsg"></span></div>
 
 <script src="district-list.js"></script>
-<script src="assets/js/pages/index-2.js?v=20260812-payment-login-handoff-1"></script>
+<script src="assets/js/pages/index-2.js?v=20260812-password-recovery-fallback-1"></script>
 <footer class="system-footer">Copyright &copy; 2026 AXIOMBYTE HUB. All rights reserved. &middot; Version 1.0</footer>
 </body>
 </html>
