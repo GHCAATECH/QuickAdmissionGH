@@ -1237,9 +1237,7 @@
   #passwordRecoveryGate .recovery-primary:disabled{opacity:.65;cursor:wait}
   #passwordRecoveryGate .recovery-message{display:none;margin:0 0 16px;padding:12px 14px;border:1px solid #4e7d64;border-radius:10px;background:#edf9f2!important;color:#174f31!important;font-size:13px;font-weight:700;line-height:1.5}
   #passwordRecoveryGate .recovery-message.is-error{border-color:#b23a3a;background:#fff0f0!important;color:#8a2222!important}
-  #passwordRecoveryGate .recovery-links{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:20px}
-  #passwordRecoveryGate .recovery-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 14px;border:1px solid #002b4c;border-radius:10px;background:#fff!important;color:#002b4c!important;font-weight:800;text-decoration:none}
-  @media(max-width:520px){#passwordRecoveryGate{padding:12px}#passwordRecoveryGate .recovery-card{padding:24px 18px;border-radius:18px}#passwordRecoveryGate .recovery-links{display:grid;grid-template-columns:1fr}#passwordRecoveryGate .recovery-links a{width:100%}}
+  @media(max-width:520px){#passwordRecoveryGate{padding:12px}#passwordRecoveryGate .recovery-card{padding:24px 18px;border-radius:18px}}
 </style>
 </head>
 <body class="booting system-footer-page">
@@ -1273,10 +1271,6 @@
       <div id="passwordRecoveryMessage" class="recovery-message" role="status" aria-live="polite"></div>
       <button type="submit" class="recovery-primary" id="passwordRecoveryButton">UPDATE PASSWORD</button>
     </form>
-    <nav class="recovery-links" aria-label="Admin login links">
-      <a href="admin/school-admin">School Admin Login</a>
-      <a href="admin/super-admin">Super Admin Login</a>
-    </nav>
   </section>
 </main>
 
@@ -1717,7 +1711,7 @@
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toastMsg"></span></div>
 
 <script src="district-list.js"></script>
-<script src="assets/js/pages/index-2.js?v=20260812-password-recovery-fallback-1"></script>
+<script src="assets/js/pages/index-2.js?v=20260812-password-recovery-buttons-removed-1"></script>
 <footer class="system-footer">Copyright &copy; 2026 AXIOMBYTE HUB. All rights reserved. &middot; Version 1.0</footer>
 </body>
 </html>

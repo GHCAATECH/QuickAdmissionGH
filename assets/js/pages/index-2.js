@@ -72,7 +72,7 @@ async function completePasswordRecovery(){
     confirmPassword.value='';
     document.getElementById('passwordRecoveryForm').hidden=true;
     document.getElementById('passwordRecoveryTitle').textContent='Password updated';
-    document.getElementById('passwordRecoveryIntro').textContent='Your password was changed successfully. Continue to the appropriate admin login below.';
+    document.getElementById('passwordRecoveryIntro').textContent='Your password was changed successfully. You can now return to your admin login page and sign in.';
     setPasswordRecoveryMessage('',false);
   }catch(e){
     setPasswordRecoveryMessage((e&&e.message)||'Could not update the password. Request a new reset link.',true);
