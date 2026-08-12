@@ -643,16 +643,32 @@ async function verifyPayment(reference, idx, name, school, parentContact){
     toast(msg); return;
   }
   clearPending(); showPendingBanner();
-  window._newToken={idx,tk:data.token};
-  toast('Payment confirmed \u2014 signing you in\u2026');
   const loginSchool=data.school_id||school||null;
-  session={index:idx,token:data.token,school:loginSchool};
-  let {data:login,error:loginError}=await studentLoginRequest({p_index:idx,p_token:data.token,p_school:loginSchool});
-  if(!(login&&login.ok)){ await new Promise(function(resolve){setTimeout(resolve,350);}); const retry=await studentLoginRequest({p_index:idx,p_token:data.token,p_school:loginSchool}); login=retry.data; loginError=retry.error; }
-  if(login&&login.ok){ STU=login.student; await applySchool(login); setStudentSession(session); hydrate(); showScreen('s-app'); showPanel('dash'); watchDeletion(); toast('Welcome! Save your token: '+data.token); }
-  else { $('new-token').textContent=data.token; $('purchase-form').style.display='none'; $('purchase-done').style.display='block'; }
+  fillPurchasedTokenLogin(idx,data.token,loginSchool);
 }
-function useNewToken(){$('login-index').value=window._newToken.idx;$('login-token').value=window._newToken.tk;$('purchase-form').style.display='block';$('purchase-done').style.display='none';showScreen('s-login');toast('Token filled in - tap Log in');}
+function fillPurchasedTokenLogin(idx,token,school){
+  const loginIndex=String(idx||'').trim();
+  const loginToken=String(token||'').trim().toUpperCase();
+  const loginSchool=tenantSchoolId()||String(school||'');
+  window._newToken={idx:loginIndex,tk:loginToken,school:loginSchool};
+  if($('login-school')&&loginSchool){
+    $('login-school').value=loginSchool;
+    syncLoginSchoolPicker();
+    onLoginSchoolChange();
+  }
+  $('login-index').value=loginIndex;
+  $('login-token').value=loginToken;
+  $('f-school').classList.remove('err');
+  $('f-index').classList.remove('err');
+  $('f-token').classList.remove('err');
+  $('purchase-form').style.display='block';
+  $('purchase-done').style.display='none';
+  showScreen('s-login');
+  requestAnimationFrame(function(){if($('loginBtn'))$('loginBtn').focus();});
+  const actionLabel=$('loginBtn')?$('loginBtn').textContent.trim():'Continue Admission';
+  toast('Payment confirmed. Your index and token are filled in - tap '+actionLabel+'.');
+}
+function useNewToken(){if(window._newToken)fillPurchasedTokenLogin(window._newToken.idx,window._newToken.tk,window._newToken.school);}
 let retrieveOtpState=null;
 function resetRetrieveOtp(){
   retrieveOtpState=null;
