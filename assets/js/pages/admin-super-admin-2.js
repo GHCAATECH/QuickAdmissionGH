@@ -161,6 +161,149 @@ function smsTargets(){
 
 /* ---- AUTH GATE ---- */
 let superAdminLoginPending=false;
+let superAdminRecoveryPending=false;
+let superAdminRecoveryMode=isSuperAdminRecoveryUrl();
+function isSuperAdminRecoveryUrl(){
+  try{
+    const query=new URLSearchParams(window.location.search||'');
+    const hash=new URLSearchParams(String(window.location.hash||'').replace(/^#/,''));
+    return query.get('type')==='recovery'||hash.get('type')==='recovery'||query.has('code');
+  }catch(e){ return false; }
+}
+function superAdminRecoveryRedirectUrl(){
+  try{
+    const url=new URL(window.location.href);
+    if(url.protocol!=='http:'&&url.protocol!=='https:')return 'https://www.quickadmissiongh.com/admin/super-admin';
+    url.search='';
+    url.hash='';
+    url.pathname=url.pathname.replace(/\.html$/i,'');
+    return url.toString();
+  }catch(e){ return 'https://www.quickadmissiongh.com/admin/super-admin'; }
+}
+function cleanSuperAdminRecoveryUrl(){
+  try{
+    const url=new URL(window.location.href);
+    url.search='';
+    url.hash='';
+    window.history.replaceState({},document.title,url.pathname+url.search+url.hash);
+  }catch(e){}
+}
+function showSuperAdminAuthView(view){
+  const views={login:'adminLoginView',request:'adminRecoveryRequestView',update:'adminRecoveryUpdateView'};
+  Object.keys(views).forEach(function(key){
+    const el=document.getElementById(views[key]);
+    if(el)el.hidden=key!==view;
+  });
+  const status=document.getElementById('ag_session_status_text');
+  if(status)status.textContent=view==='request'?'Password recovery':view==='update'?'Secure password reset':'Secure session ready';
+}
+function setSuperAdminRecoveryMessage(id,message,isError){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.textContent=message||'';
+  el.classList.toggle('is-error',!!isError);
+  el.style.display=message?'block':'none';
+}
+function setSuperAdminLoginNotice(message,isSuccess){
+  const el=document.getElementById('ag_err');
+  if(!el)return;
+  el.textContent=message||'';
+  el.classList.toggle('is-success',!!isSuccess);
+  el.style.display=message?'block':'none';
+}
+function openSuperAdminRecoveryRequest(){
+  const email=document.getElementById('ag_email');
+  const recoveryEmail=document.getElementById('ag_recovery_email');
+  if(recoveryEmail&&email)recoveryEmail.value=email.value.trim();
+  setSuperAdminRecoveryMessage('ag_recovery_msg','',false);
+  showSuperAdminAuthView('request');
+  if(recoveryEmail)recoveryEmail.focus();
+}
+async function requestSuperAdminPasswordReset(){
+  const input=document.getElementById('ag_recovery_email');
+  const btn=document.getElementById('ag_recovery_btn');
+  if(superAdminRecoveryPending||!input||!btn)return;
+  const email=input.value.trim();
+  if(!email||!input.checkValidity()){
+    setSuperAdminRecoveryMessage('ag_recovery_msg','Enter a valid email address.',true);
+    input.focus();
+    return;
+  }
+  if(!sb){
+    setSuperAdminRecoveryMessage('ag_recovery_msg','The secure login service did not load. Check your connection and reload the page.',true);
+    return;
+  }
+  superAdminRecoveryPending=true;
+  btn.disabled=true;
+  btn.textContent='SENDING LINK...';
+  setSuperAdminRecoveryMessage('ag_recovery_msg','',false);
+  try{
+    const result=await superAuthTimeout(
+      sb.auth.resetPasswordForEmail(email,{redirectTo:superAdminRecoveryRedirectUrl()}),
+      'Sending the reset link timed out. Check your connection and try again.'
+    );
+    if(result.error)throw result.error;
+    setSuperAdminRecoveryMessage('ag_recovery_msg','If this email belongs to a super-admin account, a reset link has been sent. Check the inbox and spam folder.',false);
+  }catch(e){
+    setSuperAdminRecoveryMessage('ag_recovery_msg',(e&&e.message)||'Could not send the reset link. Please try again.',true);
+  }finally{
+    superAdminRecoveryPending=false;
+    btn.disabled=false;
+    btn.textContent='SEND RESET LINK';
+  }
+}
+async function updateSuperAdminPassword(){
+  const password=document.getElementById('ag_new_pass');
+  const confirmPassword=document.getElementById('ag_confirm_pass');
+  const btn=document.getElementById('ag_reset_btn');
+  if(superAdminRecoveryPending||!password||!confirmPassword||!btn)return;
+  if(password.value.length<10||!/[a-z]/.test(password.value)||!/[A-Z]/.test(password.value)||!/[0-9]/.test(password.value)||!(/[^A-Za-z0-9]/.test(password.value))){
+    setSuperAdminRecoveryMessage('ag_reset_msg','Use at least 10 characters with upper and lowercase letters, a number and a symbol.',true);
+    password.focus();
+    return;
+  }
+  if(password.value!==confirmPassword.value){
+    setSuperAdminRecoveryMessage('ag_reset_msg','The two passwords do not match.',true);
+    confirmPassword.focus();
+    return;
+  }
+  if(!sb){
+    setSuperAdminRecoveryMessage('ag_reset_msg','The secure login service did not load. Check your connection and reload the page.',true);
+    return;
+  }
+  superAdminRecoveryPending=true;
+  btn.disabled=true;
+  btn.textContent='UPDATING PASSWORD...';
+  setSuperAdminRecoveryMessage('ag_reset_msg','',false);
+  try{
+    const sessionResult=await superAuthTimeout(sb.auth.getSession(),'The reset session check timed out.');
+    if(sessionResult.error||!sessionResult.data||!sessionResult.data.session)throw new Error('This reset link is invalid or has expired. Request a new link.');
+    const result=await superAuthTimeout(sb.auth.updateUser({password:password.value}),'Updating the password timed out. Please try again.');
+    if(result.error)throw result.error;
+    try{await superAuthTimeout(sb.auth.signOut(),'Session cleanup timed out.',3000);}catch(ignore){}
+    superAdminRecoveryMode=false;
+    cleanSuperAdminRecoveryUrl();
+    password.value='';
+    confirmPassword.value='';
+    showSuperAdminAuthView('login');
+    setSuperAdminLoginNotice('Password updated successfully. Sign in with your new password.',true);
+    const email=document.getElementById('ag_email');
+    if(email)email.focus();
+  }catch(e){
+    setSuperAdminRecoveryMessage('ag_reset_msg',(e&&e.message)||'Could not update the password. Request a new reset link.',true);
+  }finally{
+    superAdminRecoveryPending=false;
+    btn.disabled=false;
+    btn.textContent='UPDATE PASSWORD';
+  }
+}
+async function cancelSuperAdminRecovery(){
+  try{if(sb)await superAuthTimeout(sb.auth.signOut(),'Session cleanup timed out.',3000);}catch(e){}
+  superAdminRecoveryMode=false;
+  cleanSuperAdminRecoveryUrl();
+  showSuperAdminAuthView('login');
+  setSuperAdminLoginNotice('',false);
+}
 function revealSuperAdminLogin(message){
   const gate=document.getElementById('authGate');
   const app=document.querySelector('.app');
@@ -194,21 +337,54 @@ function revealSuperAdminLogin(message){
     <section class="qa-login-panel">
       <div class="qa-login-card">
         <div class="qa-session-status"><span class="qa-pulse"></span><span id="ag_session_status_text">Secure session ready</span></div>
-        <h2>Super Admin Login</h2>
-        <p>Use the email address and password assigned to your platform super-admin account.</p>
-        <form id="superAdminLoginForm">
-          <div class="qa-field">
-            <label for="ag_email">Email address</label>
-            <div class="qa-input-wrap"><span class="qa-input-icon">✉</span><input type="email" id="ag_email" class="qa-form-control" placeholder="you@admin.gh" autocomplete="username" required></div>
-          </div>
-          <div class="qa-field">
-            <label for="ag_pass">Password</label>
-            <div class="qa-input-wrap"><span class="qa-input-icon">●</span><input type="password" id="ag_pass" class="qa-form-control" placeholder="Enter your password" autocomplete="current-password" required><button type="button" class="qa-toggle-password" id="ag_toggle">Show</button></div>
-          </div>
-          <div id="ag_err" style="display:none;color:#B23A3A;font-size:12.5px;font-weight:700;margin-bottom:10px"></div>
-          <button type="submit" class="qa-login-btn" id="ag_btn">LOGIN →</button>
-        </form>
-        <div class="qa-access-note"><strong>Need access?</strong>Contact the platform owner to create or reconnect your super-admin login.</div>
+        <div id="adminLoginView">
+          <h2>Super Admin Login</h2>
+          <p>Use the email address and password assigned to your platform super-admin account.</p>
+          <form id="superAdminLoginForm">
+            <div class="qa-field">
+              <label for="ag_email">Email address</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9993;</span><input type="email" id="ag_email" class="qa-form-control" placeholder="you@admin.gh" autocomplete="username" required></div>
+            </div>
+            <div class="qa-field">
+              <label for="ag_pass">Password</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9679;</span><input type="password" id="ag_pass" class="qa-form-control" placeholder="Enter your password" autocomplete="current-password" required><button type="button" class="qa-toggle-password" id="ag_toggle">Show</button></div>
+            </div>
+            <div class="qa-forgot-row"><button type="button" class="qa-text-action" id="ag_forgot_open">Forgot password?</button></div>
+            <div id="ag_err" style="display:none;color:#B23A3A;font-size:12.5px;font-weight:700;margin-bottom:10px"></div>
+            <button type="submit" class="qa-login-btn" id="ag_btn">LOGIN &rarr;</button>
+          </form>
+          <div class="qa-access-note"><strong>Need access?</strong>Contact the platform owner to create or reconnect your super-admin login.</div>
+        </div>
+        <div id="adminRecoveryRequestView" hidden>
+          <h2>Reset password</h2>
+          <p>Enter your super-admin email address. We will send a secure password reset link to it.</p>
+          <form id="adminRecoveryRequestForm" novalidate>
+            <div class="qa-field">
+              <label for="ag_recovery_email">Email address</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9993;</span><input type="email" id="ag_recovery_email" class="qa-form-control" placeholder="you@admin.gh" autocomplete="email" required></div>
+            </div>
+            <div id="ag_recovery_msg" class="qa-recovery-message" role="status" aria-live="polite"></div>
+            <button type="submit" class="qa-login-btn" id="ag_recovery_btn">SEND RESET LINK</button>
+          </form>
+          <button type="button" class="qa-text-action qa-recovery-back" id="ag_recovery_back">&larr; Back to login</button>
+        </div>
+        <div id="adminRecoveryUpdateView" hidden>
+          <h2>Choose a new password</h2>
+          <p>Use at least 10 characters, including upper and lowercase letters, a number and a symbol.</p>
+          <form id="adminPasswordResetForm" novalidate>
+            <div class="qa-field">
+              <label for="ag_new_pass">New password</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9679;</span><input type="password" id="ag_new_pass" class="qa-form-control" placeholder="At least 10 characters" autocomplete="new-password" minlength="10" required></div>
+            </div>
+            <div class="qa-field">
+              <label for="ag_confirm_pass">Confirm new password</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9679;</span><input type="password" id="ag_confirm_pass" class="qa-form-control" placeholder="Repeat the new password" autocomplete="new-password" minlength="10" required></div>
+            </div>
+            <div id="ag_reset_msg" class="qa-recovery-message" role="status" aria-live="polite"></div>
+            <button type="submit" class="qa-login-btn" id="ag_reset_btn">UPDATE PASSWORD</button>
+          </form>
+          <button type="button" class="qa-text-action qa-recovery-back" id="ag_reset_cancel">Cancel and return to login</button>
+        </div>
         <a href="../index.html" class="qa-back-link">← Return to admission portal</a>
       </div>
     </section>
@@ -216,10 +392,34 @@ function revealSuperAdminLogin(message){
   document.body.appendChild(ov);
   document.getElementById('superAdminLoginForm').addEventListener('submit',function(e){e.preventDefault();superLogin();});
   document.getElementById('ag_toggle').addEventListener('click',function(){const p=document.getElementById('ag_pass');if(!p)return;p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'Show':'Hide';});
+  document.getElementById('ag_forgot_open').addEventListener('click',openSuperAdminRecoveryRequest);
+  document.getElementById('ag_recovery_back').addEventListener('click',function(){showSuperAdminAuthView('login');});
+  document.getElementById('ag_reset_cancel').addEventListener('click',cancelSuperAdminRecovery);
+  document.getElementById('adminRecoveryRequestForm').addEventListener('submit',function(e){e.preventDefault();requestSuperAdminPasswordReset();});
+  document.getElementById('adminPasswordResetForm').addEventListener('submit',function(e){e.preventDefault();updateSuperAdminPassword();});
+  if(sb)sb.auth.onAuthStateChange(function(event){
+    if(event!=='PASSWORD_RECOVERY')return;
+    superAdminRecoveryMode=true;
+    revealSuperAdminLogin('Secure password reset');
+    showSuperAdminAuthView('update');
+    setSuperAdminRecoveryMessage('ag_reset_msg','Reset link verified. Enter your new password.',false);
+  });
   const bootWatchdog=setTimeout(function(){
     revealSuperAdminLogin('Session check took too long. You can sign in below.');
   },SUPER_AUTH_BOOT_TIMEOUT_MS+250);
-  bootSuperSession().then(function(restored){
+  const bootPromise=superAdminRecoveryMode
+    ?(sb?superAuthTimeout(sb.auth.getSession(),'The reset session check timed out.'):Promise.reject(new Error('The secure login service did not load.'))).then(function(result){
+      revealSuperAdminLogin('Secure password reset');
+      showSuperAdminAuthView('update');
+      if(result.error||!result.data||!result.data.session){
+        setSuperAdminRecoveryMessage('ag_reset_msg','This reset link is invalid or has expired. Cancel and request a new link.',true);
+      }else{
+        setSuperAdminRecoveryMessage('ag_reset_msg','Reset link verified. Enter your new password.',false);
+      }
+      return true;
+    })
+    :bootSuperSession();
+  bootPromise.then(function(restored){
     if(!restored)revealSuperAdminLogin();
   }).catch(function(error){
     revealSuperAdminLogin((error&&error.message)||'Secure session check failed. You can sign in below.');
@@ -236,6 +436,7 @@ async function enterSuper(uid){
   go('dashboard');
 }
 async function bootSuperSession(){
+  if(superAdminRecoveryMode)return false;
   if(!sb)throw new Error('The secure login service did not load. Check your connection and reload the page.');
   const sessionResult=await superAuthTimeout(sb.auth.getSession(),'The secure session check timed out. You can sign in below.');
   const session=sessionResult&&sessionResult.data&&sessionResult.data.session;

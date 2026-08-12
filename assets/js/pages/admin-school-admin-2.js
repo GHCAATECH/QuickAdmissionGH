@@ -371,6 +371,140 @@ function loadDefaultSmsTemplate(){
 
 /* ---- AUTH GATE ---- */
 let schoolAdminLoginPending=false;
+let schoolAdminRecoveryPending=false;
+let schoolAdminRecoveryMode=isSchoolAdminRecoveryUrl();
+function isSchoolAdminRecoveryUrl(){
+  try{
+    const query=new URLSearchParams(window.location.search||'');
+    const hash=new URLSearchParams(String(window.location.hash||'').replace(/^#/,''));
+    return query.get('type')==='recovery'||hash.get('type')==='recovery'||query.has('code');
+  }catch(e){ return false; }
+}
+function schoolAdminRecoveryRedirectUrl(){
+  try{
+    const url=new URL(window.location.href);
+    if(url.protocol!=='http:'&&url.protocol!=='https:')return 'https://www.quickadmissiongh.com/admin/school-admin';
+    url.search='';
+    url.hash='';
+    url.pathname=url.pathname.replace(/\.html$/i,'');
+    return url.toString();
+  }catch(e){ return 'https://www.quickadmissiongh.com/admin/school-admin'; }
+}
+function cleanSchoolAdminRecoveryUrl(){
+  try{
+    const url=new URL(window.location.href);
+    url.search='';
+    url.hash='';
+    window.history.replaceState({},document.title,url.pathname+url.search+url.hash);
+  }catch(e){}
+}
+function showSchoolAdminAuthView(view){
+  const views={login:'adminLoginView',request:'adminRecoveryRequestView',update:'adminRecoveryUpdateView'};
+  Object.keys(views).forEach(function(key){
+    const el=document.getElementById(views[key]);
+    if(el)el.hidden=key!==view;
+  });
+  const status=document.getElementById('ag_session_status_text');
+  if(status)status.textContent=view==='request'?'Password recovery':view==='update'?'Secure password reset':'Secure session ready';
+}
+function setSchoolAdminRecoveryMessage(id,message,isError){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.textContent=message||'';
+  el.classList.toggle('is-error',!!isError);
+  el.style.display=message?'block':'none';
+}
+function setSchoolAdminLoginNotice(message,isSuccess){
+  const el=document.getElementById('ag_err');
+  if(!el)return;
+  el.textContent=message||'';
+  el.classList.toggle('is-success',!!isSuccess);
+  el.style.display=message?'block':'none';
+}
+function openSchoolAdminRecoveryRequest(){
+  const email=document.getElementById('ag_email');
+  const recoveryEmail=document.getElementById('ag_recovery_email');
+  if(recoveryEmail&&email)recoveryEmail.value=email.value.trim();
+  setSchoolAdminRecoveryMessage('ag_recovery_msg','',false);
+  showSchoolAdminAuthView('request');
+  if(recoveryEmail)recoveryEmail.focus();
+}
+async function requestSchoolAdminPasswordReset(){
+  const input=document.getElementById('ag_recovery_email');
+  const btn=document.getElementById('ag_recovery_btn');
+  if(schoolAdminRecoveryPending||!input||!btn)return;
+  const email=input.value.trim();
+  if(!email||!input.checkValidity()){
+    setSchoolAdminRecoveryMessage('ag_recovery_msg','Enter a valid email address.',true);
+    input.focus();
+    return;
+  }
+  schoolAdminRecoveryPending=true;
+  btn.disabled=true;
+  btn.textContent='SENDING LINK...';
+  setSchoolAdminRecoveryMessage('ag_recovery_msg','',false);
+  try{
+    const result=await sb.auth.resetPasswordForEmail(email,{redirectTo:schoolAdminRecoveryRedirectUrl()});
+    if(result.error)throw result.error;
+    setSchoolAdminRecoveryMessage('ag_recovery_msg','If this email belongs to an admin account, a reset link has been sent. Check the inbox and spam folder.',false);
+  }catch(e){
+    setSchoolAdminRecoveryMessage('ag_recovery_msg',(e&&e.message)||'Could not send the reset link. Please try again.',true);
+  }finally{
+    schoolAdminRecoveryPending=false;
+    btn.disabled=false;
+    btn.textContent='SEND RESET LINK';
+  }
+}
+async function updateSchoolAdminPassword(){
+  const password=document.getElementById('ag_new_pass');
+  const confirmPassword=document.getElementById('ag_confirm_pass');
+  const btn=document.getElementById('ag_reset_btn');
+  if(schoolAdminRecoveryPending||!password||!confirmPassword||!btn)return;
+  if(password.value.length<10||!/[a-z]/.test(password.value)||!/[A-Z]/.test(password.value)||!/[0-9]/.test(password.value)||!(/[^A-Za-z0-9]/.test(password.value))){
+    setSchoolAdminRecoveryMessage('ag_reset_msg','Use at least 10 characters with upper and lowercase letters, a number and a symbol.',true);
+    password.focus();
+    return;
+  }
+  if(password.value!==confirmPassword.value){
+    setSchoolAdminRecoveryMessage('ag_reset_msg','The two passwords do not match.',true);
+    confirmPassword.focus();
+    return;
+  }
+  schoolAdminRecoveryPending=true;
+  btn.disabled=true;
+  btn.textContent='UPDATING PASSWORD...';
+  setSchoolAdminRecoveryMessage('ag_reset_msg','',false);
+  try{
+    const sessionResult=await sb.auth.getSession();
+    if(sessionResult.error||!sessionResult.data||!sessionResult.data.session)throw new Error('This reset link is invalid or has expired. Request a new link.');
+    const result=await sb.auth.updateUser({password:password.value});
+    if(result.error)throw result.error;
+    setSchoolAdminTabSessionActive(false);
+    try{await sb.auth.signOut();}catch(ignore){}
+    schoolAdminRecoveryMode=false;
+    cleanSchoolAdminRecoveryUrl();
+    password.value='';
+    confirmPassword.value='';
+    showSchoolAdminAuthView('login');
+    setSchoolAdminLoginNotice('Password updated successfully. Sign in with your new password.',true);
+    const email=document.getElementById('ag_email');
+    if(email)email.focus();
+  }catch(e){
+    setSchoolAdminRecoveryMessage('ag_reset_msg',(e&&e.message)||'Could not update the password. Request a new reset link.',true);
+  }finally{
+    schoolAdminRecoveryPending=false;
+    btn.disabled=false;
+    btn.textContent='UPDATE PASSWORD';
+  }
+}
+async function cancelSchoolAdminRecovery(){
+  setSchoolAdminTabSessionActive(false);
+  try{await sb.auth.signOut();}catch(e){}
+  schoolAdminRecoveryMode=false;
+  cleanSchoolAdminRecoveryUrl();
+  showSchoolAdminAuthView('login');
+  setSchoolAdminLoginNotice('',false);
+}
 (function buildGate(){
   document.body.classList.add('auth-gate-visible');
   document.querySelector('.app').style.display='none';
@@ -387,7 +521,29 @@ let schoolAdminLoginPending=false;
     event.preventDefault();
     adminLogin();
   });
-  bootSession().finally(function(){
+  document.getElementById('ag_forgot_open').addEventListener('click',openSchoolAdminRecoveryRequest);
+  document.getElementById('ag_recovery_back').addEventListener('click',function(){showSchoolAdminAuthView('login');});
+  document.getElementById('ag_reset_cancel').addEventListener('click',cancelSchoolAdminRecovery);
+  document.getElementById('adminRecoveryRequestForm').addEventListener('submit',function(event){event.preventDefault();requestSchoolAdminPasswordReset();});
+  document.getElementById('adminPasswordResetForm').addEventListener('submit',function(event){event.preventDefault();updateSchoolAdminPassword();});
+  sb.auth.onAuthStateChange(function(event){
+    if(event!=='PASSWORD_RECOVERY')return;
+    schoolAdminRecoveryMode=true;
+    setGateReady();
+    showSchoolAdminAuthView('update');
+    setSchoolAdminRecoveryMessage('ag_reset_msg','Reset link verified. Enter your new password.',false);
+  });
+  const bootPromise=schoolAdminRecoveryMode
+    ?sb.auth.getSession().then(function(result){
+      showSchoolAdminAuthView('update');
+      if(result.error||!result.data||!result.data.session){
+        setSchoolAdminRecoveryMessage('ag_reset_msg','This reset link is invalid or has expired. Cancel and request a new link.',true);
+      }else{
+        setSchoolAdminRecoveryMessage('ag_reset_msg','Reset link verified. Enter your new password.',false);
+      }
+    })
+    :bootSession();
+  bootPromise.finally(function(){
     setGateReady();
   });
 })();
@@ -406,6 +562,7 @@ async function enterAdmin(prof,uid){
 }
 async function bootSession(){
   try{
+    if(schoolAdminRecoveryMode)return;
     if(!schoolAdminTabSessionActive()) return;
     const {data}=await sb.auth.getSession();
     const session=data&&data.session;

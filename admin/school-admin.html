@@ -1426,7 +1426,7 @@
   #authGate .qa-session-status{display:flex;align-items:center;gap:10px;width:fit-content;padding:8px 12px;margin-bottom:22px;border:1px solid #001619;border-radius:999px;background:rgba(192,235,255,.5)!important;font-size:12px;font-weight:800;color:#002B4C!important}
   #authGate .qa-pulse{width:8px;height:8px;border-radius:50%;background:#12b76a;box-shadow:0 0 0 5px rgba(18,183,106,.14)}
   #authGate .qa-login-card h2{font-family:Arial,sans-serif;font-size:34px;letter-spacing:-.03em;margin:0;color:#002B4C!important;-webkit-text-fill-color:#002B4C!important}
-  #authGate .qa-login-card>p{margin:10px 0 30px;color:#6b7a89!important;line-height:1.65}
+  #authGate .qa-login-card>p,#authGate .qa-login-card>div>p{margin:10px 0 30px;color:#6b7a89!important;line-height:1.65}
   #authGate .qa-field{margin-bottom:18px}
   #authGate .qa-field label{display:block;margin-bottom:8px;font-size:14px;font-weight:800;color:#002B4C!important}
   #authGate .qa-input-wrap{position:relative}
@@ -1438,6 +1438,14 @@
   #authGate .qa-access-note{margin-top:20px;padding:15px;border:1px solid #001619;border-radius:12px;background:rgba(245,158,113,.22)!important;font-size:13px;line-height:1.6;color:#002B4C!important}
   #authGate .qa-access-note strong{display:block;margin-bottom:4px;color:#002B4C!important}
   #authGate .qa-back-link{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:13px;font-weight:800;color:#002B4C!important;text-decoration:none}
+  #authGate [hidden]{display:none!important}
+  #authGate .qa-forgot-row{display:flex;justify-content:flex-end;margin:-8px 0 12px}
+  #authGate .qa-text-action{appearance:none;border:0!important;background:transparent!important;box-shadow:none!important;color:#002B4C!important;padding:6px 0!important;font:inherit;font-size:13px;font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  #authGate .qa-text-action:hover{background:transparent!important;color:#001d33!important;transform:none!important;box-shadow:none!important}
+  #authGate .qa-recovery-message{display:none;margin:0 0 14px;padding:11px 13px;border:1px solid #4e7d64;border-radius:10px;background:#edf9f2!important;color:#174f31!important;font-size:13px;font-weight:700;line-height:1.5}
+  #authGate .qa-recovery-message.is-error{border-color:#b23a3a;background:#fff0f0!important;color:#8a2222!important}
+  #authGate #ag_err.is-success{display:block!important;border:1px solid #4e7d64;border-radius:10px;background:#edf9f2!important;color:#174f31!important;padding:11px 13px;margin-bottom:14px}
+  #authGate .qa-recovery-back{display:block;margin:12px auto 0!important}
   #authGate .gate-status{margin:0 0 14px!important}
   @media(max-width:850px){#authGate .qa-login-shell{grid-template-columns:1fr}#authGate .qa-brand-panel{min-height:auto;padding:36px;border-right:0;border-bottom:1px solid #001619}#authGate .qa-brand-panel h1{font-size:44px}#authGate .qa-brand-bottom{margin-top:30px}#authGate .qa-login-panel{min-height:auto;padding:36px}}
   @media(max-width:520px){#authGate.gate-screen{padding:10px!important}#authGate .qa-login-shell{border-radius:18px}#authGate .qa-brand-panel,#authGate .qa-login-panel{padding:24px}#authGate .qa-brand-panel h1{font-size:36px}#authGate .qa-login-card h2{font-size:28px}}
@@ -1540,22 +1548,55 @@
     <section class="qa-login-panel">
       <div class="qa-login-card">
         <div class="qa-session-status"><span class="qa-pulse"></span><span id="ag_session_status_text">Secure session ready</span></div>
-        <h2>School Admin Login</h2>
-        <p>Use the email address and password assigned to your school-admin account.</p>
-        <form id="schoolAdminLoginForm" novalidate>
-          <div class="qa-field">
-            <label for="ag_email">Email address</label>
-            <div class="qa-input-wrap"><span class="qa-input-icon">&#9993;</span><input type="email" id="ag_email" class="qa-form-control" placeholder="you@school.gh" autocomplete="username" required></div>
-          </div>
-          <div class="qa-field">
-            <label for="ag_pass">Password</label>
-            <div class="qa-input-wrap"><span class="qa-input-icon">&#9679;</span><input type="password" id="ag_pass" class="qa-form-control" placeholder="Enter your password" autocomplete="current-password" required><button type="button" class="qa-toggle-password" data-qa-onclick="qaToggleSchoolAdminPassword(this)">Show</button></div>
-          </div>
-          <div class="gate-status"><span class="gate-spinner"></span>Checking for an existing secure session...</div>
-          <div id="ag_err" class="gate-error"></div>
-          <button type="submit" class="qa-login-btn" id="ag_btn">LOGIN &rarr;</button>
-        </form>
-        <div class="qa-access-note"><strong>Need access?</strong>Contact the platform owner or your school account owner to create or reconnect your school-admin login.</div>
+        <div id="adminLoginView">
+          <h2>School Admin Login</h2>
+          <p>Use the email address and password assigned to your school-admin account.</p>
+          <form id="schoolAdminLoginForm" novalidate>
+            <div class="qa-field">
+              <label for="ag_email">Email address</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9993;</span><input type="email" id="ag_email" class="qa-form-control" placeholder="you@school.gh" autocomplete="username" required></div>
+            </div>
+            <div class="qa-field">
+              <label for="ag_pass">Password</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9679;</span><input type="password" id="ag_pass" class="qa-form-control" placeholder="Enter your password" autocomplete="current-password" required><button type="button" class="qa-toggle-password" data-qa-onclick="qaToggleSchoolAdminPassword(this)">Show</button></div>
+            </div>
+            <div class="qa-forgot-row"><button type="button" class="qa-text-action" id="ag_forgot_open">Forgot password?</button></div>
+            <div class="gate-status"><span class="gate-spinner"></span>Checking for an existing secure session...</div>
+            <div id="ag_err" class="gate-error"></div>
+            <button type="submit" class="qa-login-btn" id="ag_btn">LOGIN &rarr;</button>
+          </form>
+          <div class="qa-access-note"><strong>Need access?</strong>Contact the platform owner or your school account owner to create or reconnect your school-admin login.</div>
+        </div>
+        <div id="adminRecoveryRequestView" hidden>
+          <h2>Reset password</h2>
+          <p>Enter your school-admin email address. We will send a secure password reset link to it.</p>
+          <form id="adminRecoveryRequestForm" novalidate>
+            <div class="qa-field">
+              <label for="ag_recovery_email">Email address</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9993;</span><input type="email" id="ag_recovery_email" class="qa-form-control" placeholder="you@school.gh" autocomplete="email" required></div>
+            </div>
+            <div id="ag_recovery_msg" class="qa-recovery-message" role="status" aria-live="polite"></div>
+            <button type="submit" class="qa-login-btn" id="ag_recovery_btn">SEND RESET LINK</button>
+          </form>
+          <button type="button" class="qa-text-action qa-recovery-back" id="ag_recovery_back">&larr; Back to login</button>
+        </div>
+        <div id="adminRecoveryUpdateView" hidden>
+          <h2>Choose a new password</h2>
+          <p>Use at least 10 characters, including upper and lowercase letters, a number and a symbol.</p>
+          <form id="adminPasswordResetForm" novalidate>
+            <div class="qa-field">
+              <label for="ag_new_pass">New password</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9679;</span><input type="password" id="ag_new_pass" class="qa-form-control" placeholder="At least 10 characters" autocomplete="new-password" minlength="10" required></div>
+            </div>
+            <div class="qa-field">
+              <label for="ag_confirm_pass">Confirm new password</label>
+              <div class="qa-input-wrap"><span class="qa-input-icon">&#9679;</span><input type="password" id="ag_confirm_pass" class="qa-form-control" placeholder="Repeat the new password" autocomplete="new-password" minlength="10" required></div>
+            </div>
+            <div id="ag_reset_msg" class="qa-recovery-message" role="status" aria-live="polite"></div>
+            <button type="submit" class="qa-login-btn" id="ag_reset_btn">UPDATE PASSWORD</button>
+          </form>
+          <button type="button" class="qa-text-action qa-recovery-back" id="ag_reset_cancel">Cancel and return to login</button>
+        </div>
         <a href="../index.html" class="qa-back-link">&larr; Return to admission portal</a>
       </div>
     </section>
@@ -2114,7 +2155,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<script src="../assets/js/pages/admin-school-admin-2.js?v=20260809-csp-1"></script>
+<script src="../assets/js/pages/admin-school-admin-2.js?v=20260812-password-recovery-1"></script>
 
 <footer class="system-footer">Copyright &copy; 2026 AXIOMBYTE HUB. All rights reserved. &middot; Version 1.0</footer>
 </body>
