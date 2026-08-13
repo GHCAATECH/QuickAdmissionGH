@@ -1365,6 +1365,7 @@ function fillTemplate(tpl){
   let out=String(tpl).replace(/\{RECORDS_TABLE\}/g, recordsTableHTML());
   const qurl=buildQR(qrText(),108);
   out=out.replace(/\{QR_CODE\}/g, qurl?'<img src="'+qurl+'" style="width:108px;height:108px" alt="QR code">':'');
+  out=out.replace(/\{SCHOOL_ADDRESS\}/g,escapeHtml(v.SCHOOL_ADDRESS).replace(/\r\n?|\n/g,'<br>'));
   const htmlVars=new Set(['CREST','CREST_TOP','CREST_CENTER']);
   out=out.replace(/\{([A-Z_]+)\}/g,(m,k)=> (k in v)? (htmlVars.has(k)?String(v[k]||''):escapeHtml(v[k])) : m);
   return window.QATemplateSanitizer.sanitize(out);
