@@ -1328,7 +1328,7 @@ function printDoc(title,bodyHTML,bare){
   w.document.write(head+wm+inner+'</body></html>');
   w.document.close(); setTimeout(()=>w.print(),350);
 }
-function reopening(){const c=SCHOOL&&SCHOOL.config;if(!c||!c.reopening_date)return '18 October 2025';try{return new Date(c.reopening_date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});}catch(e){return c.reopening_date;}}
+function reopening(){const c=SCHOOL&&SCHOOL.config,raw=String((c&&c.reopening_date)||'').trim();if(!raw)return 'Reporting date not set';const m=raw.match(/^(\d{4})-(\d{2})-(\d{2})/),d=m?new Date(Number(m[1]),Number(m[2])-1,Number(m[3])):new Date(raw);return Number.isNaN(d.getTime())?raw:d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});}
 const HANDWRITING_LINE='______________________________';
 function admissionNumberValue(){return String((STU&&(STU.permanent_admission_number||STU.admission_no||STU.school_no))||'').trim();}
 function houseAllocationValue(){return String((STU&&(STU.house_name||STU.house))||'').trim();}
