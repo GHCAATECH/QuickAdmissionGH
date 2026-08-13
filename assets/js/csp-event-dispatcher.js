@@ -121,6 +121,7 @@
     'qaSetGeneratedAdminEditPassword',
     'qaToggleSchoolAdminPassword',
     'qaTplFormatAndReset',
+    'qaTplSpacingAndReset',
     'queueManageSearch',
     'queueRegisteredSearch',
     'queueStudentFeatureSave',

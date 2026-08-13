@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://js.paystack.co; script-src-attr 'none'; connect-src 'self' https://*.supabase.co https://api.paystack.co https://sms.arkesel.com; frame-src 'self' https://js.paystack.co https://checkout.paystack.com;">
-<script src="../assets/js/csp-event-dispatcher.js?v=20260810-view-more-fix-1"></script>
+<script src="../assets/js/csp-event-dispatcher.js?v=20260813-template-spacing-1"></script>
 <title>QuickAdmissionGH</title>
 <link rel="icon" type="image/svg+xml" href="../logo-icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -711,6 +711,8 @@
   .tpl-toolbar select[title="Font"]{width:142px}
   .tpl-toolbar select[title="Size"]{width:68px}
   .tpl-toolbar select[title="Style"]{width:102px}
+  .tpl-toolbar select[title="Line spacing"]{width:88px}
+  .tpl-toolbar select[title="Paragraph spacing"]{width:104px}
   .tpl-toolbar .tb-sep{width:1px;height:20px;background:var(--line);margin:0 4px}
   .tpl-toolbar .tb-color{position:relative;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;color:var(--ink-soft)}
   .tpl-toolbar .tb-color:hover{background:#fff}
@@ -2076,6 +2078,12 @@
               <select title="Style" data-qa-onchange="qaTplFormatAndReset(this)">
                 <option value="">Style</option><option value="p">Normal</option><option value="h2">Heading</option><option value="h3">Subheading</option><option value="blockquote">Quote</option>
               </select>
+              <select title="Line spacing" data-qa-onchange="qaTplSpacingAndReset(this,'line')">
+                <option value="">Line</option><option value="1">1.0</option><option value="1.15">1.15</option><option value="1.5">1.5</option><option value="2">2.0</option>
+              </select>
+              <select title="Paragraph spacing" data-qa-onchange="qaTplSpacingAndReset(this,'paragraph')">
+                <option value="">Spacing</option><option value="0px">None</option><option value="4px">Small</option><option value="8px">Normal</option><option value="12px">Medium</option><option value="18px">Large</option>
+              </select>
               <span class="tb-sep"></span>
               <button type="button" title="Bold" data-qa-onclick="tplCmd('bold')"><b>B</b></button>
               <button type="button" title="Italic" data-qa-onclick="tplCmd('italic')"><i>I</i></button>
@@ -2158,7 +2166,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<script src="../assets/js/pages/admin-school-admin-2.js?v=20260813-reopening-date-1"></script>
+<script src="../assets/js/pages/admin-school-admin-2.js?v=20260813-template-spacing-1"></script>
 
 <footer class="system-footer">Copyright &copy; 2026 AXIOMBYTE HUB. All rights reserved. &middot; Version 1.0</footer>
 </body>

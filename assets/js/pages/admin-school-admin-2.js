@@ -1056,6 +1056,31 @@ function tplFont(f){if(!f)return;tplExec('fontName',f);}
 function tplSize(s){if(!s)return;tplExec('fontSize',s);}
 function tplColor(c){tplExec('foreColor',c);}
 function tplHilite(c){tplExec('hiliteColor',c);}
+function tplSpacingTargets(){
+  tplRestore();
+  const root=tplSelectionRoot(),selection=window.getSelection();
+  if(!root||!selection||!selection.rangeCount)return root?[root]:[];
+  const range=selection.getRangeAt(0);
+  const selector='p,div,h1,h2,h3,h4,h5,h6,li,blockquote,td,th';
+  const matches=Array.from(root.querySelectorAll(selector)).filter(function(element){
+    try{return range.intersectsNode(element);}catch(e){return false;}
+  });
+  let targets=matches.filter(function(element){
+    return !matches.some(function(candidate){return candidate!==element&&element.contains(candidate);});
+  });
+  if(!targets.length){
+    const start=range.startContainer.nodeType===Node.ELEMENT_NODE?range.startContainer:range.startContainer.parentElement;
+    const closest=start&&start.closest?start.closest(selector):null;
+    if(closest&&(closest===root||root.contains(closest)))targets=[closest];
+  }
+  return targets.length?targets:[root];
+}
+function tplApplySpacing(kind,value){
+  if(!value)return;
+  const property=kind==='paragraph'?'marginBottom':'lineHeight';
+  tplSpacingTargets().forEach(function(element){element.style[property]=value;});
+  tplSaveSel();
+}
 function insertTplVar(tok){tplRestore();document.execCommand('insertText',false,tok);tplSaveSel();}
 function uploadSchoolCrest(inp){
   const f=inp.files&&inp.files[0]; if(!f){return;} inp.value='';
@@ -1641,6 +1666,10 @@ function qaToggleSchoolAdminPassword(button) {
 }
 function qaTplFormatAndReset(select) {
   tplFormat(select.value);
+  select.value = '';
+}
+function qaTplSpacingAndReset(select, kind) {
+  tplApplySpacing(kind, select.value);
   select.value = '';
 }
 function qaOpenTplImagePicker() {
