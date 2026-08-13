@@ -707,7 +707,10 @@
   .tpl-toolbar{display:flex;flex-wrap:wrap;gap:3px;align-items:center;padding:8px 10px;background:var(--surface-2);border-bottom:1px solid var(--line)}
   .tpl-toolbar button{min-width:30px;height:30px;padding:0 7px;font-size:13px;border:1px solid transparent;background:transparent;border-radius:6px;color:var(--ink-soft);cursor:pointer}
   .tpl-toolbar button:hover{background:#fff;border-color:var(--line);color:var(--primary)}
-  .tpl-toolbar select{height:30px;border:1px solid var(--line);background:#fff;border-radius:6px;font-size:12px;color:var(--ink-soft);padding:0 4px;cursor:pointer}
+  .tpl-toolbar select{width:auto;max-width:100%;height:30px;flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:6px;font-size:12px;color:var(--ink-soft);padding:0 24px 0 8px;cursor:pointer}
+  .tpl-toolbar select[title="Font"]{width:142px}
+  .tpl-toolbar select[title="Size"]{width:68px}
+  .tpl-toolbar select[title="Style"]{width:102px}
   .tpl-toolbar .tb-sep{width:1px;height:20px;background:var(--line);margin:0 4px}
   .tpl-toolbar .tb-color{position:relative;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;color:var(--ink-soft)}
   .tpl-toolbar .tb-color:hover{background:#fff}
