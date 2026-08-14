@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
-import { guardRequest, jsonResponse } from "../_shared/security.ts";
+import { guardRequest, jsonResponse, requestAssuranceLevel } from "../_shared/security.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -697,6 +697,13 @@ Deno.serve(async (req) => {
 
     if (mode === "submission-confirmation") {
       return await handleSubmissionConfirmation(req, body);
+    }
+    if (requestAssuranceLevel(req) !== "aal2") {
+      return smsJson(req, {
+        ok: false,
+        error: "mfa_required",
+        message: "Multi-factor authentication is required.",
+      }, 403);
     }
     if (mode === "test") {
       return await handleTestSms(req, body);

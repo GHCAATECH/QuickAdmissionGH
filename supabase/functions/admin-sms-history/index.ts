@@ -28,7 +28,7 @@ async function rateAllowed(admin: ReturnType<typeof createClient>, key: string, 
   return !error && data?.allowed !== false;
 }
 Deno.serve(async (req: Request) => {
-  const blocked = guardRequest(req, { methods: ["POST", "OPTIONS"], maxBodyBytes: 8_192 });
+  const blocked = guardRequest(req, { methods: ["POST", "OPTIONS"], maxBodyBytes: 8_192, requireAal2: true });
   if (blocked) return blocked;
   const json = (body: unknown, status = 200) => jsonResponse(req, body, status);
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return json({ ok: false, error: "not_configured", message: "Supabase service credentials are missing." }, 500);

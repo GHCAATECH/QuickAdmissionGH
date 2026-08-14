@@ -120,7 +120,7 @@ async function persistProfileForUser(
 }
 
 Deno.serve(async (req: Request) => {
-  const blocked = guardRequest(req, { maxBodyBytes: 24_576 });
+  const blocked = guardRequest(req, { maxBodyBytes: 24_576, requireAal2: true });
   if (blocked) return blocked;
   const json = (body: JsonRecord, status = 200) => jsonResponse(req, body, status);
 

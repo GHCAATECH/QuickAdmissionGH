@@ -298,32 +298,9 @@ function studentContact(s){
   return cleanContact(r.sms_contact||s.parent_phone||s.placement_sms_contact||s.sms_contact||s.imported_sms_contact||s.cssps_sms_contact||s.sms||s.contact);
 }
 async function lookupPlacementName(idx,school){
-  if(!idx)return '';
-  try{
-    if(school){
-      const {data:pl}=await sb.from('placement_list').select('student_name').eq('school_id',school).eq('index_number',idx).single();
-      if(pl&&pl.student_name)return pl.student_name;
-    }
-  }catch(e){}
-  try{
-    const {data}=await studentPortalRequest('lookup',{p_index:idx,p_school:school||null});
-    const nm=nameFromLookup(data);
-    if(nm)return nm;
-  }catch(e){}
   return '';
 }
 async function lookupPlacementSms(idx,school){
-  if(!idx)return '';
-  try{
-    if(school){
-      const {data:pl,error}=await sb.from('placement_list').select('sms_contact').eq('school_id',school).eq('index_number',idx).maybeSingle();
-      if(!error&&pl&&pl.sms_contact)return cleanContact(pl.sms_contact);
-    }
-  }catch(e){}
-  try{
-    const {data}=await studentPortalRequest('lookup',{p_index:idx,p_school:school||null});
-    return placementSmsFromLookup(data);
-  }catch(e){}
   return '';
 }
 
@@ -580,7 +557,7 @@ async function payToken(method){
   // recover an unconfirmed payment instead of charging again
   if(pend&&pend.index===idx&&pend.reference){ toast('Found an unconfirmed payment - verifying instead of charging again'); return verifyPayment(pend.reference, idx, name, pend.school||sid, parentContact); }
   // already paid? then don't charge again
-  const {data:has}=await studentPortalRequest('has_token',{p_index:idx,p_school:sid});
+  const {data:has}=await studentPortalRequest('has_token',{p_index:idx,p_school:sid,parent_contact:parentContact});
   if(has&&has.ok&&has.paid){ toast('This index has already paid. Use "Retrieve token" to get your token.','warn'); $('r-value').value=idx; showScreen('s-retrieve'); return; }
   const {data:sch}=await studentPortalRequest('lookup',{p_index:idx,p_school:sid});
   if(!sch||!sch.ok){toast('This index is not on any participating school\u2019s placement list','warn');return;}

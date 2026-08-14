@@ -553,6 +553,12 @@ async function enterAdmin(prof,uid){
   applyPermissions();
   go(firstAllowedView());
 }
+async function requireSchoolAdminMfa(){
+  if(!window.QAAdminMFA||typeof window.QAAdminMFA.ensure!=='function'){
+    throw new Error('The multi-factor security component did not load. Reload the page and try again.');
+  }
+  await window.QAAdminMFA.ensure(sb);
+}
 async function bootSession(){
   try{
     if(schoolAdminRecoveryMode)return;
@@ -562,6 +568,7 @@ async function bootSession(){
     if(!session||!session.user){ setSchoolAdminTabSessionActive(false); return; }
     const {data:prof}=await sb.from('profiles').select('full_name,role,school_id,permissions').eq('id',session.user.id).single();
     if(!prof||(prof.role!=='school_admin'&&prof.role!=='super_admin')){ setSchoolAdminTabSessionActive(false); return; }
+    await requireSchoolAdminMfa();
     await enterAdmin(prof,session.user.id);
   }catch(e){
     setSchoolAdminTabSessionActive(false);
@@ -612,6 +619,9 @@ async function adminLogin(){
       return;
     }
     try{
+      btn.textContent='VERIFYING MFA...';
+      if(status)status.textContent='Completing two-step verification...';
+      await requireSchoolAdminMfa();
       btn.textContent='LOADING DASHBOARD...';
       if(status)status.textContent='Loading your school dashboard...';
       await enterAdmin(prof,data.user.id);

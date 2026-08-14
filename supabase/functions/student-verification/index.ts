@@ -432,7 +432,7 @@ async function runRpc(admin: ReturnType<typeof createClient>, fn: string, args: 
 }
 
 Deno.serve(async (req: Request) => {
-  const blocked = guardRequest(req, { maxBodyBytes: 65_536 });
+  const blocked = guardRequest(req, { maxBodyBytes: 65_536, requireAal2: true });
   if (blocked) return blocked;
   const json = (body: unknown, status = 200) => jsonResponse(req, body, status);
 

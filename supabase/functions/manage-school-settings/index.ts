@@ -120,7 +120,7 @@ function pickPatch(source: JsonRecord, keys: string[]) {
 }
 
 Deno.serve(async (req: Request) => {
-  const blocked = guardRequest(req, { maxBodyBytes: 786_432 });
+  const blocked = guardRequest(req, { maxBodyBytes: 786_432, requireAal2: true });
   if (blocked) return blocked;
   const json = (body: unknown, status = 200) => jsonResponse(req, body, status);
 

@@ -3,11 +3,36 @@ import { readFile } from "node:fs/promises";
 const reportPath = "assets/js/pages/admin-school-admin-1.js";
 const paymentPath = "supabase/functions/verify-payment/index.ts";
 const migrationPath = "supabase/migrations/20260809190000_restrict_sensitive_admin_actions.sql";
+const hardeningMigrationPath = "supabase/migrations/20260814110000_admin_mfa_security_hardening.sql";
+const portalPath = "supabase/functions/student-portal/index.ts";
+const securityPath = "supabase/functions/_shared/security.ts";
+const configPath = "supabase/config.toml";
+const indexPath = "index.html";
+const schoolAdminPath = "admin/school-admin.html";
+const superAdminPath = "admin/super-admin.html";
 
-const [reportSource, paymentSource, migrationSource] = await Promise.all([
+const [
+  reportSource,
+  paymentSource,
+  migrationSource,
+  hardeningMigrationSource,
+  portalSource,
+  securitySource,
+  configSource,
+  indexSource,
+  schoolAdminSource,
+  superAdminSource,
+] = await Promise.all([
   readFile(reportPath, "utf8"),
   readFile(paymentPath, "utf8"),
   readFile(migrationPath, "utf8"),
+  readFile(hardeningMigrationPath, "utf8"),
+  readFile(portalPath, "utf8"),
+  readFile(securityPath, "utf8"),
+  readFile(configPath, "utf8"),
+  readFile(indexPath, "utf8"),
+  readFile(schoolAdminPath, "utf8"),
+  readFile(superAdminPath, "utf8"),
 ]);
 
 const failures = [];
@@ -48,10 +73,53 @@ requireCheck(
   migrationSource.includes("permissions ->> 'sms'"),
   "SMS read policies must enforce the assigned SMS privilege.",
 );
+requireCheck(
+  hardeningMigrationSource.includes("revoke all on function public.student_login(text, text, uuid)"),
+  "The legacy public student_login RPC must remain revoked.",
+);
+requireCheck(
+  hardeningMigrationSource.includes("require_admin_mfa_20260814")
+    && hardeningMigrationSource.includes("auth.jwt() ->> ''aal''"),
+  "Protected browser tables must retain the restrictive AAL2 policy.",
+);
+requireCheck(
+  !portalSource.includes("student_found:")
+    && !portalSource.includes('select("student_name,index_number")')
+    && !portalSource.includes('select("full_name,bece_index")'),
+  "Public school lookup must not disclose student identity or existence details.",
+);
+requireCheck(
+  portalSource.includes("submittedPhone === storedPhone"),
+  "Paid-token status must remain bound to the stored Parent Contact.",
+);
+requireCheck(
+  securitySource.includes('options.allowNullOrigin === true ? "null" : ""'),
+  "Null-origin requests must remain denied unless a function opts in explicitly.",
+);
+requireCheck(
+  configSource.includes("[auth.mfa.totp]")
+    && configSource.includes("enroll_enabled = true")
+    && configSource.includes("verify_enabled = true"),
+  "TOTP enrollment and verification must remain enabled.",
+);
+for (const [label, source] of [
+  ["student index", indexSource],
+  ["school admin", schoolAdminSource],
+  ["super admin", superAdminSource],
+]) {
+  requireCheck(
+    !source.includes("cdn.jsdelivr.net") && !source.includes("cdnjs.cloudflare.com"),
+    `${label} must use the locally pinned vendor libraries.`,
+  );
+  requireCheck(
+    !source.includes("https://*.supabase.co"),
+    `${label} CSP must not allow every Supabase project.`,
+  );
+}
 
 if (failures.length) {
   for (const failure of failures) console.error(`SECURITY CHECK FAILED: ${failure}`);
   process.exit(1);
 }
 
-console.log("Security regression checks passed: report XSS, payment reuse, academic-year authorization, and SMS permissions.");
+console.log("Security regression checks passed: XSS, payment reuse, admin MFA, RPC closure, lookup privacy, CORS, CSP, and SMS permissions.");

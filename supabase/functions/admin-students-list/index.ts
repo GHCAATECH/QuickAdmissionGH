@@ -117,7 +117,7 @@ function mapById(rows: unknown[] | null | undefined, nameKeys: string[]) {
 }
 
 Deno.serve(async (req: Request) => {
-  const blocked = guardRequest(req, { methods: ["POST", "OPTIONS"], maxBodyBytes: 16_384 });
+  const blocked = guardRequest(req, { methods: ["POST", "OPTIONS"], maxBodyBytes: 16_384, requireAal2: true });
   if (blocked) return blocked;
   const json = (body: unknown, status = 200) => jsonResponse(req, body, status);
 

@@ -21,6 +21,7 @@ type SecurityOptions = {
   allowedOrigins?: string[];
   maxBodyBytes?: number;
   methods?: string[];
+  requireAal2?: boolean;
 };
 
 function normalizeOrigin(origin: string) {
@@ -55,10 +56,30 @@ function allowedOriginValue(origin: string | null, options: SecurityOptions = {}
   if (!origin) return "*";
   const normalized = normalizeOrigin(origin);
   if (normalized === "null") {
-    return options.allowNullOrigin === false ? "" : "null";
+    return options.allowNullOrigin === true ? "null" : "";
   }
   const allowedOrigins = parseAllowedOrigins(options.allowedOrigins ?? []);
   return allowedOrigins.has(normalized) || isQuickAdmissionPortalOrigin(normalized) ? normalized : "";
+}
+
+function bearerToken(req: Request) {
+  return String(req.headers.get("Authorization") ?? "")
+    .replace(/^Bearer\s+/i, "")
+    .trim();
+}
+
+export function requestAssuranceLevel(req: Request) {
+  const token = bearerToken(req);
+  const payload = token.split(".")[1] ?? "";
+  if (!payload) return "";
+  try {
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const claims = JSON.parse(atob(padded)) as Record<string, unknown>;
+    return String(claims.aal ?? "");
+  } catch {
+    return "";
+  }
 }
 
 export function corsHeaders(req: Request, options: SecurityOptions = {}) {
@@ -110,6 +131,15 @@ export function guardRequest(req: Request, options: SecurityOptions = {}) {
       req,
       { ok: false, error: "method_not_allowed", message: "Method not allowed." },
       405,
+      options,
+    );
+  }
+
+  if (options.requireAal2 && requestAssuranceLevel(req) !== "aal2") {
+    return jsonResponse(
+      req,
+      { ok: false, error: "mfa_required", message: "Multi-factor authentication is required." },
+      403,
       options,
     );
   }

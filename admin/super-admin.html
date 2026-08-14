@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://js.paystack.co; script-src-attr 'none'; connect-src 'self' https://*.supabase.co https://api.paystack.co https://sms.arkesel.com; frame-src 'self' https://js.paystack.co https://checkout.paystack.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' https://js.paystack.co; script-src-attr 'none'; connect-src 'self' https://datxaylostmyroleisdl.supabase.co https://api.paystack.co; frame-src 'self' https://js.paystack.co https://checkout.paystack.com;">
 <script src="../assets/js/csp-event-dispatcher.js?v=20260810-view-more-fix-1"></script>
 <title>QuickAdmissionGH</title>
 <link rel="icon" type="image/svg+xml" href="../logo-icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="../assets/vendor/chart-4.4.1.umd.min.js"></script>
 <style>
   :root{
     --bg:#081007; --surface:#11170c; --surface-2:#171f10;
@@ -713,6 +713,7 @@
 </style>
 <link rel="stylesheet" href="../assets/css/session-loader.css?v=20260808-light-loader-1">
 <link rel="stylesheet" href="../assets/css/table-nowrap.css?v=20260809-system-nowrap-1">
+<link rel="stylesheet" href="../assets/css/admin-mfa.css?v=20260814-admin-mfa-1">
 <script src="../assets/js/global-layout-fix.js?v=20260811-chrome-scroll-clamp-4" defer></script>
 <script src="../assets/js/admin-responsive.js?v=20260731-sidebar-controller-5" defer></script>
 </head>
@@ -995,8 +996,9 @@
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="toastMsg"></span></div>
 
 <script src="../assets/js/pages/admin-super-admin-1.js?v=20260809-csp-1"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="../assets/js/pages/admin-super-admin-2.js?v=20260812-password-recovery-1"></script>
+<script src="../assets/vendor/supabase-js-2.112.3.min.js"></script>
+<script src="../assets/js/admin-mfa.js?v=20260814-admin-mfa-1"></script>
+<script src="../assets/js/pages/admin-super-admin-2.js?v=20260814-admin-mfa-1"></script>
 
 <footer class="system-footer">Copyright &copy; 2026 AXIOMBYTE HUB. All rights reserved. &middot; Version 1.0</footer>
 </body>

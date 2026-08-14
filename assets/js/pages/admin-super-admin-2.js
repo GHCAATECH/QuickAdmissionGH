@@ -428,6 +428,12 @@ async function enterSuper(uid){
   document.querySelector('.app').style.display='grid';
   go('dashboard');
 }
+async function requireSuperAdminMfa(){
+  if(!window.QAAdminMFA||typeof window.QAAdminMFA.ensure!=='function'){
+    throw new Error('The multi-factor security component did not load. Reload the page and try again.');
+  }
+  await window.QAAdminMFA.ensure(sb);
+}
 async function bootSuperSession(){
   if(superAdminRecoveryMode)return false;
   if(!sb)throw new Error('The secure login service did not load. Check your connection and reload the page.');
@@ -441,6 +447,7 @@ async function bootSuperSession(){
   const prof=profileResult&&profileResult.data;
   if(profileResult&&profileResult.error)throw profileResult.error;
   if(!prof||prof.role!=='super_admin')return false;
+  await requireSuperAdminMfa();
   await enterSuper(session.user.id);
   return true;
 }
@@ -482,6 +489,9 @@ async function superLogin(){
       try{await superAuthTimeout(sb.auth.signOut(),'Session cleanup timed out.',3000);}catch(ignore){}
       return;
     }
+    btn.textContent='VERIFYING MFA...';
+    if(status)status.textContent='Completing two-step verification...';
+    await requireSuperAdminMfa();
     btn.textContent='LOADING DASHBOARD...';
     if(status)status.textContent='Loading the platform dashboard...';
     await enterSuper(data.user.id);

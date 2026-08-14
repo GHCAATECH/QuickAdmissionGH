@@ -65,7 +65,7 @@ function canDeleteSchoolData(profile: Record<string, unknown> | null, schoolId: 
 }
 
 Deno.serve(async (req: Request) => {
-  const blocked = guardRequest(req, { maxBodyBytes: 8_192 });
+  const blocked = guardRequest(req, { maxBodyBytes: 8_192, requireAal2: true });
   if (blocked) return blocked;
   const json = (body: Record<string, unknown>, status = 200) => jsonResponse(req, body, status);
 

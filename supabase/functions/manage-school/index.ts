@@ -51,7 +51,7 @@ async function rateAllowed(admin: ReturnType<typeof createClient>, key: string) 
 }
 
 Deno.serve(async (req: Request) => {
-  const blocked = guardRequest(req, { maxBodyBytes: 32_768 });
+  const blocked = guardRequest(req, { maxBodyBytes: 32_768, requireAal2: true });
   if (blocked) return blocked;
   const json = (body: unknown, status = 200) => jsonResponse(req, body, status);
 

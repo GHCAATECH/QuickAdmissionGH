@@ -128,17 +128,13 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
     return result;
   }
 
-  const [schoolRes, configRes, placementRes, studentRes] = await Promise.all([
+  const [schoolRes, configRes] = await Promise.all([
     admin.from("schools").select("id,name,school_code,status").eq("id", sid).maybeSingle(),
     admin.from("school_config").select("service_charge,accept_online_payment,admission_status").eq("school_id", sid).maybeSingle(),
-    admin.from("placement_list").select("student_name,index_number").eq("school_id", sid).eq("index_number", index).maybeSingle(),
-    admin.from("students").select("full_name,bece_index").eq("school_id", sid).eq("bece_index", index).maybeSingle(),
   ]);
 
   const school = (schoolRes.data ?? {}) as JsonRecord;
   const config = (configRes.data ?? {}) as JsonRecord;
-  const placement = (placementRes.data ?? {}) as JsonRecord;
-  const student = (studentRes.data ?? {}) as JsonRecord;
 
   if (safeText(school.status).toLowerCase() !== "active") {
     const result = { ok: false, error: "school_inactive", message: "This school portal is currently unavailable." };
@@ -155,8 +151,6 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
     charge: Number(config.service_charge ?? 0),
     accept_online_payment: config.accept_online_payment !== false,
     admission_status: firstText(config.admission_status),
-    student_name: firstText(placement.student_name, student.full_name),
-    placement_name: firstText(placement.student_name, student.full_name),
   };
   lookupCache.set(cacheKey, { expiresAt: Date.now() + 30_000, value: result });
   if (lookupCache.size > 1_000) {
@@ -166,22 +160,34 @@ async function lookupSchool(admin: ReturnType<typeof createClient>, index: strin
   return result;
 }
 
-async function hasToken(admin: ReturnType<typeof createClient>, index: string, schoolId: string) {
+async function hasToken(admin: ReturnType<typeof createClient>, index: string, schoolId: string, parentContact: string) {
   const sid = await resolveSchool(admin, index, schoolId);
   if (!sid) return { ok: true, paid: false, school_id: null };
 
-  const { data } = await admin
-    .from("students")
-    .select("admission_token,payment_status")
-    .eq("school_id", sid)
-    .eq("bece_index", index)
-    .maybeSingle();
+  const [studentResult, placementResult] = await Promise.all([
+    admin
+      .from("students")
+      .select("admission_token,payment_status,parent_phone")
+      .eq("school_id", sid)
+      .eq("bece_index", index)
+      .maybeSingle(),
+    admin
+      .from("placement_list")
+      .select("sms_contact")
+      .eq("school_id", sid)
+      .eq("index_number", index)
+      .maybeSingle(),
+  ]);
 
-  const token = safeText((data as JsonRecord | null)?.admission_token);
-  const status = upperText((data as JsonRecord | null)?.payment_status);
+  const student = (studentResult.data ?? {}) as JsonRecord;
+  const token = safeText(student.admission_token);
+  const status = upperText(student.payment_status);
+  const paid = !!token || status === "PAID" || status === "COMPLETED" || status === "SUCCESS";
+  const submittedPhone = normalizePhone(parentContact);
+  const storedPhone = normalizePhone(firstText(student.parent_phone, placementResult.data?.sms_contact));
   return {
     ok: true,
-    paid: !!token || status === "PAID" || status === "COMPLETED" || status === "SUCCESS",
+    paid: paid && !!submittedPhone && !!storedPhone && submittedPhone === storedPhone,
     school_id: sid,
   };
 }
@@ -609,7 +615,8 @@ Deno.serve(async (req: Request) => {
 
     if (action === "has_token") {
       if (!index) return json({ ok: false, error: "index", message: "Index number is required." }, 400);
-      return json(await hasToken(admin, index, schoolId));
+      const parentContact = safeText(body.parent_contact ?? body.phone);
+      return json(await hasToken(admin, index, schoolId, parentContact));
     }
 
     if (action === "school_status") {

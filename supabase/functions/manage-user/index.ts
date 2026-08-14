@@ -160,7 +160,7 @@ function canManageActor(
 }
 
 Deno.serve(async (req: Request) => {
-  const blocked = guardRequest(req, { maxBodyBytes: 32_768 });
+  const blocked = guardRequest(req, { maxBodyBytes: 32_768, requireAal2: true });
   if (blocked) return blocked;
   const json = (body: JsonRecord, status = 200) => jsonResponse(req, body, status);
 
