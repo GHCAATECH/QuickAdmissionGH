@@ -4,6 +4,7 @@ const reportPath = "assets/js/pages/admin-school-admin-1.js";
 const paymentPath = "supabase/functions/verify-payment/index.ts";
 const migrationPath = "supabase/migrations/20260809190000_restrict_sensitive_admin_actions.sql";
 const hardeningMigrationPath = "supabase/migrations/20260814110000_admin_mfa_security_hardening.sql";
+const legacyRpcRemovalPath = "supabase/migrations/20260814120000_drop_legacy_student_login_rpc.sql";
 const portalPath = "supabase/functions/student-portal/index.ts";
 const securityPath = "supabase/functions/_shared/security.ts";
 const configPath = "supabase/config.toml";
@@ -16,6 +17,7 @@ const [
   paymentSource,
   migrationSource,
   hardeningMigrationSource,
+  legacyRpcRemovalSource,
   portalSource,
   securitySource,
   configSource,
@@ -27,6 +29,7 @@ const [
   readFile(paymentPath, "utf8"),
   readFile(migrationPath, "utf8"),
   readFile(hardeningMigrationPath, "utf8"),
+  readFile(legacyRpcRemovalPath, "utf8"),
   readFile(portalPath, "utf8"),
   readFile(securityPath, "utf8"),
   readFile(configPath, "utf8"),
@@ -76,6 +79,10 @@ requireCheck(
 requireCheck(
   hardeningMigrationSource.includes("revoke all on function public.student_login(text, text, uuid)"),
   "The legacy public student_login RPC must remain revoked.",
+);
+requireCheck(
+  legacyRpcRemovalSource.includes("drop function if exists public.student_login(text, text, uuid)"),
+  "The obsolete student_login database RPC must remain removed.",
 );
 requireCheck(
   hardeningMigrationSource.includes("require_admin_mfa_20260814")
