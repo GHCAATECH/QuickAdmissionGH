@@ -2,8 +2,9 @@
   position: fixed;
   inset: 0;
   z-index: 2147483647;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
   overflow-y: auto;
   background: rgba(3, 15, 10, 0.82);
@@ -12,6 +13,7 @@
 
 .qa-mfa-card {
   width: min(100%, 460px);
+  margin-block: auto;
   padding: 30px;
   border: 1px solid rgba(22, 163, 74, 0.45);
   border-radius: 14px;
@@ -68,6 +70,24 @@
 }
 .qa-mfa-card button:disabled { cursor: wait; opacity: 0.7; }
 .qa-mfa-card .qa-mfa-cancel { margin-top: 10px; border: 1px solid #b7cdbf; background: #ffffff; color: #14532d; }
+
+@media (max-height: 820px) and (min-width: 481px) {
+  .qa-mfa-overlay { padding-block: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-bottom)); }
+  .qa-mfa-card { padding: 18px 24px; }
+  .qa-mfa-shield { width: 44px; height: 44px; margin-bottom: 10px; font-size: 11px; }
+  .qa-mfa-card h2 { font-size: 1.45rem; }
+  .qa-mfa-copy { margin: 6px 0 12px; font-size: 14px; line-height: 1.4; }
+  .qa-mfa-enrollment { margin-bottom: 12px; }
+  .qa-mfa-enrollment img { width: min(160px, 52%); padding: 6px; }
+  .qa-mfa-secret-wrap { margin-top: 6px; }
+  .qa-mfa-secret-wrap span { margin-bottom: 2px; }
+  .qa-mfa-secret-wrap code { font-size: 12px; }
+  .qa-mfa-card label { margin-bottom: 5px; }
+  .qa-mfa-card input { min-height: 46px; padding-block: 9px; }
+  .qa-mfa-error { min-height: 18px; margin: 5px 0; }
+  .qa-mfa-card button { min-height: 44px; }
+  .qa-mfa-card .qa-mfa-cancel { margin-top: 8px; }
+}
 
 @media (max-width: 480px) {
   .qa-mfa-card { padding: 24px 18px; }
