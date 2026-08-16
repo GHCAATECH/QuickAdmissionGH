@@ -793,7 +793,11 @@ function crudModal(title,fields,onSave){
   m.innerHTML=`<div class="modal-head"><h2>${title}</h2><button class="modal-x" data-qa-onclick="closeModal()">×</button></div>
   <div class="modal-body">${fields}</div>
   <div class="modal-foot"><button class="btn btn-ghost" data-qa-onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="crudSave">Save</button></div>`;
-  $('overlay').classList.remove('manage-student-editor');$('overlay').classList.add('show');$('crudSave').onclick=onSave;
+  const overlay=$('overlay');
+  overlay.classList.remove('manage-student-editor','student-verification-dialog','verified-student-details','class-subject-details','user-account-editor');
+  overlay.classList.add('show','structure-editor');
+  requestAnimationFrame(positionManageStudentEditor);
+  $('crudSave').onclick=onSave;
 }
 function openProg(id){
   const p=id?programmes.find(x=>x.id===id):{code:'',name:'',subjects:'',cap:100};
@@ -1184,7 +1188,7 @@ function refreshEditHouseOptions(){
   if(hint) hint.textContent=sel.options.length>1?'Only houses matching gender and residential status are shown.':'No configured house matches this gender and residential status.';
 }
 function positionManageStudentEditor(){
-  const overlay=$('overlay'); if(!overlay||(!overlay.classList.contains('manage-student-editor')&&!overlay.classList.contains('student-verification-dialog')&&!overlay.classList.contains('verified-student-details')&&!overlay.classList.contains('class-subject-details')&&!overlay.classList.contains('user-account-editor')))return;
+  const overlay=$('overlay'); if(!overlay||(!overlay.classList.contains('manage-student-editor')&&!overlay.classList.contains('student-verification-dialog')&&!overlay.classList.contains('verified-student-details')&&!overlay.classList.contains('class-subject-details')&&!overlay.classList.contains('user-account-editor')&&!overlay.classList.contains('structure-editor')))return;
   const topbar=document.querySelector('.topbar'), sidebar=$('sidebar'), footer=document.querySelector('body > footer.system-footer');
   const desktop=window.matchMedia('(min-width:1025px)').matches;
   const top=topbar?Math.max(0,topbar.getBoundingClientRect().bottom):0;
@@ -2526,7 +2530,7 @@ document.addEventListener('input',function(e){
 });
 
 /* ===== MODAL / SIDEBAR ===== */
-function closeModal(){const overlay=$('overlay');overlay.classList.remove('show','manage-student-editor','student-verification-dialog','verified-student-details','class-subject-details','user-account-editor');overlay.style.removeProperty('--manage-editor-top');overlay.style.removeProperty('--manage-editor-left');overlay.style.removeProperty('--manage-editor-bottom');}
+function closeModal(){const overlay=$('overlay');overlay.classList.remove('show','manage-student-editor','student-verification-dialog','verified-student-details','class-subject-details','user-account-editor','structure-editor');overlay.style.removeProperty('--manage-editor-top');overlay.style.removeProperty('--manage-editor-left');overlay.style.removeProperty('--manage-editor-bottom');}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
 function resetAdminScroll(){
   window.scrollTo(0,0);

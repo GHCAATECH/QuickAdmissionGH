@@ -961,7 +961,8 @@ body > #overlay.overlay.manage-student-editor,
 body > #overlay.overlay.student-verification-dialog,
 body > #overlay.overlay.verified-student-details,
 body > #overlay.overlay.class-subject-details,
-body > #overlay.overlay.user-account-editor {
+body > #overlay.overlay.user-account-editor,
+body > #overlay.overlay.structure-editor {
   inset: var(--manage-editor-top, var(--header-height)) 0
     var(--manage-editor-bottom, var(--system-footer-height, 46px))
     var(--manage-editor-left, var(--sidebar-width)) !important;
@@ -998,6 +999,12 @@ body > #overlay.overlay.class-subject-details > .modal {
 
 body > #overlay.overlay.user-account-editor > .modal {
   max-width: 680px !important;
+  max-height: 100% !important;
+  border-radius: 18px !important;
+}
+
+body > #overlay.overlay.structure-editor > .modal {
+  max-width: 760px !important;
   max-height: 100% !important;
   border-radius: 18px !important;
 }
@@ -1060,6 +1067,7 @@ body > #reportsOverlay.overlay > .rep-modal > .modal-body {
   body > #overlay.overlay.verified-student-details,
   body > #overlay.overlay.class-subject-details,
   body > #overlay.overlay.user-account-editor,
+  body > #overlay.overlay.structure-editor,
   body > #reportsOverlay.overlay {
     left: 0 !important;
     padding: 12px !important;
