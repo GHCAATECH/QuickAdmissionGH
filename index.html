@@ -949,6 +949,8 @@
   body #s-login .qa-tutorial-video-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
   body #s-login .qa-tutorial-video-card{overflow:hidden;background:rgba(192,235,255,.5)!important;border:1px solid #001619!important;border-radius:16px!important}
   body #s-login .qa-tutorial-video-frame{aspect-ratio:16/9;background:#002B4C!important;color:#C0EBFF!important;display:grid;place-items:center;font-weight:800}
+  body #s-login .qa-tutorial-video-frame video,
+  body #s-login .qa-tutorial-video-frame iframe{width:100%;height:100%;display:block;object-fit:cover;background:#002B4C;border:0}
   body #s-login .qa-tutorial-video-details{padding:18px}
   body #s-login .qa-site-footer{border-top:1px solid #001619!important;background:#fff!important}
   body #s-login .qa-footer-inner{width:min(1200px,calc(100% - 32px));margin:0 auto;padding:24px 0;display:flex;align-items:center;justify-content:space-between;gap:20px;font-size:13px}
@@ -1488,9 +1490,9 @@
         <button type="button" class="qa-tutorial-close-btn" id="closeTutorialModal" aria-label="Close video tutorials">×</button>
       </div>
       <div class="qa-tutorial-video-grid">
-        <article class="qa-tutorial-video-card"><div class="qa-tutorial-video-frame">Video coming soon</div><div class="qa-tutorial-video-details"><span>Step 1</span><h3>How to Buy a Token</h3><p>Learn how to purchase an admission token before starting your application.</p></div></article>
-        <article class="qa-tutorial-video-card"><div class="qa-tutorial-video-frame">Video coming soon</div><div class="qa-tutorial-video-details"><span>Step 2</span><h3>How to Check Admission</h3><p>Learn how to select your school and verify your admission details.</p></div></article>
-        <article class="qa-tutorial-video-card"><div class="qa-tutorial-video-frame">Video coming soon</div><div class="qa-tutorial-video-details"><span>Step 3</span><h3>Complete and Print</h3><p>Learn how to complete the admission form and print your documents.</p></div></article>
+        <article class="qa-tutorial-video-card"><div class="qa-tutorial-video-frame"><iframe src="https://www.youtube-nocookie.com/embed/zTQvcKOfALY" title="How to Buy a Token tutorial" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div><div class="qa-tutorial-video-details"><span>Step 1</span><h3>How to Buy a Token</h3><p>Learn how to purchase an admission token before starting your application.</p></div></article>
+        <article class="qa-tutorial-video-card"><div class="qa-tutorial-video-frame">Video coming soon</div><div class="qa-tutorial-video-details"><span>Step 2</span><h3>How to Complete Student Admission</h3><p>Learn how to complete and submit the student admission form.</p></div></article>
+        <article class="qa-tutorial-video-card"><div class="qa-tutorial-video-frame"><video controls preload="metadata" playsinline poster="assets/videos/how-to-retrieve-token-poster.png" aria-label="How to Retrieve Token tutorial"><source src="assets/videos/how-to-retrieve-token.mp4" type="video/mp4">Your browser does not support embedded video.</video></div><div class="qa-tutorial-video-details"><span>Step 3</span><h3>How to Retrieve Token</h3><p>Learn how to retrieve an existing admission token securely.</p></div></article>
       </div>
     </div>
   </div>
